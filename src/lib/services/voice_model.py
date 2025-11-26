@@ -1,0 +1,181 @@
+"""
+Voice model module for text-to-speech generation.
+Provides base class and implementations for various TTS models.
+"""
+
+from typing import Generator, Tuple, Optional
+from abc import ABC, abstractmethod
+import numpy as np
+import warnings
+
+from kokoro import KPipeline
+
+from ..core.config import Config
+from ..utils import printer
+
+# Suppress warnings from PyTorch and Kokoro
+warnings.filterwarnings('ignore', category=UserWarning, module='torch')
+warnings.filterwarnings('ignore', category=FutureWarning, module='torch')
+
+
+class VoiceModel(ABC):
+    """
+    Abstract base class for text-to-speech models.
+    
+    This class defines the interface that all TTS model implementations must follow.
+    Subclasses should implement the abstract methods to provide specific TTS functionality.
+    """
+    
+    def __init__(
+        self, 
+        language: str = Config.DEFAULT_LANGUAGE,
+        voice: str = Config.DEFAULT_VOICE,
+        model_name: str = Config.DEFAULT_MODEL
+    ):
+        self.language = language
+        self.voice = voice
+        self.model_name = model_name
+        self.sample_rate = Config.SAMPLE_RATE
+    
+    @abstractmethod
+    def load(self) -> None:
+        """Load the TTS model."""
+        pass
+    
+    @abstractmethod
+    def is_loaded(self) -> bool:
+        """Check if the model is loaded."""
+        pass
+    
+    @abstractmethod
+    def generate(
+        self, 
+        text: str, 
+        voice: Optional[str] = None
+    ) -> Generator[Tuple[str, str, np.ndarray], None, None]:
+        """
+        Generate speech from text with streaming output.
+        
+        Args:
+            text: The text to convert to speech
+            voice: Optional voice to use (overrides default)
+            
+        Yields:
+            Tuple of (graphemes, phonemes, audio_chunk)
+        """
+        pass
+    
+    def synthesize(self, text: str, voice: Optional[str] = None) -> Tuple[np.ndarray, int]:
+        """
+        Synthesize complete audio from text.
+        
+        Args:
+            text: The text to convert to speech
+            voice: Optional voice to use (overrides default)
+            
+        Returns:
+            Tuple of (audio_array, sample_rate)
+        """
+        audio_segments = []
+        
+        for _, _, audio in self.generate(text, voice):
+            audio_segments.append(audio)
+        
+        complete_audio = np.concatenate(audio_segments) if audio_segments else np.array([])
+        
+        return complete_audio, self.sample_rate
+    
+    @abstractmethod
+    def set_voice(self, voice: str) -> None:
+        """Set the voice for speech generation."""
+        pass
+    
+    @abstractmethod
+    def set_language(self, language: str) -> None:
+        """Set the language for speech generation."""
+        pass
+    
+    def get_info(self) -> dict:
+        """Get information about the model configuration."""
+        return {
+            'model_name': self.model_name,
+            'language': self.language,
+            'voice': self.voice,
+            'sample_rate': self.sample_rate,
+            'loaded': self.is_loaded()
+        }
+
+
+class KokoroVoiceModel(VoiceModel):
+    """
+    Kokoro TTS model implementation.
+    
+    This class provides text-to-speech generation using the Kokoro TTS model
+    with various voice options and language support.
+    """
+    
+    def __init__(
+        self, 
+        language: str = Config.DEFAULT_LANGUAGE,
+        voice: str = Config.DEFAULT_VOICE,
+        model_name: str = Config.DEFAULT_MODEL
+    ):
+        super().__init__(language, voice, model_name)
+        self._pipeline: Optional[KPipeline] = None
+        
+        if not Config.is_valid_voice(voice):
+            printer.warning(f"Voice '{voice}' may not be recognized. Using anyway.")
+    
+    def load(self) -> None:
+        """Load the Kokoro TTS model."""
+        if self._pipeline is None:
+            printer.info(f"Loading Kokoro TTS model (language: {self.language})...")
+            self._pipeline = KPipeline(
+                lang_code=self.language,
+                repo_id='hexgrad/Kokoro-82M'  # Explicitly specify to suppress warning
+            )
+            printer.success("Model loaded successfully!")
+    
+    def is_loaded(self) -> bool:
+        """Check if the Kokoro model is loaded."""
+        return self._pipeline is not None
+    
+    def generate(
+        self, 
+        text: str, 
+        voice: Optional[str] = None
+    ) -> Generator[Tuple[str, str, np.ndarray], None, None]:
+        """
+        Generate speech from text using Kokoro TTS.
+        
+        Args:
+            text: The text to convert to speech
+            voice: Optional voice to use (overrides default)
+            
+        Yields:
+            Tuple of (graphemes, phonemes, audio_chunk)
+        """
+        if not self.is_loaded():
+            self.load()
+        
+        voice_to_use = voice if voice is not None else self.voice
+        
+        printer.info(f"Generating speech with voice '{voice_to_use}'...")
+        generator = self._pipeline(text, voice=voice_to_use)
+        
+        for graphemes, phonemes, audio in generator:
+            yield graphemes, phonemes, audio
+    
+    def set_voice(self, voice: str) -> None:
+        """Set the voice for Kokoro TTS."""
+        if not Config.is_valid_voice(voice):
+            printer.warning(f"Voice '{voice}' may not be recognized.")
+        self.voice = voice
+        printer.info(f"Voice changed to: {voice}")
+    
+    def set_language(self, language: str) -> None:
+        """Set the language for Kokoro TTS."""
+        if language != self.language:
+            self.language = language
+            self._pipeline = None
+            printer.info(f"Language changed to: {language}. Model will reload on next generation.")

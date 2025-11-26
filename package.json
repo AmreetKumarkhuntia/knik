@@ -1,0 +1,13 @@
+{
+  "name": "knik",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "amreetleo123@gmail.com",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "source:venv": ". .venv/bin/activate && exec $SHELL",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
