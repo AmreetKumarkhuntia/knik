@@ -5,15 +5,16 @@ High-quality text-to-speech powered by Kokoro-82M with a clean, modular Python A
 ## 🚀 Quick Start
 
 ```bash
-# Run the TTS demo
-python src/main.py --mode tts
+# Run the interactive AI console with voice (default mode)
+python src/main.py
 
-# Run the interactive AI console with voice
+# Or explicitly specify console mode
 python src/main.py --mode console
 
 # Try demos
 python demo/tts/demo.py
 python demo/console/console_app_demo.py
+python demo/ai/simple_ai_tts.py
 ```
 
 ## 📚 Documentation
@@ -64,10 +65,14 @@ pip install -r requirements.txt
 ## 💡 Usage Example
 
 ```python
-from lib import VoiceModel, AudioProcessor
+# Import from the lib package (when running from src/)
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel, AudioProcessor
 
 # Initialize
-voice_model = VoiceModel(voice='am_adam')
+voice_model = KokoroVoiceModel(voice='am_adam')
 audio_processor = AudioProcessor()
 
 # Generate and play
@@ -80,22 +85,24 @@ audio_processor.stream_play(audio_generator)
 
 ```
 knik/
-├── docs/              # 📚 Documentation
-│   ├── guides/        # User guides (Console App, AI Client, etc.)
-│   └── library/       # API reference
+├── docs/                       # 📚 Documentation
+│   ├── guides/                 # User guides (Console App, AI Client, etc.)
+│   ├── library/                # API reference
+│   └── plan/                   # Roadmap and future plans
 ├── src/
-│   ├── apps/          # 🎯 Applications
-│   │   └── console/   # Interactive AI console app
-│   ├── lib/           # 🔧 Core library
-│   │   ├── core/      # Config & core utilities
-│   │   ├── services/  # AI, Voice, Audio services
-│   │   └── utils/     # Console processor, printer
-│   └── main.py        # 🚀 Main entry point
-├── demo/              # 🎮 Demo scripts
-│   ├── console/       # Console app demos
-│   ├── tts/           # TTS demos
-│   └── ai/            # AI client demos
-└── requirements.txt
+│   ├── apps/                   # 🎯 Applications
+│   │   └── console/            # Interactive AI console app
+│   ├── lib/                    # 🔧 Core library
+│   │   ├── core/               # Config & core utilities
+│   │   ├── services/           # AI, Voice, Audio services
+│   │   └── utils/              # Console processor, printer
+│   └── main.py                 # 🚀 Main entry point
+├── demo/                       # 🎮 Demo scripts
+│   ├── console/                # Console app demos
+│   ├── tts/                    # TTS demos
+│   └── ai/                     # AI + TTS integration demos
+├── requirements.txt            # Python dependencies
+└── package.json                # Project metadata & scripts
 ```
 
 ## 🎭 Available Voices

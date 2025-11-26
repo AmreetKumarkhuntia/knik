@@ -7,7 +7,11 @@ Clean, minimal AI client with proper exception handling and provider abstraction
 ## Usage
 
 ### Basic Query
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient
 
 ai = AIClient()  # Auto-falls back to mock if not configured
@@ -16,7 +20,11 @@ print(response)
 ```
 
 ### With Vertex AI
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient
 
 # Set env var first
@@ -32,7 +40,14 @@ response = ai.query("Explain machine learning", max_tokens=2048)
 ```
 
 ### With Conversation Context
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
+from lib import AIClient
+
+ai = AIClient()
 context = [
     {"role": "user", "text": "What is AI?"},
     {"role": "model", "text": "AI is..."}
@@ -41,7 +56,14 @@ response = ai.query("Tell me more", context=context, max_tokens=2048)
 ```
 
 ### With System Instruction
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
+from lib import AIClient
+
+ai = AIClient()
 system_instruction = "You are a helpful coding assistant. Be concise."
 response = ai.query(
     "Explain Python classes",
@@ -52,7 +74,11 @@ response = ai.query(
 ```
 
 ### Mock for Testing
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import MockAIClient
 
 ai = MockAIClient()  # No credentials needed
@@ -62,12 +88,19 @@ response = ai.query("Test query")
 ## Configuration
 
 ### Environment Variable
+
 ```bash
 export GOOGLE_CLOUD_PROJECT="your-project-id"
 ```
 
 ### In Code
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
+from lib import AIClient
+
 ai = AIClient(
     provider="vertex",
     project_id="your-project-id",

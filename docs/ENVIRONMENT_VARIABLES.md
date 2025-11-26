@@ -79,13 +79,17 @@ python src/main.py
 ```
 
 ### Python Code
+
 ```python
-from lib.core.config import AudioConfig
+import sys
+sys.path.insert(0, 'src')
+
+from lib import Config
 
 # Get config values (automatically loads from env)
-voice = AudioConfig.get_voice()  # Returns env var or default
-language = AudioConfig.get_language()
-log_level = AudioConfig.get_log_level()
+voice = Config.get_voice()  # Returns env var or default
+language = Config.get_language()
+log_level = Config.get_log_level()
 
 print(f"Voice: {voice}")
 print(f"Language: {language}")
@@ -103,32 +107,41 @@ GOOGLE_CLOUD_PROJECT=my-gcp-project
 ```
 
 Then in your code:
+
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from dotenv import load_dotenv
 load_dotenv()  # Load .env file
 
-from lib import KokoroVoiceModel, AudioConfig
+from lib import KokoroVoiceModel, Config
 
 # Will use environment variables automatically
-voice = AudioConfig.get_voice()
+voice = Config.get_voice()
 voice_model = KokoroVoiceModel(voice=voice)
 ```
 
 ## Priority Order
 
 Configuration is loaded in this order (highest priority first):
+
 1. **Explicitly passed parameters** - Direct arguments to functions/classes
 2. **Environment variables** - Set via `export` or `.env` file
-3. **Default values** - Built-in defaults in `AudioConfig`
+3. **Default values** - Built-in defaults in `Config`
 
 Example:
+
 ```python
-from lib import KokoroVoiceModel, AudioConfig
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel, Config
 
 # Even if KNIK_VOICE=am_adam is set in env,
 # this will use 'af_bella' (explicit parameter takes priority)
 model = KokoroVoiceModel(voice='af_bella')
 
 # This will use env var KNIK_VOICE or default
-model = KokoroVoiceModel(voice=AudioConfig.get_voice())
+model = KokoroVoiceModel(voice=Config.get_voice())
 ```

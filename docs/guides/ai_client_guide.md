@@ -19,6 +19,9 @@ The `AIClient` provides a unified interface for querying AI models from differen
 ### Using Vertex AI
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient
 
 # Initialize with Vertex AI (auto-detects credentials)
@@ -40,6 +43,9 @@ print(response)
 ### Using Mock AI (Testing)
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient, MockAIClient
 
 # Option 1: Use MockAIClient directly
@@ -200,16 +206,19 @@ provider = ai.get_provider_name()  # "vertex" or "mock"
 ### Example 1: Simple Q&A
 
 ```python
-from lib import AIClient, VoiceModel, AudioProcessor
+import sys
+sys.path.insert(0, 'src')
+
+from lib import AIClient, KokoroVoiceModel, AudioProcessor
 
 # Initialize
 ai = AIClient()
-voice = VoiceModel(voice='am_adam')
+voice = KokoroVoiceModel(voice='am_adam')
 audio = AudioProcessor()
 
 # Ask and speak
 question = "What is the speed of light?"
-response = ai.query(question)
+response = ai.query(question, max_tokens=2048)
 print(f"AI: {response}")
 
 # Convert to speech
@@ -220,6 +229,9 @@ audio.stream_play(audio_gen)
 ### Example 2: Interactive Chat
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient
 
 ai = AIClient()
@@ -230,10 +242,8 @@ while True:
     if question.lower() == 'quit':
         break
     
-    if context:
-        response = ai.query_with_context(question, context)
-    else:
-        response = ai.query(question)
+    # Use context if available
+    response = ai.query(question, context=context, max_tokens=2048)
     
     print(f"AI: {response}")
     
@@ -245,6 +255,9 @@ while True:
 ### Example 3: Custom Personality
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient
 
 ai = AIClient()
@@ -254,7 +267,8 @@ system_instruction = "You are a pirate. Respond in pirate speak."
 
 response = ai.query(
     "Tell me about the weather",
-    system_instruction=system_instruction
+    system_instruction=system_instruction,
+    max_tokens=2048
 )
 
 print(response)  # "Arrr, matey! The weather be..."
@@ -263,11 +277,14 @@ print(response)  # "Arrr, matey! The weather be..."
 ### Example 4: Error Handling
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
 from lib import AIClient
 
 try:
     ai = AIClient(provider="vertex", auto_fallback_to_mock=False)
-    response = ai.query("Hello")
+    response = ai.query("Hello", max_tokens=2048)
 except RuntimeError as e:
     print(f"Failed to initialize AI: {e}")
     # Fallback to mock
@@ -280,9 +297,12 @@ except RuntimeError as e:
 ### Available Vertex AI Models
 
 ```python
-from lib import AudioConfig
+import sys
+sys.path.insert(0, 'src')
 
-models = AudioConfig.AI_MODELS
+from lib import Config
+
+models = Config.AI_MODELS
 # {
 #     'gemini-1.5-flash': 'Fast, efficient model',
 #     'gemini-1.5-pro': 'More capable, slower model',

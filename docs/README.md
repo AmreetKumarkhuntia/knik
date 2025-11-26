@@ -63,13 +63,27 @@ pip install -r requirements.txt
 
 ## 🚀 Quick Start
 
-### Basic Usage
+### Run the Interactive Console App
+
+```bash
+# From project root
+python src/main.py
+
+# Or explicitly specify console mode
+python src/main.py --mode console
+```
+
+### Basic TTS Usage in Python
 
 ```python
-from lib import VoiceModel, AudioProcessor
+# Import from lib package (when running from src/)
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel, AudioProcessor
 
 # Initialize model and audio processor
-voice_model = VoiceModel(voice='am_adam')  # Male voice
+voice_model = KokoroVoiceModel(voice='am_adam')  # Male voice
 audio_processor = AudioProcessor()
 
 # Generate and play speech
@@ -81,9 +95,12 @@ audio_processor.stream_play(audio_generator)
 ### Save Audio to File
 
 ```python
-from lib import VoiceModel, AudioProcessor
+import sys
+sys.path.insert(0, 'src')
 
-voice_model = VoiceModel(voice='af_heart')  # Female voice
+from lib import KokoroVoiceModel, AudioProcessor
+
+voice_model = KokoroVoiceModel(voice='af_heart')  # Female voice
 audio_processor = AudioProcessor()
 
 text = "This will be saved to a file."
@@ -95,22 +112,19 @@ audio, sample_rate = voice_model.synthesize(text)
 audio_processor.save(audio, "output.wav")
 ```
 
-### Run the Main Demo
-
-```bash
-python src/main.py
-```
-
 ## 🤖 AI Integration
 
 Knik includes built-in AI integration for querying AI models and speaking responses:
 
 ```python
-from lib import AIClient, VoiceModel, AudioProcessor
+import sys
+sys.path.insert(0, 'src')
+
+from lib import AIClient, KokoroVoiceModel, AudioProcessor
 
 # Initialize AI and TTS
 ai = AIClient(provider="vertex", project_id="your-project")
-voice = VoiceModel(voice='am_adam')
+voice = KokoroVoiceModel(voice='am_adam')
 audio = AudioProcessor()
 
 # Query AI and speak response
@@ -169,42 +183,64 @@ See [AI Client Guide](./guides/ai_client_guide.md) for full documentation.
 ```
 knik/
 ├── src/
+│   ├── apps/                   # Applications
+│   │   └── console/            # Interactive AI console app
+│   │       ├── app.py          # Console application logic
+│   │       └── config.py       # Console configuration
 │   ├── lib/                    # Core library modules
-│   │   ├── __init__.py         # Package initialization
-│   │   ├── config.py           # Configuration and constants
-│   │   ├── voice_model.py      # TTS model interface
-│   │   ├── audio_processor.py  # Audio I/O and playback
-│   │   └── ai_client.py        # AI integration (Vertex AI, etc.)
-│   ├── demo/                   # Demo and test scripts
+│   │   ├── __init__.py         # Package initialization & exports
+│   │   ├── core/               # Core configuration
+│   │   │   └── config.py       # Configuration and constants
+│   │   ├── services/           # Main services
+│   │   │   ├── voice_model.py  # TTS model interface
+│   │   │   ├── audio_processor.py  # Audio I/O and playback
+│   │   │   └── ai_client.py    # AI integration (Vertex AI, etc.)
+│   │   └── utils/              # Utilities
+│   │       ├── console_processor.py  # Console input processing
+│   │       └── printer.py      # Logging and output
+│   └── main.py                 # Main application entry point
+├── demo/                       # Demo and test scripts
+│   ├── tts/                    # TTS demos
 │   │   ├── demo.py             # Feature showcase demos
 │   │   ├── test_segments.py    # Segmentation tests
 │   │   ├── quick_segment_test.py
 │   │   └── main_multisegment.py
-│   └── main.py                 # Main application entry point
+│   ├── console/                # Console app demos
+│   │   ├── console_app_demo.py
+│   │   ├── console_processor_demo.py
+│   │   └── simple_console_demo.py
+│   └── ai/                     # AI integration demos
+│       ├── ai_tts_demo.py
+│       ├── simple_ai_tts.py
+│       └── streaming_tts_demo.py
 ├── docs/                       # Documentation
 │   ├── README.md               # This file (main documentation)
+│   ├── ENVIRONMENT_VARIABLES.md  # Configuration guide
 │   ├── library/                # Library API documentation
 │   │   ├── library_reference.md
 │   │   └── extending_voice_models.md
 │   ├── guides/                 # User guides and tutorials
+│   │   ├── console_app_guide.md
+│   │   ├── console_app_quick.md
 │   │   ├── ai_client_guide.md
 │   │   ├── ai_client_quick.md
-│   │   ├── demo_guide.md
-│   │   └── project_organization.md
+│   │   └── demo_guide.md
 │   └── plan/                   # Future planning and roadmap
 │       └── voice_agent_plan.md
 ├── requirements.txt            # Python dependencies
-└── package.json                # Project metadata
+└── package.json                # Project metadata & npm scripts
 ```
 
 ## 🎮 Demo Scripts
 
-The project includes several demo scripts in `src/demo/`:
+The project includes several demo scripts in `demo/`:
 
-### 1. Feature Showcase (`demo.py`)
+### 1. TTS Feature Showcase (`demo/tts/demo.py`)
+
 ```bash
-python src/demo/demo.py
+python demo/tts/demo.py
 ```
+
 Interactive demo showing:
 - Streaming playback
 - Saving to files
@@ -212,30 +248,41 @@ Interactive demo showing:
 - Segment saving
 - Custom text input
 
-### 2. Segmentation Tests (`test_segments.py`)
-```bash
-python src/demo/test_segments.py
-```
-Demonstrates how text is split into segments.
+### 2. Console App Demo (`demo/console/console_app_demo.py`)
 
-### 3. Quick Segment Test (`quick_segment_test.py`)
 ```bash
-python src/demo/quick_segment_test.py
+python demo/console/console_app_demo.py
 ```
-Quick test to see segmentation in action.
 
-### 4. Multi-Segment Example (`main_multisegment.py`)
+Demonstrates the console application features.
+
+### 3. AI + TTS Integration (`demo/ai/simple_ai_tts.py`)
+
 ```bash
-python src/demo/main_multisegment.py
+python demo/ai/simple_ai_tts.py
 ```
-Example showing multiple segment generation.
+
+Shows AI query with voice response.
+
+### 4. Streaming TTS Demo (`demo/ai/streaming_tts_demo.py`)
+
+```bash
+python demo/ai/streaming_tts_demo.py
+```
+
+Demonstrates streaming AI responses with voice.
 
 ## 💡 Usage Examples
 
 ### Change Voice Mid-Session
 
 ```python
-voice_model = VoiceModel(voice='af_heart')
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel
+
+voice_model = KokoroVoiceModel(voice='af_heart')
 
 # Generate with default voice
 audio1, _ = voice_model.synthesize("Hello from voice one.")
@@ -250,10 +297,13 @@ audio2, _ = voice_model.synthesize("Hello from voice two.")
 ### Change Language
 
 ```python
-from lib import AudioConfig
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel
 
 # Start with English
-voice_model = VoiceModel(language='a', voice='af_heart')
+voice_model = KokoroVoiceModel(language='a', voice='af_heart')
 
 # Change to Spanish
 voice_model.set_language('es')
@@ -262,6 +312,14 @@ voice_model.set_language('es')
 ### Save Multiple Segments
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel, AudioProcessor
+
+voice_model = KokoroVoiceModel()
+audio_processor = AudioProcessor()
+
 audio_generator = voice_model.generate("Long text here...")
 
 saved_files = audio_processor.save_segments(
@@ -273,11 +331,16 @@ saved_files = audio_processor.save_segments(
 
 ## 🔧 API Overview
 
-### VoiceModel
+### KokoroVoiceModel
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
+from lib import KokoroVoiceModel
+
 # Initialize
-model = VoiceModel(language='a', voice='am_adam')
+model = KokoroVoiceModel(language='a', voice='am_adam')
 
 # Generate streaming audio
 for graphemes, phonemes, audio in model.generate(text):
@@ -298,6 +361,11 @@ info = model.get_info()
 ### AudioProcessor
 
 ```python
+import sys
+sys.path.insert(0, 'src')
+
+from lib import AudioProcessor
+
 # Initialize
 processor = AudioProcessor(sample_rate=24000)
 

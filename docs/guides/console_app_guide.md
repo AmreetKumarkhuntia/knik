@@ -8,8 +8,10 @@ The Knik Console App is an interactive terminal application that allows you to c
 
 ```bash
 # From the project root
-cd src
-python main.py --mode console
+python src/main.py --mode console
+
+# Or simply (console is the default mode)
+python src/main.py
 ```
 
 ### First Time Setup
@@ -154,7 +156,10 @@ export KNIK_CONSOLE_MAX_HISTORY=50
 ### Programmatic Configuration
 
 ```python
-from src.apps.console import ConsoleApp, ConsoleConfig
+import sys
+sys.path.insert(0, 'src')
+
+from apps.console import ConsoleApp, ConsoleConfig
 
 # Create custom config
 config = ConsoleConfig(
@@ -209,17 +214,14 @@ python main.py --mode console
 ### Running Demos
 
 ```bash
-# Basic demo
-python demo/console/console_app_demo.py basic
-
-# Custom configuration demo
-python demo/console/console_app_demo.py custom
-
-# Text-only (no voice) demo
-python demo/console/console_app_demo.py novoice
-
-# Interactive menu
+# Interactive demo
 python demo/console/console_app_demo.py
+
+# Simple console demo
+python demo/console/simple_console_demo.py
+
+# Console processor demo
+python demo/console/console_processor_demo.py
 ```
 
 ### Logging
@@ -237,10 +239,11 @@ Logs appear in the same terminal but are clearly marked:
 ### Disabling Voice Output
 
 For text-only mode:
+
 ```bash
 # Via environment variable
 export KNIK_CONSOLE_ENABLE_VOICE=false
-python main.py --mode console
+python src/main.py --mode console
 
 # Or toggle during session
 You: /toggle-voice
@@ -273,10 +276,10 @@ export GOOGLE_CLOUD_PROJECT=your-project-id
 
 ### Issue: "Failed to import console app"
 
-**Solution**: Run from the correct directory
+**Solution**: Run from the project root
 ```bash
-cd src
-python main.py --mode console
+# Run from project root, not from src/
+python src/main.py --mode console
 ```
 
 ### Issue: Slow responses

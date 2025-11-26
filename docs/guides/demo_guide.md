@@ -14,18 +14,20 @@ cd /path/to/knik
 source .venv/bin/activate
 
 # Run any demo script
-python src/demo/<script_name>.py
+python demo/tts/<script_name>.py
+python demo/console/<script_name>.py
+python demo/ai/<script_name>.py
 ```
 
 ---
 
-## 1. Feature Showcase Demo (`demo.py`)
+## 1. TTS Feature Showcase Demo (`demo/tts/demo.py`)
 
-**Purpose**: Interactive demo showcasing all major features of the library.
+**Purpose**: Interactive demo showcasing all major TTS features of the library.
 
 **Run**:
 ```bash
-python src/demo/demo.py
+python demo/tts/demo.py
 ```
 
 **Features Demonstrated**:
@@ -103,13 +105,46 @@ python src/demo/test_segments.py
 
 ---
 
-## 3. Quick Segment Test (`quick_segment_test.py`)
+## 3. Console App Demo (`demo/console/console_app_demo.py`)
+
+**Purpose**: Demonstrates the interactive AI console application.
+
+**Run**:
+```bash
+python demo/console/console_app_demo.py
+```
+
+**Features Demonstrated**:
+- Interactive AI chat with voice responses
+- Command processing
+- Conversation history
+- Voice model integration
+
+---
+
+## 4. AI + TTS Integration (`demo/ai/simple_ai_tts.py`)
+
+**Purpose**: Shows basic AI query with voice response.
+
+**Run**:
+```bash
+python demo/ai/simple_ai_tts.py
+```
+
+**Features Demonstrated**:
+- Query AI model
+- Convert response to speech
+- Stream audio playback
+
+---
+
+## 5. Quick Segment Test (`demo/tts/quick_segment_test.py`)
 
 **Purpose**: Fast, simple test to see segmentation in action.
 
 **Run**:
 ```bash
-python src/demo/quick_segment_test.py
+python demo/tts/quick_segment_test.py
 ```
 
 **What It Does**:
@@ -135,13 +170,13 @@ python src/demo/quick_segment_test.py
 
 ---
 
-## 4. Multi-Segment Example (`main_multisegment.py`)
+## 6. Multi-Segment Example (`demo/tts/main_multisegment.py`)
 
-**Purpose**: Demonstrates the main.py pattern with multi-segment text.
+**Purpose**: Demonstrates multi-segment text generation.
 
 **Run**:
 ```bash
-python src/demo/main_multisegment.py
+python demo/tts/main_multisegment.py
 ```
 
 **What It Shows**:
