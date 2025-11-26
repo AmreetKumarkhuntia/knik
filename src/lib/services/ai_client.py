@@ -331,7 +331,5 @@ class AIClient:
 
 
 class MockAIClient(AIClient):
-    """Mock AI client for testing."""
-    
     def __init__(self):
         super().__init__(provider="mock", auto_fallback_to_mock=False)

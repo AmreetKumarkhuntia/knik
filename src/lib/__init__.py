@@ -13,11 +13,8 @@ from .utils import (
     Printer,
     PrinterConfig,
     LogLevel,
-    get_printer,
+    printer,
 )
-
-# Create a convenience module-level printer instance
-printer = get_printer()
 
 __all__ = [
     'Config',

@@ -7,9 +7,7 @@ from typing import Optional, List, Dict, Any, Callable
 from abc import ABC, abstractmethod
 import sys
 
-from .printer import get_printer
-
-printer = get_printer()
+from .printer import printer
 
 
 class BaseProcessor(ABC):

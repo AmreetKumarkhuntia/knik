@@ -19,7 +19,12 @@ from lib import (
     printer,
     Config
 )
-from .config import ConsoleConfig
+
+# Handle both direct execution and module import
+try:
+    from .config import ConsoleConfig
+except ImportError:
+    from config import ConsoleConfig
 
 
 class ConversationHistory:
@@ -367,3 +372,10 @@ Current Configuration:
     def handle_exit(self):
         printer.info("Shutting down console application...")
         printer.success("Thanks for using Knik Console! 👋")
+
+
+if __name__ == "__main__":
+    """Run the console app directly."""
+    config = ConsoleConfig()
+    app = ConsoleApp(config)
+    app.run()

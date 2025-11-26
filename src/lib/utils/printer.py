@@ -69,20 +69,11 @@ class Printer:
     """
     
     def __init__(self, config: Optional[PrinterConfig] = None):
-        """
-        Initialize printer with configuration.
-        
-        Args:
-            config: PrinterConfig instance. If None, uses default config.
-        """
         self.config = config or PrinterConfig()
         self._configure_logger()
     
     def _configure_logger(self):
-        """Configure loguru logger based on config."""
-        # Only add handler if logs should be shown
         if self.config.show_logs:
-            # Configure format with function name and line number
             format_str = "<green>{time:HH:mm:ss}</green> | <cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{level: <8}</level> | <level>{message}</level>"
             
             if not self.config.use_colors:
@@ -98,38 +89,30 @@ class Printer:
             )
     
     def debug(self, message: str):
-        """Print debug message (lowest priority)."""
-        logger.opt(depth=1).debug(message)
+        if self.config.show_logs:
+            logger.opt(depth=1).debug(message)
     
     def info(self, message: str):
-        """Print informational message."""
-        logger.opt(depth=1).info(message)
+        if self.config.show_logs:
+            logger.opt(depth=1).info(message)
     
     def success(self, message: str):
-        """Print success message."""
-        logger.opt(depth=1).success(message)
+        if self.config.show_logs:
+            logger.opt(depth=1).success(message)
     
     def warning(self, message: str):
-        """Print warning message."""
-        logger.opt(depth=1).warning(message)
+        if self.config.show_logs:
+            logger.opt(depth=1).warning(message)
     
     def error(self, message: str):
-        """Print error message."""
-        logger.opt(depth=1).error(message)
+        if self.config.show_logs:
+            logger.opt(depth=1).error(message)
     
     def critical(self, message: str):
-        """Print critical error message."""
-        logger.opt(depth=1).critical(message)
+        if self.config.show_logs:
+            logger.opt(depth=1).critical(message)
     
     def header(self, message: str, char: str = "=", width: int = 60):
-        """
-        Print a header with decorative borders.
-        
-        Args:
-            message: Header text
-            char: Character to use for border
-            width: Width of the border
-        """
         if not self.config.show_logs:
             return
         border = char * width
@@ -138,13 +121,11 @@ class Printer:
         print(border)
     
     def separator(self, char: str = "=", width: int = 60):
-        """Print a separator line."""
         if not self.config.show_logs:
             return
         print(char * width)
     
     def blank(self, count: int = 1):
-        """Print blank line(s)."""
         if not self.config.show_logs:
             return
         for _ in range(count):
@@ -179,101 +160,21 @@ class Printer:
         self._configure_logger()
     
     def set_log_level(self, level: str):
-        """Set the minimum log level to display."""
         self.configure(log_level=level)
     
     def set_silent(self):
-        """Disable all output."""
         self.configure(show_logs=False)
     
     def set_verbose(self):
-        """Enable verbose output (DEBUG level)."""
         self.configure(log_level="DEBUG")
     
     def get_config(self) -> PrinterConfig:
-        """Get current configuration."""
         return self.config
 
 
 # Global printer instance
 logger.remove()  # Remove default handler before creating printer
-_global_printer = Printer()
-
-
-# Convenience functions that use the global printer
-def debug(message: str):
-    """Print debug message using global printer."""
-    logger.opt(depth=1).debug(message)
-
-
-def info(message: str):
-    """Print info message using global printer."""
-    logger.opt(depth=1).info(message)
-
-
-def success(message: str):
-    """Print success message using global printer."""
-    logger.opt(depth=1).success(message)
-
-
-def warning(message: str):
-    """Print warning message using global printer."""
-    logger.opt(depth=1).warning(message)
-
-
-def error(message: str):
-    """Print error message using global printer."""
-    logger.opt(depth=1).error(message)
-
-
-def critical(message: str):
-    """Print critical error message using global printer."""
-    logger.opt(depth=1).critical(message)
-
-
-def header(message: str, char: str = "=", width: int = 60):
-    """Print header using global printer."""
-    _global_printer.header(message, char, width)
-
-
-def separator(char: str = "=", width: int = 60):
-    """Print separator using global printer."""
-    _global_printer.separator(char, width)
-
-
-def blank(count: int = 1):
-    """Print blank line(s) using global printer."""
-    _global_printer.blank(count)
-
-
-def configure(**kwargs):
-    """Configure global printer."""
-    _global_printer.configure(**kwargs)
-
-
-def set_log_level(level: str):
-    """Set log level for global printer."""
-    _global_printer.set_log_level(level)
-
-
-def set_silent():
-    """Disable all output for global printer."""
-    _global_printer.set_silent()
-
-
-def set_verbose():
-    """Enable verbose output for global printer."""
-    _global_printer.set_verbose()
-
-
-def get_printer() -> Printer:
-    """Get the global printer instance."""
-    return _global_printer
-
-
-def get_config() -> PrinterConfig:
-    """Get global printer configuration."""
-    return _global_printer.get_config()
+printer = Printer()
 
 
 # Export everything
@@ -281,19 +182,5 @@ __all__ = [
     'Printer',
     'PrinterConfig',
     'LogLevel',
-    'debug',
-    'info',
-    'success',
-    'warning',
-    'error',
-    'critical',
-    'header',
-    'separator',
-    'blank',
-    'configure',
-    'set_log_level',
-    'set_silent',
-    'set_verbose',
-    'get_printer',
-    'get_config',
+    'printer',
 ]

@@ -51,8 +51,8 @@ class Config:
     DEFAULT_AI_TEMPERATURE: float = 0.7
     
     # Logging defaults (can be overridden by env vars)
-    DEFAULT_LOG_LEVEL: str = 'INFO'
-    DEFAULT_SHOW_LOGS: bool = True
+    DEFAULT_LOG_LEVEL: str = 'ERROR'
+    DEFAULT_SHOW_LOGS: bool = False
     DEFAULT_USE_COLORS: bool = True
     
     AI_MODELS = {

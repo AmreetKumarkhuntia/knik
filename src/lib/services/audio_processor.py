@@ -9,9 +9,7 @@ import soundfile as sf
 from pathlib import Path
 
 from ..core.config import Config
-from ..utils.printer import get_printer
-
-printer = get_printer()
+from ..utils.printer import printer
 
 
 class AudioProcessor:
