@@ -219,6 +219,55 @@ Current Configuration:
             printer.error(f"Error querying AI: {e}")
             return f"Sorry, I encountered an error: {e}"
     
+    def process_user_input_stream(self, user_input: str):
+        """
+        Process user input with streaming response.
+        Yields both text chunks for display and complete response.
+        Returns a generator that yields (chunk, is_final) tuples.
+        """
+        if user_input.startswith(self.config.command_prefix):
+            result = self.console_processor.process_inline(user_input)
+            yield (result, True)
+            return
+        
+        try:
+            printer.info("🤔 Thinking...")
+            
+            context = self.history.get_context(last_n=3)
+            max_tokens = self.config.max_tokens
+            temperature = self.config.temperature
+            system_instructions = self.config.system_instructions
+
+            if context:
+                full_prompt = f"Previous conversation:\n{context}\n\nCurrent question: {user_input}"
+            else:
+                full_prompt = user_input
+            
+            # Stream the response
+            response_stream = self.ai_client.query_stream(
+                full_prompt, max_tokens, temperature, system_instructions
+            )
+            
+            # Accumulate full response for history
+            full_response = []
+            
+            # Process chunks as they arrive
+            for chunk in response_stream:
+                full_response.append(chunk)
+                yield (chunk, False)
+            
+            # Save to history
+            complete_response = "".join(full_response)
+            self.history.add_entry(user_input, complete_response)
+            
+            # Signal completion
+            yield ("", True)
+            
+        except Exception as e:
+            printer.error(f"Error querying AI: {e}")
+            error_msg = f"Sorry, I encountered an error: {e}"
+            yield (error_msg, True)
+    
     def play_voice_response(self, text: str):
         if not self.config.enable_voice_output:
             return
@@ -231,6 +280,42 @@ Current Configuration:
             printer.success("Voice playback complete")
         except Exception as e:
             printer.error(f"Voice playback error: {e}")
+    
+    def stream_response_with_voice(self, user_input: str):
+        """
+        Stream response with real-time text display and TTS generation.
+        Displays text as it arrives and generates audio chunk by chunk.
+        """
+        print(f"\n{self.config.assistant_symbol}", end="", flush=True)
+        
+        chunk_count = 0
+        for chunk, is_final in self.process_user_input_stream(user_input):
+            if is_final:
+                break
+            
+            # Display text immediately
+            print(chunk, end="", flush=True)
+            chunk_count += 1
+            
+            # Generate and play audio for this chunk
+            if self.config.enable_voice_output and chunk.strip():
+                try:
+                    if chunk_count == 1:
+                        printer.info("🎙️ Starting voice generation...")
+                    
+                    audio, sample_rate = self.voice_model.synthesize(chunk)
+                    # Play in blocking mode so audio stays in sync with text
+                    self.audio_processor.play(audio, blocking=True)
+                    
+                except Exception as e:
+                    printer.error(f"Voice generation error for chunk: {e}")
+        
+        print()  # New line after complete response
+        
+        if self.config.enable_voice_output:
+            printer.success(f"Streaming complete! ({chunk_count} chunks processed)")
+        else:
+            printer.success(f"Response complete ({chunk_count} chunks)")
     
     def run(self):
         if not self.initialize():
@@ -256,14 +341,14 @@ Current Configuration:
                     
                     printer.info(f"User query: {user_input}")
                     
-                    response = self.process_user_input(user_input)
-                    
-                    if response:
-                        print(f"\n{self.config.assistant_symbol}{response}")
-                        printer.success(f"AI response generated ({len(response)} chars)")
-                        
-                        if self.config.enable_voice_output and not user_input.startswith(self.config.command_prefix):
-                            self.play_voice_response(response)
+                    # Check if it's a command (commands don't use streaming)
+                    if user_input.startswith(self.config.command_prefix):
+                        response = self.process_user_input(user_input)
+                        if response:
+                            print(f"\n{self.config.assistant_symbol}{response}")
+                    else:
+                        # Use streaming for AI responses
+                        self.stream_response_with_voice(user_input)
                 
                 except KeyboardInterrupt:
                     print("\n")

@@ -8,6 +8,7 @@
   "main": "index.js",
   "scripts": {
     "source:venv": ". .venv/bin/activate && exec $SHELL",
+    "start:console": "python src/main.py --mode console",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

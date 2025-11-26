@@ -5,7 +5,8 @@ Currently supports: Vertex AI (Google Gemini), Mock AI for testing.
 
 import os
 import warnings
-from typing import Optional, List, Dict, Any
+import time
+from typing import Optional, List, Dict, Any, Generator
 from abc import ABC, abstractmethod
 from ..utils import printer
 
@@ -26,6 +27,11 @@ class BaseAIProvider(ABC):
     
     @abstractmethod
     def query(self, prompt: str, **kwargs) -> str:
+        pass
+    
+    @abstractmethod
+    def query_stream(self, prompt: str, **kwargs) -> Generator[str, None, None]:
+        """Stream response chunks as they arrive."""
         pass
     
     @abstractmethod
@@ -116,6 +122,57 @@ class VertexAIProvider(BaseAIProvider):
         except Exception as e:
             raise RuntimeError(f"Vertex AI query failed: {e}") from e
     
+    def query_stream(
+        self, 
+        prompt: str,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        system_instruction: Optional[str] = None,
+        context: Optional[List[Dict[str, str]]] = None
+    ) -> Generator[str, None, None]:
+        self._initialize()
+        
+        try:
+            config = GenerationConfig(
+                max_output_tokens=max_tokens,
+                temperature=temperature,
+            )
+            
+            model = self._model
+
+            if system_instruction:
+                model = GenerativeModel(
+                    self.model_name,
+                    system_instruction=system_instruction
+                )
+
+            if model is None:
+                raise RuntimeError(f"Model is not present for querying")
+
+            if context:
+                chat = model.start_chat()
+                for msg in context:
+                    if msg.get("role") == "user":
+                        chat.send_message(msg.get("text", ""))
+                response_stream = chat.send_message(
+                    prompt, 
+                    generation_config=config,
+                    stream=True
+                )
+            else:
+                response_stream = model.generate_content(
+                    prompt, 
+                    generation_config=config,
+                    stream=True
+                )
+            
+            for chunk in response_stream:
+                if chunk.text:
+                    yield chunk.text
+            
+        except Exception as e:
+            raise RuntimeError(f"Vertex AI streaming query failed: {e}") from e
+    
     def is_configured(self) -> bool:
         return self.project_id is not None
     
@@ -147,6 +204,20 @@ class MockAIProvider(BaseAIProvider):
         printer.debug(f"[MOCK] Query: {prompt[:60]}...")
         printer.debug(f"[MOCK] Response: {response}")
         return response
+    
+    def query_stream(self, prompt: str, **kwargs) -> Generator[str, None, None]:
+        """Stream mock response word by word to simulate streaming."""
+        response = self._responses[self._index % len(self._responses)]
+        self._index += 1
+        printer.debug(f"[MOCK] Streaming Query: {prompt[:60]}...")
+        
+        # Split by words and yield them to simulate streaming
+        words = response.split()
+        for word in words:
+            time.sleep(0.05)  # Simulate network delay
+            yield word + " "
+        
+        printer.debug(f"[MOCK] Streaming complete")
     
     def is_configured(self) -> bool:
         return True
@@ -224,6 +295,27 @@ class AIClient:
             error_msg = f"AI query error: {e}"
             printer.error(error_msg)
             return error_msg
+    
+    def query_stream(
+        self, 
+        prompt: str,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        system_instruction: Optional[str] = None,
+        context: Optional[List[Dict[str, str]]] = None
+    ) -> Generator[str, None, None]:
+        try:
+            yield from self._provider.query_stream(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system_instruction=system_instruction,
+                context=context
+            )
+        except Exception as e:
+            error_msg = f"AI streaming query error: {e}"
+            printer.error(error_msg)
+            yield error_msg
     
     def is_configured(self) -> bool:
         return self._provider.is_configured()
