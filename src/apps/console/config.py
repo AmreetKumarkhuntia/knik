@@ -3,6 +3,7 @@ Console Application Configuration
 Settings and defaults for the console app.
 """
 
+import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -11,33 +12,31 @@ from typing import Optional
 class ConsoleConfig:
     """Configuration for Console Application."""
     
-    ai_provider: str = "langchain_vertex"
-    ai_model: str = "gemini-2.5-flash"
-    ai_project_id: Optional[str] = "breeze-uat-453414"
-    ai_location: str = "asia-south1"
+    ai_provider: str = os.getenv("KNIK_AI_PROVIDER", "langchain_vertex")
+    ai_model: str = os.getenv("KNIK_AI_MODEL", "gemini-2.5-flash")
+    ai_project_id: Optional[str] = os.getenv("KNIK_AI_PROJECT_ID", "breeze-uat-453414")
+    ai_location: str = os.getenv("KNIK_AI_LOCATION", "asia-south1")
     
     voice_language: str = "a"
-    voice_name: str = "af_sarah"
+    voice_name: str = os.getenv("KNIK_VOICE_NAME", "af_sarah")
     sample_rate: int = 24000
 
     command_prefix: str = "/"
     max_history_size: int = 50
     show_timestamps: bool = False
-    enable_voice_output: bool = True
+    enable_voice_output: bool = os.getenv("KNIK_VOICE_OUTPUT", "True").lower() == "true"
     
     welcome_message: str = "🤖 Knik Console - Your AI Assistant with Voice"
     prompt_symbol: str = "You: "
     assistant_symbol: str = "AI: "
     
-    log_to_file: bool = False
-    log_file_path: str = "console_app.log"
     debug_mode: bool = False
     
     max_tokens: int = 25565
     temperature: float = 0.7
 
     loop_check_timeout: int = 500.0
-    loop_check_interval: int = 6.0
+    loop_check_interval: int = 3.0
 
     system_instructions: str = """
         You are a helpful and reliable voice assistant.

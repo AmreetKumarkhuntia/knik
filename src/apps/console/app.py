@@ -159,8 +159,8 @@ Just type your question to chat with AI!
         for i, entry in enumerate(entries, 1):
             timestamp = entry['timestamp'].strftime("%H:%M:%S")
             history_lines.append(f"\n[{i}] {timestamp}")
-            history_lines.append(f"  You: {entry['user']}")
-            history_lines.append(f"  AI:  {entry['assistant'][:100]}...")
+            # history_lines.append(f"  You: {entry['user']}")
+            # history_lines.append(f"  AI:  {entry['assistant'][:100]}...")
         
         return "\n".join(history_lines)
     
@@ -252,7 +252,7 @@ Just type your question to chat with AI!
         if user_input.startswith(self.config.command_prefix):
             response = self.console_processor.process_inline(user_input)
             if response:
-                print(f"\n{self.config.assistant_symbol}{response}")
+                print(f"{self.config.assistant_symbol}{response}\n")
             return
         
         print(f"\n{self.config.assistant_symbol}", end="", flush=True)
@@ -260,9 +260,11 @@ Just type your question to chat with AI!
         chunk_count = 0
         first_chunk = True
         
+        full_ai_response = []
         try:
             for chunk in self._stream_response(user_input):
                 print(chunk, end="", flush=True)
+                full_ai_response.append(chunk)
                 chunk_count += 1
                 
                 if first_chunk and self.config.enable_voice_output:
@@ -271,7 +273,11 @@ Just type your question to chat with AI!
                 
                 self._enqueue_voice(chunk)
             
-            print()
+            print("\n")
+            
+            if full_ai_response:
+                full_response_text = ''.join(full_ai_response)
+                printer.info(f"AI response: {full_response_text}")
             
             status = f"Streaming complete! ({chunk_count} chunks)"
             printer.success(status)
@@ -306,7 +312,8 @@ Just type your question to chat with AI!
         try:
             while self.running:
                 try:
-                    user_input = input(f"\n{self.config.prompt_symbol}").strip()
+                    print(f"{self.config.prompt_symbol}", end="", flush=True)
+                    user_input = input().strip()
                     
                     if not user_input:
                         continue

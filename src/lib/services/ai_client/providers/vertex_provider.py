@@ -13,7 +13,6 @@ try:
 except ImportError:
     LANGCHAIN_VERTEX_AVAILABLE = False
 
-
 class VertexAIProvider(LangChainProvider):
     
     @classmethod

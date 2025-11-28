@@ -8,7 +8,9 @@
   "main": "index.js",
   "scripts": {
     "source:venv": ". .venv/bin/activate && exec $SHELL",
-    "start:console": "python src/main.py --mode console",
+    "start:console": "source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode console",
+    "start:console:split": "./scripts/start_console_split.sh",
+    "start:console:dual": "./scripts/start_console_dual.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

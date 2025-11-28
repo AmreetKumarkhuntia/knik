@@ -1,11 +1,9 @@
-"""LangChain-based AI Provider"""
-
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, Optional, TYPE_CHECKING
 
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
-from pydantic import create_model
+from pydantic import Field, create_model
 
 from ....utils import printer
 
@@ -14,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class BaseAIProvider(ABC):
-    """Abstract base class for AI providers"""
     
     @classmethod
     def get_provider_name(cls) -> str:
@@ -38,13 +35,11 @@ class BaseAIProvider(ABC):
 
 
 class LangChainProvider(BaseAIProvider):
-    """LangChain-based provider for universal LLM support"""
     
     def __init__(self, llm, provider_name: str, **config):
         self.llm = llm
         self._provider_name = provider_name
         self.config = config
-        printer.info(f"Initialized LangChain provider: {provider_name}")
     
     def _extract_text_from_content(self, content) -> str:
         if isinstance(content, str):
@@ -65,84 +60,88 @@ class LangChainProvider(BaseAIProvider):
     def get_provider_name(cls) -> str:
         return "langchain"
     
+    def _create_tool_wrappers(self, mcp_registry: 'MCPServerRegistry') -> list:
+        tools = []
+        type_mapping = {"string": str, "integer": int, "number": float, "boolean": bool}
+        
+        for schema in mcp_registry.get_tools():
+            func_def = schema.get("function", schema)
+            tool_name = func_def.get("name")
+            description = func_def.get("description", "")
+            params = func_def.get("parameters", {})
+            
+            if not tool_name:
+                continue
+            
+            impl = mcp_registry._implementations.get(tool_name)
+            if not impl:
+                continue
+            
+            fields = {}
+            for name, prop in params.get("properties", {}).items():
+                prop_type = prop.get("type", "string")
+                if prop_type not in type_mapping:
+                    continue
+                
+                py_type = type_mapping.get(prop_type, str)
+                is_required = name in params.get("required", [])
+                
+                fields[name] = (
+                    py_type if is_required else Optional[py_type],
+                    Field(description=prop.get("description", ""), default=None if not is_required else ...)
+                )
+            
+            if not fields:
+                continue
+            
+            ArgsModel = create_model(f"{tool_name}Args", **fields)
+            
+            tools.append(StructuredTool(
+                name=tool_name,
+                description=description or f"Execute {tool_name}",
+                func=impl,
+                args_schema=ArgsModel
+            ))
+        
+        return tools
+    
+    def _get_llm_with_tools(self, mcp_registry: 'MCPServerRegistry'):
+        tools = self._create_tool_wrappers(mcp_registry)
+        return self.llm.bind_tools(tools)
+    
     def query(self, prompt: str, use_tools: bool = False, mcp_registry: 'MCPServerRegistry' = None, system_instruction: Optional[str] = None, **kwargs) -> str:
-        messages = []
-        if system_instruction:
-            messages.append(SystemMessage(content=system_instruction))
+        messages = [SystemMessage(content=system_instruction)] if system_instruction else []
         messages.append(HumanMessage(content=prompt))
         
-        if use_tools and mcp_registry:
-            tools = self._convert_mcp_to_langchain_tools(mcp_registry)
-            printer.info(f"Using {len(tools)} tools")
-            llm_with_tools = self.llm.bind_tools(tools)
-            
-            response = llm_with_tools.invoke(messages, **kwargs)
-            messages.append(response)
-            
-            if hasattr(response, 'tool_calls') and response.tool_calls:
-                for tool_call in response.tool_calls:
-                    tool_name = tool_call['name']
-                    tool_args = tool_call['args']
-                    
-                    try:
-                        printer.info(f"🔧 Calling tool: {tool_name}")
-                        result = mcp_registry.execute_tool(tool_name, **tool_args)
-                        messages.append(ToolMessage(
-                            content=str(result),
-                            tool_call_id=tool_call['id']
-                        ))
-                    except Exception as e:
-                        printer.error(f"Tool execution error: {e}")
-                        messages.append(ToolMessage(
-                            content=f"Error: {str(e)}",
-                            tool_call_id=tool_call['id']
-                        ))
-                
-                response = llm_with_tools.invoke(messages, **kwargs)
-        else:
-            response = self.llm.invoke(messages, **kwargs)
+        llm = self._get_llm_with_tools(mcp_registry) if (use_tools and mcp_registry) else self.llm
+        response = llm.invoke(messages, **kwargs)
         
         return self._extract_text_from_content(response.content) if response.content else ""
     
     def query_stream(self, prompt: str, use_tools: bool = False, mcp_registry: 'MCPServerRegistry' = None, system_instruction: Optional[str] = None, **kwargs) -> Generator[str, None, None]:
-        messages = []
-        if system_instruction:
-            messages.append(SystemMessage(content=system_instruction))
+        messages = [SystemMessage(content=system_instruction)] if system_instruction else []
         messages.append(HumanMessage(content=prompt))
         
         if use_tools and mcp_registry:
-            tools = self._convert_mcp_to_langchain_tools(mcp_registry)
-            printer.info(f"Streaming with {len(tools)} tools")
-            llm_with_tools = self.llm.bind_tools(tools)
-            
-            response = llm_with_tools.invoke(messages, **kwargs)
+            llm = self._get_llm_with_tools(mcp_registry)
+            response = llm.invoke(messages, **kwargs)
             messages.append(response)
             
             if hasattr(response, 'tool_calls') and response.tool_calls:
                 for tool_call in response.tool_calls:
                     tool_name = tool_call['name']
-                    tool_args = tool_call['args']
-                    
+                    printer.info(f"🔧 {tool_name}")
                     try:
-                        printer.info(f"🔧 Calling tool: {tool_name}")
-                        result = mcp_registry.execute_tool(tool_name, **tool_args)
-                        messages.append(ToolMessage(
-                            content=str(result),
-                            tool_call_id=tool_call['id']
-                        ))
+                        result = mcp_registry.execute_tool(tool_name, **tool_call['args'])
+                        messages.append(ToolMessage(content=str(result), tool_call_id=tool_call['id']))
                     except Exception as e:
-                        printer.error(f"Tool execution error: {e}")
-                        messages.append(ToolMessage(
-                            content=f"Error: {str(e)}",
-                            tool_call_id=tool_call['id']
-                        ))
+                        messages.append(ToolMessage(content=f"Error: {str(e)}", tool_call_id=tool_call['id']))
                 
-                for chunk in llm_with_tools.stream(messages, **kwargs):
+                for chunk in llm.stream(messages, **kwargs):
                     if chunk.content:
                         yield self._extract_text_from_content(chunk.content)
-            else:
-                if response.content:
-                    yield self._extract_text_from_content(response.content)
+            elif response.content:
+                yield self._extract_text_from_content(response.content)
         else:
             for chunk in self.llm.stream(messages, **kwargs):
                 if chunk.content:
@@ -160,47 +159,3 @@ class LangChainProvider(BaseAIProvider):
             "supports_streaming": True,
             **self.config
         }
-    
-    def _convert_mcp_to_langchain_tools(self, mcp_registry: 'MCPServerRegistry') -> list:
-        tools = []
-        type_mapping = {"string": str, "integer": int, "number": float, "boolean": bool}
-        
-        for schema in mcp_registry.get_tools():
-            if "function" in schema:
-                func = schema.get("function", {})
-                tool_name = func.get("name")
-                description = func.get("description", "")
-                params = func.get("parameters", {})
-            else:
-                tool_name = schema.get("name")
-                description = schema.get("description", "")
-                params = schema.get("parameters", {})
-            
-            if not tool_name:
-                continue
-            
-            impl = mcp_registry._implementations.get(tool_name)
-            if not impl:
-                printer.warning(f"No implementation: {tool_name}")
-                continue
-            
-            props = params.get("properties", {})
-            required = params.get("required", [])
-            
-            fields = {}
-            for name, prop in props.items():
-                py_type = type_mapping.get(prop.get("type", "string"), str)
-                if name not in required:
-                    py_type = Optional[py_type]
-                fields[name] = (py_type, ...)
-            
-            ArgsModel = create_model(f"{tool_name}Args", **fields)
-            
-            tools.append(StructuredTool(
-                name=tool_name,
-                description=description,
-                func=impl,
-                args_schema=ArgsModel
-            ))
-        
-        return tools

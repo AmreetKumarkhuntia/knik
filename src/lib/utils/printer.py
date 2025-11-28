@@ -79,8 +79,9 @@ class Printer:
             if not self.config.use_colors:
                 format_str = "{time:HH:mm:ss} | {function}:{line} | {level: <8} | {message}"
             
+            # Always use stderr for logs to keep stdout clean for conversation
             self._handler_id = logger.add(
-                sys.stdout,
+                sys.stderr,
                 format=format_str,
                 level=self.config.log_level,
                 colorize=self.config.use_colors,
@@ -147,6 +148,13 @@ class Printer:
             use_colors: Whether to use colors
             show_timestamps: Whether to show timestamps
         """
+        # Remove existing handler before reconfiguring
+        if hasattr(self, '_handler_id'):
+            try:
+                logger.remove(self._handler_id)
+            except ValueError:
+                pass  # Handler already removed
+        
         if log_level is not None:
             self.config.log_level = log_level
         if show_logs is not None:
