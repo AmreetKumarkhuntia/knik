@@ -40,6 +40,7 @@ class Config:
     }
     
     # TTS defaults (can be overridden by env vars)
+    DEFAULT_TTS: str = 'kokoro'
     DEFAULT_LANGUAGE: str = 'a'
     DEFAULT_VOICE: str = 'af_heart'
     DEFAULT_MODEL: str = 'hexgrad/Kokoro-82M'

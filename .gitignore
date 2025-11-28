@@ -1,3 +1,5 @@
 .venv
 __pycache__
 node_modules
+.vscode
+async_tts_output

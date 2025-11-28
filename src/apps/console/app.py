@@ -4,6 +4,7 @@ Main application logic for the interactive console.
 """
 
 import sys
+import time
 import os
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -13,14 +14,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 from lib import (
     AIClient,
     MockAIClient,
-    KokoroVoiceModel,
-    AudioProcessor,
     ConsoleProcessor,
     printer,
-    Config
+    TTSAsyncProcessor,
 )
 
-# Handle both direct execution and module import
 try:
     from .config import ConsoleConfig
 except ImportError:
@@ -70,44 +68,19 @@ class ConsoleApp:
     def __init__(self, config: Optional[ConsoleConfig] = None):
         self.config = config or ConsoleConfig()
         self.ai_client: Optional[AIClient] = None
-        self.voice_model: Optional[KokoroVoiceModel] = None
-        self.audio_processor: Optional[AudioProcessor] = None
+        self.tts_processor: Optional[TTSAsyncProcessor] = None
         self.console_processor: Optional[ConsoleProcessor] = None
         self.history = ConversationHistory(max_size=self.config.max_history_size)
         self.running = False
     
     def initialize(self) -> bool:
+        """Initialize all application components."""
         try:
             printer.info("Initializing console application...")
             
-            if self.config.ai_provider == "vertex":
-                self.ai_client = AIClient(
-                    provider="vertex",
-                    project_id=self.config.ai_project_id,
-                    location=self.config.ai_location,
-                    model_name=self.config.ai_model
-                )
-            else:
-                self.ai_client = MockAIClient()
-            
-            if not self.ai_client.is_configured():
-                printer.error("AI client is not properly configured!")
-                printer.warning("For Vertex AI, set GOOGLE_CLOUD_PROJECT environment variable")
-                printer.info("Falling back to Mock AI for demo purposes...")
-                self.ai_client = MockAIClient()
-            
-            self.voice_model = KokoroVoiceModel(
-                language=self.config.voice_language,
-                voice=self.config.voice_name
-            )
-            
-            self.audio_processor = AudioProcessor()
-            
-            self.console_processor = ConsoleProcessor(
-                command_prefix=self.config.command_prefix
-            )
-            
-            self._register_commands()
+            self._initialize_ai_client()
+            self._initialize_tts_processor()
+            self._initialize_console_processor()
             
             printer.success("✓ All components initialized successfully")
             return True
@@ -115,6 +88,38 @@ class ConsoleApp:
         except Exception as e:
             printer.error(f"Failed to initialize: {e}")
             return False
+    
+    def _initialize_ai_client(self):
+        """Initialize AI client with fallback to Mock."""
+        if self.config.ai_provider == "vertex":
+            self.ai_client = AIClient(
+                provider="vertex",
+                project_id=self.config.ai_project_id,
+                location=self.config.ai_location,
+                model_name=self.config.ai_model
+            )
+        else:
+            self.ai_client = MockAIClient()
+        
+        if not self.ai_client.is_configured():
+            printer.warning("AI client not configured, falling back to Mock AI")
+            self.ai_client = MockAIClient()
+    
+    def _initialize_tts_processor(self):
+        """Initialize TTS processor for voice output."""
+        self.tts_processor = TTSAsyncProcessor(
+            sample_rate=self.config.sample_rate,
+            voice_model=self.config.voice_name,
+            play_voice=self.config.enable_voice_output,
+        )
+        self.tts_processor.start_async_processing()
+    
+    def _initialize_console_processor(self):
+        """Initialize console command processor."""
+        self.console_processor = ConsoleProcessor(
+            command_prefix=self.config.command_prefix
+        )
+        self._register_commands()
     
     def _register_commands(self):
         self.console_processor.register_command("exit", self._cmd_exit)
@@ -127,12 +132,10 @@ class ConsoleApp:
         self.console_processor.register_command("toggle-voice", self._cmd_toggle_voice)
     
     def _cmd_exit(self, args: str) -> str:
-        """Exit command handler."""
         self.running = False
         return "Goodbye! 👋"
     
     def _cmd_help(self, args: str) -> str:
-        """Help command handler."""
         help_text = f"""
 Available Commands:
   {self.config.command_prefix}help          - Show this help message
@@ -170,170 +173,124 @@ Just type your question to chat with AI!
             return f"Current voice: {self.config.voice_name}\nUsage: {self.config.command_prefix}voice <name>"
         
         try:
-            self.voice_model = KokoroVoiceModel(
-                language=self.config.voice_language,
-                voice=args.strip()
-            )
-            self.config.voice_name = args.strip()
+            if self.tts_processor:
+                self.tts_processor.set_voice(args.strip())
+                self.config.voice_name = args.strip()
             return f"Voice changed to: {args.strip()} 🎙️"
         except Exception as e:
             return f"Failed to change voice: {e}"
     
     def _cmd_info(self, args: str) -> str:
         ai_info = self.ai_client.get_info()
-        voice_info = self.voice_model.get_info()
+        voice_status = 'Enabled' if self.config.enable_voice_output else 'Disabled'
         
-        info_text = f"""
-Current Configuration:
-  AI Provider:    {ai_info.get('provider', 'Unknown')}
-  AI Model:       {ai_info.get('model', 'Unknown')}
-  Voice:          {voice_info.get('voice', 'Unknown')}
-  Voice Output:   {'Enabled' if self.config.enable_voice_output else 'Disabled'}
-  History Size:   {len(self.history.entries)}/{self.config.max_history_size}
-"""
-        return info_text.strip()
+        return f"""Current Configuration:
+            AI Provider:    {ai_info.get('provider', 'Unknown')}
+            AI Model:       {ai_info.get('model', 'Unknown')}
+            Voice:          {self.config.voice_name}
+            Voice Output:   {voice_status}
+            History Size:   {len(self.history.entries)}/{self.config.max_history_size}"""
     
     def _cmd_toggle_voice(self, args: str) -> str:
         self.config.enable_voice_output = not self.config.enable_voice_output
         status = "enabled" if self.config.enable_voice_output else "disabled"
         return f"Voice output {status} 🔊"
     
-    def process_user_input(self, user_input: str) -> Optional[str]:
-        if user_input.startswith(self.config.command_prefix):
-            return self.console_processor.process_inline(user_input)
-        
-        try:
-            printer.info("🤔 Thinking...")
-            
-            context = self.history.get_context(last_n=3)
-            max_tokens = self.config.max_tokens
-            temperature = self.config.temperature
-            system_instructions = self.config.system_instructions
-
-            if context:
-                full_prompt = f"Previous conversation:\n{context}\n\nCurrent question: {user_input}"
-            else:
-                full_prompt = user_input
-            
-            response = self.ai_client.query(full_prompt, max_tokens, temperature, system_instructions)
-            self.history.add_entry(user_input, response)
-            
-            return response
-            
-        except Exception as e:
-            printer.error(f"Error querying AI: {e}")
-            return f"Sorry, I encountered an error: {e}"
+    def _build_prompt(self, user_input: str) -> str:
+        context = self.history.get_context(last_n=3)
+        if context:
+            return f"Previous conversation:\n{context}\n\nCurrent question: {user_input}"
+        return user_input
     
-    def process_user_input_stream(self, user_input: str):
-        """
-        Process user input with streaming response.
-        Yields both text chunks for display and complete response.
-        Returns a generator that yields (chunk, is_final) tuples.
-        """
+    def _stream_response(self, user_input: str):
+        printer.info("🤔 Thinking...")
+        
+        full_prompt = self._build_prompt(user_input)
+        response_stream = self.ai_client.query_stream(
+            full_prompt, 
+            self.config.max_tokens, 
+            self.config.temperature, 
+            self.config.system_instructions
+        )
+        
+        full_response = []
+        for chunk in response_stream:
+            full_response.append(chunk)
+            yield chunk
+        
+        self.history.add_entry(user_input, "".join(full_response))
+    
+    def _enqueue_voice(self, text: str):
+        if self.config.enable_voice_output and self.tts_processor and text.strip():
+            try:
+                self.tts_processor.play_async(text)
+            except Exception as e:
+                printer.error(f"Voice generation error: {e}")
+    
+    def wait_until(self, condition_fn, timeout: Optional[float] = None, check_interval: float = 2) -> bool:
+        start_time = time.time()
+        
+        while not condition_fn():
+            if timeout is not None and (time.time() - start_time) >= timeout:
+                printer.warning("timing out of wait ...")
+                return False
+            time.sleep(check_interval)
+        
+        return True
+    
+    def _handle_user_input(self, user_input: str):
         if user_input.startswith(self.config.command_prefix):
-            result = self.console_processor.process_inline(user_input)
-            yield (result, True)
+            response = self.console_processor.process_inline(user_input)
+            if response:
+                print(f"\n{self.config.assistant_symbol}{response}")
             return
         
-        try:
-            printer.info("🤔 Thinking...")
-            
-            context = self.history.get_context(last_n=3)
-            max_tokens = self.config.max_tokens
-            temperature = self.config.temperature
-            system_instructions = self.config.system_instructions
-
-            if context:
-                full_prompt = f"Previous conversation:\n{context}\n\nCurrent question: {user_input}"
-            else:
-                full_prompt = user_input
-            
-            # Stream the response
-            response_stream = self.ai_client.query_stream(
-                full_prompt, max_tokens, temperature, system_instructions
-            )
-            
-            # Accumulate full response for history
-            full_response = []
-            
-            # Process chunks as they arrive
-            for chunk in response_stream:
-                full_response.append(chunk)
-                yield (chunk, False)
-            
-            # Save to history
-            complete_response = "".join(full_response)
-            self.history.add_entry(user_input, complete_response)
-            
-            # Signal completion
-            yield ("", True)
-            
-        except Exception as e:
-            printer.error(f"Error querying AI: {e}")
-            error_msg = f"Sorry, I encountered an error: {e}"
-            yield (error_msg, True)
-    
-    def play_voice_response(self, text: str):
-        if not self.config.enable_voice_output:
-            return
-        
-        try:
-            printer.info("🎙️ Generating voice...")
-            # Use synthesize() instead of generate() to avoid pauses between paragraphs
-            audio, sample_rate = self.voice_model.synthesize(text)
-            self.audio_processor.play(audio, blocking=True)
-            printer.success("Voice playback complete")
-        except Exception as e:
-            printer.error(f"Voice playback error: {e}")
-    
-    def stream_response_with_voice(self, user_input: str):
-        """
-        Stream response with real-time text display and TTS generation.
-        Displays text as it arrives and generates audio chunk by chunk.
-        """
         print(f"\n{self.config.assistant_symbol}", end="", flush=True)
         
         chunk_count = 0
-        for chunk, is_final in self.process_user_input_stream(user_input):
-            if is_final:
-                break
-            
-            # Display text immediately
-            print(chunk, end="", flush=True)
-            chunk_count += 1
-            
-            # Generate and play audio for this chunk
-            if self.config.enable_voice_output and chunk.strip():
-                try:
-                    if chunk_count == 1:
-                        printer.info("🎙️ Starting voice generation...")
-                    
-                    audio, sample_rate = self.voice_model.synthesize(chunk)
-                    # Play in blocking mode so audio stays in sync with text
-                    self.audio_processor.play(audio, blocking=True)
-                    
-                except Exception as e:
-                    printer.error(f"Voice generation error for chunk: {e}")
+        first_chunk = True
         
-        print()  # New line after complete response
-        
-        if self.config.enable_voice_output:
-            printer.success(f"Streaming complete! ({chunk_count} chunks processed)")
-        else:
-            printer.success(f"Response complete ({chunk_count} chunks)")
+        try:
+            for chunk in self._stream_response(user_input):
+                print(chunk, end="", flush=True)
+                chunk_count += 1
+                
+                if first_chunk and self.config.enable_voice_output:
+                    printer.info("🎙️ Starting voice generation...")
+                    first_chunk = False
+                
+                self._enqueue_voice(chunk)
+            
+            print()
+            
+            status = f"Streaming complete! ({chunk_count} chunks)"
+            printer.success(status)
+            
+            if self.config.enable_voice_output and self.tts_processor:
+                printer.info("Waiting for audio playback to complete...")
+                self.wait_until(
+                    condition_fn=lambda: self.tts_processor.is_processing_complete(),
+                    timeout=ConsoleConfig.loop_check_timeout,
+                    check_interval=ConsoleConfig.loop_check_interval
+                )
+                printer.success("Audio playback complete!")
+            
+        except Exception as e:
+            printer.error(f"Error: {e}")
+    
+    def _display_welcome(self):
+        print("\n" + "="*60)
+        print(self.config.welcome_message)
+        print("="*60)
+        print(f"\nType '{self.config.command_prefix}help' for available commands")
+        print(f"Type '{self.config.command_prefix}exit' to quit\n")
     
     def run(self):
         if not self.initialize():
             printer.error("Failed to start application")
             return
         
-        # Display welcome message
-        print("\n" + "="*60)
-        print(self.config.welcome_message)
-        print("="*60)
-        print(f"\nType '{self.config.command_prefix}help' for available commands")
-        print(f"Type '{self.config.command_prefix}exit' to quit\n")
-        
+        self._display_welcome()
         self.running = True
         
         try:
@@ -345,15 +302,7 @@ Current Configuration:
                         continue
                     
                     printer.info(f"User query: {user_input}")
-                    
-                    # Check if it's a command (commands don't use streaming)
-                    if user_input.startswith(self.config.command_prefix):
-                        response = self.process_user_input(user_input)
-                        if response:
-                            print(f"\n{self.config.assistant_symbol}{response}")
-                    else:
-                        # Use streaming for AI responses
-                        self.stream_response_with_voice(user_input)
+                    self._handle_user_input(user_input)
                 
                 except KeyboardInterrupt:
                     print("\n")
@@ -367,15 +316,14 @@ Current Configuration:
                     continue
         
         finally:
-            self.handle_exit()
+            self._shutdown()
     
-    def handle_exit(self):
+    def _shutdown(self):
         printer.info("Shutting down console application...")
         printer.success("Thanks for using Knik Console! 👋")
 
 
 if __name__ == "__main__":
-    """Run the console app directly."""
     config = ConsoleConfig()
     app = ConsoleApp(config)
     app.run()

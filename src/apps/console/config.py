@@ -13,12 +13,13 @@ class ConsoleConfig:
     
     ai_provider: str = "vertex"
     ai_model: str = "gemini-2.5-flash"
-    ai_project_id: Optional[str] = "dev-ai-gamma"
-    ai_location: str = "us-east5"
+    ai_project_id: Optional[str] = "breeze-uat-453414"
+    ai_location: str = "asia-south1"
     
     voice_language: str = "a"
     voice_name: str = "af_sarah"
-    
+    sample_rate: int = 24000
+
     command_prefix: str = "/"
     max_history_size: int = 50
     show_timestamps: bool = False
@@ -34,6 +35,9 @@ class ConsoleConfig:
     
     max_tokens: int = 25565
     temperature: int  = 0.7
+
+    loop_check_timeout: int = 500.0
+    loop_check_interval: int = 2.0
 
     system_instructions: str = """
         Avoid all markdown or special characters.
