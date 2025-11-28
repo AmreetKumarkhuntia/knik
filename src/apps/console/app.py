@@ -3,20 +3,11 @@ Console Application
 Main application logic for the interactive console.
 """
 
-import sys
 import time
-import os
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
-
-from lib import (
-    AIClient,
-    ConsoleProcessor,
-    printer,
-    TTSAsyncProcessor,
-)
+from imports import AIClient, ConsoleProcessor, printer, TTSAsyncProcessor
 
 try:
     from .config import ConsoleConfig
@@ -159,8 +150,8 @@ Just type your question to chat with AI!
         for i, entry in enumerate(entries, 1):
             timestamp = entry['timestamp'].strftime("%H:%M:%S")
             history_lines.append(f"\n[{i}] {timestamp}")
-            # history_lines.append(f"  You: {entry['user']}")
-            # history_lines.append(f"  AI:  {entry['assistant'][:100]}...")
+            history_lines.append(f"  You: {entry['user']}")
+            history_lines.append(f"  AI:  {entry['assistant'][:100]}...")
         
         return "\n".join(history_lines)
     

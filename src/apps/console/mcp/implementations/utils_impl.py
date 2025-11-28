@@ -2,6 +2,8 @@ import operator
 import math
 from datetime import datetime
 
+from imports import printer
+
 
 def calculate(expression: str) -> str:
     safe_functions = {
