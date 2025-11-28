@@ -1,0 +1,73 @@
+import re
+
+
+def word_count(text: str) -> str:
+    words = len(text.split())
+    chars = len(text)
+    chars_no_spaces = len(text.replace(" ", ""))
+    lines = len(text.splitlines())
+    
+    return f"Words: {words}, Characters: {chars}, Characters (no spaces): {chars_no_spaces}, Lines: {lines}"
+
+
+def find_and_replace(text: str, find: str, replace: str, case_sensitive: bool = True) -> str:
+    if not case_sensitive:
+        pattern = re.compile(re.escape(find), re.IGNORECASE)
+        result = pattern.sub(replace, text)
+    else:
+        result = text.replace(find, replace)
+    
+    return result
+
+
+def extract_emails(text: str) -> str:
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    emails = re.findall(email_pattern, text)
+    
+    if emails:
+        return ", ".join(emails)
+    else:
+        return "No email addresses found"
+
+
+def extract_urls(text: str) -> str:
+    url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    urls = re.findall(url_pattern, text)
+    
+    if urls:
+        return ", ".join(urls)
+    else:
+        return "No URLs found"
+
+
+def text_case_convert(text: str, case_type: str) -> str:
+    case_type = case_type.lower()
+    
+    if case_type == 'upper':
+        return text.upper()
+    elif case_type == 'lower':
+        return text.lower()
+    elif case_type == 'title':
+        return text.title()
+    elif case_type == 'capitalize':
+        return text.capitalize()
+    elif case_type == 'snake':
+        text = re.sub(r'(?<!^)(?=[A-Z])', '_', text).lower()
+        return text.replace(' ', '_').replace('-', '_')
+    elif case_type == 'camel':
+        words = text.replace('_', ' ').replace('-', ' ').split()
+        return words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+    elif case_type == 'kebab':
+        text = re.sub(r'(?<!^)(?=[A-Z])', '-', text).lower()
+        return text.replace(' ', '-').replace('_', '-')
+    else:
+        return f"Unknown case type: {case_type}. Use: upper, lower, title, capitalize, snake, camel, kebab"
+
+
+TEXT_IMPLEMENTATIONS = {
+    "word_count": word_count,
+    "find_and_replace": find_and_replace,
+    "extract_emails": extract_emails,
+    "extract_urls": extract_urls,
+    "text_case_convert": text_case_convert,
+}

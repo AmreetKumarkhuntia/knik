@@ -48,7 +48,7 @@ class Config:
     # AI defaults (can be overridden by env vars)
     DEFAULT_AI_MODEL: str = 'gemini-1.5-flash'
     DEFAULT_AI_LOCATION: str = 'us-central1'
-    DEFAULT_AI_MAX_TOKENS: int = 1024
+    DEFAULT_AI_MAX_TOKENS: int = 25565
     DEFAULT_AI_TEMPERATURE: float = 0.7
     
     # Logging defaults (can be overridden by env vars)

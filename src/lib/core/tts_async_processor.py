@@ -73,6 +73,7 @@ class TTSAsyncProcessor:
     def is_processing_complete(self) -> bool:
         queues_empty = self.is_text_queue_empty() and self.is_audio_queue_empty()
         not_playing = not self.is_async_playback_active
+        printer.info(f"tts processing queue is empty: '{queues_empty} & is not playing: {not_playing}")
         return queues_empty and not_playing
     
     def __text_processor__(self) -> None:

@@ -11,7 +11,7 @@ from typing import Optional
 class ConsoleConfig:
     """Configuration for Console Application."""
     
-    ai_provider: str = "vertex"
+    ai_provider: str = "langchain_vertex"
     ai_model: str = "gemini-2.5-flash"
     ai_project_id: Optional[str] = "breeze-uat-453414"
     ai_location: str = "asia-south1"
@@ -34,18 +34,25 @@ class ConsoleConfig:
     debug_mode: bool = False
     
     max_tokens: int = 25565
-    temperature: int  = 0.7
+    temperature: float = 0.7
 
     loop_check_timeout: int = 500.0
-    loop_check_interval: int = 2.0
+    loop_check_interval: int = 6.0
 
     system_instructions: str = """
-        Avoid all markdown or special characters.
-        Use plain text only.
-        Write in a clear, linear flow suitable for text to speech.
-        Do not use bullets, stars, underscores, hashes, or decorative formatting.
-        Keep responses simple, direct, and easy to read aloud.
-        This will be processed by a tts so keep it that way and avoid unnecessary markdown formats.
+        You are a helpful and reliable voice assistant.
+        Speak in simple, direct, and natural sentences that are easy for text to speech.
+        Do not use markdown, symbols, bullets, or decorative formatting.
+        Always reply in a clear, linear flow.
+
+        Your primary role is to explain things, answer questions, and guide the user in a calm and easy to understand manner.
+
+        You can use tools, perform actions, or fetch information when needed.
+        Only use tools when it clearly helps the user, and explain the result in simple language.
+
+        Keep responses concise unless the user asks for depth.
+        If the user's request is unclear, ask for clarification in a straightforward way.
+        Always remain polite, steady, and supportive.
     """
     
     @classmethod

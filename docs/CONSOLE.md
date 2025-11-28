@@ -19,6 +19,7 @@ npm run start:console
 | `/voice <name>` | Change voice |
 | `/info` | Show config |
 | `/toggle-voice` | Enable/disable voice |
+| `/tools` | Show available MCP tools |
 
 ## Usage
 
@@ -78,10 +79,43 @@ export KNIK_ENABLE_VOICE="true"
 **Smart Wait:** Blocks input until audio completes  
 **Context-Aware:** Remembers conversation history  
 **Streaming:** See responses as AI generates them  
+**MCP Tools:** 11 built-in tools for calculations, text processing, and more
+
+## MCP Tools
+
+The console app includes Model Context Protocol (MCP) tools that the AI can use:
+
+**Utility Tools:**
+- `calculate` - Basic math expressions
+- `advanced_calculate` - Advanced math with precision
+- `get_current_time` - Get current timestamp
+- `get_current_date` - Get today's date
+- `reverse_string` - Reverse text
+- `count_words` - Count words
+
+**Text Processing:**
+- `word_count` - Detailed text statistics
+- `find_and_replace` - Text replacement
+- `extract_emails` - Extract email addresses
+- `extract_urls` - Extract URLs
+- `text_case_convert` - Convert case (snake, camel, kebab)
+
+Use `/tools` to see the list, or just ask the AI naturally:
+
+```
+You: What's 25 * 4 + sqrt(144)?
+AI: Let me calculate that... The result is 112.0
+
+You: Convert "hello world" to snake_case
+AI: The snake_case version is: hello_world
+```
+
+See **[MCP.md](MCP.md)** for details on creating custom tools.
 
 ## Tips
 
 - Use `/toggle-voice` to disable audio temporarily
 - Use `/clear` to reset conversation context
+- Use `/tools` to see available AI tools
 - Shorter responses = less wait time
 - Check `/info` to verify configuration

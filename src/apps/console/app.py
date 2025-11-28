@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from lib import (
     AIClient,
-    MockAIClient,
     ConsoleProcessor,
     printer,
     TTSAsyncProcessor,
@@ -21,8 +20,10 @@ from lib import (
 
 try:
     from .config import ConsoleConfig
+    from .mcp import register_all_tools, get_tool_info
 except ImportError:
-    from config import ConsoleConfig
+    from apps.console.config import ConsoleConfig
+    from apps.console.mcp import register_all_tools, get_tool_info
 
 
 class ConversationHistory:
@@ -44,7 +45,6 @@ class ConversationHistory:
             self.entries = self.entries[-self.max_size:]
     
     def get_context(self, last_n: int = 5) -> str:
-        """Get conversation context for AI query."""
         if not self.entries:
             return ""
         
@@ -74,7 +74,6 @@ class ConsoleApp:
         self.running = False
     
     def initialize(self) -> bool:
-        """Initialize all application components."""
         try:
             printer.info("Initializing console application...")
             
@@ -90,23 +89,19 @@ class ConsoleApp:
             return False
     
     def _initialize_ai_client(self):
-        """Initialize AI client with fallback to Mock."""
-        if self.config.ai_provider == "vertex":
-            self.ai_client = AIClient(
-                provider="vertex",
-                project_id=self.config.ai_project_id,
-                location=self.config.ai_location,
-                model_name=self.config.ai_model
-            )
-        else:
-            self.ai_client = MockAIClient()
+        self.ai_client = AIClient(
+            provider=self.config.ai_provider,
+            project_id=self.config.ai_project_id,
+            location=self.config.ai_location,
+            model_name=self.config.ai_model
+        )
         
-        if not self.ai_client.is_configured():
-            printer.warning("AI client not configured, falling back to Mock AI")
-            self.ai_client = MockAIClient()
+        # Register MCP tools
+        tools_registered = register_all_tools(self.ai_client)
+        if tools_registered > 0:
+            printer.success(f"✓ Registered {tools_registered} MCP tools")
     
     def _initialize_tts_processor(self):
-        """Initialize TTS processor for voice output."""
         self.tts_processor = TTSAsyncProcessor(
             sample_rate=self.config.sample_rate,
             voice_model=self.config.voice_name,
@@ -115,7 +110,6 @@ class ConsoleApp:
         self.tts_processor.start_async_processing()
     
     def _initialize_console_processor(self):
-        """Initialize console command processor."""
         self.console_processor = ConsoleProcessor(
             command_prefix=self.config.command_prefix
         )
@@ -130,6 +124,7 @@ class ConsoleApp:
         self.console_processor.register_command("voice", self._cmd_voice)
         self.console_processor.register_command("info", self._cmd_info)
         self.console_processor.register_command("toggle-voice", self._cmd_toggle_voice)
+        self.console_processor.register_command("tools", self._cmd_tools)
     
     def _cmd_exit(self, args: str) -> str:
         self.running = False
@@ -145,6 +140,7 @@ Available Commands:
   {self.config.command_prefix}voice <name>  - Change voice (e.g., af_sarah, am_adam)
   {self.config.command_prefix}info          - Show current configuration
   {self.config.command_prefix}toggle-voice  - Enable/disable voice output
+  {self.config.command_prefix}tools         - Show available MCP tools
 
 Just type your question to chat with AI!
 """
@@ -196,6 +192,19 @@ Just type your question to chat with AI!
         status = "enabled" if self.config.enable_voice_output else "disabled"
         return f"Voice output {status} 🔊"
     
+    def _cmd_tools(self, args: str) -> str:
+        """Show available MCP tools."""
+        tool_info = get_tool_info()
+        
+        tools_text = [f"\n🛠️  Available MCP Tools ({tool_info['total_tools']} tools):\n"]
+        
+        for tool in tool_info['tools']:
+            tools_text.append(f"  • {tool['name']}")
+            tools_text.append(f"    {tool['description']}")
+            tools_text.append("")
+        
+        return "\n".join(tools_text)
+    
     def _build_prompt(self, user_input: str) -> str:
         context = self.history.get_context(last_n=3)
         if context:
@@ -207,10 +216,11 @@ Just type your question to chat with AI!
         
         full_prompt = self._build_prompt(user_input)
         response_stream = self.ai_client.query_stream(
-            full_prompt, 
-            self.config.max_tokens, 
-            self.config.temperature, 
-            self.config.system_instructions
+            prompt=full_prompt,
+            use_tools=True,  # Enable MCP tools
+            max_tokens=self.config.max_tokens, 
+            temperature=self.config.temperature, 
+            system_instruction=self.config.system_instructions
         )
         
         full_response = []

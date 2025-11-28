@@ -95,6 +95,88 @@ app.wait_until(
 **Male:**
 - `am_adam`, `am_michael`, `bm_george`, `bm_lewis`
 
+## AIClient
+
+Unified AI client with multiple provider support and MCP tools.
+
+### Initialization
+
+```python
+from lib.services.ai_client import AIClient
+
+client = AIClient(
+    provider="langchain_vertex",
+    project_id="your-project-id",
+    location="us-central1",
+    model_name="gemini-2.0-flash-exp"
+)
+```
+
+### Methods
+
+#### `query(prompt, use_tools, max_tokens, temperature, system_instruction, context)`
+Get complete AI response.
+
+```python
+response = client.query(
+    prompt="What is AI?",
+    use_tools=True,
+    max_tokens=1024,
+    temperature=0.7
+)
+```
+
+#### `query_stream(prompt, use_tools, ...)`
+Stream AI response chunks.
+
+```python
+for chunk in client.query_stream(prompt="Hello", use_tools=True):
+    print(chunk, end="", flush=True)
+```
+
+#### `register_tool(tool_dict, implementation)`
+Register MCP tool.
+
+```python
+tool_def = {
+    "name": "my_tool",
+    "description": "Does something useful",
+    "parameters": {...}
+}
+
+def my_tool_impl(param):
+    return f"Result: {param}"
+
+client.register_tool(tool_def, my_tool_impl)
+```
+
+#### `get_registered_tools()`
+List all registered tools.
+
+```python
+tools = client.get_registered_tools()
+for tool in tools:
+    print(tool['name'])
+```
+
+#### `execute_tool(tool_name, **kwargs)`
+Manually execute a tool.
+
+```python
+result = client.execute_tool("calculate", expression="2 + 2")
+```
+
+### Provider Support
+
+- **vertex** - Google Vertex AI
+- **langchain_vertex** - LangChain + Vertex AI (recommended)
+- **mock** - Testing/development
+
+List providers:
+```python
+AIClient.list_available_providers()
+```
+
 ## Examples
 
 ### Simple TTS

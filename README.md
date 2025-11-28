@@ -54,13 +54,16 @@ pip install -r requirements.txt
 - ✅ Interactive chat with AI (Google Gemini)
 - ✅ Voice-enabled responses
 - ✅ Context-aware conversations
-- ✅ Command system (/help, /history, /voice, etc.)
+- ✅ Command system (/help, /history, /voice, /tools, etc.)
 - ✅ Conversation history tracking
+- ✅ **MCP Tools** - 11 built-in tools (calculate, text processing, time, etc.)
+- ✅ Function calling with AI
 
 ### Library
 - ✅ Modular, reusable components
 - ✅ Clean Python API
 - ✅ Easy integration
+- ✅ Multiple AI provider support (Vertex AI, LangChain, Mock)
 
 ## 💡 Usage Example
 
@@ -92,9 +95,13 @@ knik/
 ├── src/
 │   ├── apps/                   # 🎯 Applications
 │   │   └── console/            # Interactive AI console app
+│   │       ├── mcp/            # Model Context Protocol tools
+│   │       │   ├── definitions/   # Tool schemas (JSON)
+│   │       │   └── implementations/  # Tool functions
 │   ├── lib/                    # 🔧 Core library
-│   │   ├── core/               # Config & core utilities
+│   │   ├── core/               # Config & TTS async processor
 │   │   ├── services/           # AI, Voice, Audio services
+│   │   │   └── ai_client/      # AI client with provider registry
 │   │   └── utils/              # Console processor, printer
 │   └── main.py                 # 🚀 Main entry point
 ├── demo/                       # 🎮 Demo scripts

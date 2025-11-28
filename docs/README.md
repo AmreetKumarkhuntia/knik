@@ -6,6 +6,7 @@ High-quality text-to-speech with async processing and AI console.
 
 - **[Setup Guide](SETUP.md)** - Installation and configuration
 - **[Console App](CONSOLE.md)** - Interactive AI chat with voice
+- **[MCP Tools](MCP.md)** - Model Context Protocol tools system
 - **[API Reference](API.md)** - Code documentation
 - **[Environment Variables](ENVIRONMENT_VARIABLES.md)** - Configuration options
 
@@ -66,8 +67,13 @@ knik/
 
 - **[SETUP.md](SETUP.md)** - Get started
 - **[CONSOLE.md](CONSOLE.md)** - Console app usage
+- **[MCP.md](MCP.md)** - MCP tools system
 - **[API.md](API.md)** - Code reference
 - **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** - Config
+
+### Application Docs
+
+- **[apps/console/MCP_IMPLEMENTATION.md](apps/console/MCP_IMPLEMENTATION.md)** - MCP implementation guide
 
 ### Library Reference
 
