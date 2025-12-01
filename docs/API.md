@@ -74,6 +74,15 @@ app = ConsoleApp(config)
 app.run()
 ```
 
+### Architecture
+
+The console app uses a modular design with:
+- **app.py** - Main ConsoleApp class
+- **history.py** - ConversationHistory for context management
+- **tools/** - Command handlers with registry pattern
+  - **index.py** - Command registry (`get_command_registry()`, `register_commands()`)
+  - Individual command files (`*_cmd.py`)
+
 ### Methods
 
 #### `wait_until(condition_fn, timeout, check_interval)`
@@ -85,6 +94,20 @@ app.wait_until(
     timeout=30.0,
     check_interval=0.1
 )
+```
+
+### ConversationHistory
+
+Manages conversation context (located in `apps/console/history.py`):
+
+```python
+from apps.console.history import ConversationHistory
+
+history = ConversationHistory(max_size=50)
+history.add_entry("user input", "ai response")
+context = history.get_context(last_n=3)  # Get last 3 exchanges
+entries = history.get_all_entries()       # Get all entries
+history.clear()                           # Clear history
 ```
 
 ## Available Voices

@@ -28,16 +28,23 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 - Two query modes: `query()` (blocking) and `query_stream()` (generator)
 - MCP tool integration via `MCPServerRegistry` and `register_tool()`
 
-**ConsoleApp** (`src/apps/console/app.py`)
+**ConsoleApp** (`src/apps/console/`)
 - Interactive AI chat with voice responses and conversation history
-- Built-in command system: `/voice`, `/history`, `/tools`, `/toggle-voice`, etc.
+- Modular architecture: `app.py` (main), `history.py` (context), `tools/` (commands)
+- Built-in command system with registry pattern: `/voice`, `/history`, `/tools`, etc.
 - Integrates AIClient + TTSAsyncProcessor with smart wait system (blocks user input during playback)
+
+**Console Commands** (`src/apps/console/tools/`)
+- Modular command handlers: Each command in separate `*_cmd.py` file
+- Registry pattern in `index.py`: `get_command_registry()`, `register_commands()`
+- Easy to extend: Create new `*_cmd.py`, add to registry, done
+- 8 built-in commands: help, exit, clear, history, voice, info, toggle-voice, tools
 
 **MCP Tools System** (`src/lib/mcp/`)
 - Clean separation: `definitions/` (JSON schemas) → `implementations/` (Python functions) → `index.py` (registry)
 - 12 built-in tools: calculate, text processing, time/date, email/URL extraction, shell commands
 - Tools registered at app startup via `register_all_tools(ai_client)`
-- Now in library layer (`lib/mcp`) for reusability across apps
+- Separate from console commands (MCP = AI tools, console commands = user commands)
 
 ## Critical Patterns
 
@@ -62,9 +69,22 @@ while not processor.is_processing_complete():  # Wait for completion
     time.sleep(0.1)
 ```
 
+### Adding Console Commands
+1. Create handler in `src/apps/console/tools/my_cmd.py`:
+   ```python
+   def my_command(app, args: str) -> str:
+       return f"Result: {args}"
+   ```
+2. Add to registry in `tools/index.py`:
+   ```python
+   from .my_cmd import my_command
+   # Add to get_command_registry() dict: 'my': my_command
+   ```
+3. Use with: `/my argument`
+
 ### Adding MCP Tools
-1. Define schema in `definitions/category_defs.py` with JSON Schema format
-2. Implement function in `implementations/category_impl.py`
+1. Define schema in `lib/mcp/definitions/category_defs.py` with JSON Schema format
+2. Implement function in `lib/mcp/implementations/category_impl.py`
 3. Export in `definitions/__init__.py` (`ALL_DEFINITIONS`) and `implementations/__init__.py` (`ALL_IMPLEMENTATIONS`)
 4. No changes to `index.py` needed - auto-registered via dictionary lookup
 
@@ -111,13 +131,16 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 **Key directories to know:**
 - `src/lib/services/ai_client/providers/` - AI provider implementations (vertex, langchain, mock)
 - `src/lib/services/ai_client/registry/` - Registry pattern implementations
-- `src/lib/mcp/` - MCP tool definitions and implementations (library layer)
+- `src/lib/mcp/` - MCP tool definitions and implementations (AI-callable tools)
+- `src/apps/console/tools/` - Console command handlers (user-callable commands)
 - `docs/` - Comprehensive documentation (MCP.md, CONSOLE.md, API.md, etc.)
 
 **Entry points:**
 - `src/main.py` - Application launcher
 - `src/imports.py` - Central import hub
-- `src/apps/console/app.py` - Console app logic
+- `src/apps/console/app.py` - Console app main logic
+- `src/apps/console/history.py` - ConversationHistory class
+- `src/apps/console/tools/index.py` - Command registry
 
 ## Project-Specific Conventions
 

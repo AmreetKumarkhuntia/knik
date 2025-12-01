@@ -115,6 +115,52 @@ AI: The snake_case version is: hello_world
 
 See **[MCP.md](MCP.md)** for details on creating custom tools.
 
+## Architecture
+
+The console app follows a modular design:
+
+```
+src/apps/console/
+├── app.py              # Main application logic
+├── config.py           # Configuration management
+├── history.py          # ConversationHistory class
+└── tools/              # Command handlers
+    ├── index.py        # Command registry
+    ├── help_cmd.py     # /help command
+    ├── exit_cmd.py     # /exit and /quit
+    ├── clear_cmd.py    # /clear command
+    ├── history_cmd.py  # /history command
+    ├── voice_cmd.py    # /voice command
+    ├── info_cmd.py     # /info command
+    ├── toggle_voice_cmd.py  # /toggle-voice command
+    └── tools_cmd.py    # /tools command
+```
+
+### Adding Custom Commands
+
+1. Create a new handler in `tools/`:
+
+```python
+# tools/my_cmd.py
+def my_command(app, args: str) -> str:
+    """My custom command"""
+    return f"You said: {args}"
+```
+
+2. Register in `tools/index.py`:
+
+```python
+def get_command_registry() -> Dict[str, Callable]:
+    from .my_cmd import my_command
+    
+    return {
+        # ... existing commands
+        'my': my_command,
+    }
+```
+
+3. Use it: `/my hello world`
+
 ## Tips
 
 - Use `/toggle-voice` to disable audio temporarily
