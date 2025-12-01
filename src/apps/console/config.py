@@ -1,8 +1,3 @@
-"""
-Console Application Configuration
-Settings and defaults for the console app.
-"""
-
 import os
 from dataclasses import dataclass
 from typing import Optional
@@ -10,8 +5,6 @@ from typing import Optional
 
 @dataclass
 class ConsoleConfig:
-    """Configuration for Console Application."""
-    
     ai_provider: str = os.getenv("KNIK_AI_PROVIDER", "vertex")
     ai_model: str = os.getenv("KNIK_AI_MODEL", "demo")
     ai_project_id: Optional[str] = os.getenv("KNIK_AI_PROJECT_ID", "demo")
@@ -57,25 +50,4 @@ Be reliable, efficient, and action focused like Jarvis."""
         
         self.system_instruction = os.getenv("KNIK_AI_SYSTEM_INSTRUCTION", default_instruction)
     
-    @classmethod
-    def from_dict(cls, config_dict: dict) -> 'ConsoleConfig':
-        """Create config from dictionary."""
-        return cls(**{k: v for k, v in config_dict.items() if hasattr(cls, k)})
-    
-    def to_dict(self) -> dict:
-        """Convert config to dictionary."""
-        return {
-            'ai_provider': self.ai_provider,
-            'ai_model': self.ai_model,
-            'ai_project_id': self.ai_project_id,
-            'ai_location': self.ai_location,
-            'voice_language': self.voice_language,
-            'voice_name': self.voice_name,
-            'command_prefix': self.command_prefix,
-            'max_history_size': self.max_history_size,
-            'show_timestamps': self.show_timestamps,
-            'enable_voice_output': self.enable_voice_output,
-            'max_tokens': self.max_tokens,
-            'temperature': self.temperature,
-            'system_instruction': self.system_instruction
-        }
+

@@ -1,12 +1,8 @@
-"""Conversation history management"""
-
 from typing import List, Dict, Any
 from datetime import datetime
 
 
 class ConversationHistory:
-    """Manages conversation history for context-aware interactions."""
-    
     def __init__(self, max_size: int = 50):
         self.max_size = max_size
         self.entries: List[Dict[str, Any]] = []

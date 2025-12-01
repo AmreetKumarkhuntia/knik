@@ -199,52 +199,16 @@ List providers:
 AIClient.list_available_providers()
 ```
 
-## Examples
-
-### Simple TTS
+## Example
 
 ```python
 from lib import TTSAsyncProcessor
 import time
 
-processor = TTSAsyncProcessor(
-    sample_rate=24000,
-    voice_model="af_sarah"
-)
+processor = TTSAsyncProcessor(sample_rate=24000, voice_model="af_sarah")
 processor.start_async_processing()
-
 processor.play_async("Hello world")
 
 while not processor.is_processing_complete():
     time.sleep(0.1)
-```
-
-### Console with Wait
-
-```python
-class ConsoleApp:
-    def _handle_user_input(self, user_input: str):
-        for chunk in self._stream_response(user_input):
-            print(chunk, end="", flush=True)
-            self._enqueue_voice(chunk)
-        
-        # Wait for audio to finish
-        self.wait_until(
-            lambda: self.tts_processor.is_processing_complete()
-        )
-```
-
-### Change Voice
-
-```python
-processor.set_voice("am_adam")
-processor.play_async("I sound different now")
-```
-
-### Save Audio
-
-```python
-processor.set_save_dir("./recordings")
-processor.play_async("This will be saved")
-# Creates: ./recordings/segment_<timestamp>.wav
 ```

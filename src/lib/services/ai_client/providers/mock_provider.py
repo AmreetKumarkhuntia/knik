@@ -46,6 +46,14 @@ class MockAIProvider(BaseAIProvider):
         
         printer.debug(f"[MOCK] Streaming complete")
     
+    def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+        """Mock agent chat - same as query"""
+        return self.query(prompt=prompt, use_tools=use_tools, **kwargs)
+    
+    def chat_with_agent_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+        """Mock agent stream - same as query_stream"""
+        yield from self.query_stream(prompt=prompt, use_tools=use_tools, **kwargs)
+    
     def is_configured(self) -> bool:
         return True
     

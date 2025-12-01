@@ -1,152 +1,56 @@
 # MCP Tools System
 
-Model Context Protocol (MCP) tools extend the AI assistant's capabilities with executable functions.
-
-## Overview
-
-The MCP system in Knik allows the AI to:
-- Perform calculations
-- Process text
-- Get current time/date
-- Extract information from text
-- And more...
+Model Context Protocol (MCP) tools extend AI capabilities with executable functions.
 
 ## Architecture
 
-```
+```text
 src/lib/mcp/
-├── definitions/          # Tool schemas (what AI sees)
-│   ├── utils_defs.py    # Utility tool schemas
-│   ├── text_defs.py     # Text processing schemas
-│   └── shell_defs.py    # Shell command schemas
-├── implementations/      # Tool code (what executes)
-│   ├── utils_impl.py    # Utility functions
-│   ├── text_impl.py     # Text processing functions
-│   └── shell_impl.py    # Shell command execution
-└── index.py             # Registry (connects them)
+├── definitions/          # Tool schemas
+│   ├── utils_defs.py
+│   ├── text_defs.py
+│   └── shell_defs.py
+├── implementations/      # Tool code
+│   ├── utils_impl.py
+│   ├── text_impl.py
+│   └── shell_impl.py
+└── index.py             # Registry
 ```
 
-**Key Principle:** Clean separation between interface (definitions) and implementation (code).
+Clean separation: definitions (interface) vs implementations (code).
 
-**Note:** MCP tools are now in `lib/mcp` (library layer) instead of `apps/console/mcp`, making them reusable across applications.
+## Built-in Tools (12)
 
-## Built-in Tools
+### Utility (6)
+- `calculate` - Basic math expressions
+- `advanced_calculate` - Extended math with precision
+- `get_current_time` - Current timestamp
+- `get_current_date` - Today's date
+- `reverse_string` - Reverse text
+- `count_words` - Count words
 
-### Utility Tools (6)
+### Text Processing (5)
+- `word_count` - Text statistics
+- `find_and_replace` - Find/replace with case options
+- `extract_emails` - Extract email addresses
+- `extract_urls` - Extract URLs
+- `text_case_convert` - Convert case (upper, lower, snake, camel, kebab)
 
-**calculate**
-```python
-expression: str  # e.g., "2 + 2", "sqrt(16)"
-```
-Basic math with operators (+, -, *, /, **, %) and functions (sqrt, sin, cos, log, etc.)
+### Shell (1)
+- `run_shell_command` - Execute shell commands (safe, timeout protected)
 
-**advanced_calculate**
-```python
-expression: str
-precision: int = 2  # Decimal places
-```
-Extended math with factorial, gcd, more trig functions, and precision control.
+## Usage
 
-**get_current_time**
-```python
-timezone: str = "local"
-```
-Returns current timestamp.
+AI automatically uses tools when appropriate:
 
-**get_current_date**
-```python
-# No parameters
-```
-Returns today's date.
-
-**reverse_string**
-```python
-text: str
-```
-Reverses the input text.
-
-**count_words**
-```python
-text: str
-```
-Counts words in text.
-
-### Text Processing Tools (5)
-
-**word_count**
-```python
-text: str
-```
-Returns detailed statistics: words, characters, characters (no spaces), lines.
-
-**find_and_replace**
-```python
-text: str
-find: str
-replace: str
-case_sensitive: bool = True
-```
-Find and replace text with optional case sensitivity.
-
-**extract_emails**
-```python
-text: str
-```
-Extracts all email addresses from text.
-
-**extract_urls**
-```python
-text: str
-```
-Extracts all URLs from text.
-
-**text_case_convert**
-```python
-text: str
-case_type: str  # upper, lower, title, capitalize, snake, camel, kebab
-```
-Converts text between different casing styles.
-
-### Shell Tools (1)
-
-**run_shell_command**
-```python
-command: str
-timeout: int = 10  # Max 30 seconds
-```
-Execute shell commands in a controlled environment. Supports system operations, file operations, git commands, etc.
-
-**Safety Features:**
-- Blocks dangerous commands (`rm -rf`, `mkfs`, etc.)
-- Timeout protection (max 30 seconds)
-- Executes in project root directory
-- Returns both stdout and stderr
-
-## Using Tools
-
-The AI automatically uses tools when appropriate:
-
-```
+```text
 You: What's 15 * 8 + 20?
-AI: [uses calculate tool]
-The result is 140.
-
-You: Extract emails from: contact@example.com and support@demo.org
-AI: [uses extract_emails tool]
-Found: contact@example.com, support@demo.org
+AI: The result is 140.
 
 You: Convert "HelloWorld" to snake_case
-AI: [uses text_case_convert tool]
-Result: hello_world
+AI: Result: hello_world
 
-You: What files are in the current directory?
-AI: [uses run_shell_command tool]
-Lists files using ls command...
-```
-
-View available tools:
-```
-You: /tools
+You: /tools  # View all available tools
 ```
 
 ## Creating Custom Tools

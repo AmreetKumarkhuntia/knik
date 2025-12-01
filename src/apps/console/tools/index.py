@@ -16,17 +16,19 @@ def get_command_registry() -> Dict[str, Callable]:
     from .info_cmd import info_command
     from .toggle_voice_cmd import toggle_voice_command
     from .tools_cmd import tools_command
+    from .agent_cmd import agent_command
     
     return {
         'help': help_command,
         'exit': exit_command,
-        'quit': exit_command,  # Alias for exit
+        'quit': exit_command,
         'clear': clear_command,
         'history': history_command,
         'voice': voice_command,
         'info': info_command,
         'toggle-voice': toggle_voice_command,
         'tools': tools_command,
+        'agent': agent_command,
     }
 
 

@@ -1,8 +1,4 @@
-"""History command handler"""
-
-
 def history_command(app, args: str) -> str:
-    """Display conversation history"""
     entries = app.history.get_all_entries()
     if not entries:
         return "No conversation history yet."

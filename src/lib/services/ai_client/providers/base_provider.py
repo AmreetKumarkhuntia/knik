@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, Optional, TYPE_CHECKING
 
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from langchain_core.tools import StructuredTool
-from pydantic import Field, create_model
 
 from ....utils import printer
 
@@ -46,7 +44,7 @@ class LangChainProvider(BaseAIProvider):
         self.system_instruction = system_instruction
         
         if mcp_registry:
-            tools = self._create_tool_wrappers(mcp_registry)
+            tools = mcp_registry.create_langchain_tools()
             self.llm = llm.bind_tools(tools) if tools else llm
             printer.success(f"Bound {len(tools)} tools to {provider_name} LLM at initialization")
         else:
@@ -71,59 +69,31 @@ class LangChainProvider(BaseAIProvider):
     def get_provider_name(cls) -> str:
         return "langchain"
     
-    def _create_tool_wrappers(self, mcp_registry: 'MCPServerRegistry') -> list:
-        tools = []
-        type_mapping = {"string": str, "integer": int, "number": float, "boolean": bool}
-        
-        for schema in mcp_registry.get_tools():
-            func_def = schema.get("function", schema)
-            tool_name = func_def.get("name")
-            description = func_def.get("description", "")
-            params = func_def.get("parameters", {})
-            
-            if not tool_name:
-                continue
-            
-            impl = mcp_registry._implementations.get(tool_name)
-            if not impl:
-                continue
-            
-            fields = {}
-            for name, prop in params.get("properties", {}).items():
-                prop_type = prop.get("type", "string")
-                if prop_type not in type_mapping:
-                    continue
-                
-                py_type = type_mapping.get(prop_type, str)
-                is_required = name in params.get("required", [])
-                
-                fields[name] = (
-                    py_type if is_required else Optional[py_type],
-                    Field(description=prop.get("description", ""), default=None if not is_required else ...)
-                )
-            
-            if not fields:
-                continue
-            
-            ArgsModel = create_model(f"{tool_name}Args", **fields)
-            
-            tools.append(StructuredTool(
-                name=tool_name,
-                description=description or f"Execute {tool_name}",
-                func=impl,
-                args_schema=ArgsModel
-            ))
-        
-        return tools
-    
     def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
         messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
         messages.append(HumanMessage(content=prompt))
         
-        llm = self.llm if (use_tools and self.mcp_registry) else self._llm_raw
-        response = llm.invoke(messages, **kwargs)
-        
-        return self._extract_text_from_content(response.content) if response.content else ""
+        if use_tools and self.mcp_registry:
+            response = self.llm.invoke(messages, **kwargs)
+            messages.append(response)
+            
+            if hasattr(response, 'tool_calls') and response.tool_calls:
+                for tool_call in response.tool_calls:
+                    tool_name = tool_call['name']
+                    printer.info(f"🔧 {tool_name}")
+                    try:
+                        result = self.mcp_registry.execute_tool(tool_name, **tool_call['args'])
+                        messages.append(ToolMessage(content=str(result), tool_call_id=tool_call['id']))
+                    except Exception as e:
+                        messages.append(ToolMessage(content=f"Error: {str(e)}", tool_call_id=tool_call['id']))
+                
+                final_response = self.llm.invoke(messages, **kwargs)
+                return self._extract_text_from_content(final_response.content) if final_response.content else ""
+            
+            return self._extract_text_from_content(response.content) if response.content else ""
+        else:
+            response = self._llm_raw.invoke(messages, **kwargs)
+            return self._extract_text_from_content(response.content) if response.content else ""
     
     def query_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
         messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
@@ -154,13 +124,58 @@ class LangChainProvider(BaseAIProvider):
                     yield self._extract_text_from_content(chunk.content)
 
     def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+        """Execute prompt using LangChain agent. Falls back to query if no agent."""
         if not self.agent:
-            raise ValueError("Agent is not initialized for this provider.")
+            return self.query(prompt=prompt, use_tools=use_tools, **kwargs)
         
-        tools = self._create_tool_wrappers(self.mcp_registry) if self.mcp_registry else []
-        response = self.agent.run(input=prompt, tools=tools, **kwargs)
+        result = self.agent.invoke({"messages": [{"role": "user", "content": prompt}]}, **kwargs)
         
-        return self._extract_text_from_content(response) if response else ""
+        if isinstance(result, dict):
+            messages = result.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                if hasattr(last_message, 'content'):
+                    output = last_message.content
+                elif isinstance(last_message, dict):
+                    output = last_message.get('content', '')
+                else:
+                    output = str(last_message)
+            else:
+                output = result.get("output", result.get("result", ""))
+        else:
+            output = str(result)
+        
+        return self._extract_text_from_content(output) if output else ""
+    
+    def chat_with_agent_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+        """Stream agent responses. Falls back to query_stream if no agent."""
+        if not self.agent:
+            yield from self.query_stream(prompt=prompt, use_tools=use_tools, **kwargs)
+            return
+        
+        previous_content = None
+        for chunk in self.agent.stream(
+            {"messages": [{"role": "user", "content": prompt}]},
+            stream_mode="values",
+            **kwargs
+        ):
+            if isinstance(chunk, dict):
+                messages = chunk.get("messages", [])
+                if messages:
+                    last_message = messages[-1]
+                    message_type = getattr(last_message, 'type', None) or getattr(last_message, '__class__.__name__', None)
+                    
+                    if message_type == 'ai' or (hasattr(last_message, 'content') and message_type not in ['human', 'tool']):
+                        if hasattr(last_message, 'content'):
+                            content = self._extract_text_from_content(last_message.content)
+                            if content and content != previous_content:
+                                yield content
+                                previous_content = content
+                        elif isinstance(last_message, dict):
+                            content = last_message.get('content', '')
+                            if content and content != previous_content:
+                                yield self._extract_text_from_content(content)
+                                previous_content = content
 
     def is_configured(self) -> bool:
         return self._llm_raw is not None

@@ -1,10 +1,7 @@
-"""Tools command handler"""
-
 from lib.mcp import get_tool_info
 
 
 def tools_command(app, args: str) -> str:
-    """Display available MCP tools"""
     tool_info = get_tool_info()
     
     tools_text = [f"\n🛠️  Available MCP Tools ({tool_info['total_tools']} tools):\n"]

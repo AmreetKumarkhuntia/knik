@@ -1,8 +1,3 @@
-"""
-Console Application
-Main application logic for the interactive console.
-"""
-
 import time
 from typing import Optional
 
@@ -86,9 +81,8 @@ class ConsoleApp:
     def _stream_response(self, user_input: str):
         printer.info("🤔 Thinking...")
         
-        full_prompt = self._build_prompt(user_input)
-        response_stream = self.ai_client.query_stream(
-            prompt=full_prompt,
+        response_stream = self.ai_client.chat_with_agent_stream(
+            prompt=user_input,
             use_tools=True,
             max_tokens=self.config.max_tokens, 
             temperature=self.config.temperature

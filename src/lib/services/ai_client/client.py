@@ -145,6 +145,42 @@ class AIClient:
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
         """Execute a registered tool by name."""
         return MCPServerRegistry.execute_tool(tool_name, **kwargs)
+    
+    def chat_with_agent(
+        self, 
+        prompt: str,
+        use_tools: bool = False,
+        **kwargs
+    ) -> str:
+        """Execute prompt using LangChain agent if available."""
+        try:
+            return self._provider.chat_with_agent(
+                prompt=prompt,
+                use_tools=use_tools,
+                **kwargs
+            )
+        except Exception as e:
+            error_msg = f"Agent query error: {e}"
+            printer.error(error_msg)
+            return error_msg
+    
+    def chat_with_agent_stream(
+        self, 
+        prompt: str,
+        use_tools: bool = False,
+        **kwargs
+    ) -> Generator[str, None, None]:
+        """Stream agent responses if available."""
+        try:
+            yield from self._provider.chat_with_agent_stream(
+                prompt=prompt,
+                use_tools=use_tools,
+                **kwargs
+            )
+        except Exception as e:
+            error_msg = f"Agent streaming error: {e}"
+            printer.error(error_msg)
+            yield error_msg
 
 
 class MockAIClient(AIClient):

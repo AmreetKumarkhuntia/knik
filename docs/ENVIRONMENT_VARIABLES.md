@@ -58,90 +58,11 @@ Knik supports configuration via environment variables. All have sensible default
 | `KNIK_SHOW_LOGS` | `true` | Whether to show logs at all |
 | `KNIK_USE_COLORS` | `true` | Whether to use colored output |
 
-## Usage Examples
+## Usage
 
-### Bash/Zsh
 ```bash
-# Set default voice to male
-export KNIK_VOICE=am_adam
-
-# Set log level to DEBUG for verbose output
-export KNIK_LOG_LEVEL=DEBUG
-
-# Disable colored output
-export KNIK_USE_COLORS=false
-
-# Configure Google Cloud for AI
-export GOOGLE_CLOUD_PROJECT=my-project-id
-
-# Run your script
+export KNIK_VOICE_NAME="am_adam"
+export KNIK_VOICE_OUTPUT="true"
+export GOOGLE_CLOUD_PROJECT="your-project-id"
 python src/main.py
-```
-
-### Python Code
-
-```python
-import sys
-sys.path.insert(0, 'src')
-
-from lib import Config
-
-# Get config values (automatically loads from env)
-voice = Config.get_voice()  # Returns env var or default
-language = Config.get_language()
-log_level = Config.get_log_level()
-
-print(f"Voice: {voice}")
-print(f"Language: {language}")
-print(f"Log Level: {log_level}")
-```
-
-### .env File (with python-dotenv)
-```bash
-# .env file
-KNIK_VOICE=am_michael
-KNIK_LANGUAGE=a
-KNIK_LOG_LEVEL=DEBUG
-KNIK_AI_MODEL=gemini-1.5-pro
-GOOGLE_CLOUD_PROJECT=my-gcp-project
-```
-
-Then in your code:
-
-```python
-import sys
-sys.path.insert(0, 'src')
-
-from dotenv import load_dotenv
-load_dotenv()  # Load .env file
-
-from lib import KokoroVoiceModel, Config
-
-# Will use environment variables automatically
-voice = Config.get_voice()
-voice_model = KokoroVoiceModel(voice=voice)
-```
-
-## Priority Order
-
-Configuration is loaded in this order (highest priority first):
-
-1. **Explicitly passed parameters** - Direct arguments to functions/classes
-2. **Environment variables** - Set via `export` or `.env` file
-3. **Default values** - Built-in defaults in `Config`
-
-Example:
-
-```python
-import sys
-sys.path.insert(0, 'src')
-
-from lib import KokoroVoiceModel, Config
-
-# Even if KNIK_VOICE=am_adam is set in env,
-# this will use 'af_bella' (explicit parameter takes priority)
-model = KokoroVoiceModel(voice='af_bella')
-
-# This will use env var KNIK_VOICE or default
-model = KokoroVoiceModel(voice=Config.get_voice())
 ```

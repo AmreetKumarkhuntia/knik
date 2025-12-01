@@ -1,8 +1,4 @@
-"""Voice command handler"""
-
-
 def voice_command(app, args: str) -> str:
-    """Change the voice model"""
     if not args:
         return f"Current voice: {app.config.voice_name}\nUsage: {app.config.command_prefix}voice <name>"
     
