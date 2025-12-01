@@ -14,17 +14,21 @@ The MCP system in Knik allows the AI to:
 ## Architecture
 
 ```
-src/apps/console/mcp/
+src/lib/mcp/
 ├── definitions/          # Tool schemas (what AI sees)
 │   ├── utils_defs.py    # Utility tool schemas
-│   └── text_defs.py     # Text processing schemas
+│   ├── text_defs.py     # Text processing schemas
+│   └── shell_defs.py    # Shell command schemas
 ├── implementations/      # Tool code (what executes)
 │   ├── utils_impl.py    # Utility functions
-│   └── text_impl.py     # Text processing functions
+│   ├── text_impl.py     # Text processing functions
+│   └── shell_impl.py    # Shell command execution
 └── index.py             # Registry (connects them)
 ```
 
 **Key Principle:** Clean separation between interface (definitions) and implementation (code).
+
+**Note:** MCP tools are now in `lib/mcp` (library layer) instead of `apps/console/mcp`, making them reusable across applications.
 
 ## Built-in Tools
 
@@ -103,6 +107,21 @@ case_type: str  # upper, lower, title, capitalize, snake, camel, kebab
 ```
 Converts text between different casing styles.
 
+### Shell Tools (1)
+
+**run_shell_command**
+```python
+command: str
+timeout: int = 10  # Max 30 seconds
+```
+Execute shell commands in a controlled environment. Supports system operations, file operations, git commands, etc.
+
+**Safety Features:**
+- Blocks dangerous commands (`rm -rf`, `mkfs`, etc.)
+- Timeout protection (max 30 seconds)
+- Executes in project root directory
+- Returns both stdout and stderr
+
 ## Using Tools
 
 The AI automatically uses tools when appropriate:
@@ -119,6 +138,10 @@ Found: contact@example.com, support@demo.org
 You: Convert "HelloWorld" to snake_case
 AI: [uses text_case_convert tool]
 Result: hello_world
+
+You: What files are in the current directory?
+AI: [uses run_shell_command tool]
+Lists files using ls command...
 ```
 
 View available tools:
@@ -130,7 +153,7 @@ You: /tools
 
 ### Step 1: Create Definition
 
-Create `src/apps/console/mcp/definitions/my_tools_defs.py`:
+Create `src/lib/mcp/definitions/my_tools_defs.py`:
 
 ```python
 MY_TOOLS_DEFINITIONS = [
@@ -158,7 +181,7 @@ MY_TOOLS_DEFINITIONS = [
 
 ### Step 2: Create Implementation
 
-Create `src/apps/console/mcp/implementations/my_tools_impl.py`:
+Create `src/lib/mcp/implementations/my_tools_impl.py`:
 
 ```python
 def tool_name(param1: str, param2: int = 10) -> str:

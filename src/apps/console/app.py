@@ -11,10 +11,10 @@ from imports import AIClient, ConsoleProcessor, printer, TTSAsyncProcessor
 
 try:
     from .config import ConsoleConfig
-    from .mcp import register_all_tools, get_tool_info
 except ImportError:
     from apps.console.config import ConsoleConfig
-    from apps.console.mcp import register_all_tools, get_tool_info
+
+from lib.mcp import register_all_tools, get_tool_info
 
 
 class ConversationHistory:

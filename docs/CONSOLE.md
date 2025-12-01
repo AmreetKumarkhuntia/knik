@@ -98,6 +98,9 @@ The console app includes Model Context Protocol (MCP) tools that the AI can use:
 - `find_and_replace` - Text replacement
 - `extract_emails` - Extract email addresses
 - `extract_urls` - Extract URLs
+
+**Shell Tools:**
+- `run_shell_command` - Execute shell commands (controlled/safe)
 - `text_case_convert` - Convert case (snake, camel, kebab)
 
 Use `/tools` to see the list, or just ask the AI naturally:

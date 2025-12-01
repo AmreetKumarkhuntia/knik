@@ -33,10 +33,11 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 - Built-in command system: `/voice`, `/history`, `/tools`, `/toggle-voice`, etc.
 - Integrates AIClient + TTSAsyncProcessor with smart wait system (blocks user input during playback)
 
-**MCP Tools System** (`src/apps/console/mcp/`)
+**MCP Tools System** (`src/lib/mcp/`)
 - Clean separation: `definitions/` (JSON schemas) → `implementations/` (Python functions) → `index.py` (registry)
-- 11 built-in tools: calculate, text processing, time/date, email/URL extraction
+- 12 built-in tools: calculate, text processing, time/date, email/URL extraction, shell commands
 - Tools registered at app startup via `register_all_tools(ai_client)`
+- Now in library layer (`lib/mcp`) for reusability across apps
 
 ## Critical Patterns
 
@@ -110,7 +111,7 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 **Key directories to know:**
 - `src/lib/services/ai_client/providers/` - AI provider implementations (vertex, langchain, mock)
 - `src/lib/services/ai_client/registry/` - Registry pattern implementations
-- `src/apps/console/mcp/` - MCP tool definitions and implementations
+- `src/lib/mcp/` - MCP tool definitions and implementations (library layer)
 - `docs/` - Comprehensive documentation (MCP.md, CONSOLE.md, API.md, etc.)
 
 **Entry points:**
@@ -140,4 +141,3 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 - `docs/MCP.md` - MCP tools architecture (100+ lines with examples)
 - `docs/CONSOLE.md` - Console app commands and usage
 - `docs/ENVIRONMENT_VARIABLES.md` - All config options
-- `docs/apps/console/MCP_IMPLEMENTATION.md` - Adding new MCP tools

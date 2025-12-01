@@ -71,10 +71,6 @@ knik/
 - **[API.md](API.md)** - Code reference
 - **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** - Config
 
-### Application Docs
-
-- **[apps/console/MCP_IMPLEMENTATION.md](apps/console/MCP_IMPLEMENTATION.md)** - MCP implementation guide
-
 ### Library Reference
 
 - **[library/LIBRARY_REFERENCE.md](library/LIBRARY_REFERENCE.md)** - Detailed API docs

@@ -23,6 +23,13 @@ from lib import (
     LogLevel,
 )
 
+# MCP tools exports
+from lib.mcp import (
+    register_all_tools,
+    get_all_tools,
+    get_tool_info,
+)
+
 __all__ = [
     'AIClient',
     'ConsoleProcessor',
@@ -40,4 +47,7 @@ __all__ = [
     'Printer',
     'PrinterConfig',
     'LogLevel',
+    'register_all_tools',
+    'get_all_tools',
+    'get_tool_info',
 ]

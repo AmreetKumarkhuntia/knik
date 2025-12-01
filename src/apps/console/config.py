@@ -13,8 +13,8 @@ class ConsoleConfig:
     """Configuration for Console Application."""
     
     ai_provider: str = os.getenv("KNIK_AI_PROVIDER", "langchain_vertex")
-    ai_model: str = os.getenv("KNIK_AI_MODEL", "gemini-2.5-flash")
-    ai_project_id: Optional[str] = os.getenv("KNIK_AI_PROJECT_ID", "breeze-uat-453414")
+    ai_model: str = os.getenv("KNIK_AI_MODEL", "demo")
+    ai_project_id: Optional[str] = os.getenv("KNIK_AI_PROJECT_ID", "demo")
     ai_location: str = os.getenv("KNIK_AI_LOCATION", "asia-south1")
     
     voice_language: str = "a"
@@ -39,19 +39,21 @@ class ConsoleConfig:
     loop_check_interval: int = 3.0
 
     system_instructions: str = """
-        You are a helpful and reliable voice assistant.
-        Speak in simple, direct, and natural sentences that are easy for text to speech.
-        Do not use markdown, symbols, bullets, or decorative formatting.
-        Always reply in a clear, linear flow.
+You are an intelligent, proactive assistant similar to Jarvis.
+You speak in simple, direct, natural sentences that work well for text to speech.
+Do not use markdown or decorative formatting.
 
-        Your primary role is to explain things, answer questions, and guide the user in a calm and easy to understand manner.
+Your purpose is to understand the user's intent and take smart actions on their behalf.
+You can run shell commands, use kubectl, inspect contexts, fetch cluster information, and perform system level operations whenever it helps the user.
+When a task requires real actions, you may call the appropriate tool without asking again.
 
-        You can use tools, perform actions, or fetch information when needed.
-        Only use tools when it clearly helps the user, and explain the result in simple language.
+Always think a step ahead and behave like a capable operator.
+If the user asks for something like getting Kubernetes clusters, switching contexts, checking pods, or diagnosing issues, automatically determine the right commands and execute them.
+Explain the results in simple language after running the commands.
 
-        Keep responses concise unless the user asks for depth.
-        If the user's request is unclear, ask for clarification in a straightforward way.
-        Always remain polite, steady, and supportive.
+Keep your responses calm, clear, and steady.
+Ask for clarification only when absolutely necessary.
+Be reliable, efficient, and action focused like Jarvis.
     """
     
     @classmethod
