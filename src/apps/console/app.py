@@ -15,6 +15,7 @@ except ImportError:
     from apps.console.config import ConsoleConfig
 
 from lib.mcp import register_all_tools, get_tool_info
+from lib.services.ai_client.registry import MCPServerRegistry
 
 
 class ConversationHistory:
@@ -80,17 +81,18 @@ class ConsoleApp:
             return False
     
     def _initialize_ai_client(self):
+        tools_registered = register_all_tools(MCPServerRegistry)
+        if tools_registered > 0:
+            printer.success(f"✓ Registered {tools_registered} MCP tools to registry")
+        
         self.ai_client = AIClient(
             provider=self.config.ai_provider,
+            mcp_registry=MCPServerRegistry,
+            system_instruction=self.config.system_instruction,
             project_id=self.config.ai_project_id,
             location=self.config.ai_location,
             model_name=self.config.ai_model
         )
-        
-        # Register MCP tools
-        tools_registered = register_all_tools(self.ai_client)
-        if tools_registered > 0:
-            printer.success(f"✓ Registered {tools_registered} MCP tools")
     
     def _initialize_tts_processor(self):
         self.tts_processor = TTSAsyncProcessor(
@@ -208,10 +210,9 @@ Just type your question to chat with AI!
         full_prompt = self._build_prompt(user_input)
         response_stream = self.ai_client.query_stream(
             prompt=full_prompt,
-            use_tools=True,  # Enable MCP tools
+            use_tools=True,
             max_tokens=self.config.max_tokens, 
-            temperature=self.config.temperature, 
-            system_instruction=self.config.system_instructions
+            temperature=self.config.temperature
         )
         
         full_response = []

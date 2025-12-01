@@ -91,9 +91,9 @@ def main():
     # Register tools in MCP registry
     register_tools_in_mcp()
     
-    # Initialize AIClient with LangChain Vertex AI provider
+    # Initialize AIClient with Vertex AI provider
     client = AIClient(
-        provider="langchain_vertex",
+        provider="vertex",
         project_id="breeze-uat-453414",
         location="asia-south1",
         model_name="gemini-2.5-flash",

@@ -18,11 +18,11 @@ class BaseAIProvider(ABC):
         raise NotImplementedError("Subclasses must implement get_provider_name()")
     
     @abstractmethod
-    def query(self, prompt: str, use_tools: bool = False, mcp_registry: 'MCPServerRegistry' = None, **kwargs) -> str:
+    def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
         pass
     
     @abstractmethod
-    def query_stream(self, prompt: str, use_tools: bool = False, mcp_registry: 'MCPServerRegistry' = None, **kwargs) -> Generator[str, None, None]:
+    def query_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
         pass
     
     @abstractmethod
@@ -35,12 +35,23 @@ class BaseAIProvider(ABC):
 
 
 class LangChainProvider(BaseAIProvider):
-    
-    def __init__(self, llm, provider_name: str, **config):
-        self.llm = llm
+
+    def __init__(self, llm, agent, provider_name: str, mcp_registry: Optional['MCPServerRegistry'] = None, 
+                 system_instruction: Optional[str] = None, **config):
+        self._llm_raw = llm
         self._provider_name = provider_name
         self.config = config
-    
+        self.agent = agent
+        self.mcp_registry = mcp_registry
+        self.system_instruction = system_instruction
+        
+        if mcp_registry:
+            tools = self._create_tool_wrappers(mcp_registry)
+            self.llm = llm.bind_tools(tools) if tools else llm
+            printer.success(f"Bound {len(tools)} tools to {provider_name} LLM at initialization")
+        else:
+            self.llm = llm
+
     def _extract_text_from_content(self, content) -> str:
         if isinstance(content, str):
             return content
@@ -105,26 +116,21 @@ class LangChainProvider(BaseAIProvider):
         
         return tools
     
-    def _get_llm_with_tools(self, mcp_registry: 'MCPServerRegistry'):
-        tools = self._create_tool_wrappers(mcp_registry)
-        return self.llm.bind_tools(tools)
-    
-    def query(self, prompt: str, use_tools: bool = False, mcp_registry: 'MCPServerRegistry' = None, system_instruction: Optional[str] = None, **kwargs) -> str:
-        messages = [SystemMessage(content=system_instruction)] if system_instruction else []
+    def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+        messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
         messages.append(HumanMessage(content=prompt))
         
-        llm = self._get_llm_with_tools(mcp_registry) if (use_tools and mcp_registry) else self.llm
+        llm = self.llm if (use_tools and self.mcp_registry) else self._llm_raw
         response = llm.invoke(messages, **kwargs)
         
         return self._extract_text_from_content(response.content) if response.content else ""
     
-    def query_stream(self, prompt: str, use_tools: bool = False, mcp_registry: 'MCPServerRegistry' = None, system_instruction: Optional[str] = None, **kwargs) -> Generator[str, None, None]:
-        messages = [SystemMessage(content=system_instruction)] if system_instruction else []
+    def query_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+        messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
         messages.append(HumanMessage(content=prompt))
         
-        if use_tools and mcp_registry:
-            llm = self._get_llm_with_tools(mcp_registry)
-            response = llm.invoke(messages, **kwargs)
+        if use_tools and self.mcp_registry:
+            response = self.llm.invoke(messages, **kwargs)
             messages.append(response)
             
             if hasattr(response, 'tool_calls') and response.tool_calls:
@@ -132,23 +138,32 @@ class LangChainProvider(BaseAIProvider):
                     tool_name = tool_call['name']
                     printer.info(f"🔧 {tool_name}")
                     try:
-                        result = mcp_registry.execute_tool(tool_name, **tool_call['args'])
+                        result = self.mcp_registry.execute_tool(tool_name, **tool_call['args'])
                         messages.append(ToolMessage(content=str(result), tool_call_id=tool_call['id']))
                     except Exception as e:
                         messages.append(ToolMessage(content=f"Error: {str(e)}", tool_call_id=tool_call['id']))
                 
-                for chunk in llm.stream(messages, **kwargs):
+                for chunk in self.llm.stream(messages, **kwargs):
                     if chunk.content:
                         yield self._extract_text_from_content(chunk.content)
             elif response.content:
                 yield self._extract_text_from_content(response.content)
         else:
-            for chunk in self.llm.stream(messages, **kwargs):
+            for chunk in self._llm_raw.stream(messages, **kwargs):
                 if chunk.content:
                     yield self._extract_text_from_content(chunk.content)
-    
+
+    def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+        if not self.agent:
+            raise ValueError("Agent is not initialized for this provider.")
+        
+        tools = self._create_tool_wrappers(self.mcp_registry) if self.mcp_registry else []
+        response = self.agent.run(input=prompt, tools=tools, **kwargs)
+        
+        return self._extract_text_from_content(response) if response else ""
+
     def is_configured(self) -> bool:
-        return self.llm is not None
+        return self._llm_raw is not None
     
     def get_info(self) -> Dict[str, Any]:
         return {

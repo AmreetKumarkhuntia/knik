@@ -105,10 +105,10 @@ Unified AI client with multiple provider support and MCP tools.
 from lib.services.ai_client import AIClient
 
 client = AIClient(
-    provider="langchain_vertex",
+    provider="vertex",
     project_id="your-project-id",
     location="us-central1",
-    model_name="gemini-2.0-flash-exp"
+    model_name="gemini-2.5-flash"
 )
 ```
 
@@ -168,8 +168,7 @@ result = client.execute_tool("calculate", expression="2 + 2")
 
 ### Provider Support
 
-- **vertex** - Google Vertex AI
-- **langchain_vertex** - LangChain + Vertex AI (recommended)
+- **vertex** - Google Vertex AI with LangChain (recommended)
 - **mock** - Testing/development
 
 List providers:

@@ -12,7 +12,7 @@ from typing import Optional
 class ConsoleConfig:
     """Configuration for Console Application."""
     
-    ai_provider: str = os.getenv("KNIK_AI_PROVIDER", "langchain_vertex")
+    ai_provider: str = os.getenv("KNIK_AI_PROVIDER", "vertex")
     ai_model: str = os.getenv("KNIK_AI_MODEL", "demo")
     ai_project_id: Optional[str] = os.getenv("KNIK_AI_PROJECT_ID", "demo")
     ai_location: str = os.getenv("KNIK_AI_LOCATION", "asia-south1")
@@ -38,8 +38,8 @@ class ConsoleConfig:
     loop_check_timeout: int = 500.0
     loop_check_interval: int = 3.0
 
-    system_instructions: str = """
-You are an intelligent, proactive assistant similar to Jarvis.
+    def __post_init__(self):
+        default_instruction = """You are an intelligent, proactive assistant similar to Jarvis.
 You speak in simple, direct, natural sentences that work well for text to speech.
 Do not use markdown or decorative formatting.
 
@@ -53,8 +53,9 @@ Explain the results in simple language after running the commands.
 
 Keep your responses calm, clear, and steady.
 Ask for clarification only when absolutely necessary.
-Be reliable, efficient, and action focused like Jarvis.
-    """
+Be reliable, efficient, and action focused like Jarvis."""
+        
+        self.system_instruction = os.getenv("KNIK_AI_SYSTEM_INSTRUCTION", default_instruction)
     
     @classmethod
     def from_dict(cls, config_dict: dict) -> 'ConsoleConfig':
@@ -76,5 +77,5 @@ Be reliable, efficient, and action focused like Jarvis.
             'enable_voice_output': self.enable_voice_output,
             'max_tokens': self.max_tokens,
             'temperature': self.temperature,
-            'system_instructions': self.system_instructions
+            'system_instruction': self.system_instruction
         }

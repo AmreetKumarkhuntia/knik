@@ -1,11 +1,14 @@
 """Google Vertex AI Provider with LangChain"""
 
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 
 from .base_provider import LangChainProvider
 from ..registry import ProviderRegistry
 from ....utils import printer
+
+if TYPE_CHECKING:
+    from ..registry import MCPServerRegistry
 
 try:
     from langchain_google_vertexai import ChatVertexAI
@@ -21,7 +24,8 @@ class VertexAIProvider(LangChainProvider):
     
     def __init__(self, project_id: Optional[str] = None, location: str = "us-central1", 
                  model_name: str = "gemini-2.5-flash", temperature: float = 0.7, 
-                 max_tokens: Optional[int] = None, **kwargs):
+                 max_tokens: Optional[int] = None, mcp_registry: Optional['MCPServerRegistry'] = None,
+                 system_instruction: Optional[str] = None, **kwargs):
         if not LANGCHAIN_VERTEX_AVAILABLE:
             raise ImportError("LangChain Vertex AI not installed. Run: pip install langchain-google-vertexai")
         
@@ -37,7 +41,8 @@ class VertexAIProvider(LangChainProvider):
         llm = ChatVertexAI(model_name=model_name, project=self.project_id, location=location, 
                           temperature=temperature, max_tokens=max_tokens, **kwargs)
         
-        super().__init__(llm=llm, provider_name="vertex", project_id=self.project_id, 
+        super().__init__(llm=llm, agent=None, provider_name="vertex", mcp_registry=mcp_registry,
+                        system_instruction=system_instruction, project_id=self.project_id, 
                         location=location, model=model_name)
         
         printer.success(f"Vertex AI initialized: {model_name}")
