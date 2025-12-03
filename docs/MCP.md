@@ -19,7 +19,7 @@ src/lib/mcp/
 
 Clean separation: definitions (interface) vs implementations (code).
 
-## Built-in Tools (12)
+## Built-in Tools (20)
 
 ### Utility (6)
 - `calculate` - Basic math expressions
@@ -38,6 +38,16 @@ Clean separation: definitions (interface) vs implementations (code).
 
 ### Shell (1)
 - `run_shell_command` - Execute shell commands (safe, timeout protected)
+
+### File System (8)
+- `read_file` - Read the complete contents of a file or a specific line range.
+- `list_directory` - List all files and directories in a given path.
+- `search_in_files` - Search for a pattern (text or regex) across multiple files in a directory.
+- `file_info` - Get detailed information about a file or directory.
+- `write_file` - Write content to a file.
+- `append_to_file` - Append content to an existing file.
+- `find_in_file` - Search for a pattern within a specific file.
+- `count_in_file` - Count how many times a pattern appears in a file.
 
 ## Usage
 

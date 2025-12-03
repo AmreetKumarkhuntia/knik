@@ -43,7 +43,7 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 
 **MCP Tools System** (`src/lib/mcp/`)
 - Clean separation: `definitions/` (JSON schemas) → `implementations/` (Python functions) → `index.py` (registry)
-- 12 built-in tools: calculate, text processing, time/date, email/URL extraction, shell commands
+- 20 built-in tools: calculate, text processing, time/date, email/URL extraction, shell commands, file operations (read with line ranges, write, search, list, metadata, find in file, count occurrences)
 - Tools registered at app startup via `register_all_tools(ai_client)`
 - Separate from console commands (MCP = AI tools, console commands = user commands)
 

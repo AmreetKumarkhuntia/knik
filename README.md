@@ -56,7 +56,7 @@ pip install -r requirements.txt
 - ✅ Context-aware conversations
 - ✅ Command system (12 commands: /help, /history, /voice, /tools, /provider, /model, /debug, etc.)
 - ✅ Conversation history tracking
-- ✅ **MCP Tools** - 12 built-in tools (calculate, text processing, time, shell, etc.)
+- ✅ **MCP Tools** - 20 built-in tools (calculate, text processing, time, shell, file operations, etc.)
 - ✅ Function calling with AI
 - ✅ Dynamic provider switching (Vertex AI, LangChain, Mock)
 - ✅ AI model switching (gemini-1.5-pro, gemini-1.5-flash, etc.)

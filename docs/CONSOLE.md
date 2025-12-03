@@ -107,7 +107,7 @@ See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for all options.
 - Agent-powered streaming responses
 - Multi-step reasoning
 - Real-time voice output
-- 12 MCP tools (math, text, shell)
+- 20 MCP tools (math, text, shell, file operations)
 - Conversation history
 
 See [MCP.md](MCP.md) for tool details.

@@ -212,3 +212,76 @@ processor.play_async("Hello world")
 while not processor.is_processing_complete():
     time.sleep(0.1)
 ```
+
+## File System Tools
+
+### `read_file`
+Read the complete contents of a file or a specific line range.
+
+**Parameters:**
+- `file_path` (string): Path to the file to read.
+- `encoding` (string, optional): File encoding (default: 'utf-8').
+- `start_line` (integer, optional): Starting line number.
+- `end_line` (integer, optional): Ending line number.
+
+### `list_directory`
+List all files and directories in a given path.
+
+**Parameters:**
+- `directory_path` (string): Path to the directory to list.
+- `recursive` (boolean, optional): Whether to list files recursively.
+- `pattern` (string, optional): Glob pattern to filter files.
+
+### `search_in_files`
+Search for a pattern across multiple files in a directory.
+
+**Parameters:**
+- `directory_path` (string): Directory to search in.
+- `pattern` (string): Text or regex pattern to search for.
+- `file_pattern` (string, optional): Glob pattern for files to search.
+- `is_regex` (boolean, optional): Whether the pattern is a regex.
+- `case_sensitive` (boolean, optional): Whether the search is case sensitive.
+- `max_results` (integer, optional): Maximum number of matches to return.
+
+### `file_info`
+Get detailed information about a file or directory.
+
+**Parameters:**
+- `path` (string): Path to the file or directory.
+
+### `write_file`
+Write content to a file.
+
+**Parameters:**
+- `file_path` (string): Path where the file should be written.
+- `content` (string): Content to write to the file.
+- `encoding` (string, optional): File encoding (default: 'utf-8').
+
+### `append_to_file`
+Append content to an existing file.
+
+**Parameters:**
+- `file_path` (string): Path to the file to append to.
+- `content` (string): Content to append.
+- `encoding` (string, optional): File encoding (default: 'utf-8').
+
+### `find_in_file`
+Search for a pattern within a specific file.
+
+**Parameters:**
+- `file_path` (string): Path to the file to search in.
+- `pattern` (string): Text pattern or regex to search for.
+- `is_regex` (boolean, optional): Whether the pattern is a regular expression.
+- `case_sensitive` (boolean, optional): Whether the search should be case-sensitive.
+- `max_results` (integer, optional): Maximum number of matches to return.
+- `show_context` (boolean, optional): Whether to show context lines around matches.
+- `context_lines` (integer, optional): Number of context lines to show.
+
+### `count_in_file`
+Count how many times a pattern appears in a file.
+
+**Parameters:**
+- `file_path` (string): Path to the file to analyze.
+- `pattern` (string): Text pattern or regex to count.
+- `is_regex` (boolean, optional): Whether the pattern is a regular expression.
+- `case_sensitive` (boolean, optional): Whether the count should be case-sensitive.
