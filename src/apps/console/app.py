@@ -27,6 +27,7 @@ class ConsoleApp:
         self.console_processor: Optional[ConsoleProcessor] = None
         self.history = ConversationHistory(max_size=self.config.max_history_size)
         self.running = False
+        self.debug_mode = False
     
     def initialize(self) -> bool:
         try:
@@ -115,10 +116,16 @@ class ConsoleApp:
     
     def _handle_user_input(self, user_input: str):
         if user_input.startswith(self.config.command_prefix):
+            if self.debug_mode:
+                print(f"🐛 [DEBUG] Executing command: {user_input}")
             response = self.console_processor.process_inline(user_input)
             if response:
                 print(f"{self.config.assistant_symbol}{response}\n")
             return
+        
+        if self.debug_mode:
+            print(f"🐛 [DEBUG] Processing input: {user_input[:50]}...")
+            print(f"🐛 [DEBUG] Querying AI with provider: {self.ai_client.provider_name}")
         
         print(f"\n{self.config.assistant_symbol}", end="", flush=True)
         
@@ -133,6 +140,8 @@ class ConsoleApp:
                 chunk_count += 1
                 
                 if first_chunk and self.config.enable_voice_output:
+                    if self.debug_mode:
+                        print("\n🐛 [DEBUG] Starting voice generation...")
                     printer.info("🎙️ Starting voice generation...")
                     first_chunk = False
                 
@@ -143,21 +152,40 @@ class ConsoleApp:
             if full_ai_response:
                 full_response_text = ''.join(full_ai_response)
                 printer.info(f"AI response: {full_response_text}")
+                
+                if self.debug_mode:
+                    word_count = len(full_response_text.split())
+                    char_count = len(full_response_text)
+                    print(f"🐛 [DEBUG] Response stats: {word_count} words, {char_count} chars")
+            else:
+                if self.debug_mode:
+                    print("🐛 [DEBUG] No response received from AI!")
+            
+            if self.debug_mode:
+                print(f"🐛 [DEBUG] Streaming complete! ({chunk_count} chunks)")
             
             status = f"Streaming complete! ({chunk_count} chunks)"
             printer.success(status)
             
             if self.config.enable_voice_output and self.tts_processor:
+                if self.debug_mode:
+                    print("🐛 [DEBUG] Waiting for audio playback to complete...")
                 printer.info("Waiting for audio playback to complete...")
                 self.wait_until(
                     condition_fn=lambda: self.tts_processor.is_processing_complete(),
                     timeout=ConsoleConfig.loop_check_timeout,
                     check_interval=ConsoleConfig.loop_check_interval
                 )
+                if self.debug_mode:
+                    print("🐛 [DEBUG] Audio playback complete!")
                 printer.success("Audio playback complete!")
             
         except Exception as e:
+            print(f"\n❌ Error: {e}")
             printer.error(f"Error: {e}")
+            if self.debug_mode:
+                import traceback
+                print(f"🐛 [DEBUG] Traceback:\n{traceback.format_exc()}")
     
     def _display_welcome(self):
         print("\n" + "="*60)

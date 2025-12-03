@@ -17,6 +17,9 @@ def get_command_registry() -> Dict[str, Callable]:
     from .toggle_voice_cmd import toggle_voice_command
     from .tools_cmd import tools_command
     from .agent_cmd import agent_command
+    from .provider_cmd import provider_command
+    from .model_cmd import model_command
+    from .debug_cmd import debug_command
     
     return {
         'help': help_command,
@@ -29,6 +32,9 @@ def get_command_registry() -> Dict[str, Callable]:
         'toggle-voice': toggle_voice_command,
         'tools': tools_command,
         'agent': agent_command,
+        'provider': provider_command,
+        'model': model_command,
+        'debug': debug_command,
     }
 
 

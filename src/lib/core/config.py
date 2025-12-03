@@ -85,7 +85,10 @@ class Config:
         
         # Handle boolean conversion
         if type_cast == bool:
-            return value.lower() in ('true', '1', 'yes', 'on')
+            lower_value = value.lower()
+            if lower_value in ('false', '0', 'no', 'off'):
+                return False
+            return lower_value in ('true', '1', 'yes', 'on')
         
         # Handle int/float conversion
         try:

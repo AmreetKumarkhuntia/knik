@@ -31,14 +31,15 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 **ConsoleApp** (`src/apps/console/`)
 - Interactive AI chat with voice responses and conversation history
 - Modular architecture: `app.py` (main), `history.py` (context), `tools/` (commands)
-- Built-in command system with registry pattern: `/voice`, `/history`, `/tools`, etc.
+- Built-in command system with registry pattern: `/voice`, `/history`, `/tools`, `/provider`, `/model`, `/debug`, etc.
 - Integrates AIClient + TTSAsyncProcessor with smart wait system (blocks user input during playback)
+- Debug mode support: Toggle with `/debug` to see verbose processing details (uses `print()` for user console output)
 
 **Console Commands** (`src/apps/console/tools/`)
 - Modular command handlers: Each command in separate `*_cmd.py` file
 - Registry pattern in `index.py`: `get_command_registry()`, `register_commands()`
 - Easy to extend: Create new `*_cmd.py`, add to registry, done
-- 8 built-in commands: help, exit, clear, history, voice, info, toggle-voice, tools
+- 12 built-in commands: help, exit, clear, history, voice, info, toggle-voice, tools, agent, provider, model, debug
 
 **MCP Tools System** (`src/lib/mcp/`)
 - Clean separation: `definitions/` (JSON schemas) → `implementations/` (Python functions) → `index.py` (registry)
@@ -144,11 +145,12 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 ## Project-Specific Conventions
 
-1. **Printer instead of print/logging:** Use `from imports import printer` then `printer.info()`, `printer.success()`, `printer.error()`
+1. **Printer vs print:** Use `printer` for internal logging (`printer.info()`, `printer.success()`, `printer.error()`). Use regular `print()` for direct user output (e.g., debug mode)
 2. **Voice names:** Female `af_*` (sarah, heart, bella) vs Male `am_*` (adam, michael, leo)
 3. **Provider naming:** Always lowercase in registry (`vertex`, `mock`, not `Vertex`)
 4. **Run from src/:** Most import paths assume `src/` as working directory
 5. **Config classes:** Each app has a `Config` class reading from env vars with defaults (e.g., `ConsoleConfig`)
+6. **Dynamic switching:** `/provider` and `/model` commands recreate AIClient to apply changes while preserving MCP tools and system instructions
 
 ## Common Pitfalls
 
