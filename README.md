@@ -23,11 +23,15 @@ python demo/ai/simple_ai_tts.py
 
 All documentation is in the `docs/` folder:
 
-- **[docs/README.md](docs/README.md)** - Complete documentation, installation, usage
-- **[docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md)** - Configuration via environment variables
-- **[docs/library/](docs/library/)** - API reference and technical docs
-- **[docs/guides/](docs/guides/)** - User guides and tutorials
-- **[docs/plan/](docs/plan/)** - Roadmap and future plans
+- **[docs/README.md](docs/README.md)** - Documentation index & quick start
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** - Development plan & future features
+- **[docs/SETUP.md](docs/SETUP.md)** - Installation and configuration
+- **[docs/CONSOLE.md](docs/CONSOLE.md)** - Console app usage & commands
+- **[docs/GUI.md](docs/GUI.md)** - GUI application guide
+- **[docs/MCP.md](docs/MCP.md)** - MCP tools system & examples
+- **[docs/LINTING.md](docs/LINTING.md)** - Code quality & formatting
+- **[docs/API.md](docs/API.md)** - Code documentation
+- **[docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md)** - Configuration options
 
 ## 📦 Installation
 
@@ -110,25 +114,34 @@ audio_processor.stream_play(audio_generator)
 ```
 knik/
 ├── docs/                       # 📚 Documentation
-│   ├── guides/                 # User guides (Console App, AI Client, etc.)
-│   ├── library/                # API reference
-│   └── plan/                   # Roadmap and future plans
+│   ├── README.md               # Documentation index
+│   ├── ROADMAP.md              # Development plan
+│   ├── SETUP.md                # Installation guide
+│   ├── CONSOLE.md              # Console app guide
+│   ├── GUI.md                  # GUI app guide
+│   ├── MCP.md                  # MCP tools documentation
+│   ├── LINTING.md              # Code quality guide
+│   └── API.md                  # Code reference
 ├── src/
 │   ├── apps/                   # 🎯 Applications
-│   │   └── console/            # Interactive AI console app
-│   │       ├── mcp/            # Model Context Protocol tools
-│   │       │   ├── definitions/   # Tool schemas (JSON)
-│   │       │   └── implementations/  # Tool functions
+│   │   ├── console/            # Terminal AI console app
+│   │   └── gui/                # Desktop GUI app (CustomTkinter)
 │   ├── lib/                    # 🔧 Core library
 │   │   ├── core/               # Config & TTS async processor
 │   │   ├── services/           # AI, Voice, Audio services
 │   │   │   └── ai_client/      # AI client with provider registry
+│   │   ├── mcp/                # Model Context Protocol tools
+│   │   │   ├── definitions/    # Tool schemas (JSON)
+│   │   │   └── implementations/  # Tool functions
 │   │   └── utils/              # Console processor, printer
+│   ├── imports.py              # Central import hub
 │   └── main.py                 # 🚀 Main entry point
 ├── demo/                       # 🎮 Demo scripts
 │   ├── console/                # Console app demos
 │   ├── tts/                    # TTS demos
-│   └── ai/                     # AI + TTS integration demos
+│   ├── ai/                     # AI + TTS integration demos
+│   └── mcp/                    # MCP tools testing
+├── .ruff.toml                  # Linter configuration
 ├── requirements.txt            # Python dependencies
 └── package.json                # Project metadata & scripts
 ```

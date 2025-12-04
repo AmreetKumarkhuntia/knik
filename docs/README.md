@@ -9,6 +9,7 @@ AI-powered voice console with async TTS processing.
 - **[Setup](SETUP.md)** - Installation and configuration
 - **[Console](CONSOLE.md)** - Interactive AI chat with voice
 - **[MCP Tools](MCP.md)** - Model Context Protocol tools
+- **[Linting](LINTING.md)** - Code quality & formatting
 - **[API](API.md)** - Code documentation
 - **[Environment](ENVIRONMENT_VARIABLES.md)** - Configuration options
 
@@ -43,5 +44,6 @@ src/
 - **[SETUP](SETUP.md)** - Installation
 - **[CONSOLE](CONSOLE.md)** - Console usage
 - **[MCP](MCP.md)** - Tool system
+- **[LINTING](LINTING.md)** - Code quality & formatting
 - **[API](API.md)** - Code reference
 - **[MCP_LANGCHAIN_PATTERN](MCP_LANGCHAIN_PATTERN.md)** - Tool binding pattern
