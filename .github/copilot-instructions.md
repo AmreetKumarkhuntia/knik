@@ -183,6 +183,7 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 ## Documentation Map
 
 - `docs/README.md` - Doc index and quick links
+- `docs/ROADMAP.md` - **Development roadmap: what's built, what's planned, and how to extend Knik into a JARVIS-like assistant**
 - `docs/MCP.md` - MCP tools architecture (100+ lines with examples)
 - `docs/CONSOLE.md` - Console app commands and usage
 - `docs/ENVIRONMENT_VARIABLES.md` - All config options

@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from ...utils.printer import printer
 
 
 def _validate_path(path: Path, path_str: str, path_type: str = "file") -> Optional[Dict[str, Any]]:
@@ -65,6 +66,8 @@ def _build_file_response(path: Path, content: str, lines: List[str], start_line:
 
 
 def read_file_impl(file_path: str, encoding: str = "utf-8", start_line: Optional[int] = None, end_line: Optional[int] = None) -> Dict[str, Any]:
+    range_info = f" (lines {start_line}-{end_line})" if start_line or end_line else ""
+    printer.info(f"🔧 Reading file: {file_path}{range_info}")
     try:
         path = Path(file_path)
         error = _validate_file_path(path, file_path)
@@ -131,6 +134,9 @@ def _list_non_recursive(path: Path, pattern: Optional[str]) -> tuple[List[Dict[s
 
 
 def list_directory_impl(directory_path: str, recursive: bool = False, pattern: Optional[str] = None) -> Dict[str, Any]:
+    mode = "recursively" if recursive else "non-recursively"
+    pattern_info = f" with pattern '{pattern}'" if pattern else ""
+    printer.info(f"🔧 Listing directory {mode}: {directory_path}{pattern_info}")
     try:
         path = Path(directory_path)
         error = _validate_dir_path(path, directory_path)
@@ -200,6 +206,7 @@ def search_in_files_impl(
     case_sensitive: bool = True,
     max_results: int = 100
 ) -> Dict[str, Any]:
+    printer.info(f"🔧 Searching in files: pattern='{pattern}', directory={directory_path}, file_pattern={file_pattern}")
     try:
         path = Path(directory_path)
         error = _validate_dir_path(path, directory_path)
@@ -249,6 +256,7 @@ def _get_line_count(path: Path) -> Optional[int]:
 
 
 def file_info_impl(path: str) -> Dict[str, Any]:
+    printer.info(f"🔧 Getting file/directory info for: {path}")
     try:
         p = Path(path)
         if not p.exists():
@@ -300,6 +308,7 @@ def _write_to_file(path: Path, content: str, mode: str, encoding: str) -> Dict[s
 
 
 def write_file_impl(file_path: str, content: str, encoding: str = "utf-8") -> Dict[str, Any]:
+    printer.info(f"🔧 Writing to file: {file_path} ({len(content)} bytes)")
     try:
         return _write_to_file(Path(file_path), content, 'w', encoding)
     except Exception as e:
@@ -307,6 +316,7 @@ def write_file_impl(file_path: str, content: str, encoding: str = "utf-8") -> Di
 
 
 def append_to_file_impl(file_path: str, content: str, encoding: str = "utf-8") -> Dict[str, Any]:
+    printer.info(f"🔧 Appending to file: {file_path} ({len(content)} bytes)")
     try:
         return _write_to_file(Path(file_path), content, 'a', encoding)
     except Exception as e:
@@ -338,57 +348,6 @@ def _build_match_info(line_num: int, line: str, lines: List[str], show_context: 
         match_info["context_after"] = _get_context_lines(lines, line_num, context_lines, "after")
     
     return match_info
-
-
-def find_in_file_impl(
-    file_path: str,
-    pattern: str,
-    is_regex: bool = False,
-    case_sensitive: bool = True,
-    max_results: int = 100,
-    show_context: bool = False,
-    context_lines: int = 2
-) -> Dict[str, Any]:
-    try:
-        path = Path(file_path)
-        error = _validate_file_path(path, file_path)
-        if error:
-            return error
-        
-        try:
-            regex = _compile_search_regex(pattern, case_sensitive, is_regex)
-        except ValueError as e:
-            return {"error": str(e)}
-        
-        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-            lines = f.readlines()
-        
-        matches = []
-        for line_num, line in enumerate(lines, 1):
-            if _line_matches_pattern(line, pattern, regex, case_sensitive):
-                match_info = _build_match_info(line_num, line, lines, show_context, context_lines)
-                matches.append(match_info)
-                
-                if len(matches) >= max_results:
-                    return {
-                        "success": True,
-                        "file_path": str(path.absolute()),
-                        "pattern": pattern,
-                        "matches": matches,
-                        "total_matches": len(matches),
-                        "max_results_reached": True
-                    }
-        
-        return {
-            "success": True,
-            "file_path": str(path.absolute()),
-            "pattern": pattern,
-            "matches": matches,
-            "total_matches": len(matches),
-            "max_results_reached": False
-        }
-    except Exception as e:
-        return {"error": f"Error searching file: {str(e)}"}
 
 
 def _count_pattern_in_line(line: str, pattern: str, regex: Optional[re.Pattern], case_sensitive: bool) -> int:
@@ -481,6 +440,7 @@ def count_in_file_impl(
     is_regex: bool = False,
     case_sensitive: bool = True
 ) -> Dict[str, Any]:
+    printer.info(f"🔧 Counting pattern '{pattern}' in file: {file_path}")
     try:
         path = Path(file_path)
         error = _validate_file_path(path, file_path)

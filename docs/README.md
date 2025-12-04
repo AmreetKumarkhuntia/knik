@@ -4,6 +4,8 @@ AI-powered voice console with async TTS processing.
 
 ## Quick Links
 
+- **[Roadmap](ROADMAP.md)** - 🚀 **Development plan & future features**
+- **[GUI App](GUI.md)** - 🖥️ **Desktop GUI application guide** (NEW!)
 - **[Setup](SETUP.md)** - Installation and configuration
 - **[Console](CONSOLE.md)** - Interactive AI chat with voice
 - **[MCP Tools](MCP.md)** - Model Context Protocol tools
@@ -36,6 +38,8 @@ src/
 
 ## Documentation
 
+- **[ROADMAP](ROADMAP.md)** - 🗺️ Development plan & future features
+- **[GUI](GUI.md)** - 🖥️ GUI application guide (NEW!)
 - **[SETUP](SETUP.md)** - Installation
 - **[CONSOLE](CONSOLE.md)** - Console usage
 - **[MCP](MCP.md)** - Tool system

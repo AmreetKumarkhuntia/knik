@@ -35,13 +35,14 @@ class BaseAIProvider(ABC):
 class LangChainProvider(BaseAIProvider):
 
     def __init__(self, llm, agent, provider_name: str, mcp_registry: Optional['MCPServerRegistry'] = None, 
-                 system_instruction: Optional[str] = None, **config):
+                 system_instruction: Optional[str] = None, tool_callback=None, **config):
         self._llm_raw = llm
         self._provider_name = provider_name
         self.config = config
         self.agent = agent
         self.mcp_registry = mcp_registry
         self.system_instruction = system_instruction
+        self.tool_callback = tool_callback
         
         if mcp_registry:
             tools = mcp_registry.create_langchain_tools()
@@ -80,9 +81,14 @@ class LangChainProvider(BaseAIProvider):
             if hasattr(response, 'tool_calls') and response.tool_calls:
                 for tool_call in response.tool_calls:
                     tool_name = tool_call['name']
+                    tool_args = tool_call.get('args', {})
                     printer.info(f"🔧 {tool_name}")
+                    
+                    if self.tool_callback:
+                        self.tool_callback(tool_name, tool_args)
+                    
                     try:
-                        result = self.mcp_registry.execute_tool(tool_name, **tool_call['args'])
+                        result = self.mcp_registry.execute_tool(tool_name, **tool_args)
                         messages.append(ToolMessage(content=str(result), tool_call_id=tool_call['id']))
                     except Exception as e:
                         messages.append(ToolMessage(content=f"Error: {str(e)}", tool_call_id=tool_call['id']))
@@ -106,9 +112,14 @@ class LangChainProvider(BaseAIProvider):
             if hasattr(response, 'tool_calls') and response.tool_calls:
                 for tool_call in response.tool_calls:
                     tool_name = tool_call['name']
+                    tool_args = tool_call.get('args', {})
                     printer.info(f"🔧 {tool_name}")
+                    
+                    if self.tool_callback:
+                        self.tool_callback(tool_name, tool_args)
+                    
                     try:
-                        result = self.mcp_registry.execute_tool(tool_name, **tool_call['args'])
+                        result = self.mcp_registry.execute_tool(tool_name, **tool_args)
                         messages.append(ToolMessage(content=str(result), tool_call_id=tool_call['id']))
                     except Exception as e:
                         messages.append(ToolMessage(content=f"Error: {str(e)}", tool_call_id=tool_call['id']))
@@ -153,6 +164,7 @@ class LangChainProvider(BaseAIProvider):
             yield from self.query_stream(prompt=prompt, use_tools=use_tools, **kwargs)
             return
         
+        printer.debug(f"Using agent stream mode for prompt: {prompt[:50]}...")
         previous_content = None
         for chunk in self.agent.stream(
             {"messages": [{"role": "user", "content": prompt}]},
@@ -164,6 +176,10 @@ class LangChainProvider(BaseAIProvider):
                 if messages:
                     last_message = messages[-1]
                     message_type = getattr(last_message, 'type', None) or getattr(last_message, '__class__.__name__', None)
+                    
+                    # Log tool calls when they happen
+                    if message_type == 'tool':
+                        printer.debug(f"Tool message detected in stream: {last_message}")
                     
                     if message_type == 'ai' or (hasattr(last_message, 'content') and message_type not in ['human', 'tool']):
                         if hasattr(last_message, 'content'):

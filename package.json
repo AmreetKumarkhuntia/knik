@@ -8,6 +8,8 @@
   "main": "index.js",
   "scripts": {
     "source:venv": ". .venv/bin/activate && exec $SHELL",
+    "start": "source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode gui",
+    "start:gui": "source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode gui",
     "start:console": "source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode console",
     "start:console:split": "./scripts/start_console_split.sh",
     "start:console:dual": "./scripts/start_console_dual.sh",

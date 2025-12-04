@@ -73,7 +73,7 @@ class TTSAsyncProcessor:
     def is_processing_complete(self) -> bool:
         queues_empty = self.is_text_queue_empty() and self.is_audio_queue_empty()
         not_playing = not self.is_async_playback_active
-        printer.info(f"tts processing queue is empty: '{queues_empty} & is not playing: {not_playing}")
+        printer.debug(f"tts processing queue is empty: '{queues_empty} & is not playing: {not_playing}")
         return queues_empty and not_playing
     
     def __text_processor__(self) -> None:
@@ -84,7 +84,7 @@ class TTSAsyncProcessor:
                 try:
                     audio, sample_rate = self.tts_processor.generate(text)
                     self.audio_processing_queue.append(audio)
-                    printer.info(f"Audio generated")
+                    printer.debug(f"Audio generated")
                 except Exception as e:
                     printer.error(f"Error processing text: {e}")
             time.sleep(self.sleep_duration)
@@ -106,9 +106,9 @@ class TTSAsyncProcessor:
                         except Exception as e:
                             printer.error(f"Failed to save audio: {e}")
                     if self.should_play:
-                        printer.info("Playing audio...")
+                        printer.debug("Playing audio...")
                         self.audio_processor.play(audio, blocking=True)
-                        printer.info("Completed Playback")
+                        printer.debug("Completed Playback")
                 
                 if len(self.audio_processing_queue) == 0 and len(self.text_processing_queue) == 0:
                     self.is_async_playback_active = False

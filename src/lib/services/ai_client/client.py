@@ -31,16 +31,20 @@ class AIClient:
         auto_fallback_to_mock: bool = True,
         mcp_registry = None,
         system_instruction: Optional[str] = None,
+        tool_callback = None,
         **provider_kwargs
     ):
         self.provider_name = provider.lower()
         self.auto_fallback_to_mock = auto_fallback_to_mock
         self._provider: Optional[BaseAIProvider] = None
+        self.tool_callback = tool_callback
         
         if mcp_registry:
             provider_kwargs['mcp_registry'] = mcp_registry
         if system_instruction:
             provider_kwargs['system_instruction'] = system_instruction
+        if tool_callback:
+            provider_kwargs['tool_callback'] = tool_callback
         
         try:
             provider_class = ProviderRegistry.get(self.provider_name)

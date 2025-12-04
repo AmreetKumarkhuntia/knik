@@ -34,9 +34,12 @@ def run_shell_command(command: str, timeout: int = 10) -> str:
                 response += f"Error: {error}\n"
             if output:
                 response += f"Output: {output}"
+            printer.warning(f"Command failed with exit code {result.returncode}")
             return response.strip()
         
-        return output if output else "Command executed successfully (no output)"
+        result_text = output if output else "Command executed successfully (no output)"
+        printer.info(f"Command completed: {result_text[:100]}{'...' if len(result_text) > 100 else ''}")
+        return result_text
         
     except subprocess.TimeoutExpired:
         return f"Error: Command timed out after {timeout} seconds"

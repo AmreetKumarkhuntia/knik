@@ -5,11 +5,13 @@ High-quality text-to-speech powered by Kokoro-82M with a clean, modular Python A
 ## 🚀 Quick Start
 
 ```bash
-# Run the interactive AI console with voice (default mode)
-python src/main.py
+# Run the GUI application (default - NEW! 🎉)
+npm run start
+# or: python src/main.py
 
-# Or explicitly specify console mode
-python src/main.py --mode console
+# Run the terminal console
+npm run start:console
+# or: python src/main.py --mode console
 
 # Try demos
 python demo/tts/demo.py
@@ -51,18 +53,31 @@ pip install -r requirements.txt
 - ✅ Real-time streaming playback
 - ✅ Save to WAV files
 
-### AI Console App (NEW! 🎉)
+### AI Assistant Apps
 
-- ✅ Interactive chat with AI (Google Gemini)
-- ✅ Voice-enabled responses
-- ✅ Context-aware conversations
+**🖥️ GUI Application (NEW! 🎉)**
+- ✅ Modern desktop interface with CustomTkinter
+- ✅ Rich chat interface with scrollable history
+- ✅ Real-time AI streaming responses
+- ✅ Voice output with visual feedback
+- ✅ Settings panel (AI provider, model, voice, theme)
+- ✅ Dark/Light/System theme support
+- ✅ All console features in beautiful UI
+
+**💻 Console Application**
+- ✅ Terminal-based interactive chat
 - ✅ Command system (12 commands: /help, /history, /voice, /tools, /provider, /model, /debug, etc.)
 - ✅ Conversation history tracking
+- ✅ Debug mode for verbose logging
+
+**🧠 AI Features (Both Apps)**
+- ✅ Powered by Google Gemini (Vertex AI)
+- ✅ Voice-enabled responses with Kokoro TTS
+- ✅ Context-aware conversations
 - ✅ **MCP Tools** - 20 built-in tools (calculate, text processing, time, shell, file operations, etc.)
 - ✅ Function calling with AI
 - ✅ Dynamic provider switching (Vertex AI, LangChain, Mock)
-- ✅ AI model switching (gemini-1.5-pro, gemini-1.5-flash, etc.)
-- ✅ Debug mode for verbose logging
+- ✅ AI model switching (gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash, etc.)
 
 ### Library
 
