@@ -44,6 +44,7 @@ pip install -r requirements.txt
 ## 🎯 Features
 
 ### Text-to-Speech
+
 - ✅ High-quality TTS with Kokoro-82M (82M parameters)
 - ✅ Multiple voices (male & female)
 - ✅ Multi-language support
@@ -51,6 +52,7 @@ pip install -r requirements.txt
 - ✅ Save to WAV files
 
 ### AI Console App (NEW! 🎉)
+
 - ✅ Interactive chat with AI (Google Gemini)
 - ✅ Voice-enabled responses
 - ✅ Context-aware conversations
@@ -63,6 +65,7 @@ pip install -r requirements.txt
 - ✅ Debug mode for verbose logging
 
 ### Library
+
 - ✅ Modular, reusable components
 - ✅ Clean Python API
 - ✅ Easy integration
