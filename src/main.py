@@ -5,6 +5,7 @@ Main entry point for the application.
 
 import argparse
 import sys
+
 from lib import printer
 
 
@@ -12,7 +13,7 @@ def run_console_app():
     """Run the interactive console application."""
     try:
         from apps.console import ConsoleApp, ConsoleConfig
-        
+
         config = ConsoleConfig()
         app = ConsoleApp(config)
         app.run()
@@ -29,7 +30,7 @@ def run_gui_app():
     """Run the GUI application."""
     try:
         from apps.gui import GUIApp, GUIConfig
-        
+
         config = GUIConfig()
         app = GUIApp(config)
         app.run()
@@ -52,23 +53,23 @@ Examples:
   python main.py                   # Run GUI application (default)
   python main.py --mode gui        # Run GUI application
   python main.py --mode console    # Run terminal console
-  
+
 For TTS demos, use: python demo/tts/demo.py
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        '--mode',
-        choices=['console', 'gui'],
-        default='gui',
-        help='Application mode: console (terminal) or gui (desktop window)'
+        "--mode",
+        choices=["console", "gui"],
+        default="gui",
+        help="Application mode: console (terminal) or gui (desktop window)",
     )
-    
+
     args = parser.parse_args()
-    
-    if args.mode == 'console':
+
+    if args.mode == "console":
         run_console_app()
-    elif args.mode == 'gui':
+    elif args.mode == "gui":
         run_gui_app()
     else:
         printer.error(f"Unknown mode: {args.mode}")

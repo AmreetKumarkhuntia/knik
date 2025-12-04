@@ -1,0 +1,10 @@
+[project]
+name = "knik"
+version = "1.0.0"
+description = "AI-powered voice assistant with async TTS processing"
+authors = [{name = "Amreet Kumar Khuntia", email = "amreetleo123@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "ISC"}
+
+# Note: Ruff configuration is in .ruff.toml

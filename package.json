@@ -13,6 +13,10 @@
     "start:console": "source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode console",
     "start:console:split": "./scripts/start_console_split.sh",
     "start:console:dual": "./scripts/start_console_dual.sh",
+    "lint": "source .venv/bin/activate && ruff check .",
+    "lint:fix": "source .venv/bin/activate && ruff check --fix .",
+    "format": "source .venv/bin/activate && ruff format .",
+    "format:check": "source .venv/bin/activate && ruff format --check .",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

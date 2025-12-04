@@ -1,0 +1,67 @@
+# Ruff Configuration for Knik
+# Documentation: https://docs.astral.sh/ruff/
+
+# Target Python 3.12+
+target-version = "py312"
+
+# Line length to match your style
+line-length = 120
+
+# Directories to exclude from linting
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "*.pyc",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "build",
+    "dist",
+    "*.egg-info",
+    "async_tts_output",
+]
+
+[lint]
+# Enable these rule sets:
+# E/W - pycodestyle errors and warnings
+# F - Pyflakes
+# I - isort (import sorting)
+# N - pep8-naming
+# UP - pyupgrade (modernize Python code)
+# B - flake8-bugbear (find likely bugs)
+# C4 - flake8-comprehensions
+# SIM - flake8-simplify
+select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM"]
+
+# Ignore specific rules that might be too strict for this project
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "B008",   # Do not perform function calls in argument defaults
+    "C901",   # Function is too complex
+    "N802",   # Function name should be lowercase (conflicts with naming conventions)
+    "N803",   # Argument name should be lowercase
+    "N806",   # Variable in function should be lowercase
+]
+
+# Allow unused variables when prefixed with underscore
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.per-file-ignores]
+# Don't enforce import rules in __init__ files
+"__init__.py" = ["F401", "F403"]
+# Demo files can have more relaxed rules
+"demo/**/*.py" = ["E402", "F841"]
+
+[lint.isort]
+# Configure import sorting
+known-first-party = ["lib", "apps", "imports"]
+force-single-line = false
+lines-after-imports = 2
+
+[format]
+# Formatting preferences
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

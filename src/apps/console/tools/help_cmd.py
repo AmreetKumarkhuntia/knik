@@ -18,7 +18,7 @@ Chat Features:
   • Agent-powered streaming responses by default
   • Multi-step reasoning and complex task handling
   • Real-time voice output (if enabled)
-  
+
 Just type your question to chat with AI!
 """
     return help_text.strip()

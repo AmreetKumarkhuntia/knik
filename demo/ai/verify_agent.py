@@ -1,26 +1,29 @@
 """
 Quick test to verify agent is initialized
 """
-import sys
+
 import os
+import sys
+
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from src.lib.mcp import register_all_tools
 from src.lib.services.ai_client import AIClient
 from src.lib.services.ai_client.registry import MCPServerRegistry
-from src.lib.mcp import register_all_tools
 from src.lib.utils import printer
+
 
 register_all_tools(MCPServerRegistry)
 
 client = AIClient(
     provider="vertex",
     mcp_registry=MCPServerRegistry,
-    project_id=os.getenv('GOOGLE_CLOUD_PROJECT'),
+    project_id=os.getenv("GOOGLE_CLOUD_PROJECT"),
     location="asia-south1",
     model_name="gemini-2.5-flash",
     temperature=0.0,
-    auto_fallback_to_mock=False
+    auto_fallback_to_mock=False,
 )
 
 # Check if agent exists

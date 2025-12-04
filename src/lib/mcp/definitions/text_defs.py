@@ -4,14 +4,9 @@ TEXT_DEFINITIONS = [
         "description": "Count words, characters, and lines in text",
         "parameters": {
             "type": "object",
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "Text to analyze"
-                }
-            },
-            "required": ["text"]
-        }
+            "properties": {"text": {"type": "string", "description": "Text to analyze"}},
+            "required": ["text"],
+        },
     },
     {
         "name": "find_and_replace",
@@ -19,54 +14,35 @@ TEXT_DEFINITIONS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "Text to process"
-                },
-                "find": {
-                    "type": "string",
-                    "description": "Text to find"
-                },
-                "replace": {
-                    "type": "string",
-                    "description": "Text to replace with"
-                },
+                "text": {"type": "string", "description": "Text to process"},
+                "find": {"type": "string", "description": "Text to find"},
+                "replace": {"type": "string", "description": "Text to replace with"},
                 "case_sensitive": {
                     "type": "boolean",
                     "description": "Whether search is case-sensitive (default: true)",
-                    "default": True
-                }
+                    "default": True,
+                },
             },
-            "required": ["text", "find", "replace"]
-        }
+            "required": ["text", "find", "replace"],
+        },
     },
     {
         "name": "extract_emails",
         "description": "Extract email addresses from text",
         "parameters": {
             "type": "object",
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "Text to extract emails from"
-                }
-            },
-            "required": ["text"]
-        }
+            "properties": {"text": {"type": "string", "description": "Text to extract emails from"}},
+            "required": ["text"],
+        },
     },
     {
         "name": "extract_urls",
         "description": "Extract URLs from text",
         "parameters": {
             "type": "object",
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "Text to extract URLs from"
-                }
-            },
-            "required": ["text"]
-        }
+            "properties": {"text": {"type": "string", "description": "Text to extract URLs from"}},
+            "required": ["text"],
+        },
     },
     {
         "name": "text_case_convert",
@@ -74,16 +50,13 @@ TEXT_DEFINITIONS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "Text to convert"
-                },
+                "text": {"type": "string", "description": "Text to convert"},
                 "case_type": {
                     "type": "string",
-                    "description": "Case type: upper, lower, title, capitalize, snake, camel, kebab"
-                }
+                    "description": "Case type: upper, lower, title, capitalize, snake, camel, kebab",
+                },
             },
-            "required": ["text", "case_type"]
-        }
-    }
+            "required": ["text", "case_type"],
+        },
+    },
 ]

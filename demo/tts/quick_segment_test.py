@@ -4,12 +4,15 @@ Quick test to see text segmentation in action.
 
 import sys
 from pathlib import Path
+
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.lib import KokoroVoiceModel, AudioProcessor
+from src.lib import AudioProcessor, KokoroVoiceModel
+
 
 # Initialize
-voice_model = KokoroVoiceModel(voice='am_adam')
+voice_model = KokoroVoiceModel(voice="am_adam")
 audio_processor = AudioProcessor()
 
 # Different text examples - uncomment one to test
@@ -51,14 +54,14 @@ print("\nGenerating speech with segmentation info:\n")
 
 # Generate and count segments
 segment_count = 0
-for graphemes, phonemes, audio in voice_model.generate(text):
+for graphemes, _phonemes, audio in voice_model.generate(text):
     segment_count += 1
     duration = len(audio) / 24000
     print(f"Segment {segment_count}:")
     print(f"  Text: {graphemes}")
     print(f"  Duration: {duration:.2f}s")
     print()
-    
+
     # Play the audio
     audio_processor.play(audio, blocking=True)
 

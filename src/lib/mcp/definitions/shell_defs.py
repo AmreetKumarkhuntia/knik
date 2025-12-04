@@ -7,15 +7,15 @@ SHELL_DEFINITIONS = [
             "properties": {
                 "command": {
                     "type": "string",
-                    "description": "The shell command to execute (e.g., 'ls -la', 'git status', 'pwd')."
+                    "description": "The shell command to execute (e.g., 'ls -la', 'git status', 'pwd').",
                 },
                 "timeout": {
                     "type": "integer",
                     "description": "Maximum time (in seconds) to allow the command to run. Default is 10 seconds, maximum allowed is 30 seconds.",
-                    "default": 10
-                }
+                    "default": 10,
+                },
             },
-            "required": ["command"]
-        }
+            "required": ["command"],
+        },
     }
 ]

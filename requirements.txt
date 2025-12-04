@@ -7,3 +7,6 @@ loguru  # Modern logging with colors and formatting
 google-cloud-aiplatform  # For Vertex AI / Gemini integration (optional)
 customtkinter>=5.2.0  # Modern GUI framework
 Pillow>=10.0.0  # Image processing for GUI
+
+# Development tools
+ruff>=0.7.0  # Modern Python linter and formatter

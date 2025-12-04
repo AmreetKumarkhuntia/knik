@@ -1,27 +1,23 @@
-from typing import Optional, Union
+from pathlib import Path
+
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from pathlib import Path
 
 from ..core.config import Config
 from ..utils.printer import printer
 
+
 class AudioProcessor:
     sample_rate = None
-    is_playing = False
+    _is_playing = False
 
     def __init__(self, sample_rate: int = Config.SAMPLE_RATE):
         self.sample_rate = sample_rate
         self._is_playing = False
 
         try:
-            self.stream = sd.OutputStream(
-                samplerate=self.sample_rate,
-                channels=1,
-                dtype="float32",
-                blocksize=0
-            )
+            self.stream = sd.OutputStream(samplerate=self.sample_rate, channels=1, dtype="float32", blocksize=0)
             self.stream.start()
             printer.success("Audio output stream initialized")
         except Exception as e:
@@ -41,22 +37,16 @@ class AudioProcessor:
             if blocking:
                 sd.wait()
 
-
         except Exception as e:
             printer.error(f"Playback error: {e}")
         finally:
             printer.info("Completed playback of segment")
             self._is_playing = False
 
-    def stream_play(
-        self,
-        audio_generator,
-        show_progress: bool = True,
-        blocking: bool = True
-    ) -> None:
+    def stream_play(self, audio_generator, show_progress: bool = True, blocking: bool = True) -> None:
         count = 0
 
-        for g, p, audio in audio_generator:
+        for g, _p, audio in audio_generator:
             if show_progress:
                 printer.info(f"Playing segment {count}: {g}")
             self.play(audio, blocking)
@@ -65,13 +55,7 @@ class AudioProcessor:
         if show_progress:
             printer.success(f"Played {count} segment(s)")
 
-    def save(
-        self,
-        audio: np.ndarray,
-        filepath: Union[str, Path],
-        format: Optional[str] = None
-    ) -> None:
-
+    def save(self, audio: np.ndarray, filepath: str | Path, format: str | None = None) -> None:
         if audio.size == 0:
             printer.warning("Cannot save empty audio")
             return
@@ -85,19 +69,14 @@ class AudioProcessor:
             printer.error(f"Error saving audio: {e}")
 
     def save_segments(
-        self,
-        audio_generator,
-        output_dir: Union[str, Path] = ".",
-        prefix: str = "segment",
-        extension: str = "wav"
+        self, audio_generator, output_dir: str | Path = ".", prefix: str = "segment", extension: str = "wav"
     ) -> list[Path]:
-
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
         saved = []
 
-        for i, (g, p, audio) in enumerate(audio_generator):
+        for i, (g, _p, audio) in enumerate(audio_generator):
             filepath = output_dir / f"{prefix}_{i}.{extension}"
             self.save(audio, filepath)
             saved.append(filepath)
@@ -106,14 +85,12 @@ class AudioProcessor:
         printer.success(f"Saved {len(saved)} segments")
         return saved
 
-    def load(self, filepath: Union[str, Path]) -> np.ndarray:
+    def load(self, filepath: str | Path) -> np.ndarray:
         try:
             audio, sr = sf.read(str(filepath))
 
             if sr != self.sample_rate:
-                printer.warning(
-                    f"File sample rate {sr} differs from {self.sample_rate}"
-                )
+                printer.warning(f"File sample rate {sr} differs from {self.sample_rate}")
 
             return audio
         except Exception as e:
@@ -132,10 +109,7 @@ class AudioProcessor:
         return self._is_playing
 
     def get_devices(self) -> dict:
-        return {
-            'devices': sd.query_devices(),
-            'default_output': sd.query_devices(kind='output')
-        }
+        return {"devices": sd.query_devices(), "default_output": sd.query_devices(kind="output")}
 
     def set_sample_rate(self, sample_rate: int) -> None:
         self.sample_rate = sample_rate

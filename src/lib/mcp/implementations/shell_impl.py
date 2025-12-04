@@ -1,33 +1,28 @@
-import subprocess
 import os
+import subprocess
+
 from ...utils.printer import printer
 
-BLOCKED_COMMANDS = ['rm -rf', 'mkfs', 'dd if=', ':(){', 'fork', '>(', 'sudo rm']
+
+BLOCKED_COMMANDS = ["rm -rf", "mkfs", "dd if=", ":(){", "fork", ">(", "sudo rm"]
 MAX_TIMEOUT = 30
 
 
 def run_shell_command(command: str, timeout: int = 10) -> str:
     timeout = min(timeout, MAX_TIMEOUT)
 
-    printer.info(f"Executing shell command: \"{command}\" with timeout {timeout}s")
+    printer.info(f'Executing shell command: "{command}" with timeout {timeout}s')
 
     for blocked in BLOCKED_COMMANDS:
         if blocked in command.lower():
             return f"Error: Command blocked for safety reasons. Cannot execute commands containing '{blocked}'"
-    
+
     try:
-        result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=os.getcwd()
-        )
-        
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout, cwd=os.getcwd())
+
         output = result.stdout if result.stdout else ""
         error = result.stderr if result.stderr else ""
-        
+
         if result.returncode != 0:
             response = f"Exit code: {result.returncode}\n"
             if error:
@@ -36,11 +31,11 @@ def run_shell_command(command: str, timeout: int = 10) -> str:
                 response += f"Output: {output}"
             printer.warning(f"Command failed with exit code {result.returncode}")
             return response.strip()
-        
+
         result_text = output if output else "Command executed successfully (no output)"
         printer.info(f"Command completed: {result_text[:100]}{'...' if len(result_text) > 100 else ''}")
         return result_text
-        
+
     except subprocess.TimeoutExpired:
         return f"Error: Command timed out after {timeout} seconds"
     except Exception as e:

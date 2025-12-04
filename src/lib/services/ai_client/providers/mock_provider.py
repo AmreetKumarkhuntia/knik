@@ -1,23 +1,24 @@
 """Mock AI Provider implementation for testing."""
 
 import time
-from typing import Dict, Any, Generator, Optional, TYPE_CHECKING
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any
 
-from .base_provider import BaseAIProvider
-from ..registry import ProviderRegistry
 from ....utils import printer
+from ..registry import ProviderRegistry
+from .base_provider import BaseAIProvider
+
 
 if TYPE_CHECKING:
     from ..registry import MCPServerRegistry
 
 
 class MockAIProvider(BaseAIProvider):
-    
     @classmethod
     def get_provider_name(cls) -> str:
         return "mock"
-    
-    def __init__(self, mcp_registry: 'MCPServerRegistry' = None, system_instruction: Optional[str] = None):
+
+    def __init__(self, mcp_registry: "MCPServerRegistry" = None, system_instruction: str | None = None):
         self.mcp_registry = mcp_registry
         self.system_instruction = system_instruction
         self._responses = [
@@ -26,44 +27,39 @@ class MockAIProvider(BaseAIProvider):
             "Mock response. Install and configure Vertex AI for actual answers.",
         ]
         self._index = 0
-    
+
     def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
         printer.debug(f"[MOCK] Query: {prompt[:60]}...")
         printer.debug(f"[MOCK] Response: {response}")
         return response
-    
+
     def query_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
         printer.debug(f"[MOCK] Streaming Query: {prompt[:60]}...")
-        
+
         words = response.split()
         for word in words:
             time.sleep(0.05)
             yield word + " "
-        
-        printer.debug(f"[MOCK] Streaming complete")
-    
+
+        printer.debug("[MOCK] Streaming complete")
+
     def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
         """Mock agent chat - same as query"""
         return self.query(prompt=prompt, use_tools=use_tools, **kwargs)
-    
+
     def chat_with_agent_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
         """Mock agent stream - same as query_stream"""
         yield from self.query_stream(prompt=prompt, use_tools=use_tools, **kwargs)
-    
+
     def is_configured(self) -> bool:
         return True
-    
-    def get_info(self) -> Dict[str, Any]:
-        return {
-            'provider': 'Mock AI',
-            'configured': True,
-            'initialized': True,
-            'note': 'Using mock responses'
-        }
+
+    def get_info(self) -> dict[str, Any]:
+        return {"provider": "Mock AI", "configured": True, "initialized": True, "note": "Using mock responses"}
 
 
 ProviderRegistry.register(MockAIProvider.get_provider_name(), MockAIProvider)
