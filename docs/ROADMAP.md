@@ -1,8 +1,23 @@
 # Knik Development Roadmap
 
-**Last Updated:** December 4, 2025
+**Last Updated:** December 6, 2025
 
-This document tracks what we've built and what's planned for Knik - our journey toward a JARVIS-like AI assistant with native UI.
+This document tracks what we've built and what's planned for Knik - our journey toward a JARVIS-like AI assistant.
+
+## 🔄 **MAJOR UPDATE: Web App Complete!**
+
+**Decision:** Migrated from CustomTkinter to **React + FastAPI + Tailwind CSS** for professional web interface with smooth 60fps animations.
+
+**Status:** ✅ **Web app implementation complete!** (Todos 1-6 of 9)
+
+- ✅ **Backend:** FastAPI with unified chat endpoint, config system, admin/history APIs
+- ✅ **Frontend:** React + TypeScript + Vite with smooth animations
+- ✅ **Scripts:** Organized startup scripts with .env loading
+- ✅ **Documentation:** Comprehensive WEB_APP.md guide
+
+**Next:** Electron integration for desktop packaging (Todos 7-9)
+
+**See:** `docs/WEB_APP.md` for complete architecture and usage guide.
 
 ---
 

@@ -44,6 +44,24 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 - Voice toggle: Enable/disable TTS output via settings
 - MCP tool integration: AI can execute 20+ tools with visual feedback in chat
 
+**WebApp** (`src/apps/web/`)
+- Modern web interface with React + FastAPI for 60fps smooth animations
+- **Backend** (`backend/`): FastAPI REST API with 3 main routers
+  - `routes/chat.py`: Unified chat endpoint (text in → text + audio out)
+  - `routes/admin.py`: Settings management (provider, model, voice lists)
+  - `routes/history.py`: Conversation history CRUD operations
+  - `config.py`: WebBackendConfig reads from environment variables
+  - `main.py`: App entry point with CORS, lifespan handlers
+- **Frontend** (`frontend/src/`): React 18 + TypeScript + Vite + Tailwind
+  - `lib/components/`: TopBar, ChatPanel, InputPanel (messenger-style UI)
+  - `services/`: api.ts (backend client), audio.ts (playback), theme.ts (design tokens)
+  - Smooth animations: gradient-shift (8s), slide-in-right/left (300ms bounce)
+  - GPU-accelerated for 60fps performance
+- **Scripts**: `scripts/start_web_backend.sh`, `scripts/start_web_frontend.sh`
+- **Config Pattern**: All settings from .env (KNIK_AI_PROVIDER, KNIK_AI_MODEL, KNIK_VOICE_NAME, etc.)
+- **Usage**: `npm run start:web` (starts both backend + frontend)
+- **See**: `docs/WEB_APP.md` for complete architecture and API reference
+
 **Console Commands** (`src/apps/console/tools/`)
 - Modular command handlers: Each command in separate `*_cmd.py` file
 - Registry pattern in `index.py`: `get_command_registry()`, `register_commands()`
