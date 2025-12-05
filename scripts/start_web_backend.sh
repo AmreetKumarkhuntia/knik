@@ -4,8 +4,8 @@
 # Exit on error
 set -e
 
-# Get the project root directory
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+# Get the project root directory (scripts/ is one level below project root)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "🚀 Starting Knik Backend..."
 echo "📁 Project root: $PROJECT_ROOT"

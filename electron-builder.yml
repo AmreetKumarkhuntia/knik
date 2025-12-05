@@ -1,0 +1,80 @@
+# Electron Builder Configuration
+# More readable alternative to package.json build section
+
+appId: com.knik.app
+productName: Knik
+copyright: Copyright © 2025
+
+directories:
+  output: dist-electron
+  buildResources: assets
+
+files:
+  - electron-main.js
+  - electron-preload.js
+  - src/apps/web/frontend/dist/**/*
+  - node_modules/**/*
+
+# macOS Configuration
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  icon: assets/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: assets/entitlements.mac.plist
+  entitlementsInherit: assets/entitlements.mac.plist
+
+# Windows Configuration
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: assets/icon.ico
+
+# Linux Configuration
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: assets/icon.png
+  category: Utility
+
+# NSIS Installer (Windows)
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+# DMG Installer (macOS)
+dmg:
+  background: assets/dmg-background.png
+  icon: assets/icon.icns
+  iconSize: 100
+  window:
+    width: 540
+    height: 380
+  contents:
+    - x: 140
+      y: 180
+    - x: 400
+      y: 180
+      type: link
+      path: /Applications
