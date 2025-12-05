@@ -8,5 +8,10 @@ google-cloud-aiplatform  # For Vertex AI / Gemini integration (optional)
 customtkinter>=5.2.0  # Modern GUI framework
 Pillow>=10.0.0  # Image processing for GUI
 
+# FastAPI backend for web app
+fastapi>=0.115.0  # Web framework (compatible with pydantic 2.9+)
+uvicorn[standard]>=0.32.0  # ASGI server
+python-multipart>=0.0.6  # Form data parsing
+
 # Development tools
 ruff>=0.7.0  # Modern Python linter and formatter
