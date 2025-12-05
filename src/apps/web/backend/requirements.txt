@@ -1,0 +1,7 @@
+# FastAPI Backend Dependencies
+# Note: Using compatible versions with existing LangChain dependencies
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.6
+
+# No need to specify pydantic/websockets - already installed by LangChain
