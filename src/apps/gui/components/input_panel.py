@@ -4,32 +4,65 @@ from collections.abc import Callable
 
 import customtkinter as ctk
 
+from ..theme import ColorTheme, Fonts, Spacing
+
 
 class InputPanel(ctk.CTkFrame):
     """Input panel with text entry and send button."""
 
     def __init__(self, master, on_send: Callable[[str], None] | None = None, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, fg_color=ColorTheme.BG_SECONDARY, **kwargs)
 
         self.on_send = on_send
         self.is_processing = False
         self.grid_columnconfigure(0, weight=1)
 
+        # Modern text entry with rounded corners
         self.text_entry = ctk.CTkEntry(
-            self, placeholder_text="Type your message here...", height=40, font=ctk.CTkFont(size=14)
+            self,
+            placeholder_text="Type your message here...",
+            height=Spacing.INPUT_HEIGHT,
+            font=ctk.CTkFont(**Fonts.input()),
+            corner_radius=ColorTheme.RADIUS_LARGE,
+            border_width=0,
+            fg_color=ColorTheme.BG_TERTIARY,
+            text_color=ColorTheme.TEXT_PRIMARY,
+            placeholder_text_color=ColorTheme.TEXT_TERTIARY,
         )
-        self.text_entry.grid(row=0, column=0, sticky="ew", padx=(10, 5), pady=10)
+        self.text_entry.grid(
+            row=0, column=0, sticky="ew", padx=(Spacing.PAD_LARGE, Spacing.PAD_SMALL), pady=Spacing.MARGIN_LARGE
+        )
         self.text_entry.bind("<Return>", self._on_enter_pressed)
 
+        # Modern send button
         self.send_button = ctk.CTkButton(
-            self, text="Send", width=100, height=40, command=self._handle_send, font=ctk.CTkFont(size=14, weight="bold")
+            self,
+            text="Send",
+            width=120,
+            height=Spacing.BUTTON_HEIGHT,
+            command=self._handle_send,
+            font=ctk.CTkFont(**Fonts.button()),
+            corner_radius=ColorTheme.RADIUS_LARGE,
+            fg_color=ColorTheme.BTN_PRIMARY,
+            hover_color=ColorTheme.BTN_PRIMARY_HOVER,
+            text_color="white",  # White text on purple button
         )
-        self.send_button.grid(row=0, column=1, padx=(5, 10), pady=10)
+        self.send_button.grid(row=0, column=1, padx=(5, Spacing.PAD_SMALL), pady=Spacing.MARGIN_LARGE)
 
+        # Modern voice button
         self.voice_button = ctk.CTkButton(
-            self, text="🎤", width=50, height=40, command=self._handle_voice, font=ctk.CTkFont(size=18)
+            self,
+            text="Voice",
+            width=70,
+            height=Spacing.BUTTON_HEIGHT,
+            command=self._handle_voice,
+            font=ctk.CTkFont(size=13),
+            corner_radius=ColorTheme.RADIUS_LARGE,
+            fg_color=ColorTheme.BTN_SECONDARY,
+            hover_color=ColorTheme.BTN_SECONDARY_HOVER,
+            text_color=ColorTheme.TEXT_PRIMARY,
         )
-        self.voice_button.grid(row=0, column=2, padx=(0, 10), pady=10)
+        self.voice_button.grid(row=0, column=2, padx=(0, Spacing.PAD_LARGE), pady=Spacing.MARGIN_LARGE)
 
     def _on_enter_pressed(self, event):
         """Handle Enter key press."""

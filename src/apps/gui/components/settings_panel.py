@@ -133,7 +133,10 @@ class SettingsPanel(ctk.CTkToplevel):
 
     def _change_appearance_mode(self, mode: str):
         """Change appearance mode."""
+        from ..theme import ColorTheme
+
         ctk.set_appearance_mode(mode)
+        ColorTheme.set_mode(mode)
 
     def _handle_save(self):
         """Save settings."""

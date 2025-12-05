@@ -45,7 +45,8 @@ Knik supports configuration via environment variables. All have sensible default
 |----------|---------|-------------|
 | `KNIK_CONSOLE_VOICE` | `af_sarah` | Default voice for console app |
 | `KNIK_CONSOLE_ENABLE_VOICE` | `true` | Enable voice output in console |
-| `KNIK_CONSOLE_MAX_HISTORY` | `50` | Maximum conversation history entries |
+| `KNIK_MAX_HISTORY_SIZE` | `50` | Maximum conversation history entries |
+| `KNIK_HISTORY_CONTEXT_SIZE` | `5` | Number of conversation turns sent to AI |
 | `KNIK_CONSOLE_AI_PROVIDER` | `vertex` | AI provider: 'vertex' or 'mock' |
 
 **Note for Console App**: To use the console app with Vertex AI, you **must** set `GOOGLE_CLOUD_PROJECT` environment variable with your Google Cloud project ID. Without it, the app will fall back to Mock AI for demonstration purposes.

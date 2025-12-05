@@ -35,6 +35,7 @@ class GUIConfig:
 
     # History
     max_history_size: int = Config.from_env("KNIK_MAX_HISTORY_SIZE", 50, int)
+    history_context_size: int = Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int)
 
     # System instruction
     def __post_init__(self):

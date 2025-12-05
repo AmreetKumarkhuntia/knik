@@ -60,6 +60,7 @@ class LangChainProvider(BaseAIProvider):
             self.llm = llm
 
     def _extract_text_from_content(self, content) -> str:
+        """Extract text from various content formats."""
         if isinstance(content, str):
             return content
         elif isinstance(content, list):
@@ -74,12 +75,32 @@ class LangChainProvider(BaseAIProvider):
             return content.get("text", content.get("content", ""))
         return ""
 
+    def _build_agent_messages(self, history: list | None, prompt: str) -> list[dict]:
+        """Build message list for agent with conversation history."""
+        messages = []
+
+        if history:
+            for msg in history:
+                if hasattr(msg, "type"):
+                    if msg.type == "human":
+                        messages.append({"role": "user", "content": msg.content})
+                    elif msg.type == "ai":
+                        messages.append({"role": "assistant", "content": msg.content})
+
+        messages.append({"role": "user", "content": prompt})
+        return messages
+
     @classmethod
     def get_provider_name(cls) -> str:
         return "langchain"
 
-    def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+    def query(self, prompt: str, use_tools: bool = False, history: list = None, **kwargs) -> str:
         messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
+
+        # Add conversation history if provided
+        if history:
+            messages.extend(history)
+
         messages.append(HumanMessage(content=prompt))
 
         if use_tools and self.mcp_registry:
@@ -109,8 +130,15 @@ class LangChainProvider(BaseAIProvider):
             response = self._llm_raw.invoke(messages, **kwargs)
             return self._extract_text_from_content(response.content) if response.content else ""
 
-    def query_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+    def query_stream(
+        self, prompt: str, use_tools: bool = False, history: list = None, **kwargs
+    ) -> Generator[str, None, None]:
         messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
+
+        # Add conversation history if provided
+        if history:
+            messages.extend(history)
+
         messages.append(HumanMessage(content=prompt))
 
         if use_tools and self.mcp_registry:
@@ -142,12 +170,14 @@ class LangChainProvider(BaseAIProvider):
                 if chunk.content:
                     yield self._extract_text_from_content(chunk.content)
 
-    def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+    def chat_with_agent(self, prompt: str, use_tools: bool = False, history: list = None, **kwargs) -> str:
         """Execute prompt using LangChain agent. Falls back to query if no agent."""
         if not self.agent:
-            return self.query(prompt=prompt, use_tools=use_tools, **kwargs)
+            return self.query(prompt=prompt, use_tools=use_tools, history=history, **kwargs)
 
-        result = self.agent.invoke({"messages": [{"role": "user", "content": prompt}]}, **kwargs)
+        # Build message list with history
+        agent_messages = self._build_agent_messages(history, prompt)
+        result = self.agent.invoke({"messages": agent_messages}, **kwargs)
 
         if isinstance(result, dict):
             messages = result.get("messages", [])
@@ -166,17 +196,20 @@ class LangChainProvider(BaseAIProvider):
 
         return self._extract_text_from_content(output) if output else ""
 
-    def chat_with_agent_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+    def chat_with_agent_stream(
+        self, prompt: str, use_tools: bool = False, history: list = None, **kwargs
+    ) -> Generator[str, None, None]:
         """Stream agent responses. Falls back to query_stream if no agent."""
         if not self.agent:
-            yield from self.query_stream(prompt=prompt, use_tools=use_tools, **kwargs)
+            yield from self.query_stream(prompt=prompt, use_tools=use_tools, history=history, **kwargs)
             return
 
-        printer.debug(f"Using agent stream mode for prompt: {prompt[:50]}...")
+        printer.debug(f"Agent stream with {len(history) if history else 0} history messages")
+
+        agent_messages = self._build_agent_messages(history, prompt)
         previous_content = None
-        for chunk in self.agent.stream(
-            {"messages": [{"role": "user", "content": prompt}]}, stream_mode="values", **kwargs
-        ):
+
+        for chunk in self.agent.stream({"messages": agent_messages}, stream_mode="values", **kwargs):
             if isinstance(chunk, dict):
                 messages = chunk.get("messages", [])
                 if messages:

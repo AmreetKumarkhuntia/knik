@@ -58,6 +58,7 @@ class VertexAIProvider(LangChainProvider):
         max_tokens: int | None = None,
         mcp_registry: Optional["MCPServerRegistry"] = None,
         system_instruction: str | None = None,
+        tool_callback=None,
         **kwargs,
     ):
         if not LANGCHAIN_VERTEX_AVAILABLE:
@@ -72,6 +73,7 @@ class VertexAIProvider(LangChainProvider):
         self.temperature = temperature
         self.max_tokens = max_tokens
 
+        # Create LangChain model (don't pass tool_callback - it's for internal use only)
         llm = ChatVertexAI(
             model_name=model_name,
             project=self.project_id,
@@ -89,6 +91,7 @@ class VertexAIProvider(LangChainProvider):
             provider_name="vertex",
             mcp_registry=mcp_registry,
             system_instruction=system_instruction,
+            tool_callback=tool_callback,
             project_id=self.project_id,
             location=location,
             model=model_name,

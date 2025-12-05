@@ -81,8 +81,18 @@ class ConsoleApp:
     def _stream_response(self, user_input: str):
         printer.info("🤔 Thinking...")
 
+        # Get conversation history as message objects
+        history_messages = self.history.get_messages(last_n=self.config.history_context_size)
+
+        if self.debug_mode:
+            print(f"🐛 [DEBUG] Passing {len(history_messages)} history messages to AI")
+
         response_stream = self.ai_client.chat_with_agent_stream(
-            prompt=user_input, use_tools=True, max_tokens=self.config.max_tokens, temperature=self.config.temperature
+            prompt=user_input,
+            use_tools=True,
+            history=history_messages,
+            max_tokens=self.config.max_tokens,
+            temperature=self.config.temperature,
         )
 
         full_response = []

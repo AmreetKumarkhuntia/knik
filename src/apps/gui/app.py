@@ -13,11 +13,13 @@ try:
     from .components.input_panel import InputPanel
     from .components.settings_panel import SettingsPanel
     from .config import GUIConfig
+    from .theme import ColorTheme, Fonts, Spacing
 except ImportError:
     from apps.gui.components.chat_panel import ChatPanel
     from apps.gui.components.input_panel import InputPanel
     from apps.gui.components.settings_panel import SettingsPanel
     from apps.gui.config import GUIConfig
+    from apps.gui.theme import ColorTheme, Fonts, Spacing
 
 from apps.console.history import ConversationHistory
 from lib.mcp import register_all_tools
@@ -36,6 +38,7 @@ class GUIApp:
 
         ctk.set_appearance_mode(self.config.appearance_mode)
         ctk.set_default_color_theme(self.config.color_theme)
+        ColorTheme.set_mode(self.config.appearance_mode)
 
         self.root = ctk.CTk()
         self.root.title(self.config.window_title)
@@ -49,59 +52,76 @@ class GUIApp:
 
     def _create_widgets(self):
         """Create all GUI widgets."""
-        top_bar = ctk.CTkFrame(self.root, height=60, corner_radius=0)
-        top_bar.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
-        top_bar.grid_columnconfigure(0, weight=1)
-        top_bar.grid_propagate(False)
+        # Modern gradient-style top bar
+        self.top_bar = ctk.CTkFrame(
+            self.root, height=Spacing.TOPBAR_HEIGHT, corner_radius=0, fg_color=ColorTheme.BG_SECONDARY
+        )
+        self.top_bar.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
+        self.top_bar.grid_columnconfigure(0, weight=1)
+        self.top_bar.grid_propagate(False)
 
-        title_label = ctk.CTkLabel(top_bar, text="🤖 Knik AI Assistant", font=ctk.CTkFont(size=24, weight="bold"))
-        title_label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+        self.title_label = ctk.CTkLabel(
+            self.top_bar,
+            text="Knik AI Assistant",
+            font=ctk.CTkFont(**Fonts.title()),
+            text_color=ColorTheme.TEXT_PRIMARY,
+        )
+        self.title_label.grid(row=0, column=0, padx=Spacing.PAD_XLARGE, pady=Spacing.MARGIN_MEDIUM, sticky="w")
 
         self.settings_button = ctk.CTkButton(
-            top_bar, text="⚙️ Settings", width=120, command=self._open_settings, font=ctk.CTkFont(size=14)
+            self.top_bar,
+            text="Settings",
+            width=130,
+            height=40,
+            command=self._open_settings,
+            font=ctk.CTkFont(size=14, weight="normal"),
+            fg_color=ColorTheme.BTN_SECONDARY,
+            hover_color=ColorTheme.BTN_SECONDARY_HOVER,
+            text_color=ColorTheme.TEXT_PRIMARY,
+            corner_radius=ColorTheme.RADIUS_SMALL,
         )
-        self.settings_button.grid(row=0, column=1, padx=10, pady=10)
+        self.settings_button.grid(row=0, column=1, padx=Spacing.PAD_SMALL, pady=Spacing.MARGIN_MEDIUM)
 
         self.clear_button = ctk.CTkButton(
-            top_bar,
-            text="🗑️ Clear",
-            width=100,
+            self.top_bar,
+            text="Clear",
+            width=110,
+            height=40,
             command=self._clear_chat,
-            font=ctk.CTkFont(size=14),
-            fg_color="gray40",
-            hover_color="gray50",
+            font=ctk.CTkFont(size=14, weight="normal"),
+            fg_color=ColorTheme.BTN_SECONDARY,
+            hover_color=ColorTheme.BTN_SECONDARY_HOVER,
+            text_color=ColorTheme.TEXT_PRIMARY,
+            corner_radius=ColorTheme.RADIUS_SMALL,
         )
-        self.clear_button.grid(row=0, column=2, padx=10, pady=10)
+        self.clear_button.grid(row=0, column=2, padx=Spacing.PAD_SMALL, pady=Spacing.MARGIN_MEDIUM)
 
-        self.status_label = ctk.CTkLabel(top_bar, text="● Ready", font=ctk.CTkFont(size=12), text_color="green")
-        self.status_label.grid(row=0, column=3, padx=20, pady=10)
+        self.status_label = ctk.CTkLabel(
+            self.top_bar, text="● Ready", font=ctk.CTkFont(size=13), text_color=ColorTheme.STATUS_SUCCESS
+        )
+        self.status_label.grid(row=0, column=3, padx=Spacing.PAD_XLARGE, pady=Spacing.MARGIN_MEDIUM)
 
-        self.chat_panel = ChatPanel(self.root, corner_radius=0)
+        # Chat panel with modern background
+        self.chat_panel = ChatPanel(self.root, corner_radius=0, fg_color=ColorTheme.BG_PRIMARY)
         self.chat_panel.grid(row=1, column=0, sticky="nsew", padx=0, pady=0)
 
-        self.input_panel = InputPanel(self.root, on_send=self._handle_user_input, height=80)
+        # Input panel with modern styling
+        self.input_panel = InputPanel(self.root, on_send=self._handle_user_input, height=90)
         self.input_panel.grid(row=2, column=0, sticky="ew", padx=0, pady=0)
 
         self._show_welcome_message()
 
     def _show_welcome_message(self):
         """Show initial welcome message."""
-        welcome = """Welcome to Knik AI Assistant! 👋
+        welcome = """Welcome! I'm Knik, your AI assistant. 🚀
 
-I'm your intelligent AI assistant, powered by advanced language models and voice synthesis.
+I can help you with:
+• Answering questions with conversation memory
+• File operations and system commands
+• Calculations and text processing
+• And much more with 20+ built-in tools!
 
-**Features:**
-• Natural conversation with context awareness
-• Voice responses (can be toggled in settings)
-• 20+ built-in tools for calculations, file operations, shell commands, and more
-• Dynamic provider and model switching
-
-**Quick Tips:**
-• Just type your question or command and press Enter
-• Click ⚙️ Settings to configure AI provider, voice, and appearance
-• Use 🎤 button for voice input (coming soon in Phase 2)
-
-How can I help you today?"""
+Just type your question below and press Enter to get started."""
 
         self.chat_panel.add_assistant_message(welcome)
 
@@ -137,7 +157,7 @@ How can I help you today?"""
 
         except Exception as e:
             printer.error(f"Failed to initialize backend: {e}")
-            self._update_status("Error", "red")
+            self._update_status("Error", ColorTheme.STATUS_ERROR)
 
     def _handle_user_input(self, user_input: str):
         """Handle user input and get AI response."""
@@ -151,7 +171,7 @@ How can I help you today?"""
 
         self.input_panel.set_processing(True)
         self.is_processing = True
-        self._update_status("Thinking...", "orange")
+        self._update_status("Thinking...", ColorTheme.STATUS_WARNING)
 
         thread = threading.Thread(target=self._process_ai_response, args=(user_input,), daemon=True)
         thread.start()
@@ -161,19 +181,26 @@ How can I help you today?"""
         try:
             printer.info(f"User query: {user_input}")
 
+            # Get conversation history as message objects
+            history_messages = self.history.get_messages(last_n=self.config.history_context_size)
+
+            if history_messages:
+                printer.debug(f"Including {len(history_messages)} history messages")
+
             full_response = []
             response_started = False
 
             for chunk in self.ai_client.chat_with_agent_stream(
                 prompt=user_input,
                 use_tools=True,
+                history=history_messages,
                 max_tokens=self.config.max_tokens,
                 temperature=self.config.temperature,
             ):
                 full_response.append(chunk)
 
                 if not response_started:
-                    self._update_status("Speaking...", "blue")
+                    self._update_status("Speaking...", ColorTheme.STATUS_INFO)
                     response_started = True
 
                 if self.config.enable_voice_output and self.tts_processor:
@@ -202,7 +229,7 @@ How can I help you today?"""
         """Finish processing and re-enable input."""
         self.input_panel.set_processing(False)
         self.is_processing = False
-        self._update_status("Ready", "green")
+        self._update_status("Ready", ColorTheme.STATUS_SUCCESS)
         self.input_panel.focus_input()
 
     def _update_status(self, text: str, color: str):
@@ -237,6 +264,10 @@ How can I help you today?"""
         printer.info("Settings saved, reinitializing backend...")
         self.config = config
 
+        # Update theme
+        ColorTheme.set_mode(self.config.appearance_mode)
+        self._refresh_theme()
+
         self.ai_client = AIClient(
             provider=self.config.ai_provider,
             mcp_registry=MCPServerRegistry,
@@ -254,6 +285,56 @@ How can I help you today?"""
             f"Settings updated! Provider: {self.config.ai_provider}, "
             f"Model: {self.config.ai_model}, Voice: {self.config.voice_name}"
         )
+
+    def _refresh_theme(self):
+        """Refresh UI colors after theme change."""
+        printer.info(f"Refreshing theme to: {ColorTheme.get_mode()}")
+
+        # Update main window background
+        self.root.configure(fg_color=ColorTheme.BG_PRIMARY)
+
+        # Update top bar
+        self.top_bar.configure(fg_color=ColorTheme.BG_SECONDARY)
+        self.title_label.configure(text_color=ColorTheme.TEXT_PRIMARY)
+
+        # Update top bar buttons
+        self.settings_button.configure(
+            fg_color=ColorTheme.BTN_SECONDARY,
+            hover_color=ColorTheme.BTN_SECONDARY_HOVER,
+            text_color=ColorTheme.TEXT_PRIMARY,
+        )
+        self.clear_button.configure(
+            fg_color=ColorTheme.BTN_SECONDARY,
+            hover_color=ColorTheme.BTN_SECONDARY_HOVER,
+            text_color=ColorTheme.TEXT_PRIMARY,
+        )
+
+        # Update status label color
+        self._update_status("Ready", ColorTheme.STATUS_SUCCESS)
+
+        # Update chat panel background
+        self.chat_panel.configure(fg_color=ColorTheme.BG_PRIMARY)
+
+        # Update input panel colors
+        self.input_panel.configure(fg_color=ColorTheme.BG_SECONDARY)
+        self.input_panel.text_entry.configure(
+            fg_color=ColorTheme.BG_TERTIARY,
+            text_color=ColorTheme.TEXT_PRIMARY,
+            placeholder_text_color=ColorTheme.TEXT_TERTIARY,
+        )
+        self.input_panel.send_button.configure(
+            fg_color=ColorTheme.BTN_PRIMARY, hover_color=ColorTheme.BTN_PRIMARY_HOVER, text_color="white"
+        )
+        self.input_panel.voice_button.configure(
+            fg_color=ColorTheme.BTN_SECONDARY,
+            hover_color=ColorTheme.BTN_SECONDARY_HOVER,
+            text_color=ColorTheme.TEXT_PRIMARY,
+        )
+
+        # Force chat panel to refresh all messages with new colors
+        self.chat_panel.refresh_theme()
+
+        printer.success("Theme refresh complete!")
 
     def run(self):
         """Run the application."""

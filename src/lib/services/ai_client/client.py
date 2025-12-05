@@ -40,6 +40,7 @@ class AIClient:
         self._provider: BaseAIProvider | None = None
         self.tool_callback = tool_callback
 
+        # Pass internal parameters to provider (not to LangChain model)
         if mcp_registry:
             provider_kwargs["mcp_registry"] = mcp_registry
         if system_instruction:
@@ -80,10 +81,16 @@ class AIClient:
         max_tokens: int = 1024,
         temperature: float = 0.7,
         context: list[dict[str, str]] | None = None,
+        history: list = None,
     ) -> str:
         try:
             return self._provider.query(
-                prompt=prompt, use_tools=use_tools, max_tokens=max_tokens, temperature=temperature, context=context
+                prompt=prompt,
+                use_tools=use_tools,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                context=context,
+                history=history,
             )
         except Exception as e:
             error_msg = f"AI query error: {e}"
@@ -97,10 +104,16 @@ class AIClient:
         max_tokens: int = 1024,
         temperature: float = 0.7,
         context: list[dict[str, str]] | None = None,
+        history: list = None,
     ) -> Generator[str, None, None]:
         try:
             yield from self._provider.query_stream(
-                prompt=prompt, use_tools=use_tools, max_tokens=max_tokens, temperature=temperature, context=context
+                prompt=prompt,
+                use_tools=use_tools,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                context=context,
+                history=history,
             )
         except Exception as e:
             error_msg = f"AI streaming query error: {e}"
@@ -140,19 +153,23 @@ class AIClient:
         """Execute a registered tool by name."""
         return MCPServerRegistry.execute_tool(tool_name, **kwargs)
 
-    def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+    def chat_with_agent(self, prompt: str, use_tools: bool = False, history: list = None, **kwargs) -> str:
         """Execute prompt using LangChain agent if available."""
         try:
-            return self._provider.chat_with_agent(prompt=prompt, use_tools=use_tools, **kwargs)
+            return self._provider.chat_with_agent(prompt=prompt, use_tools=use_tools, history=history, **kwargs)
         except Exception as e:
             error_msg = f"Agent query error: {e}"
             printer.error(error_msg)
             return error_msg
 
-    def chat_with_agent_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+    def chat_with_agent_stream(
+        self, prompt: str, use_tools: bool = False, history: list = None, **kwargs
+    ) -> Generator[str, None, None]:
         """Stream agent responses if available."""
         try:
-            yield from self._provider.chat_with_agent_stream(prompt=prompt, use_tools=use_tools, **kwargs)
+            yield from self._provider.chat_with_agent_stream(
+                prompt=prompt, use_tools=use_tools, history=history, **kwargs
+            )
         except Exception as e:
             error_msg = f"Agent streaming error: {e}"
             printer.error(error_msg)

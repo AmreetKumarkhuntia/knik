@@ -24,6 +24,7 @@ class ConsoleConfig:
     # Console-specific settings
     command_prefix: str = "/"
     max_history_size: int = 50
+    history_context_size: int = Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int)
     show_timestamps: bool = False
     welcome_message: str = "🤖 Knik Console - Your AI Assistant with Voice"
     prompt_symbol: str = "You: "
