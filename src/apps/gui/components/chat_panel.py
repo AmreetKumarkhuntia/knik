@@ -2,6 +2,7 @@
 
 import customtkinter as ctk
 
+from ..animations import AnimationController, AnimationGroup, ease_in
 from ..theme import ColorTheme, Fonts, Spacing
 
 
@@ -14,6 +15,10 @@ class ChatPanel(ctk.CTkScrollableFrame):
         self.messages = []
         self.message_frames = []
         self.grid_columnconfigure(0, weight=1)
+
+        # Animation settings
+        self.animations_enabled = True
+        self.active_animations = AnimationGroup()
 
     def add_user_message(self, text: str):
         """Add user message to chat."""
@@ -104,7 +109,125 @@ class ChatPanel(ctk.CTkScrollableFrame):
 
         self.message_frames.append(container)
         self.messages.append({"text": text, "is_user": is_user, "is_system": is_system})
+
+        # Apply animations if enabled
+        if self.animations_enabled:
+            # Slide-in animation for message bubble
+            if is_system:
+                self._animate_fade_in(message_frame)
+            else:
+                direction = "right" if is_user else "left"
+                self._animate_slide_in(message_frame, direction)
+
+            # Text reveal animation for message content
+            # Only for non-system messages to avoid conflict with icon
+            if not is_system and message_label:
+                self._animate_text_reveal(message_label, text)
+
         self._scroll_to_bottom()
+
+    def _animate_slide_in(self, widget, direction: str, duration: int = 350):
+        """Animate widget sliding in from left or right.
+
+        Args:
+            widget: Widget to animate
+            direction: "left" or "right"
+            duration: Animation duration in milliseconds
+        """
+        # Note: Grid-based animation with negative padding causes errors in CustomTkinter
+        # Instead, we'll use a subtle scale/opacity effect by modifying the widget state
+        # The text reveal animation provides the primary visual feedback
+
+        # For a future enhancement, we could:
+        # 1. Use place() geometry manager instead of grid()
+        # 2. Implement canvas-based rendering with true opacity
+        # 3. Use CTkCanvas to draw custom animated frames
+
+        # For now, skip the slide animation to prevent errors
+        # The word-by-word text reveal provides sufficient animation feedback
+        pass
+
+    def _animate_fade_in(self, widget, duration: int = 200):
+        """Animate widget fading in (for system messages).
+
+        Args:
+            widget: Widget to animate
+            duration: Animation duration in milliseconds
+        """
+        # Note: CustomTkinter doesn't support widget-level opacity
+        # We'll simulate with a quick scale animation instead
+
+        def update(progress: float):
+            # Scale from 0.95 to 1.0 for subtle effect (visual placeholder)
+            # We can't actually scale in CTk, so we'll just use the animation timing
+            # The widget will appear instantly but the animation provides consistency
+            pass
+
+        animation = AnimationController(
+            widget=self,
+            duration_ms=duration,
+            update_callback=update,
+            easing=ease_in,
+            fps=60,
+        )
+
+        self.active_animations.add(animation)
+        animation.start()
+
+    def _animate_text_reveal(self, label: ctk.CTkLabel, text: str, word_delay: int = 40, fade_duration: int = 100):
+        """Animate text revealing word by word.
+
+        Args:
+            label: Label widget to animate
+            text: Full text to reveal
+            word_delay: Delay between words in milliseconds
+            fade_duration: Duration for each word fade in milliseconds
+        """
+        words = text.split()
+        if not words:
+            return
+
+        # Start with empty text
+        label.configure(text="")
+
+        # Track current word index
+        animation_state = {"current_index": 0, "revealed_text": ""}
+
+        def reveal_next_word():
+            if animation_state["current_index"] >= len(words):
+                return
+
+            # Add next word
+            if animation_state["revealed_text"]:
+                animation_state["revealed_text"] += " "
+            animation_state["revealed_text"] += words[animation_state["current_index"]]
+
+            # Update label
+            try:
+                label.configure(text=animation_state["revealed_text"])
+            except Exception:
+                return  # Widget destroyed
+
+            animation_state["current_index"] += 1
+
+            # Schedule next word
+            if animation_state["current_index"] < len(words):
+                self.after(word_delay, reveal_next_word)
+
+        # Start revealing words
+        reveal_next_word()
+
+    def set_animations_enabled(self, enabled: bool):
+        """Enable or disable animations.
+
+        Args:
+            enabled: True to enable animations, False to disable
+        """
+        self.animations_enabled = enabled
+
+    def stop_all_animations(self):
+        """Stop all active animations."""
+        self.active_animations.stop_all()
 
     def _scroll_to_bottom(self):
         """Scroll to the bottom of the chat."""
@@ -127,6 +250,10 @@ class ChatPanel(ctk.CTkScrollableFrame):
         # Store current messages
         messages_backup = list(self.messages)
 
+        # Temporarily disable animations for instant refresh
+        animations_were_enabled = self.animations_enabled
+        self.animations_enabled = False
+
         # Clear and rebuild all messages with new theme
         for frame in self.message_frames:
             frame.destroy()
@@ -136,3 +263,6 @@ class ChatPanel(ctk.CTkScrollableFrame):
         # Re-add all messages with new colors
         for msg in messages_backup:
             self._add_message(msg["text"], msg["is_user"], msg.get("is_system", False))
+
+        # Restore animation setting
+        self.animations_enabled = animations_were_enabled

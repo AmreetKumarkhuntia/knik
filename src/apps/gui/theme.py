@@ -38,6 +38,13 @@ class DarkTheme:
     BORDER_SUBTLE = "#2A2D37"
     BORDER_FOCUS = "#5B4FFF"
 
+    # Gradient background colors
+    GRADIENT_COLORS = [
+        "#001F3F",  # Deep blue
+        "#2C1B47",  # Purple
+        "#004D4D",  # Teal
+    ]
+
 
 class LightTheme:
     """Light theme color palette."""
@@ -74,6 +81,13 @@ class LightTheme:
     BORDER_SUBTLE = "#E5E5EA"
     BORDER_FOCUS = "#5B4FFF"
 
+    # Gradient background colors
+    GRADIENT_COLORS = [
+        "#E0F2FE",  # Light blue
+        "#EDE9FE",  # Light purple
+        "#CCFBF1",  # Light teal
+    ]
+
 
 class ColorTheme:
     """Dynamic color theme that switches based on appearance mode."""
@@ -104,6 +118,8 @@ class ColorTheme:
 
     BORDER_SUBTLE = DarkTheme.BORDER_SUBTLE
     BORDER_FOCUS = DarkTheme.BORDER_FOCUS
+
+    GRADIENT_COLORS = DarkTheme.GRADIENT_COLORS
 
     # Radius
     RADIUS_SMALL = 10
@@ -148,6 +164,8 @@ class ColorTheme:
 
         cls.BORDER_SUBTLE = theme.BORDER_SUBTLE
         cls.BORDER_FOCUS = theme.BORDER_FOCUS
+
+        cls.GRADIENT_COLORS = theme.GRADIENT_COLORS
 
     @classmethod
     def get_mode(cls):

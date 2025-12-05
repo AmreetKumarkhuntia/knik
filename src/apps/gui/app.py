@@ -10,12 +10,14 @@ from imports import AIClient, TTSAsyncProcessor, printer
 
 try:
     from .components.chat_panel import ChatPanel
+    from .components.gradient_background import GradientBackground
     from .components.input_panel import InputPanel
     from .components.settings_panel import SettingsPanel
     from .config import GUIConfig
     from .theme import ColorTheme, Fonts, Spacing
 except ImportError:
     from apps.gui.components.chat_panel import ChatPanel
+    from apps.gui.components.gradient_background import GradientBackground
     from apps.gui.components.input_panel import InputPanel
     from apps.gui.components.settings_panel import SettingsPanel
     from apps.gui.config import GUIConfig
@@ -52,6 +54,12 @@ class GUIApp:
 
     def _create_widgets(self):
         """Create all GUI widgets."""
+        # Animated gradient background (lowest layer)
+        self.gradient_bg = GradientBackground(
+            self.root, colors=ColorTheme.GRADIENT_COLORS, transition_speed=8000, fps=30
+        )
+        self.gradient_bg.place(x=0, y=0, relwidth=1, relheight=1)
+
         # Modern gradient-style top bar
         self.top_bar = ctk.CTkFrame(
             self.root, height=Spacing.TOPBAR_HEIGHT, corner_radius=0, fg_color=ColorTheme.BG_SECONDARY
@@ -289,6 +297,10 @@ Just type your question below and press Enter to get started."""
     def _refresh_theme(self):
         """Refresh UI colors after theme change."""
         printer.info(f"Refreshing theme to: {ColorTheme.get_mode()}")
+
+        # Update gradient background with new theme colors
+        if hasattr(self, "gradient_bg"):
+            self.gradient_bg.update_theme(ColorTheme.GRADIENT_COLORS)
 
         # Update main window background
         self.root.configure(fg_color=ColorTheme.BG_PRIMARY)
