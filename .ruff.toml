@@ -37,6 +37,7 @@ select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM"]
 # Ignore specific rules that might be too strict for this project
 ignore = [
     "E501",   # Line too long (handled by formatter)
+    "E402",   # Module level import not at top (needed for sys.path manipulation)
     "B008",   # Do not perform function calls in argument defaults
     "C901",   # Function is too complex
     "N802",   # Function name should be lowercase (conflicts with naming conventions)
