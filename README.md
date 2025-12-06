@@ -5,13 +5,19 @@ High-quality text-to-speech powered by Kokoro-82M with a clean, modular Python A
 ## 🚀 Quick Start
 
 ```bash
-# Run the GUI application (default - NEW! 🎉)
+# Run the GUI application (default)
 npm run start
 # or: python src/main.py
 
 # Run the terminal console
 npm run start:console
 # or: python src/main.py --mode console
+
+# Run the web app (React + FastAPI - NEW! 🌐)
+npm run start:web
+
+# Run as Electron desktop app (NEW! 🖥️)
+npm run start:electron
 
 # Try demos
 python demo/tts/demo.py
@@ -26,6 +32,9 @@ All documentation is in the `docs/` folder:
 - **[docs/README.md](docs/README.md)** - Documentation index & quick start
 - **[docs/ROADMAP.md](docs/ROADMAP.md)** - Development plan & future features
 - **[docs/SETUP.md](docs/SETUP.md)** - Installation and configuration
+- **[docs/WEB_APP.md](docs/WEB_APP.md)** - **Web app architecture & API reference**
+- **[docs/ELECTRON.md](docs/ELECTRON.md)** - **Electron desktop app guide**
+- **[docs/FRONTEND_POLISH.md](docs/FRONTEND_POLISH.md)** - **Frontend UI/UX details**
 - **[docs/CONSOLE.md](docs/CONSOLE.md)** - Console app usage & commands
 - **[docs/GUI.md](docs/GUI.md)** - GUI application guide
 - **[docs/MCP.md](docs/MCP.md)** - MCP tools system & examples
@@ -59,7 +68,23 @@ pip install -r requirements.txt
 
 ### AI Assistant Apps
 
-**🖥️ GUI Application (NEW! 🎉)**
+#### 🌐 Web Application (NEW! 🎉)
+
+- ✅ Modern React + TypeScript frontend with Vite
+- ✅ FastAPI backend with REST API
+- ✅ **Beautiful UI** - Animated gradient blobs, glassmorphism, dark theme
+- ✅ **ChatGPT-style sidebar** - Collapsible navigation with hamburger menu
+- ✅ **Smooth animations** - 60fps performance, GPU-accelerated
+- ✅ **Real-time chat** - Streaming responses with typing indicators
+- ✅ **Toast notifications** - Success/error/info feedback
+- ✅ **Keyboard shortcuts** - Ctrl+K (sidebar), Esc (close)
+- ✅ **Error boundary** - Graceful error handling
+- ✅ **Voice output** - TTS integration with audio playback
+- ✅ **Conversation history** - Context-aware AI responses
+- ✅ **Electron support** - Run as desktop app (macOS/Windows/Linux)
+
+#### 🖥️ GUI Application
+
 - ✅ Modern desktop interface with CustomTkinter
 - ✅ Rich chat interface with scrollable history
 - ✅ Real-time AI streaming responses
@@ -68,13 +93,15 @@ pip install -r requirements.txt
 - ✅ Dark/Light/System theme support
 - ✅ All console features in beautiful UI
 
-**💻 Console Application**
+#### 💻 Console Application
+
 - ✅ Terminal-based interactive chat
 - ✅ Command system (12 commands: /help, /history, /voice, /tools, /provider, /model, /debug, etc.)
 - ✅ Conversation history tracking
 - ✅ Debug mode for verbose logging
 
-**🧠 AI Features (Both Apps)**
+#### 🧠 AI Features (All Apps)
+
 - ✅ Powered by Google Gemini (Vertex AI)
 - ✅ Voice-enabled responses with Kokoro TTS
 - ✅ Context-aware conversations
@@ -117,6 +144,9 @@ knik/
 │   ├── README.md               # Documentation index
 │   ├── ROADMAP.md              # Development plan
 │   ├── SETUP.md                # Installation guide
+│   ├── WEB_APP.md              # Web app architecture (NEW!)
+│   ├── ELECTRON.md             # Electron desktop guide (NEW!)
+│   ├── FRONTEND_POLISH.md      # UI/UX details (NEW!)
 │   ├── CONSOLE.md              # Console app guide
 │   ├── GUI.md                  # GUI app guide
 │   ├── MCP.md                  # MCP tools documentation
@@ -125,7 +155,8 @@ knik/
 ├── src/
 │   ├── apps/                   # 🎯 Applications
 │   │   ├── console/            # Terminal AI console app
-│   │   └── gui/                # Desktop GUI app (CustomTkinter)
+│   │   ├── gui/                # Desktop GUI app (CustomTkinter)
+│   │   └── web/                # Web app (React + FastAPI) (NEW!)
 │   ├── lib/                    # 🔧 Core library
 │   │   ├── core/               # Config & TTS async processor
 │   │   ├── services/           # AI, Voice, Audio services
