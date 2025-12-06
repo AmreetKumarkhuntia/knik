@@ -96,7 +96,7 @@ class LangChainProvider(BaseAIProvider):
 
     def query(self, prompt: str, use_tools: bool = False, history: list = None, **kwargs) -> str:
         printer.info(f"🔍 Provider query starting (use_tools={use_tools}, history={len(history) if history else 0} msgs)")
-        
+
         messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
 
         # Add conversation history if provided
