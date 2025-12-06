@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Sidebar, ChatPanel, InputPanel, ErrorBoundary, Toast } from './lib/components'
 import type { InputPanelRef } from './lib/components'
 import { useToast, useKeyboardShortcuts } from './lib/hooks'
-import { api, playAudio } from './services'
+import { api, playAudio, stopAudio, isAudioPlaying } from './services'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -14,8 +14,17 @@ function AppContent() {
   const [inputText, setInputText] = useState('')
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [audioPlaying, setAudioPlaying] = useState(false)
   const inputRef = useRef<InputPanelRef>(null)
+  const chatScrollRef = useRef<HTMLDivElement>(null)
   const { toasts, hideToast, success, error } = useToast()
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [messages, loading])
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -57,7 +66,14 @@ function AppContent() {
       setMessages(prev => [...prev, aiMessage])
       
       // Play audio
-      await playAudio(response.audio, response.sample_rate)
+      setAudioPlaying(true)
+      try {
+        await playAudio(response.audio, response.sample_rate)
+      } catch (audioErr) {
+        console.error('Audio playback error:', audioErr)
+      } finally {
+        setAudioPlaying(false)
+      }
       success('Response received!')
       
     } catch (err) {
@@ -75,6 +91,11 @@ function AppContent() {
     }
   }
 
+  const handleStopAudio = () => {
+    stopAudio()
+    setAudioPlaying(false)
+  }
+
   return (
     <>
       <div className="h-screen bg-gray-950 relative overflow-hidden flex flex-col">
@@ -87,9 +108,9 @@ function AppContent() {
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="fixed top-6 left-6 z-50 w-11 h-11 bg-white/10 backdrop-blur-lg border border-white/20 
-                       rounded-xl flex items-center justify-center text-white hover:bg-white/20 
-                       transition-all duration-200 shadow-xl hover:scale-105"
+            className="fixed top-6 left-6 z-50 w-11 h-11 bg-white/5 backdrop-blur-3xl border border-white/30 
+                       rounded-lg flex items-center justify-center text-white hover:bg-white/10 
+                       transition-all duration-200 shadow-2xl hover:scale-105"
             aria-label="Open sidebar"
           >
             <svg
@@ -111,18 +132,42 @@ function AppContent() {
           onClearHistory={handleClearHistory} 
         />
 
-        {/* Content overlay */}
-        <div className="relative z-10 flex-1 flex flex-col p-6 gap-4 max-w-7xl w-full mx-auto overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <ChatPanel messages={messages} isLoading={loading} />
+        {/* Bounded scrollable chat container */}
+        <div className="relative z-10 flex-1 overflow-hidden flex flex-col">
+          <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-6 pt-6 pb-40 scroll-smooth scrollbar-hide">
+            <div className="max-w-4xl mx-auto">
+              <ChatPanel messages={messages} isLoading={loading} />
+            </div>
           </div>
-          <InputPanel 
-            ref={inputRef}
-            value={inputText}
-            onChange={setInputText}
-            onSend={handleSend}
-            disabled={loading}
-          />
+        </div>
+
+        {/* Fixed input panel at bottom - hovering above content */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 p-6 pointer-events-none">
+          <div className="max-w-4xl mx-auto pointer-events-auto">
+            {/* Stop audio button - appears when audio is playing */}
+            {audioPlaying && (
+              <div className="mb-3 flex justify-center">
+                <button
+                  onClick={handleStopAudio}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold 
+                           transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
+                           flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <rect x="6" y="4" width="8" height="12" rx="1" />
+                  </svg>
+                  Stop Audio
+                </button>
+              </div>
+            )}
+            <InputPanel 
+              ref={inputRef}
+              value={inputText}
+              onChange={setInputText}
+              onSend={handleSend}
+              disabled={loading}
+            />
+          </div>
         </div>
       </div>
       

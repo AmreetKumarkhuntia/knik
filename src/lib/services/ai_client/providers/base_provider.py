@@ -95,15 +95,20 @@ class LangChainProvider(BaseAIProvider):
         return "langchain"
 
     def query(self, prompt: str, use_tools: bool = False, history: list = None, **kwargs) -> str:
+        printer.info(f"🔍 Provider query starting (use_tools={use_tools}, history={len(history) if history else 0} msgs)")
+        
         messages = [SystemMessage(content=self.system_instruction)] if self.system_instruction else []
 
         # Add conversation history if provided
         if history:
             messages.extend(history)
+            printer.info(f"📚 Loaded {len(history)} history messages")
 
         messages.append(HumanMessage(content=prompt))
+        printer.info(f"📝 Built message chain: {len(messages)} total messages")
 
         if use_tools and self.mcp_registry:
+            printer.info("🛠️  Invoking LLM with tools enabled...")
             response = self.llm.invoke(messages, **kwargs)
             messages.append(response)
 
@@ -125,10 +130,15 @@ class LangChainProvider(BaseAIProvider):
                 final_response = self.llm.invoke(messages, **kwargs)
                 return self._extract_text_from_content(final_response.content) if final_response.content else ""
 
-            return self._extract_text_from_content(response.content) if response.content else ""
+            result = self._extract_text_from_content(response.content) if response.content else ""
+            printer.success(f"✅ LLM response received ({len(result)} chars)")
+            return result
         else:
+            printer.info("💬 Invoking LLM (no tools)...")
             response = self._llm_raw.invoke(messages, **kwargs)
-            return self._extract_text_from_content(response.content) if response.content else ""
+            result = self._extract_text_from_content(response.content) if response.content else ""
+            printer.success(f"✅ LLM response received ({len(result)} chars)")
+            return result
 
     def query_stream(
         self, prompt: str, use_tools: bool = False, history: list = None, **kwargs
