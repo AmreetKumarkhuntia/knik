@@ -16,6 +16,7 @@ sys.path.insert(0, str(src_path))
 
 from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, TTSAsyncProcessor, printer
+from lib.services.ai_client.registry import MCPServerRegistry
 
 
 router = APIRouter()
@@ -55,12 +56,14 @@ async def update_settings(settings: SettingsUpdate):
     """Update AI client settings (recreates client with new config)"""
     try:
         if settings.provider or settings.model:
-            # Recreate AI client with updated settings
+            # Recreate AI client with updated settings (with MCP tools)
             chat_module.ai_client = AIClient(
                 provider=settings.provider or config.ai_provider,
                 model=settings.model or config.ai_model,
+                mcp_registry=MCPServerRegistry,
                 project_id=config.ai_project_id,
                 location=config.ai_location,
+                system_instruction=config.system_instruction,
             )
             printer.info(
                 f"AI client updated: {settings.provider or config.ai_provider}/{settings.model or config.ai_model}"

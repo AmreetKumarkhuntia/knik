@@ -28,17 +28,19 @@ class MockAIProvider(BaseAIProvider):
         ]
         self._index = 0
 
-    def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+    def chat(self, prompt: str, history: list = None, **kwargs) -> str:
+        """Mock chat response"""
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
-        printer.debug(f"[MOCK] Query: {prompt[:60]}...")
+        printer.debug(f"[MOCK] Chat: {prompt[:60]}...")
         printer.debug(f"[MOCK] Response: {response}")
         return response
 
-    def query_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
+    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
+        """Mock streaming chat response"""
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
-        printer.debug(f"[MOCK] Streaming Query: {prompt[:60]}...")
+        printer.debug(f"[MOCK] Streaming Chat: {prompt[:60]}...")
 
         words = response.split()
         for word in words:
@@ -46,14 +48,6 @@ class MockAIProvider(BaseAIProvider):
             yield word + " "
 
         printer.debug("[MOCK] Streaming complete")
-
-    def chat_with_agent(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
-        """Mock agent chat - same as query"""
-        return self.query(prompt=prompt, use_tools=use_tools, **kwargs)
-
-    def chat_with_agent_stream(self, prompt: str, use_tools: bool = False, **kwargs) -> Generator[str, None, None]:
-        """Mock agent stream - same as query_stream"""
-        yield from self.query_stream(prompt=prompt, use_tools=use_tools, **kwargs)
 
     def is_configured(self) -> bool:
         return True

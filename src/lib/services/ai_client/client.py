@@ -74,49 +74,77 @@ class AIClient:
             else:
                 raise
 
-    def query(
+    def chat(
         self,
         prompt: str,
-        use_tools: bool = False,
         max_tokens: int = 1024,
         temperature: float = 0.7,
-        context: list[dict[str, str]] | None = None,
         history: list = None,
+        **kwargs,
     ) -> str:
+        """
+        Send a chat message and get a response.
+
+        Tool usage is automatic - if mcp_registry was provided during initialization,
+        the AI can use registered tools. Otherwise, it's just a direct LLM call.
+
+        Args:
+            prompt: The user's message
+            max_tokens: Maximum tokens in response
+            temperature: Response randomness (0.0-2.0)
+            history: Conversation history (list of LangChain messages)
+            **kwargs: Additional provider-specific parameters
+
+        Returns:
+            str: The AI's response
+        """
         try:
-            return self._provider.query(
+            return self._provider.chat(
                 prompt=prompt,
-                use_tools=use_tools,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                context=context,
                 history=history,
+                **kwargs,
             )
         except Exception as e:
-            error_msg = f"AI query error: {e}"
+            error_msg = f"Chat error: {e}"
             printer.error(error_msg)
             return error_msg
 
-    def query_stream(
+    def chat_stream(
         self,
         prompt: str,
-        use_tools: bool = False,
         max_tokens: int = 1024,
         temperature: float = 0.7,
-        context: list[dict[str, str]] | None = None,
         history: list = None,
+        **kwargs,
     ) -> Generator[str, None, None]:
+        """
+        Stream a chat response.
+
+        Tool usage is automatic - if mcp_registry was provided during initialization,
+        the AI can use registered tools. Otherwise, it's just a direct LLM streaming.
+
+        Args:
+            prompt: The user's message
+            max_tokens: Maximum tokens in response
+            temperature: Response randomness (0.0-2.0)
+            history: Conversation history (list of LangChain messages)
+            **kwargs: Additional provider-specific parameters
+
+        Yields:
+            str: Chunks of the AI's response
+        """
         try:
-            yield from self._provider.query_stream(
+            yield from self._provider.chat_stream(
                 prompt=prompt,
-                use_tools=use_tools,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                context=context,
                 history=history,
+                **kwargs,
             )
         except Exception as e:
-            error_msg = f"AI streaming query error: {e}"
+            error_msg = f"Chat streaming error: {e}"
             printer.error(error_msg)
             yield error_msg
 
@@ -153,27 +181,7 @@ class AIClient:
         """Execute a registered tool by name."""
         return MCPServerRegistry.execute_tool(tool_name, **kwargs)
 
-    def chat_with_agent(self, prompt: str, use_tools: bool = False, history: list = None, **kwargs) -> str:
-        """Execute prompt using LangChain agent if available."""
-        try:
-            return self._provider.chat_with_agent(prompt=prompt, use_tools=use_tools, history=history, **kwargs)
-        except Exception as e:
-            error_msg = f"Agent query error: {e}"
-            printer.error(error_msg)
-            return error_msg
 
-    def chat_with_agent_stream(
-        self, prompt: str, use_tools: bool = False, history: list = None, **kwargs
-    ) -> Generator[str, None, None]:
-        """Stream agent responses if available."""
-        try:
-            yield from self._provider.chat_with_agent_stream(
-                prompt=prompt, use_tools=use_tools, history=history, **kwargs
-            )
-        except Exception as e:
-            error_msg = f"Agent streaming error: {e}"
-            printer.error(error_msg)
-            yield error_msg
 
 
 class MockAIClient(AIClient):

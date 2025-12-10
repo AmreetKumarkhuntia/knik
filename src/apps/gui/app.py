@@ -198,9 +198,8 @@ Just type your question below and press Enter to get started."""
             full_response = []
             response_started = False
 
-            for chunk in self.ai_client.chat_with_agent_stream(
+            for chunk in self.ai_client.chat_stream(
                 prompt=user_input,
-                use_tools=True,
                 history=history_messages,
                 max_tokens=self.config.max_tokens,
                 temperature=self.config.temperature,
