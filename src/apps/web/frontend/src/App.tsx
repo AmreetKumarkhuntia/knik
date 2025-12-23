@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Sidebar, ChatPanel, InputPanel, ErrorBoundary, Toast } from './lib/components'
 import type { InputPanelRef } from './lib/components'
 import { useToast, useKeyboardShortcuts } from './lib/hooks'
-import { api, playAudio, stopAudio, isAudioPlaying } from './services'
+import { api, stopAudio } from './services'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -58,22 +58,31 @@ function AppContent() {
     setLoading(true)
 
     try {
-      // Call API
-      const response = await api.chat(inputText)
+      // Clear audio queue before starting new chat
+      const { clearAudioQueue, queueAudio } = await import('./services/audio')
+      clearAudioQueue()
+      
+      setAudioPlaying(true)
+      
+      // Call API with callback to queue audio as it arrives
+      let chunkCount = 0
+      const response = await api.chat(inputText, (audio, sampleRate) => {
+        chunkCount++
+        console.log(`[App] Queueing audio chunk ${chunkCount} as it arrives, length:`, audio.length)
+        queueAudio(audio, sampleRate)
+      })
       
       // Add AI response
       const aiMessage: Message = { role: 'assistant', content: response.text }
       setMessages(prev => [...prev, aiMessage])
       
-      // Play audio
-      setAudioPlaying(true)
-      try {
-        await playAudio(response.audio, response.sample_rate)
-      } catch (audioErr) {
-        console.error('Audio playback error:', audioErr)
-      } finally {
+      console.log(`Stream complete - Audio chunks received: ${response.audioChunks?.length || 0}, Chunks queued during stream: ${chunkCount}`)
+      
+      // Audio is already playing from queue, just wait a bit for queue to finish
+      setTimeout(() => {
         setAudioPlaying(false)
-      }
+      }, 1000)
+      
       success('Response received!')
       
     } catch (err) {
@@ -91,8 +100,10 @@ function AppContent() {
     }
   }
 
-  const handleStopAudio = () => {
+  const handleStopAudio = async () => {
     stopAudio()
+    const { clearAudioQueue } = await import('./services/audio')
+    clearAudioQueue()
     setAudioPlaying(false)
   }
 

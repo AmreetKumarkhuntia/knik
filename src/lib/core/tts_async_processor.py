@@ -2,6 +2,7 @@ import time
 from collections import deque
 from pathlib import Path
 from threading import Thread
+from typing import Callable
 
 from ..services.audio_processor import AudioProcessor
 from ..services.voice_model import KokoroVoiceModel
@@ -19,6 +20,7 @@ class TTSAsyncProcessor:
     should_play: False
     is_async_playback_active: False
     sleep_duration: 0.1
+    audio_ready_callback: Callable | None
 
     def __init__(
         self,
@@ -27,6 +29,7 @@ class TTSAsyncProcessor:
         save_dir: str | None = None,
         play_voice: bool = True,
         sleep_duration: int = 0.3,
+        audio_ready_callback: Callable[[bytes, int], None] | None = None,
     ):
         self.audio_processor = AudioProcessor(sample_rate)
         self.audio_processor_class = "kokoro"
@@ -37,7 +40,9 @@ class TTSAsyncProcessor:
         self.audio_processing_queue = deque()
         self.save_dir: Path | None = Path(save_dir) if save_dir else None
         self.is_async_playback_active = False
+        self.is_generating = False  # Track if TTS generation is in progress
         self.sleep_duration = sleep_duration
+        self.audio_ready_callback = audio_ready_callback
         if self.save_dir is not None:
             self.save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -80,8 +85,13 @@ class TTSAsyncProcessor:
     def is_processing_complete(self) -> bool:
         queues_empty = self.is_text_queue_empty() and self.is_audio_queue_empty()
         not_playing = not self.is_async_playback_active
-        printer.debug(f"tts processing queue is empty: '{queues_empty} & is not playing: {not_playing}")
-        return queues_empty and not_playing
+        not_generating = not self.is_generating
+        printer.debug(f"tts processing queue is empty: '{queues_empty}' & is not playing: {not_playing} & not generating: {not_generating}")
+        return queues_empty and not_playing and not_generating
+
+    def set_audio_ready_callback(self, callback: Callable[[bytes, int], None] | None) -> None:
+        """Set callback to be called when audio is ready (before playback)"""
+        self.audio_ready_callback = callback
 
     def __text_processor__(self) -> None:
         printer.info("Text processor started")
@@ -89,11 +99,14 @@ class TTSAsyncProcessor:
             if len(self.text_processing_queue) > 0:
                 text = self.text_processing_queue.popleft()
                 try:
+                    self.is_generating = True
                     audio, sample_rate = self.tts_processor.generate(text)
-                    self.audio_processing_queue.append(audio)
+                    self.audio_processing_queue.append((audio, sample_rate))
                     printer.debug("Audio generated")
                 except Exception as e:
                     printer.error(f"Error processing text: {e}")
+                finally:
+                    self.is_generating = False
             time.sleep(self.sleep_duration)
         printer.info("Text processor stopped")
 
@@ -103,7 +116,15 @@ class TTSAsyncProcessor:
             if not self.audio_processor.is_playing():
                 if len(self.audio_processing_queue) > 0:
                     self.is_async_playback_active = True
-                    audio = self.audio_processing_queue.popleft()
+                    audio, sample_rate = self.audio_processing_queue.popleft()
+
+                    # Call callback if set (for streaming to frontend)
+                    if self.audio_ready_callback:
+                        try:
+                            self.audio_ready_callback(audio, sample_rate)
+                        except Exception as e:
+                            printer.error(f"Audio callback error: {e}")
+
                     if self.save_dir:
                         try:
                             timestamp = int(time.time() * 1000)
@@ -112,6 +133,7 @@ class TTSAsyncProcessor:
                             printer.info(f"Audio saved: {filepath.name}")
                         except Exception as e:
                             printer.error(f"Failed to save audio: {e}")
+
                     if self.should_play:
                         printer.debug("Playing audio...")
                         self.audio_processor.play(audio, blocking=True)
