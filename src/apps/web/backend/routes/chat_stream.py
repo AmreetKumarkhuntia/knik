@@ -25,6 +25,7 @@ from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, TTSAsyncProcessor, printer
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
+from lib.services.voice_model import KokoroVoiceModel
 
 
 router = APIRouter()
@@ -59,7 +60,7 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
         # Initialize AI client if needed
         if ai_client is None:
             tools_count = register_all_tools(MCPServerRegistry)
-            printer.info(f"Registered {tools_count} MCP tools")
+            printer.info(f"Registered {tools_count} MCP tools, preparing AI client... with {config.ai_provider}/{config.ai_model}")
 
             ai_client = AIClient(
                 provider=config.ai_provider,
@@ -73,7 +74,6 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
 
         # Initialize TTS processor (direct voice model usage)
         if tts_processor is None:
-            from lib.services.voice_model import KokoroVoiceModel
             tts_processor = KokoroVoiceModel()
             printer.success(f"TTS ready: {config.voice_name}")
 

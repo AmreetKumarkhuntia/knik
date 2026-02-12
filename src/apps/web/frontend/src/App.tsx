@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { Sidebar, ChatPanel, InputPanel, ErrorBoundary, Toast } from './lib/components'
+import { Sidebar, ChatPanel, InputPanel, ErrorBoundary, Toast, MenuIcon, PlayIcon, PauseIcon, StopIcon } from './lib/components'
 import type { InputPanelRef } from './lib/components'
 import { useToast, useKeyboardShortcuts } from './lib/hooks'
-import { api, stopAudio } from './services'
+import { stopAudio, streamChat, queueAudio, clearAudioQueue, setAudioStateCallback, pauseAudio, resumeAudio } from './services'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -15,18 +15,28 @@ function AppContent() {
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [audioPlaying, setAudioPlaying] = useState(false)
+  const [audioPaused, setAudioPaused] = useState(false)
   const inputRef = useRef<InputPanelRef>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
+  const streamControllerRef = useRef<AbortController | null>(null)
   const { toasts, hideToast, success, error } = useToast()
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
     }
   }, [messages, loading])
 
-  // Keyboard shortcuts
+  useEffect(() => {
+    setAudioStateCallback((isPaused, isPlaying) => {
+      console.log('[App] Audio state changed:', { isPaused, isPlaying })
+      setAudioPaused(isPaused)
+      setAudioPlaying(isPlaying)
+    })
+    
+    return () => setAudioStateCallback(null)
+  }, [])
+
   useKeyboardShortcuts([
     {
       key: 'k',
@@ -53,58 +63,94 @@ function AppContent() {
     if (!inputText.trim() || loading) return
 
     const userMessage: Message = { role: 'user', content: inputText }
+    const messageCopy = inputText
     setMessages(prev => [...prev, userMessage])
     setInputText('')
     setLoading(true)
 
+    const assistantMessageIndex = messages.length + 1
+    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
     try {
-      // Clear audio queue before starting new chat
-      const { clearAudioQueue, queueAudio } = await import('./services/audio')
       clearAudioQueue()
-      
       setAudioPlaying(true)
       
-      // Call API with callback to queue audio as it arrives
-      let chunkCount = 0
-      const response = await api.chat(inputText, (audio, sampleRate) => {
-        chunkCount++
-        console.log(`[App] Queueing audio chunk ${chunkCount} as it arrives, length:`, audio.length)
-        queueAudio(audio, sampleRate)
+      let audioChunkCount = 0
+      
+      const controller = await streamChat(messageCopy, {
+        onText: (textChunk: string) => {
+          setMessages(prev => {
+            const updated = [...prev]
+            if (updated[assistantMessageIndex]) {
+              updated[assistantMessageIndex] = {
+                ...updated[assistantMessageIndex],
+                content: updated[assistantMessageIndex].content + textChunk
+              }
+            }
+            return updated
+          })
+        },
+        onAudio: (audioBase64: string) => {
+          audioChunkCount++
+          console.log(`[App] Queueing audio chunk ${audioChunkCount}`)
+          queueAudio(audioBase64, 24000)
+        },
+        onComplete: (count: number) => {
+          console.log(`[App] Stream complete: ${count} audio chunks`)
+          setLoading(false)
+          setTimeout(() => {
+            setAudioPlaying(false)
+          }, 1000)
+          success('Response received!')
+        },
+        onError: (errorMsg: string) => {
+          console.error('[App] Stream error:', errorMsg)
+          error(`Error: ${errorMsg}`)
+          setLoading(false)
+          setAudioPlaying(false)
+        }
       })
       
-      // Add AI response
-      const aiMessage: Message = { role: 'assistant', content: response.text }
-      setMessages(prev => [...prev, aiMessage])
-      
-      console.log(`Stream complete - Audio chunks received: ${response.audioChunks?.length || 0}, Chunks queued during stream: ${chunkCount}`)
-      
-      // Audio is already playing from queue, just wait a bit for queue to finish
-      setTimeout(() => {
-        setAudioPlaying(false)
-      }, 1000)
-      
-      success('Response received!')
+      streamControllerRef.current = controller
       
     } catch (err) {
       console.error('Chat error:', err)
       const errorMsg = err instanceof Error ? err.message : 'Something went wrong'
       error(`Error: ${errorMsg}`)
       
-      const errorMessage: Message = { 
-        role: 'assistant', 
-        content: 'Sorry, something went wrong. Please try again.' 
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
+      setMessages(prev => {
+        const updated = [...prev]
+        if (updated[assistantMessageIndex]) {
+          updated[assistantMessageIndex] = {
+            role: 'assistant',
+            content: 'Sorry, something went wrong. Please try again.'
+          }
+        }
+        return updated
+      })
       setLoading(false)
+      setAudioPlaying(false)
     }
   }
 
-  const handleStopAudio = async () => {
+  const handleStopAudio = () => {
+    if (streamControllerRef.current) {
+      streamControllerRef.current.abort()
+      streamControllerRef.current = null
+    }
+    
     stopAudio()
-    const { clearAudioQueue } = await import('./services/audio')
     clearAudioQueue()
     setAudioPlaying(false)
+    setLoading(false)
+  }
+
+  const handleTogglePause = () => {
+    if (audioPaused) {
+      resumeAudio()
+    } else {
+      pauseAudio()
+    }
   }
 
   return (
@@ -119,19 +165,12 @@ function AppContent() {
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="fixed top-6 left-6 z-50 w-11 h-11 bg-white/5 backdrop-blur-3xl border border-white/30 
+            className="fixed top-6 left-6 z-20 w-11 h-11 bg-white/5 backdrop-blur-3xl border border-white/30 
                        rounded-lg flex items-center justify-center text-white hover:bg-white/10 
                        transition-all duration-200 shadow-2xl hover:scale-105"
             aria-label="Open sidebar"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <MenuIcon className="w-5 h-5" />
           </button>
         )}
 
@@ -155,19 +194,40 @@ function AppContent() {
         {/* Fixed input panel at bottom - hovering above content */}
         <div className="fixed bottom-0 left-0 right-0 z-20 p-6 pointer-events-none">
           <div className="max-w-4xl mx-auto pointer-events-auto">
-            {/* Stop audio button - appears when audio is playing */}
+            {/* Audio control buttons - appear when audio is playing */}
             {audioPlaying && (
-              <div className="mb-3 flex justify-center">
+              <div className="mb-3 flex justify-center gap-2">
+                {/* Pause/Resume button */}
+                <button
+                  onClick={handleTogglePause}
+                  className={`${
+                    audioPaused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'
+                  } text-white px-6 py-3 rounded-lg font-semibold 
+                             transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
+                             flex items-center gap-2`}
+                >
+                  {audioPaused ? (
+                    <>
+                      <PlayIcon />
+                      Resume
+                    </>
+                  ) : (
+                    <>
+                      <PauseIcon />
+                      Pause
+                    </>
+                  )}
+                </button>
+
+                {/* Stop button */}
                 <button
                   onClick={handleStopAudio}
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold 
                            transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
                            flex items-center gap-2"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <rect x="6" y="4" width="8" height="12" rx="1" />
-                  </svg>
-                  Stop Audio
+                  <StopIcon />
+                  Stop
                 </button>
               </div>
             )}

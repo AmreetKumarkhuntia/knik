@@ -28,26 +28,36 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
           <p className="text-lg text-white/60">Your voice-enabled AI assistant</p>
         </div>
       ) : (
-        messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+        messages.map((msg, idx) => {
+          const isLastMessage = idx === messages.length - 1
+          const isStreaming = isLastMessage && isLoading && msg.role === 'assistant'
+          
+          return (
             <div
-              className={`max-w-[70%] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-3xl border ${
-                msg.role === 'user'
-                  ? 'bg-white/5 text-white border-white/50 animate-slide-in-right'
-                  : 'bg-black/10 text-white border-white/30 animate-slide-in-left'
-              }`}
+              key={idx}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <p className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              <div
+                className={`max-w-[70%] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-3xl border ${
+                  msg.role === 'user'
+                    ? 'bg-white/5 text-white border-white/50 animate-slide-in-right'
+                    : 'bg-black/10 text-white border-white/30 animate-slide-in-left'
+                }`}
+              >
+                <p className="text-base leading-relaxed whitespace-pre-wrap">
+                  {msg.content}
+                  {isStreaming && (
+                    <span className="inline-block w-0.5 h-5 bg-white/80 ml-1 animate-pulse" />
+                  )}
+                </p>
+              </div>
             </div>
-          </div>
-        ))
+          )
+        })
       )}
       
-      {/* Loading indicator */}
-      {isLoading && (
+      {/* Loading indicator - only show if no messages yet */}
+      {isLoading && messages.length === 0 && (
         <div className="flex justify-start">
           <div className="bg-black/10 backdrop-blur-3xl border border-white/30 px-6 py-4 rounded-xl shadow-2xl animate-slide-in-left">
             <div className="flex items-center gap-2">

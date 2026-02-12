@@ -60,16 +60,13 @@ export async function streamChat(message: string, callbacks: StreamCallbacks): P
     const decoder = new TextDecoder();
     let buffer = '';
 
-    // Read stream
     let currentEvent = '';
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      // Decode chunk and add to buffer
       buffer += decoder.decode(value, { stream: true });
 
-      // Process complete SSE messages
       const lines = buffer.split('\n');
       buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
@@ -82,15 +79,20 @@ export async function streamChat(message: string, callbacks: StreamCallbacks): P
         if (line.startsWith('data:')) {
           const data = line.substring(5).trim();
 
-          if (currentEvent === 'text' && callbacks.onText) {
-            callbacks.onText(data);
-          } else if (currentEvent === 'audio' && callbacks.onAudio) {
-            callbacks.onAudio(data);
-          } else if (currentEvent === 'done' && callbacks.onComplete) {
-            const count = parseInt(data, 10);
-            callbacks.onComplete(count);
-          } else if (currentEvent === 'error' && callbacks.onError) {
-            callbacks.onError(data);
+          try {
+            const parsed = JSON.parse(data);
+            
+            if (currentEvent === 'text' && callbacks.onText && parsed.text) {
+              callbacks.onText(parsed.text);
+            } else if (currentEvent === 'audio' && callbacks.onAudio && parsed.audio) {
+              callbacks.onAudio(parsed.audio);
+            } else if (currentEvent === 'done' && callbacks.onComplete) {
+              callbacks.onComplete(parsed.audio_count || 0);
+            } else if (currentEvent === 'error' && callbacks.onError) {
+              callbacks.onError(parsed.error || 'Unknown error');
+            }
+          } catch (e) {
+            console.error('[Streaming] Failed to parse SSE JSON:', e, data);
           }
 
           currentEvent = ''; // Reset after processing
