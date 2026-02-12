@@ -4,6 +4,7 @@ torch
 sounddevice
 numpy
 loguru  # Modern logging with colors and formatting
+python-dotenv>=1.0.0  # Load environment variables from .env file
 google-cloud-aiplatform  # For Vertex AI / Gemini integration (optional)
 langchain-google-genai>=2.0.0  # For Gemini AI Studio API key authentication
 customtkinter>=5.2.0  # Modern GUI framework

@@ -4,59 +4,46 @@ Supports loading configuration from environment variables with sensible defaults
 """
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import ClassVar
+
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 
 @dataclass
 class Config:
     """Configuration class for application settings (TTS, AI, logging, etc.)."""
 
-    SAMPLE_RATE: int = 24000
+    # ============================================================================
+    # Class-level constants and defaults
+    # ============================================================================
 
-    LANGUAGE_CODES = {
-        "american_english": "a",
-        "british_english": "b",
-        "spanish": "es",
-        "french": "fr",
-        "italian": "it",
-        "portuguese": "pt",
-        "german": "de",
-        "japanese": "ja",
-        "chinese": "zh",
-        "korean": "ko",
-    }
+    # Sample rate constant
+    SAMPLE_RATE: ClassVar[int] = 24000
 
-    VOICES = {
-        "af_heart": "af_heart",
-        "af_bella": "af_bella",
-        "af_sarah": "af_sarah",
-        "af_nicole": "af_nicole",
-        "af_sky": "af_sky",
-        "am_adam": "am_adam",
-        "am_michael": "am_michael",
-        "am_leo": "am_leo",
-        "am_ryan": "am_ryan",
-    }
+    # TTS defaults
+    DEFAULT_TTS: ClassVar[str] = "kokoro"
+    DEFAULT_LANGUAGE: ClassVar[str] = "a"
+    DEFAULT_VOICE: ClassVar[str] = "af_heart"
+    DEFAULT_MODEL: ClassVar[str] = "hexgrad/Kokoro-82M"
 
-    # TTS defaults (can be overridden by env vars)
-    DEFAULT_TTS: str = "kokoro"
-    DEFAULT_LANGUAGE: str = "a"
-    DEFAULT_VOICE: str = "af_heart"
-    DEFAULT_MODEL: str = "hexgrad/Kokoro-82M"
+    # AI defaults
+    DEFAULT_AI_MODEL: ClassVar[str] = "gemini-1.5-flash"
+    DEFAULT_AI_LOCATION: ClassVar[str] = "us-central1"
+    DEFAULT_AI_MAX_TOKENS: ClassVar[int] = 25565
+    DEFAULT_AI_TEMPERATURE: ClassVar[float] = 0.7
 
-    # AI defaults (can be overridden by env vars)
-    DEFAULT_AI_MODEL: str = "gemini-1.5-flash"
-    DEFAULT_AI_LOCATION: str = "us-central1"
-    DEFAULT_AI_MAX_TOKENS: int = 25565
-    DEFAULT_AI_TEMPERATURE: float = 0.7
-
-    # Logging defaults (can be overridden by env vars)
-    DEFAULT_LOG_LEVEL: str = "ERROR"
-    DEFAULT_SHOW_LOGS: bool = False
-    DEFAULT_USE_COLORS: bool = True
+    # Logging defaults
+    DEFAULT_LOG_LEVEL: ClassVar[str] = "ERROR"
+    DEFAULT_SHOW_LOGS: ClassVar[bool] = False
+    DEFAULT_USE_COLORS: ClassVar[bool] = True
 
     # System instruction for AI assistant
-    DEFAULT_SYSTEM_INSTRUCTION: str = """You are an intelligent, proactive assistant similar to Jarvis.
+    DEFAULT_SYSTEM_INSTRUCTION: ClassVar[str] = """You are an intelligent, proactive assistant similar to Jarvis.
 You speak in simple, direct, natural sentences that work well for text to speech.
 Do not use markdown or decorative formatting.
 
@@ -72,13 +59,73 @@ Keep your responses calm, clear, and steady.
 Ask for clarification only when absolutely necessary.
 Be reliable, efficient, and action focused like Jarvis."""
 
-    AI_MODELS = {
+    # Lookup dictionaries (used by utility methods)
+    LANGUAGE_CODES: ClassVar[dict[str, str]] = {
+        "american_english": "a",
+        "british_english": "b",
+        "spanish": "es",
+        "french": "fr",
+        "italian": "it",
+        "portuguese": "pt",
+        "german": "de",
+        "japanese": "ja",
+        "chinese": "zh",
+        "korean": "ko",
+    }
+
+    VOICES: ClassVar[dict[str, str]] = {
+        "af_heart": "af_heart",
+        "af_bella": "af_bella",
+        "af_sarah": "af_sarah",
+        "af_nicole": "af_nicole",
+        "af_sky": "af_sky",
+        "am_adam": "am_adam",
+        "am_michael": "am_michael",
+        "am_leo": "am_leo",
+        "am_ryan": "am_ryan",
+    }
+
+    AI_MODELS: ClassVar[dict[str, str]] = {
         "gemini-2.0-flash-exp": "Latest experimental flash model (December 2024+)",
         "gemini-1.5-flash": "Fast, efficient model",
         "gemini-1.5-flash-8b": "Smaller, faster flash variant",
         "gemini-1.5-pro": "More capable, slower model",
         "gemini-1.0-pro": "Legacy stable model",
     }
+
+    # ============================================================================
+    # Instance fields (common AI and TTS settings for all applications)
+    # ============================================================================
+
+    # AI configuration
+    ai_provider: str = field(default_factory=lambda: Config.from_env("KNIK_AI_PROVIDER", "vertex"))
+    ai_model: str = field(default_factory=lambda: Config.get_ai_model())
+    ai_project_id: str | None = field(default_factory=lambda: Config.get_ai_project())
+    ai_location: str = field(default_factory=lambda: Config.get_ai_location())
+    max_tokens: int = field(
+        default_factory=lambda: Config.from_env("KNIK_MAX_TOKENS", Config.DEFAULT_AI_MAX_TOKENS, int)
+    )
+    temperature: float = field(
+        default_factory=lambda: Config.from_env("KNIK_TEMPERATURE", Config.DEFAULT_AI_TEMPERATURE, float)
+    )
+
+    # TTS configuration
+    voice_language: str = field(default_factory=lambda: Config.get_language())
+    voice_name: str = field(default_factory=lambda: Config.get_voice())
+    sample_rate: int = field(default=24000)
+    enable_voice_output: bool = field(default_factory=lambda: Config.from_env("KNIK_VOICE_OUTPUT", True, bool))
+
+    # ============================================================================
+    # Initialization
+    # ============================================================================
+
+    def __post_init__(self):
+        """Initialize system instruction from environment."""
+        self.system_instruction = Config.from_env("KNIK_AI_SYSTEM_INSTRUCTION", Config.DEFAULT_SYSTEM_INSTRUCTION)
+
+    # ============================================================================
+    # Utility class methods
+    # ============================================================================
 
     @classmethod
     def from_env(cls, key: str, default=None, type_cast=str):
@@ -161,8 +208,10 @@ Be reliable, efficient, and action focused like Jarvis."""
 
     @classmethod
     def get_language_code(cls, language: str) -> str:
+        """Get language code for a given language name."""
         return cls.LANGUAGE_CODES.get(language.lower(), cls.DEFAULT_LANGUAGE)
 
     @classmethod
     def is_valid_voice(cls, voice: str) -> bool:
+        """Check if a voice is valid."""
         return voice in cls.VOICES.values()
