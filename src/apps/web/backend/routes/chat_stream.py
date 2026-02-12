@@ -3,26 +3,25 @@ Streaming Chat API endpoint with Server-Sent Events (SSE)
 Streams both text and audio progressively as they're generated
 """
 
-import asyncio
 import base64
 import io
 import json
 import sys
-from collections import deque
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 
 import soundfile as sf
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+
 # Add src to path
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
 from apps.web.backend.config import WebBackendConfig
-from imports import AIClient, TTSAsyncProcessor, printer
+from imports import AIClient, printer
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
 from lib.services.voice_model import KokoroVoiceModel
@@ -35,7 +34,7 @@ config = WebBackendConfig()
 
 # Global clients
 ai_client: AIClient | None = None
-tts_processor: TTSAsyncProcessor | None = None
+tts_processor: KokoroVoiceModel | None = None
 
 
 class StreamChatRequest(BaseModel):
@@ -60,7 +59,9 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
         # Initialize AI client if needed
         if ai_client is None:
             tools_count = register_all_tools(MCPServerRegistry)
-            printer.info(f"Registered {tools_count} MCP tools, preparing AI client... with {config.ai_provider}/{config.ai_model}")
+            printer.info(
+                f"Registered {tools_count} MCP tools, preparing AI client... with {config.ai_provider}/{config.ai_model}"
+            )
 
             ai_client = AIClient(
                 provider=config.ai_provider,
@@ -68,7 +69,7 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
                 mcp_registry=MCPServerRegistry,
                 project_id=config.ai_project_id,
                 location=config.ai_location,
-                system_instruction=config.system_instruction,
+                system_instruction=str(config.system_instruction) if config.system_instruction else None,
             )
             printer.success(f"AIClient ready: {config.ai_provider}/{config.ai_model}")
 
@@ -88,28 +89,28 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
 
             # Buffer text for sentence detection
             text_buffer += text_chunk
-            
+
             # Check for complete sentences
             for ending in sentence_endings:
                 if ending in text_buffer:
                     parts = text_buffer.split(ending, 1)
                     sentence = (parts[0] + ending).strip()
-                    
+
                     if sentence:
                         # Generate audio synchronously (no threading/race conditions)
                         printer.info(f"Generating audio for: '{sentence[:50]}...'")
                         audio_data, sr = tts_processor.generate(sentence)
-                        
+
                         # Convert to WAV and encode
                         buf = io.BytesIO()
                         sf.write(buf, audio_data, sr, format="WAV")
                         audio_b64 = base64.b64encode(buf.getvalue()).decode()
-                        
+
                         # Send audio immediately
                         yield f"event: audio\ndata: {json.dumps({'audio': audio_b64, 'sample_rate': sr})}\n\n"
                         audio_count += 1
                         printer.success(f"Sent audio chunk {audio_count}")
-                    
+
                     # Keep remaining text in buffer
                     text_buffer = parts[1] if len(parts) > 1 else ""
                     break
@@ -118,11 +119,11 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
         if text_buffer.strip():
             printer.info(f"Generating audio for remaining: '{text_buffer[:50]}...'")
             audio_data, sr = tts_processor.generate(text_buffer.strip())
-            
+
             buf = io.BytesIO()
             sf.write(buf, audio_data, sr, format="WAV")
             audio_b64 = base64.b64encode(buf.getvalue()).decode()
-            
+
             yield f"event: audio\ndata: {json.dumps({'audio': audio_b64, 'sample_rate': sr})}\n\n"
             audio_count += 1
             printer.success(f"Sent final audio chunk {audio_count}")

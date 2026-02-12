@@ -15,6 +15,11 @@ class BaseAIProvider(ABC):
         raise NotImplementedError("Subclasses must implement get_provider_name()")
 
     @abstractmethod
+    def __init__(self, **kwargs):
+        """Initialize provider with configuration."""
+        pass
+
+    @abstractmethod
     def chat(self, prompt: str, history: list = None, **kwargs) -> str:
         """Send a chat message. Uses tools automatically if mcp_registry was provided."""
         pass
@@ -53,8 +58,7 @@ class LangChainProvider(BaseAIProvider):
         # Agent is REQUIRED - subclass must create it
         if not agent:
             raise ValueError(
-                f"{provider_name}: Agent was not created. "
-                "Subclass must create and provide an agent instance."
+                f"{provider_name}: Agent was not created. Subclass must create and provide an agent instance."
             )
 
         self.agent = agent
@@ -111,8 +115,7 @@ class LangChainProvider(BaseAIProvider):
         """
         if not self.agent:
             raise RuntimeError(
-                "Chat requires agent to be initialized. "
-                "Initialize provider without mcp_registry for direct LLM calls."
+                "Chat requires agent to be initialized. Initialize provider without mcp_registry for direct LLM calls."
             )
 
         agent_messages = self._build_agent_messages(history, prompt)
@@ -135,9 +138,7 @@ class LangChainProvider(BaseAIProvider):
 
         return self._extract_text_from_content(output) if output else ""
 
-    def chat_stream(
-        self, prompt: str, history: list = None, **kwargs
-    ) -> Generator[str, None, None]:
+    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
         """
         Stream chat with AI. Uses agent with tools if mcp_registry was provided during init.
         Agent must exist if this is called (enforced during initialization).

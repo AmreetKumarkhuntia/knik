@@ -1,8 +1,8 @@
 import time
 from collections import deque
+from collections.abc import Callable
 from pathlib import Path
 from threading import Thread
-from typing import Callable
 
 from ..services.audio_processor import AudioProcessor
 from ..services.voice_model import KokoroVoiceModel
@@ -11,16 +11,16 @@ from .config import Config
 
 
 class TTSAsyncProcessor:
-    text_processing_queue: None
-    audio_processing_queue: None
-    tts_processor: None
-    audio_processor_class: None
-    audio_processor: None
-    should_process: False
-    should_play: False
-    is_async_playback_active: False
-    sleep_duration: 0.1
-    audio_ready_callback: Callable | None
+    text_processing_queue: deque
+    audio_processing_queue: deque
+    tts_processor: KokoroVoiceModel
+    audio_processor_class: str
+    audio_processor: AudioProcessor
+    should_process: bool = False
+    should_play: bool = False
+    is_async_playback_active: bool = False
+    sleep_duration: float = 0.1
+    audio_ready_callback: Callable[[bytes, int], None] | None = None
 
     def __init__(
         self,
@@ -28,7 +28,7 @@ class TTSAsyncProcessor:
         voice_model: str = Config.DEFAULT_TTS,
         save_dir: str | None = None,
         play_voice: bool = True,
-        sleep_duration: int = 0.3,
+        sleep_duration: float = 0.3,
         audio_ready_callback: Callable[[bytes, int], None] | None = None,
     ):
         self.audio_processor = AudioProcessor(sample_rate)
@@ -86,7 +86,9 @@ class TTSAsyncProcessor:
         queues_empty = self.is_text_queue_empty() and self.is_audio_queue_empty()
         not_playing = not self.is_async_playback_active
         not_generating = not self.is_generating
-        printer.debug(f"tts processing queue is empty: '{queues_empty}' & is not playing: {not_playing} & not generating: {not_generating}")
+        printer.debug(
+            f"tts processing queue is empty: '{queues_empty}' & is not playing: {not_playing} & not generating: {not_generating}"
+        )
         return queues_empty and not_playing and not_generating
 
     def set_audio_ready_callback(self, callback: Callable[[bytes, int], None] | None) -> None:

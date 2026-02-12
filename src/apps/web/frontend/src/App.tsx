@@ -1,8 +1,26 @@
 import { useState, useRef, useEffect } from 'react'
-import { Sidebar, ChatPanel, InputPanel, ErrorBoundary, Toast, MenuIcon, PlayIcon, PauseIcon, StopIcon } from './lib/components'
+import {
+  Sidebar,
+  ChatPanel,
+  InputPanel,
+  ErrorBoundary,
+  Toast,
+  MenuIcon,
+  PlayIcon,
+  PauseIcon,
+  StopIcon,
+} from './lib/components'
 import type { InputPanelRef } from './lib/components'
 import { useToast, useKeyboardShortcuts } from './lib/hooks'
-import { stopAudio, streamChat, queueAudio, clearAudioQueue, setAudioStateCallback, pauseAudio, resumeAudio } from './services'
+import {
+  stopAudio,
+  streamChat,
+  queueAudio,
+  clearAudioQueue,
+  setAudioStateCallback,
+  pauseAudio,
+  resumeAudio,
+} from './services'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -33,7 +51,7 @@ function AppContent() {
       setAudioPaused(isPaused)
       setAudioPlaying(isPlaying)
     })
-    
+
     return () => setAudioStateCallback(null)
   }, [])
 
@@ -74,9 +92,9 @@ function AppContent() {
     try {
       clearAudioQueue()
       setAudioPlaying(true)
-      
+
       let audioChunkCount = 0
-      
+
       const controller = await streamChat(messageCopy, {
         onText: (textChunk: string) => {
           setMessages(prev => {
@@ -84,7 +102,7 @@ function AppContent() {
             if (updated[assistantMessageIndex]) {
               updated[assistantMessageIndex] = {
                 ...updated[assistantMessageIndex],
-                content: updated[assistantMessageIndex].content + textChunk
+                content: updated[assistantMessageIndex].content + textChunk,
               }
             }
             return updated
@@ -108,22 +126,21 @@ function AppContent() {
           error(`Error: ${errorMsg}`)
           setLoading(false)
           setAudioPlaying(false)
-        }
+        },
       })
-      
+
       streamControllerRef.current = controller
-      
     } catch (err) {
       console.error('Chat error:', err)
       const errorMsg = err instanceof Error ? err.message : 'Something went wrong'
       error(`Error: ${errorMsg}`)
-      
+
       setMessages(prev => {
         const updated = [...prev]
         if (updated[assistantMessageIndex]) {
           updated[assistantMessageIndex] = {
             role: 'assistant',
-            content: 'Sorry, something went wrong. Please try again.'
+            content: 'Sorry, something went wrong. Please try again.',
           }
         }
         return updated
@@ -138,7 +155,7 @@ function AppContent() {
       streamControllerRef.current.abort()
       streamControllerRef.current = null
     }
-    
+
     stopAudio()
     clearAudioQueue()
     setAudioPlaying(false)
@@ -160,7 +177,7 @@ function AppContent() {
         <div className="absolute -top-20 -left-20 w-[700px] h-[700px] bg-purple-600 rounded-full blur-[140px] opacity-30 animate-blob pointer-events-none"></div>
         <div className="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-teal-500 rounded-full blur-[140px] opacity-30 animate-blob animation-delay-2000 pointer-events-none"></div>
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[140px] opacity-20 animate-blob animation-delay-4000 pointer-events-none"></div>
-        
+
         {/* Hamburger menu button - hides when sidebar is open */}
         {!sidebarOpen && (
           <button
@@ -175,16 +192,19 @@ function AppContent() {
         )}
 
         {/* Sidebar */}
-        <Sidebar 
+        <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          onNewChat={handleNewChat} 
-          onClearHistory={handleClearHistory} 
+          onNewChat={handleNewChat}
+          onClearHistory={handleClearHistory}
         />
 
         {/* Bounded scrollable chat container */}
         <div className="relative z-10 flex-1 overflow-hidden flex flex-col">
-          <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-6 pt-6 pb-40 scroll-smooth scrollbar-hide">
+          <div
+            ref={chatScrollRef}
+            className="flex-1 overflow-y-auto px-6 pt-6 pb-40 scroll-smooth scrollbar-hide"
+          >
             <div className="max-w-4xl mx-auto">
               <ChatPanel messages={messages} isLoading={loading} />
             </div>
@@ -201,7 +221,9 @@ function AppContent() {
                 <button
                   onClick={handleTogglePause}
                   className={`${
-                    audioPaused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'
+                    audioPaused
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-yellow-600 hover:bg-yellow-700'
                   } text-white px-6 py-3 rounded-lg font-semibold 
                              transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
                              flex items-center gap-2`}
@@ -231,7 +253,7 @@ function AppContent() {
                 </button>
               </div>
             )}
-            <InputPanel 
+            <InputPanel
               ref={inputRef}
               value={inputText}
               onChange={setInputText}
@@ -241,7 +263,7 @@ function AppContent() {
           </div>
         </div>
       </div>
-      
+
       {/* Toast notifications */}
       {toasts.map(toast => (
         <Toast

@@ -1,0 +1,25 @@
+{
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".venv",
+        "dist",
+        "dist-electron"
+    ],
+    "typeCheckingMode": "basic",
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "reportAttributeAccessIssue": false,
+    "reportOptionalMemberAccess": false,
+    "reportOptionalCall": false,
+    "reportArgumentType": false,
+    "reportReturnType": false,
+    "reportAssignmentType": false,
+    "reportGeneralTypeIssues": false,
+    "reportOptionalSubscript": false,
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Darwin"
+}

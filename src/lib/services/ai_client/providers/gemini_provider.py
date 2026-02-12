@@ -60,15 +60,11 @@ class GeminiAIProvider(LangChainProvider):
         **kwargs,
     ):
         if not LANGCHAIN_GEMINI_AVAILABLE:
-            raise ImportError(
-                "LangChain Google GenAI not installed. Run: pip install langchain-google-genai"
-            )
+            raise ImportError("LangChain Google GenAI not installed. Run: pip install langchain-google-genai")
 
         self.api_key = os.getenv("GEMINI_API_KEY")
         if not self.api_key:
-            raise RuntimeError(
-                "No API key found. Set GEMINI_API_KEY environment variable."
-            )
+            raise RuntimeError("No API key found. Set GEMINI_API_KEY environment variable.")
 
         self.model_name = model_name
         self.temperature = temperature
@@ -76,17 +72,27 @@ class GeminiAIProvider(LangChainProvider):
 
         # Extract model from kwargs if passed (overrides model_name parameter)
         # This handles cases where AIClient passes model=... instead of model_name=...
-        if 'model' in kwargs:
-            self.model_name = kwargs['model']
+        if "model" in kwargs:
+            self.model_name = kwargs["model"]
             model_name = self.model_name
 
         # Filter out parameters we're setting explicitly AND Vertex AI specific params
         # Vertex AI uses: project_id, location, project
         # Gemini AI Studio uses: google_api_key
         filtered_kwargs = {
-            k: v for k, v in kwargs.items() 
-            if k not in ['model', 'model_name', 'google_api_key', 'temperature', 'max_output_tokens', 
-                        'project_id', 'location', 'project']
+            k: v
+            for k, v in kwargs.items()
+            if k
+            not in [
+                "model",
+                "model_name",
+                "google_api_key",
+                "temperature",
+                "max_output_tokens",
+                "project_id",
+                "location",
+                "project",
+            ]
         }
 
         # Create LangChain model (don't pass tool_callback - it's for internal use only)

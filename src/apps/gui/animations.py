@@ -276,7 +276,7 @@ class AnimationController:
 
     def _animate(self):
         """Internal animation loop."""
-        if not self.is_running or self.is_paused:
+        if not self.is_running or self.is_paused or self.start_time is None:
             return
 
         import time

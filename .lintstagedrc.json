@@ -1,0 +1,14 @@
+{
+    "*.{py}": [
+        "./scripts/lint_backend.sh --fix",
+        "./scripts/format_backend.sh",
+        "./scripts/typecheck_backend.sh"
+    ],
+    "src/apps/web/frontend/src/**/*.{ts,tsx}": [
+        "./scripts/lint_frontend.sh --fix",
+        "./scripts/format_frontend.sh"
+    ],
+    "src/apps/web/frontend/src/**/*.{css,json}": [
+        "./scripts/format_frontend.sh"
+    ]
+}

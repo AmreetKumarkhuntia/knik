@@ -22,11 +22,18 @@
     "electron:build:mac": "electron-builder --mac",
     "electron:build:win": "electron-builder --win",
     "electron:build:linux": "electron-builder --linux",
-    "lint": "source .venv/bin/activate && ruff check .",
-    "lint:fix": "source .venv/bin/activate && ruff check --fix .",
-    "format": "source .venv/bin/activate && ruff format .",
-    "format:check": "source .venv/bin/activate && ruff format --check .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "./scripts/lint_backend.sh",
+    "lint:fix": "./scripts/lint_backend.sh --fix",
+    "lint:frontend": "./scripts/lint_frontend.sh",
+    "lint:all": "npm run lint && npm run lint:frontend",
+    "format": "./scripts/format_backend.sh",
+    "format:check": "./scripts/format_backend.sh --check",
+    "format:frontend": "./scripts/format_frontend.sh",
+    "format:all": "npm run format && npm run format:frontend",
+    "typecheck": "./scripts/typecheck_backend.sh",
+    "typecheck:frontend": "cd src/apps/web/frontend && tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
   },
   "build": {
     "appId": "com.knik.app",
@@ -68,6 +75,8 @@
     "electron": "^39.2.6",
     "electron-builder": "^26.0.12",
     "electron-is-dev": "^3.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "wait-on": "^8.0.5"
   }
 }
