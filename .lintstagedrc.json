@@ -1,5 +1,5 @@
 {
-    "*.{py}": [
+    "*.py": [
         "./scripts/lint_backend.sh --fix",
         "./scripts/format_backend.sh",
         "./scripts/typecheck_backend.sh"

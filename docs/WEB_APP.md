@@ -50,12 +50,21 @@ src/apps/web/frontend/
 │   ├── index.css                   # Global styles + Tailwind imports
 │   ├── main.tsx                    # Entry point
 │   ├── lib/
-│   │   └── components/             # Reusable UI components
-│   │       ├── ChatPanel.tsx       # Message display with animations
-│   │       ├── InputPanel.tsx      # Text input + send button
-│   │       ├── Sidebar.tsx         # New chat / clear history
-│   │       ├── icons/              # SVG icon components
-│   │       └── index.ts            # Component exports
+│   │   ├── components/             # Reusable UI components
+│   │   │   ├── AudioControls.tsx   # Playback buttons (Pause/Stop)
+│   │   │   ├── BackgroundEffects.tsx # Animated background blobs
+│   │   │   ├── ChatPanel.tsx       # Message display with animations
+│   │   │   ├── HamburgerButton.tsx # Sidebar toggle button
+│   │   │   ├── InputPanel.tsx      # Text input + send button
+│   │   │   ├── Sidebar.tsx         # New chat / clear history
+│   │   │   ├── icons/              # SVG icon components
+│   │   │   └── index.ts            # Component exports
+│   │   └── hooks/                  # Custom React hooks
+│   │       ├── useAudio.ts         # Audio playback state
+│   │       ├── useChat.ts          # Chat state and streaming
+│   │       ├── useKeyboardShortcuts.ts # Global shortcuts
+│   │       ├── useToast.ts         # Toast notifications
+│   │       └── index.ts            # Hooks barrel export
 │   └── services/                   # Business logic
 │       ├── api.ts                  # Backend API client
 │       ├── streaming.ts            # SSE streaming client (streamChat)
@@ -75,10 +84,10 @@ src/apps/web/frontend/
 
 ### Key Components
 
-**TopBar** (`src/lib/components/TopBar.tsx`)
-- App branding with "🤖 Knik" title
-- Loading indicator during AI requests
-- Clean, minimal design
+**App** (`src/App.tsx`)
+- Main layout orchestrator
+- Composes BackgroundEffects, HamburgerButton, Sidebar, ChatPanel, InputPanel, AudioControls
+- Logic delegated to `useAudio` and `useChat` hooks
 
 **ChatPanel** (`src/lib/components/ChatPanel.tsx`)
 - Scrollable message display

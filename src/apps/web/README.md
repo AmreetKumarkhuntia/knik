@@ -36,28 +36,26 @@ src/apps/web/
         ├── main.tsx            # Entry point
         ├── App.tsx             # Root component
         ├── index.css           # Tailwind imports
-        ├── components/         # React components
-        │   ├── GradientBackground.tsx
-        │   ├── ChatPanel.tsx
-        │   ├── MessageBubble.tsx
-        │   ├── InputPanel.tsx
-        │   ├── SettingsPanel.tsx
-        │   └── TopBar.tsx
-        ├── hooks/              # Custom React hooks
-        │   ├── useChat.ts
-        │   ├── useTTS.ts
-        │   └── useTheme.ts
-        ├── services/           # API clients
-        │   ├── api.ts
-        │   └── websocket.ts
-        ├── store/              # State management
-        │   ├── chatStore.ts
-        │   ├── settingsStore.ts
-        │   └── themeStore.ts
-        └── types/              # TypeScript types
-            ├── message.ts
-            ├── settings.ts
-            └── api.ts
+        ├── lib/                # Reusable modules
+        │   ├── components/     # React components
+        │   │   ├── AudioControls.tsx
+        │   │   ├── BackgroundEffects.tsx
+        │   │   ├── ChatPanel.tsx
+        │   │   ├── HamburgerButton.tsx
+        │   │   ├── InputPanel.tsx
+        │   │   ├── Sidebar.tsx
+        │   │   └── index.ts
+        │   └── hooks/          # Custom React hooks
+        │       ├── useAudio.ts
+        │       ├── useChat.ts
+        │       ├── useKeyboardShortcuts.ts
+        │       ├── useToast.ts
+        │       └── index.ts
+        └── services/           # Business logic & API
+            ├── api.ts
+            ├── streaming.ts
+            ├── theme.ts
+            └── audio/
 ```
 
 ## 🔗 Integration with Existing Code
