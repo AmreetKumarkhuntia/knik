@@ -1,0 +1,616 @@
+diff --git a/.husky/pre-commit b/.husky/pre-commit
+old mode 100755
+new mode 100644
+diff --git a/scripts/format_backend.sh b/scripts/format_backend.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/format_frontend.sh b/scripts/format_frontend.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/lint_backend.sh b/scripts/lint_backend.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/lint_frontend.sh b/scripts/lint_frontend.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/start_console_dual.sh b/scripts/start_console_dual.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/start_console_split.sh b/scripts/start_console_split.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/start_electron.sh b/scripts/start_electron.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/start_web_backend.sh b/scripts/start_web_backend.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/start_web_frontend.sh b/scripts/start_web_frontend.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/typecheck_backend.sh b/scripts/typecheck_backend.sh
+old mode 100755
+new mode 100644
+diff --git a/src/apps/web/frontend/src/App.tsx b/src/apps/web/frontend/src/App.tsx
+index a26ca95..aaa191b 100644
+--- a/src/apps/web/frontend/src/App.tsx
++++ b/src/apps/web/frontend/src/App.tsx
+@@ -5,56 +5,49 @@ import {
+   InputPanel,
+   ErrorBoundary,
+   Toast,
+-  MenuIcon,
+-  PlayIcon,
+-  PauseIcon,
+-  StopIcon,
++  BackgroundEffects,
++  HamburgerButton,
++  AudioControls,
+ } from './lib/components'
+ import type { InputPanelRef } from './lib/components'
+-import { useToast, useKeyboardShortcuts } from './lib/hooks'
+-import {
+-  stopAudio,
+-  streamChat,
+-  queueAudio,
+-  clearAudioQueue,
+-  setAudioStateCallback,
+-  pauseAudio,
+-  resumeAudio,
+-} from './services'
+-
+-interface Message {
+-  role: 'user' | 'assistant'
+-  content: string
+-}
++import { useToast, useKeyboardShortcuts, useAudio, useChat } from './lib/hooks'
+ 
+ function AppContent() {
+-  const [messages, setMessages] = useState<Message[]>([])
+-  const [inputText, setInputText] = useState('')
+-  const [loading, setLoading] = useState(false)
+   const [sidebarOpen, setSidebarOpen] = useState(false)
+-  const [audioPlaying, setAudioPlaying] = useState(false)
+-  const [audioPaused, setAudioPaused] = useState(false)
+   const inputRef = useRef<InputPanelRef>(null)
+   const chatScrollRef = useRef<HTMLDivElement>(null)
+-  const streamControllerRef = useRef<AbortController | null>(null)
+   const { toasts, hideToast, success, error } = useToast()
+ 
++  const {
++    audioPlaying,
++    setAudioPlaying,
++    audioPaused,
++    streamControllerRef,
++    handleStopAudio,
++    handleTogglePause,
++  } = useAudio()
++
++  const {
++    messages,
++    inputText,
++    setInputText,
++    loading,
++    handleNewChat,
++    handleClearHistory,
++    handleSend,
++  } = useChat({
++    setAudioPlaying,
++    streamControllerRef,
++    success,
++    error,
++  })
++
+   useEffect(() => {
+     if (chatScrollRef.current) {
+       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+     }
+   }, [messages, loading])
+ 
+-  useEffect(() => {
+-    setAudioStateCallback((isPaused, isPlaying) => {
+-      console.log('[App] Audio state changed:', { isPaused, isPlaying })
+-      setAudioPaused(isPaused)
+-      setAudioPlaying(isPlaying)
+-    })
+-
+-    return () => setAudioStateCallback(null)
+-  }, [])
+-
+   useKeyboardShortcuts([
+     {
+       key: 'k',
+@@ -67,125 +60,15 @@ function AppContent() {
+     },
+   ])
+ 
+-  const handleNewChat = () => {
+-    setMessages([])
+-    setInputText('')
+-  }
+-
+-  const handleClearHistory = () => {
+-    setMessages([])
+-    success('History cleared!')
+-  }
+-
+-  const handleSend = async () => {
+-    if (!inputText.trim() || loading) return
+-
+-    const userMessage: Message = { role: 'user', content: inputText }
+-    const messageCopy = inputText
+-    setMessages(prev => [...prev, userMessage])
+-    setInputText('')
+-    setLoading(true)
+-
+-    const assistantMessageIndex = messages.length + 1
+-    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+-
+-    try {
+-      clearAudioQueue()
+-      setAudioPlaying(true)
+-
+-      let audioChunkCount = 0
+-
+-      const controller = await streamChat(messageCopy, {
+-        onText: (textChunk: string) => {
+-          setMessages(prev => {
+-            const updated = [...prev]
+-            if (updated[assistantMessageIndex]) {
+-              updated[assistantMessageIndex] = {
+-                ...updated[assistantMessageIndex],
+-                content: updated[assistantMessageIndex].content + textChunk,
+-              }
+-            }
+-            return updated
+-          })
+-        },
+-        onAudio: (audioBase64: string) => {
+-          audioChunkCount++
+-          console.log(`[App] Queueing audio chunk ${audioChunkCount}`)
+-          queueAudio(audioBase64, 24000)
+-        },
+-        onComplete: (count: number) => {
+-          console.log(`[App] Stream complete: ${count} audio chunks`)
+-          setLoading(false)
+-          success('Response received!')
+-        },
+-        onError: (errorMsg: string) => {
+-          console.error('[App] Stream error:', errorMsg)
+-          error(`Error: ${errorMsg}`)
+-          setLoading(false)
+-          setAudioPlaying(false)
+-        },
+-      })
+-
+-      streamControllerRef.current = controller
+-    } catch (err) {
+-      console.error('Chat error:', err)
+-      const errorMsg = err instanceof Error ? err.message : 'Something went wrong'
+-      error(`Error: ${errorMsg}`)
+-
+-      setMessages(prev => {
+-        const updated = [...prev]
+-        if (updated[assistantMessageIndex]) {
+-          updated[assistantMessageIndex] = {
+-            role: 'assistant',
+-            content: 'Sorry, something went wrong. Please try again.',
+-          }
+-        }
+-        return updated
+-      })
+-      setLoading(false)
+-      setAudioPlaying(false)
+-    }
+-  }
+-
+-  const handleStopAudio = () => {
+-    if (streamControllerRef.current) {
+-      streamControllerRef.current.abort()
+-      streamControllerRef.current = null
+-    }
+-
+-    stopAudio()
+-    clearAudioQueue()
+-    setAudioPlaying(false)
+-    setLoading(false)
+-  }
+-
+-  const handleTogglePause = () => {
+-    if (audioPaused) {
+-      resumeAudio()
+-    } else {
+-      pauseAudio()
+-    }
+-  }
+-
+   return (
+     <>
+       <div className="h-screen bg-gray-950 relative overflow-hidden flex flex-col">
+         {/* Gradient blobs with blur effect - animated floating orbs */}
+-        <div className="absolute -top-20 -left-20 w-[700px] h-[700px] bg-purple-600 rounded-full blur-[140px] opacity-30 animate-blob pointer-events-none"></div>
+-        <div className="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-teal-500 rounded-full blur-[140px] opacity-30 animate-blob animation-delay-2000 pointer-events-none"></div>
+-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[140px] opacity-20 animate-blob animation-delay-4000 pointer-events-none"></div>
++        <BackgroundEffects />
+ 
+         {/* Hamburger menu button - hides when sidebar is open */}
+         {!sidebarOpen && (
+-          <button
+-            onClick={() => setSidebarOpen(true)}
+-            className="fixed top-6 left-6 z-20 w-11 h-11 bg-white/5 backdrop-blur-3xl border border-white/30 
+-                       rounded-lg flex items-center justify-center text-white hover:bg-white/10 
+-                       transition-all duration-200 shadow-2xl hover:scale-105"
+-            aria-label="Open sidebar"
+-          >
+-            <MenuIcon className="w-5 h-5" />
+-          </button>
++          <HamburgerButton onClick={() => setSidebarOpen(true)} />
+         )}
+ 
+         {/* Sidebar */}
+@@ -212,44 +95,12 @@ function AppContent() {
+         <div className="fixed bottom-0 left-0 right-0 z-20 p-6 pointer-events-none">
+           <div className="max-w-4xl mx-auto pointer-events-auto">
+             {/* Audio control buttons - appear when audio is playing or stream is still loading */}
+-            {(audioPlaying || loading) && (
+-              <div className="mb-3 flex justify-center gap-2">
+-                {/* Pause/Resume button */}
+-                <button
+-                  onClick={handleTogglePause}
+-                  className={`${
+-                    audioPaused
+-                      ? 'bg-green-600 hover:bg-green-700'
+-                      : 'bg-yellow-600 hover:bg-yellow-700'
+-                  } text-white px-6 py-3 rounded-lg font-semibold 
+-                             transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
+-                             flex items-center gap-2`}
+-                >
+-                  {audioPaused ? (
+-                    <>
+-                      <PlayIcon />
+-                      Resume
+-                    </>
+-                  ) : (
+-                    <>
+-                      <PauseIcon />
+-                      Pause
+-                    </>
+-                  )}
+-                </button>
+-
+-                {/* Stop button */}
+-                <button
+-                  onClick={handleStopAudio}
+-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold 
+-                           transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
+-                           flex items-center gap-2"
+-                >
+-                  <StopIcon />
+-                  Stop
+-                </button>
+-              </div>
+-            )}
++            <AudioControls
++              isPlayingOrLoading={audioPlaying || loading}
++              isPaused={audioPaused}
++              onTogglePause={handleTogglePause}
++              onStop={handleStopAudio}
++            />
+             <InputPanel
+               ref={inputRef}
+               value={inputText}
+diff --git a/src/apps/web/frontend/src/lib/components/AudioControls.tsx b/src/apps/web/frontend/src/lib/components/AudioControls.tsx
+new file mode 100644
+index 0000000..fcedf1b
+--- /dev/null
++++ b/src/apps/web/frontend/src/lib/components/AudioControls.tsx
+@@ -0,0 +1,56 @@
++
++import { PlayIcon, PauseIcon, StopIcon } from './index';
++
++interface AudioControlsProps {
++    isPlayingOrLoading: boolean;
++    isPaused: boolean;
++    onTogglePause: () => void;
++    onStop: () => void;
++}
++
++export default function AudioControls({
++    isPlayingOrLoading,
++    isPaused,
++    onTogglePause,
++    onStop,
++}: AudioControlsProps) {
++    if (!isPlayingOrLoading) return null;
++
++    return (
++        <div className="mb-3 flex justify-center gap-2">
++            {/* Pause/Resume button */}
++            <button
++                onClick={onTogglePause}
++                className={`${isPaused
++                    ? 'bg-green-600 hover:bg-green-700'
++                    : 'bg-yellow-600 hover:bg-yellow-700'
++                    } text-white px-6 py-3 rounded-lg font-semibold 
++                   transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
++                   flex items-center gap-2`}
++            >
++                {isPaused ? (
++                    <>
++                        <PlayIcon />
++                        Resume
++                    </>
++                ) : (
++                    <>
++                        <PauseIcon />
++                        Pause
++                    </>
++                )}
++            </button>
++
++            {/* Stop button */}
++            <button
++                onClick={onStop}
++                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold 
++                 transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
++                 flex items-center gap-2"
++            >
++                <StopIcon />
++                Stop
++            </button>
++        </div>
++    );
++}
+diff --git a/src/apps/web/frontend/src/lib/components/BackgroundEffects.tsx b/src/apps/web/frontend/src/lib/components/BackgroundEffects.tsx
+new file mode 100644
+index 0000000..d7cba00
+--- /dev/null
++++ b/src/apps/web/frontend/src/lib/components/BackgroundEffects.tsx
+@@ -0,0 +1,11 @@
++
++
++export default function BackgroundEffects() {
++    return (
++        <>
++            <div className="absolute -top-20 -left-20 w-[700px] h-[700px] bg-purple-600 rounded-full blur-[140px] opacity-30 animate-blob pointer-events-none"></div>
++            <div className="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-teal-500 rounded-full blur-[140px] opacity-30 animate-blob animation-delay-2000 pointer-events-none"></div>
++            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[140px] opacity-20 animate-blob animation-delay-4000 pointer-events-none"></div>
++        </>
++    );
++}
+diff --git a/src/apps/web/frontend/src/lib/components/HamburgerButton.tsx b/src/apps/web/frontend/src/lib/components/HamburgerButton.tsx
+new file mode 100644
+index 0000000..9d12727
+--- /dev/null
++++ b/src/apps/web/frontend/src/lib/components/HamburgerButton.tsx
+@@ -0,0 +1,20 @@
++
++import { MenuIcon } from './index';
++
++interface HamburgerButtonProps {
++    onClick: () => void;
++}
++
++export default function HamburgerButton({ onClick }: HamburgerButtonProps) {
++    return (
++        <button
++            onClick={onClick}
++            className="fixed top-6 left-6 z-20 w-11 h-11 bg-white/5 backdrop-blur-3xl border border-white/30 
++                 rounded-lg flex items-center justify-center text-white hover:bg-white/10 
++                 transition-all duration-200 shadow-2xl hover:scale-105"
++            aria-label="Open sidebar"
++        >
++            <MenuIcon className="w-5 h-5" />
++        </button>
++    );
++}
+diff --git a/src/apps/web/frontend/src/lib/components/index.ts b/src/apps/web/frontend/src/lib/components/index.ts
+index 11e7c5a..ab430e4 100644
+--- a/src/apps/web/frontend/src/lib/components/index.ts
++++ b/src/apps/web/frontend/src/lib/components/index.ts
+@@ -9,6 +9,9 @@ export { default as InputPanel } from './InputPanel'
+ export { default as ErrorBoundary } from './ErrorBoundary'
+ export { default as Toast } from './Toast'
+ export { default as Sidebar } from './Sidebar'
++export { default as BackgroundEffects } from './BackgroundEffects'
++export { default as HamburgerButton } from './HamburgerButton'
++export { default as AudioControls } from './AudioControls'
+ export type { InputPanelRef } from './InputPanel'
+ export type { ToastType } from './Toast'
+ export * from './icons'
+diff --git a/src/apps/web/frontend/src/lib/hooks/index.ts b/src/apps/web/frontend/src/lib/hooks/index.ts
+index a34c681..f8b8337 100644
+--- a/src/apps/web/frontend/src/lib/hooks/index.ts
++++ b/src/apps/web/frontend/src/lib/hooks/index.ts
+@@ -1,3 +1,6 @@
+ export { useToast } from './useToast'
+ export { useKeyboardShortcuts } from './useKeyboardShortcuts'
++export { useAudio } from './useAudio'
++export { useChat } from './useChat'
++export type { Message } from './useChat'
+ export type { KeyboardShortcut } from './useKeyboardShortcuts'
+diff --git a/src/apps/web/frontend/src/lib/hooks/useAudio.ts b/src/apps/web/frontend/src/lib/hooks/useAudio.ts
+new file mode 100644
+index 0000000..bdd61da
+--- /dev/null
++++ b/src/apps/web/frontend/src/lib/hooks/useAudio.ts
+@@ -0,0 +1,53 @@
++import { useState, useRef, useEffect } from 'react';
++import {
++    setAudioStateCallback,
++    stopAudio,
++    clearAudioQueue,
++    pauseAudio,
++    resumeAudio,
++} from '../../services';
++
++export function useAudio() {
++    const [audioPlaying, setAudioPlaying] = useState(false);
++    const [audioPaused, setAudioPaused] = useState(false);
++    const streamControllerRef = useRef<AbortController | null>(null);
++
++    useEffect(() => {
++        setAudioStateCallback((isPaused, isPlaying) => {
++            console.log('[useAudio] Audio state changed:', { isPaused, isPlaying });
++            setAudioPaused(isPaused);
++            setAudioPlaying(isPlaying);
++        });
++
++        return () => setAudioStateCallback(null);
++    }, []);
++
++    const handleStopAudio = () => {
++        if (streamControllerRef.current) {
++            streamControllerRef.current.abort();
++            streamControllerRef.current = null;
++        }
++
++        stopAudio();
++        clearAudioQueue();
++        setAudioPlaying(false);
++    };
++
++    const handleTogglePause = () => {
++        if (audioPaused) {
++            resumeAudio();
++        } else {
++            pauseAudio();
++        }
++    };
++
++    return {
++        audioPlaying,
++        setAudioPlaying,
++        audioPaused,
++        setAudioPaused,
++        streamControllerRef,
++        handleStopAudio,
++        handleTogglePause,
++    };
++}
+diff --git a/src/apps/web/frontend/src/lib/hooks/useChat.ts b/src/apps/web/frontend/src/lib/hooks/useChat.ts
+new file mode 100644
+index 0000000..90f9826
+--- /dev/null
++++ b/src/apps/web/frontend/src/lib/hooks/useChat.ts
+@@ -0,0 +1,117 @@
++import { useState } from 'react';
++import { streamChat, queueAudio, clearAudioQueue } from '../../services';
++
++export interface Message {
++    role: 'user' | 'assistant';
++    content: string;
++}
++
++interface UseChatProps {
++    setAudioPlaying: (playing: boolean) => void;
++    streamControllerRef: React.MutableRefObject<AbortController | null>;
++    success: (msg: string) => void;
++    error: (msg: string) => void;
++}
++
++export function useChat({
++    setAudioPlaying,
++    streamControllerRef,
++    success,
++    error,
++}: UseChatProps) {
++    const [messages, setMessages] = useState<Message[]>([]);
++    const [inputText, setInputText] = useState('');
++    const [loading, setLoading] = useState(false);
++
++    const handleNewChat = () => {
++        setMessages([]);
++        setInputText('');
++    };
++
++    const handleClearHistory = () => {
++        setMessages([]);
++        success('History cleared!');
++    };
++
++    const handleSend = async () => {
++        if (!inputText.trim() || loading) return;
++
++        const userMessage: Message = { role: 'user', content: inputText };
++        const messageCopy = inputText;
++        setMessages(prev => [...prev, userMessage]);
++        setInputText('');
++        setLoading(true);
++
++        const assistantMessageIndex = messages.length + 1;
++        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
++
++        try {
++            clearAudioQueue();
++            setAudioPlaying(true);
++
++            let audioChunkCount = 0;
++
++            const controller = await streamChat(messageCopy, {
++                onText: (textChunk: string) => {
++                    setMessages(prev => {
++                        const updated = [...prev];
++                        if (updated[assistantMessageIndex]) {
++                            updated[assistantMessageIndex] = {
++                                ...updated[assistantMessageIndex],
++                                content: updated[assistantMessageIndex].content + textChunk,
++                            };
++                        }
++                        return updated;
++                    });
++                },
++                onAudio: (audioBase64: string) => {
++                    audioChunkCount++;
++                    console.log(`[useChat] Queueing audio chunk ${audioChunkCount}`);
++                    queueAudio(audioBase64, 24000);
++                },
++                onComplete: (count: number) => {
++                    console.log(`[useChat] Stream complete: ${count} audio chunks`);
++                    setLoading(false);
++                    success('Response received!');
++                },
++                onError: (errorMsg: string) => {
++                    console.error('[useChat] Stream error:', errorMsg);
++                    error(`Error: ${errorMsg}`);
++                    setLoading(false);
++                    setAudioPlaying(false);
++                },
++            });
++
++            streamControllerRef.current = controller;
++        } catch (err) {
++            console.error('Chat error:', err);
++            const errorMsg =
++                err instanceof Error ? err.message : 'Something went wrong';
++            error(`Error: ${errorMsg}`);
++
++            setMessages(prev => {
++                const updated = [...prev];
++                if (updated[assistantMessageIndex]) {
++                    updated[assistantMessageIndex] = {
++                        role: 'assistant',
++                        content: 'Sorry, something went wrong. Please try again.',
++                    };
++                }
++                return updated;
++            });
++            setLoading(false);
++            setAudioPlaying(false);
++        }
++    };
++
++    return {
++        messages,
++        inputText,
++        setInputText,
++        loading,
++        setLoading,
++        handleNewChat,
++        handleClearHistory,
++        handleSend,
++    };
++}
+diff --git a/src/apps/web/start_frontend.sh b/src/apps/web/start_frontend.sh
+old mode 100755
+new mode 100644

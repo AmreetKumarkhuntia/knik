@@ -1,3 +1,6 @@
 export { useToast } from './useToast'
 export { useKeyboardShortcuts } from './useKeyboardShortcuts'
+export { useAudio } from './useAudio'
+export { useChat } from './useChat'
+export type { Message } from './useChat'
 export type { KeyboardShortcut } from './useKeyboardShortcuts'
