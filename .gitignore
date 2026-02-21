@@ -6,3 +6,5 @@ async_tts_output
 .env
 
 src/apps/web/frontend/node_modules
+
+.python-version
