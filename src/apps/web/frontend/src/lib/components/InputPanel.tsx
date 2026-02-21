@@ -38,7 +38,7 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
           ref={inputRef}
           type="text"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="Type your message... (Ctrl+K to focus, Esc to clear)"
           disabled={disabled}

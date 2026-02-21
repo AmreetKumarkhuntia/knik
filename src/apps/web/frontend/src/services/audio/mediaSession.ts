@@ -9,9 +9,7 @@ export function updateMediaSession(): void {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: 'Knik AI Assistant',
       artist: 'AI Response',
-      artwork: [
-        { src: '/favicon.ico', sizes: '96x96', type: 'image/x-icon' }
-      ]
+      artwork: [{ src: '/favicon.ico', sizes: '96x96', type: 'image/x-icon' }],
     })
 
     navigator.mediaSession.setActionHandler('play', () => {

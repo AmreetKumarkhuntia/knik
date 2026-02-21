@@ -24,47 +24,53 @@ export function notifyStateChange(isPaused: boolean, isPlaying: boolean): void {
   if (stateCallback) stateCallback(isPaused, isPlaying)
 }
 
-export function playAudio(base64Audio: string, _sampleRate: number = 24000): Promise<void> {
+export function playAudio(
+  base64Audio: string,
+  _sampleRate: number = 24000,
+  getQueueSize: () => number = () => 0
+): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
       console.log('[Audio] Starting playback, data length:', base64Audio.length)
-      
+
       if (currentAudio && !currentAudio.paused) {
         console.log('[Audio] Stopping previous audio')
         currentAudio.pause()
         currentAudio = null
       }
-      
+
       currentResolve = resolve
-      
+
       const binaryString = atob(base64Audio)
       console.log('[Audio] Decoded binary length:', binaryString.length)
-      
+
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i)
       }
-      
+
       const blob = new Blob([bytes], { type: 'audio/wav' })
       console.log('[Audio] Created blob, size:', blob.size, 'type:', blob.type)
-      
+
       const audioUrl = URL.createObjectURL(blob)
       console.log('[Audio] Created object URL:', audioUrl)
-      
+
       const audio = new Audio(audioUrl)
       currentAudio = audio
       isPaused = false
-      
+
       audio.onended = () => {
         console.log('[Audio] Playback ended')
         URL.revokeObjectURL(audioUrl)
         currentAudio = null
         currentResolve = null
-        notifyStateChange(false, false)
+        if (getQueueSize() === 0) {
+          notifyStateChange(false, false)
+        }
         resolve()
       }
-      
-      audio.onerror = (err) => {
+
+      audio.onerror = err => {
         console.error('[Audio] Playback error:', err)
         URL.revokeObjectURL(audioUrl)
         currentAudio = null
@@ -72,16 +78,17 @@ export function playAudio(base64Audio: string, _sampleRate: number = 24000): Pro
         notifyStateChange(false, false)
         reject(new Error('Audio playback failed'))
       }
-      
+
       audio.volume = 1.0
-      
-      audio.play()
+
+      audio
+        .play()
         .then(() => {
           console.log('[Audio] Play started successfully')
           if (mediaSessionUpdater) mediaSessionUpdater()
           notifyStateChange(false, true)
         })
-        .catch((err) => {
+        .catch(err => {
           console.error('[Audio] Play failed:', err)
           reject(err)
         })
@@ -99,12 +106,12 @@ export function stopAudio(): void {
     currentAudio.currentTime = 0
     currentAudio = null
   }
-  
+
   if (currentResolve) {
     currentResolve()
     currentResolve = null
   }
-  
+
   isPaused = false
   notifyStateChange(false, false)
 }

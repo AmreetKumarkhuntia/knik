@@ -17,7 +17,7 @@ export default function TopBar({ isLoading }: TopBarProps) {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-wide">Knik AI Assistant</h1>
         </div>
-        
+
         {isLoading && (
           <div className="flex items-center gap-2 text-white/90 bg-white/10 px-4 py-2 rounded-full">
             <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></div>

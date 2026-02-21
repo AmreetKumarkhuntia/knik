@@ -116,9 +116,6 @@ function AppContent() {
         onComplete: (count: number) => {
           console.log(`[App] Stream complete: ${count} audio chunks`)
           setLoading(false)
-          setTimeout(() => {
-            setAudioPlaying(false)
-          }, 1000)
           success('Response received!')
         },
         onError: (errorMsg: string) => {
@@ -214,8 +211,8 @@ function AppContent() {
         {/* Fixed input panel at bottom - hovering above content */}
         <div className="fixed bottom-0 left-0 right-0 z-20 p-6 pointer-events-none">
           <div className="max-w-4xl mx-auto pointer-events-auto">
-            {/* Audio control buttons - appear when audio is playing */}
-            {audioPlaying && (
+            {/* Audio control buttons - appear when audio is playing or stream is still loading */}
+            {(audioPlaying || loading) && (
               <div className="mb-3 flex justify-center gap-2">
                 {/* Pause/Resume button */}
                 <button

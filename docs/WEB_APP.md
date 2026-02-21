@@ -46,24 +46,31 @@ The web app provides a modern, high-performance desktop interface for Knik with 
 ```
 src/apps/web/frontend/
 ├── src/
-│   ├── App.tsx                 # Main application component
-│   ├── index.css               # Global styles + Tailwind imports
-│   ├── main.tsx                # Entry point
+│   ├── App.tsx                     # Main application component
+│   ├── index.css                   # Global styles + Tailwind imports
+│   ├── main.tsx                    # Entry point
 │   ├── lib/
-│   │   └── components/         # Reusable UI components
-│   │       ├── TopBar.tsx      # Header with app title and status
-│   │       ├── ChatPanel.tsx   # Message display with animations
-│   │       ├── InputPanel.tsx  # Text input + send button
-│   │       └── index.ts        # Component exports
-│   └── services/               # Business logic
-│       ├── api.ts              # Backend API client
-│       ├── audio.ts            # Audio playback utilities
-│       ├── theme.ts            # Design tokens and colors
-│       └── index.ts            # Service exports
-├── tailwind.config.js          # Custom animations configuration
-├── tsconfig.json               # TypeScript configuration
-├── vite.config.ts              # Vite build configuration
-└── package.json                # Dependencies
+│   │   └── components/             # Reusable UI components
+│   │       ├── ChatPanel.tsx       # Message display with animations
+│   │       ├── InputPanel.tsx      # Text input + send button
+│   │       ├── Sidebar.tsx         # New chat / clear history
+│   │       ├── icons/              # SVG icon components
+│   │       └── index.ts            # Component exports
+│   └── services/                   # Business logic
+│       ├── api.ts                  # Backend API client
+│       ├── streaming.ts            # SSE streaming client (streamChat)
+│       ├── theme.ts                # Design tokens and colors
+│       ├── audio/                  # Audio playback service layer
+│       │   ├── queue.ts            # Sequential chunk queue
+│       │   ├── playback.ts         # HTMLAudioElement driver + state
+│       │   ├── queueState.ts       # Shared active-queue flag
+│       │   ├── mediaSession.ts     # Browser Media Session API
+│       │   └── index.ts            # Audio exports
+│       └── index.ts                # Service barrel exports
+├── tailwind.config.js              # Custom animations
+├── tsconfig.json                   # TypeScript configuration
+├── vite.config.ts                  # Vite build configuration
+└── package.json                    # Dependencies
 ```
 
 ### Key Components
@@ -104,10 +111,19 @@ await api.clearHistory(): Promise<void>
 await api.getSettings(): Promise<Settings>
 ```
 
-**Audio Service** (`src/services/audio.ts`)
+**Audio Service** (`src/services/audio/`)
 ```typescript
-// Play base64-encoded WAV audio
-playAudio(base64Audio: string, sampleRate: number): Promise<void>
+// Queue a base64 WAV chunk for sequential playback
+queueAudio(base64Audio: string, sampleRate: number): void
+
+// Playback controls
+pauseAudio(): void
+resumeAudio(): void
+stopAudio(): void          // stops current + clears queue
+clearAudioQueue(): void
+
+// Subscribe to play/pause/stop state (drives UI button visibility)
+setAudioStateCallback((isPaused: boolean, isPlaying: boolean) => void): void
 ```
 
 **Theme** (`src/services/theme.ts`)

@@ -182,8 +182,6 @@ class AIClient:
         return MCPServerRegistry.execute_tool(tool_name, **kwargs)
 
 
-
-
 class MockAIClient(AIClient):
     """Mock AI client for testing."""
 

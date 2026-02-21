@@ -10,8 +10,8 @@ export interface ChatRequest {
 
 export interface ChatResponse {
   text: string
-  audio: string  // base64 encoded (first chunk for backward compatibility)
-  audioChunks: string[]  // all audio chunks
+  audio: string // base64 encoded (first chunk for backward compatibility)
+  audioChunks: string[] // all audio chunks
   sample_rate: number
 }
 
@@ -20,7 +20,10 @@ export const api = {
    * Send a chat message and get text + audio response (streaming)
    * Audio chunks are automatically queued for playback as they arrive
    */
-  async chat(message: string, onAudioChunk?: (audio: string, sampleRate: number) => void): Promise<ChatResponse> {
+  async chat(
+    message: string,
+    onAudioChunk?: (audio: string, sampleRate: number) => void
+  ): Promise<ChatResponse> {
     const response = await fetch(`${API_BASE_URL}/chat/stream`, {
       method: 'POST',
       headers: {
@@ -28,7 +31,7 @@ export const api = {
       },
       body: JSON.stringify({ message }),
     })
-    
+
     if (!response.ok) {
       throw new Error(`API error: ${response.statusText}`)
     }
@@ -57,7 +60,12 @@ export const api = {
           console.log('[SSE] Event type:', currentEvent)
         } else if (line.startsWith('data:')) {
           const jsonData = line.substring(5).trim()
-          console.log('[SSE] Processing data for event:', currentEvent, '| Data preview:', jsonData.substring(0, 50))
+          console.log(
+            '[SSE] Processing data for event:',
+            currentEvent,
+            '| Data preview:',
+            jsonData.substring(0, 50)
+          )
           try {
             const parsed = JSON.parse(jsonData)
             if (currentEvent === 'text' && parsed.text) {
@@ -66,7 +74,7 @@ export const api = {
             } else if (currentEvent === 'audio' && parsed.audio) {
               audioChunks.push(parsed.audio)
               console.log('[SSE] Audio chunk received, length:', parsed.audio.length)
-              
+
               // Queue audio for immediate playback
               if (onAudioChunk) {
                 onAudioChunk(parsed.audio, parsed.sample_rate || 24000)
@@ -86,17 +94,23 @@ export const api = {
     console.log('Parsed SSE stream:')
     console.log('- Text length:', fullText.length)
     console.log('- Audio chunks:', audioChunks.length)
-    console.log('- Individual chunk lengths:', audioChunks.map(c => c.length))
-    console.log('- Total audio data:', audioChunks.reduce((sum, c) => sum + c.length, 0))
+    console.log(
+      '- Individual chunk lengths:',
+      audioChunks.map(c => c.length)
+    )
+    console.log(
+      '- Total audio data:',
+      audioChunks.reduce((sum, c) => sum + c.length, 0)
+    )
 
     return {
       text: fullText,
       audioChunks: audioChunks, // Return array of chunks for sequential playback
       audio: audioChunks.length > 0 ? audioChunks[0] : '', // Keep for backward compatibility
-      sample_rate: 24000
+      sample_rate: 24000,
     }
   },
-  
+
   /**
    * Get conversation history
    */
@@ -107,7 +121,7 @@ export const api = {
     }
     return response.json()
   },
-  
+
   /**
    * Clear conversation history
    */
@@ -120,7 +134,7 @@ export const api = {
     }
     return response.json()
   },
-  
+
   /**
    * Get current settings
    */

@@ -114,16 +114,17 @@ data: 5
 
 **Usage:**
 ```typescript
-import { streamChat, playBase64Audio } from './services/streaming';
+import { streamChat } from './services/streaming';
+import { queueAudio } from './services/audio';
 
-const source = streamChat("Hello!", {
+const controller = await streamChat("Hello!", {
   onText: (chunk) => {
     // Append to UI immediately
     appendToChat(chunk);
   },
   onAudio: (audioBase64) => {
-    // Play audio chunk
-    playBase64Audio(audioBase64);
+    // Queue chunk — the audio service plays them sequentially
+    queueAudio(audioBase64, 24000);
   },
   onComplete: (count) => {
     console.log(`Done! ${count} audio chunks`);
@@ -134,14 +135,33 @@ const source = streamChat("Hello!", {
 });
 
 // Cancel streaming
-source.close();
+controller.abort();
 ```
 
-**React Hook:** `useStreamingChat()`
-```typescript
-const { sendMessage, cancelStream, isStreaming, fullText } = useStreamingChat();
+#### 4. Audio Service Layer
 
-sendMessage("What's the weather?");
+**Location:** `src/apps/web/frontend/src/services/audio/`
+
+| File | Responsibility |
+|---|---|
+| `queue.ts` | Receives chunks via `queueAudio()`, plays them sequentially |
+| `playback.ts` | Decodes base64 WAV, drives `HTMLAudioElement`, emits play/pause/stop state |
+| `queueState.ts` | Shared flag tracking whether queue is active (avoids circular imports) |
+| `mediaSession.ts` | Keeps the browser Media Session API in sync |
+
+**Playback control API:**
+```typescript
+import { pauseAudio, resumeAudio, stopAudio, setAudioStateCallback } from './services/audio';
+
+// Listen to state changes (used to show/hide Pause & Stop buttons)
+setAudioStateCallback((isPaused, isPlaying) => {
+  setAudioPaused(isPaused);
+  setAudioPlaying(isPlaying);
+});
+
+pauseAudio();   // Pause current chunk
+resumeAudio();  // Resume
+stopAudio();    // Stop + clear queue
 ```
 
 ## Implementation Details
@@ -192,29 +212,31 @@ while not tts_processor.is_processing_complete():
 
 ### Client-Side Audio Playback
 
-Frontend converts base64 to playable audio:
+Chunks are queued and played sequentially via the audio service layer:
 
 ```typescript
-function playBase64Audio(audioBase64: string) {
-  // Decode base64
-  const binaryString = atob(audioBase64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  
-  // Create audio blob
-  const blob = new Blob([bytes], { type: 'audio/wav' });
-  const url = URL.createObjectURL(blob);
-  
-  // Play
-  const audio = new Audio(url);
-  audio.play();
-  
-  // Cleanup
-  audio.onended = () => URL.revokeObjectURL(url);
+// queue.ts — adds a chunk to the playback queue
+export function queueAudio(base64Audio: string, sampleRate: number): void {
+  audioQueue.push({ audio: base64Audio, sampleRate })
+  if (!isPlayingQueue) playQueue()  // start draining if idle
+}
+
+// playback.ts — decodes and plays one chunk via HTMLAudioElement
+export function playAudio(base64Audio: string): Promise<void> {
+  return new Promise((resolve) => {
+    const bytes = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0))
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }))
+    const audio = new Audio(url)
+    audio.onended = () => { URL.revokeObjectURL(url); notifyStateChange(false, false); resolve() }
+    audio.play().then(() => notifyStateChange(false, true))
+  })
 }
 ```
+
+**Key design decisions:**
+- Audio chunks play **sequentially** (no overlap between chunks)
+- The `loading` state (stream still receiving) keeps Pause/Stop visible in the inter-chunk gap
+- `stopAudio()` + `clearAudioQueue()` abort both the current playback and any pending chunks
 
 ## Configuration
 

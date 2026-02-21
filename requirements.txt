@@ -6,7 +6,10 @@ numpy
 loguru  # Modern logging with colors and formatting
 python-dotenv>=1.0.0  # Load environment variables from .env file
 google-cloud-aiplatform  # For Vertex AI / Gemini integration (optional)
+langchain>=0.3.0              # Core LangChain framework (agents, chains)
+langchain-core>=0.3.0         # LangChain core primitives (messages, tools)
 langchain-google-genai>=2.0.0  # For Gemini AI Studio API key authentication
+langchain-google-vertexai>=2.0.0  # For Vertex AI integration
 customtkinter>=5.2.0  # Modern GUI framework
 Pillow>=10.0.0  # Image processing for GUI
 

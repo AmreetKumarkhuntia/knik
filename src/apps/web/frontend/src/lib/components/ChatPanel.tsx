@@ -14,7 +14,6 @@ interface ChatPanelProps {
 }
 
 export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
-
   return (
     <div className="min-h-full space-y-4">
       {messages.length === 0 ? (
@@ -22,16 +21,14 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
           <div className="w-20 h-20 bg-white/10 backdrop-blur-3xl border border-white/30 rounded-2xl flex items-center justify-center mb-6 shadow-2xl">
             <span className="text-5xl">🤖</span>
           </div>
-          <h2 className="text-3xl font-bold mb-3 text-white">
-            Welcome to Knik!
-          </h2>
+          <h2 className="text-3xl font-bold mb-3 text-white">Welcome to Knik!</h2>
           <p className="text-lg text-white/60">Your voice-enabled AI assistant</p>
         </div>
       ) : (
         messages.map((msg, idx) => {
           const isLastMessage = idx === messages.length - 1
           const isStreaming = isLastMessage && isLoading && msg.role === 'assistant'
-          
+
           return (
             <div
               key={idx}
@@ -55,15 +52,24 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
           )
         })
       )}
-      
+
       {/* Loading indicator - only show if no messages yet */}
       {isLoading && messages.length === 0 && (
         <div className="flex justify-start">
           <div className="bg-black/10 backdrop-blur-3xl border border-white/30 px-6 py-4 rounded-xl shadow-2xl animate-slide-in-left">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div
+                className="w-2 h-2 bg-white/80 rounded-full animate-bounce"
+                style={{ animationDelay: '0ms' }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-white/60 rounded-full animate-bounce"
+                style={{ animationDelay: '150ms' }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-white/80 rounded-full animate-bounce"
+                style={{ animationDelay: '300ms' }}
+              ></div>
             </div>
           </div>
         </div>
