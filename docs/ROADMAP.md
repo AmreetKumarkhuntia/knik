@@ -1,23 +1,23 @@
 # Knik Development Roadmap
 
-**Last Updated:** December 6, 2025
+**Last Updated:** February 22, 2026
 
 This document tracks what we've built and what's planned for Knik - our journey toward a JARVIS-like AI assistant.
 
-## 🔄 **MAJOR UPDATE: Web App Complete!**
+## 🎉 **MAJOR MILESTONE: Phase 1 Complete!**
 
-**Decision:** Migrated from CustomTkinter to **React + FastAPI + Tailwind CSS** for professional web interface with smooth 60fps animations.
+**Status:** ✅ **Desktop Application Fully Functional!** (All 9 web app todos complete)
 
-**Status:** ✅ **Web app implementation complete!** (Todos 1-6 of 9)
+**Three Complete Applications:**
 
-- ✅ **Backend:** FastAPI with unified chat endpoint, config system, admin/history APIs
-- ✅ **Frontend:** React + TypeScript + Vite with smooth animations
-- ✅ **Scripts:** Organized startup scripts with .env loading
-- ✅ **Documentation:** Comprehensive WEB_APP.md guide
+- ✅ **Console App:** Terminal-based AI chat with voice responses and 12 commands
+- ✅ **GUI App:** CustomTkinter desktop interface with animated gradients and dynamic theming
+- ✅ **Web App:** React + FastAPI with ultra-glassmorphism UI and smooth 60fps animations
+- ✅ **Electron:** Desktop packaging ready for macOS/Windows/Linux distribution
 
-**Next:** Electron integration for desktop packaging (Todos 7-9)
+**Current Phase:** Ready for Phase 2 (Speech-to-Text) or Phase 3 (Extended MCP Tools)
 
-**See:** `docs/WEB_APP.md` for complete architecture and usage guide.
+**See:** `docs/WEB_APP.md`, `docs/GUI.md`, `docs/ELECTRON.md` for complete architecture guides.
 
 ---
 
@@ -50,26 +50,26 @@ This document tracks what we've built and what's planned for Knik - our journey 
 
 Model Context Protocol tools that extend AI capabilities:
 
-**Utils (5 tools)**
+**Utils (6 tools)**
 
-- `calculate` - Math expressions
+- `calculate` - Basic math expressions
+- `advanced_calculate` - Extended math with precision
 - `get_current_time` - Current timestamp
-- `extract_emails` - Email extraction from text
-- `extract_urls` - URL extraction from text
-- `generate_uuid` - UUID generation
+- `get_current_date` - Today's date
+- `reverse_string` - Reverse text
+- `count_words` - Count words in text
 
 **Text Processing (5 tools)**
 
-- `count_words` - Word count statistics
-- `reverse_text` - Reverse strings
-- `to_uppercase` - Convert to uppercase
-- `to_lowercase` - Convert to lowercase
-- `extract_numbers` - Extract numbers from text
+- `word_count` - Word count statistics
+- `find_and_replace` - Find and replace patterns
+- `extract_emails` - Email extraction from text
+- `extract_urls` - URL extraction from text
+- `text_case_convert` - Convert text case (upper/lower/title)
 
-**Shell Operations (2 tools)**
+**Shell Operations (1 tool)**
 
 - `run_shell_command` - Execute shell commands safely
-- `get_environment_variable` - Read env vars
 
 **File Operations (8 tools)**
 
@@ -81,6 +81,39 @@ Model Context Protocol tools that extend AI capabilities:
 - `append_to_file` - Append to existing file
 - `find_in_file` - Search within specific file
 - `count_in_file` - Count pattern occurrences
+
+#### **GUI Application**
+
+Modern desktop interface with CustomTkinter:
+
+- Animated gradient background with smooth color transitions
+- Dynamic theme system (Dark, Light, System modes) with 26 color attributes
+- Real-time AI streaming responses with messenger-style chat bubbles
+- Voice output integration with TTS
+- Settings panel: AI provider, model, temperature, voice, theme selection
+- Conversation history integration (last N messages for context)
+- MCP tool support (AI can execute 20+ tools with visual feedback)
+- Four main components:
+  - **ChatPanel** - Scrollable message display with theme-aware bubbles
+  - **InputPanel** - Text entry with Send button
+  - **SettingsPanel** - Configuration modal dialog
+  - **GradientBackground** - Animated gradient effects component
+- Runs with: `npm run start:gui` or `python src/main.py --mode gui`
+
+#### **Web Application**
+
+Professional web interface with React + FastAPI:
+
+- Ultra-glassmorphism UI with bounded scroll and fixed input panel
+- Smooth 60fps animations with gradient blobs and backdrop-blur effects
+- Stop audio button during playback with proper promise resolution
+- Sidebar history integration with backend API and loading states
+- Comprehensive backend logging with emoji-based structured logging
+- System instructions support in AIClient initialization
+- Complete REST API with 3 main routers (chat, admin, history)
+- Electron packaging for desktop distribution (macOS/Windows/Linux)
+- Scripts: `npm run start:web` (starts both backend + frontend)
+- See: `docs/WEB_APP.md` and `docs/ELECTRON.md` for complete details
 
 #### **Console Application**
 
@@ -103,71 +136,7 @@ Interactive AI chat with voice responses:
 
 ## 🎯 What We Can Build Next
 
-### Phase 1: Desktop UI Foundation (2-3 weeks)
-
-**Goal:** Transform console app into native desktop application
-
-#### **UI Framework Selection**
-
-**Primary Recommendation: CustomTkinter**
-
-```python
-# Lightweight, modern, great themes
-pip install customtkinter>=5.2.0
-```
-
-**Alternative: PyQt6** (if need more features)
-
-```python
-# Professional, feature-rich
-pip install PyQt6>=6.6.0 PyQt6-WebEngine>=6.6.0
-```
-
-#### **UI Components to Build**
-
-```
-src/apps/gui/
-├── __init__.py
-├── app.py                  # Main GUI application
-├── config.py              # GUI-specific configuration
-├── components/
-│   ├── __init__.py
-│   ├── chat_panel.py      # Chat history with markdown
-│   ├── input_panel.py     # Text/voice input area
-│   ├── voice_viz.py       # Audio waveform visualization
-│   ├── status_bar.py      # System status indicators
-│   ├── settings_panel.py  # Settings & configuration
-│   ├── command_palette.py # Quick command access (Cmd+K)
-│   └── sidebar.py         # Navigation & tools
-└── themes/
-    ├── __init__.py
-    ├── dark_theme.py      # Dark mode
-    └── light_theme.py     # Light mode
-```
-
-#### **Features**
-
-- 💬 Rich chat interface with markdown rendering
-- 🎙️ Voice visualization during listening/speaking
-- ⚙️ Settings panel (API keys, voice, model selection)
-- 🔍 Command palette for quick actions
-- 📊 System monitor widget (CPU, RAM, battery)
-- 🌓 Dark/Light theme toggle
-- 🔔 Notification center
-- 📝 Quick notes sidebar
-- 🎨 Customizable layout
-
-**Deliverables:**
-
-- Basic GUI shell with CustomTkinter
-- Chat panel with conversation history
-- Input panel with send button
-- Integration with existing ConsoleApp logic
-- Settings panel for configuration
-
----
-
-### Phase 2: Speech-to-Text & Voice Input (2-3 weeks)
+### Phase 2: Speech-to-Text & Voice Input (2-3 weeks) 🔜 Next
 
 **Goal:** Enable voice commands and conversations
 
@@ -538,16 +507,16 @@ src/lib/plugins/
 
 ### Medium Priority (Should Have)
 
-5. ✅ Productivity tools (Phase 3)
-6. ✅ Vision/OCR capabilities (Phase 3)
-7. ✅ Proactive assistance (Phase 4)
-8. ✅ Memory system (Phase 4)
+1. ✅ Productivity tools (Phase 3)
+2. ✅ Vision/OCR capabilities (Phase 3)
+3. ✅ Proactive assistance (Phase 4)
+4. ✅ Memory system (Phase 4)
 
 ### Low Priority (Nice to Have)
 
-9. ⚪ Smart home integration (Phase 3)
-10. ⚪ Cloud sync (Phase 5)
-11. ⚪ Multi-user support (Phase 5)
+1. ⚪ Smart home integration (Phase 3)
+2. ⚪ Cloud sync (Phase 5)
+3. ⚪ Multi-user support (Phase 5)
 
 ---
 
@@ -555,8 +524,8 @@ src/lib/plugins/
 
 | Phase | Focus | Duration | Status |
 |-------|-------|----------|--------|
-| **Phase 1** | Desktop UI | 2-3 weeks | 🔜 Next |
-| **Phase 2** | Voice Input | 2-3 weeks | 📋 Planned |
+| **Phase 1** | Desktop UI | 2-3 weeks | ✅ Complete |
+| **Phase 2** | Voice Input | 2-3 weeks | 🔜 Next |
 | **Phase 3** | Extended Tools | 3-4 weeks | 📋 Planned |
 | **Phase 4** | Intelligence | 3-4 weeks | 📋 Planned |
 | **Phase 5** | Production | 2-3 weeks | 📋 Planned |
@@ -568,27 +537,37 @@ src/lib/plugins/
 
 ### Immediate Next Steps
 
-**Week 1-2: UI Foundation**
+**Phase 2: Speech-to-Text (Voice Input)**
 
-1. Choose UI framework (CustomTkinter recommended)
-2. Create basic window and layout
-3. Implement chat panel component
-4. Integrate with existing ConsoleApp
-5. Add settings panel
+1. Choose STT implementation (Whisper, faster-whisper, or SpeechRecognition)
+2. Implement hotword detection for "Hey Jarvis" wake word
+3. Add voice input button to GUI/Web apps
+4. Integrate audio recording and transcription
+5. Add voice visualization during listening
 
 **Commands to start:**
 
 ```bash
-# Install UI dependencies
-pip install customtkinter>=5.2.0
+# Install STT dependencies (option 1: faster-whisper)
+pip install faster-whisper>=0.10.0
 
-# Create GUI app structure
-mkdir -p src/apps/gui/components
-mkdir -p src/apps/gui/themes
+# Or option 2: SpeechRecognition (easier, cloud-based)
+pip install speechrecognition>=3.10.0 pyaudio>=0.2.13
 
-# Run GUI app (once created)
-python src/main.py --mode gui
+# Test existing apps
+npm run start:gui      # GUI app
+npm run start:web      # Web app
+npm run start:console  # Console app
 ```
+
+**Alternative: Phase 3 (Extended MCP Tools)**
+
+If STT is not priority, extend MCP tools first:
+
+- System monitoring tools (CPU, RAM, battery)
+- Web search capability
+- Productivity tools (calendar, reminders)
+- File system operations
 
 ---
 
@@ -632,4 +611,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines (to be created).
 
 **Questions or suggestions?** Open an issue or discussion on GitHub!
 
-**Last Review:** December 4, 2025
+**Last Review:** February 22, 2026

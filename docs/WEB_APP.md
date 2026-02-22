@@ -1,8 +1,10 @@
 # Knik Web App
 
+**Last Updated:** February 22, 2026
+
 **Electron + React + FastAPI Voice-Enabled AI Assistant**
 
-The web app provides a modern, high-performance desktop interface for Knik with smooth 60fps animations and seamless AI voice interaction.
+The web app provides a modern, high-performance desktop interface for Knik with **ultra-glassmorphism UI**, smooth 60fps animations, and seamless AI voice interaction.
 
 ## Architecture
 
@@ -10,19 +12,21 @@ The web app provides a modern, high-performance desktop interface for Knik with 
 
 ```
 ┌─────────────────────────────────────────┐
-│         Electron (Future)               │
+│              Electron ✅                 │
 │  Desktop window management & packaging  │
+│   See docs/ELECTRON.md for details     │
 └─────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────┐
 │    React + TypeScript + Tailwind        │
-│  Modern UI with 60fps animations        │
+│  Ultra-glassmorphism UI with 60fps    │
 │  http://localhost:5173                  │
 └─────────────────────────────────────────┘
               ↓ REST API
 ┌─────────────────────────────────────────┐
 │        FastAPI Backend                  │
 │  AI + TTS + MCP Tools + History        │
+│  Comprehensive emoji-based logging     │
 │  http://localhost:8000                  │
 └─────────────────────────────────────────┘
               ↓
@@ -85,21 +89,42 @@ src/apps/web/frontend/
 ### Key Components
 
 **App** (`src/App.tsx`)
-- Main layout orchestrator
+- Main layout orchestrator with ultra-glassmorphism design
 - Composes BackgroundEffects, HamburgerButton, Sidebar, ChatPanel, InputPanel, AudioControls
 - Logic delegated to `useAudio` and `useChat` hooks
+- Bounded scroll container with fixed input panel at bottom
 
 **ChatPanel** (`src/lib/components/ChatPanel.tsx`)
-- Scrollable message display
+- Scrollable message display with glassmorphic effects
+- **backdrop-blur-3xl** effects throughout interface
 - Animated message bubbles (slide-in-right for user, slide-in-left for AI)
 - Auto-scroll to bottom on new messages
 - System messages for tool execution feedback
+- Transparent styling matching glassmorphic theme
 
 **InputPanel** (`src/lib/components/InputPanel.tsx`)
 - Text input with Enter key support
 - Send button with hover effects
 - Voice toggle button (future feature)
+- Fixed at bottom of viewport with glassmorphic background
 - Rounded corners (25px radius) for modern look
+
+**AudioControls** (`src/lib/components/AudioControls.tsx`)
+- **Stop audio button** during playback with proper promise resolution
+- Pause/Resume controls
+- Conditional rendering based on playback state
+- Glassmorphic button styling
+
+**Sidebar** (`src/lib/components/Sidebar.tsx`)
+- **History integration** with backend API and loading states
+- Transparent button styles matching glassmorphic theme
+- New chat and clear history actions
+- Slide-in animation from left
+
+**BackgroundEffects** (`src/lib/components/BackgroundEffects.tsx`)
+- Smooth 60fps animations with gradient blobs
+- GPU-accelerated rendering
+- 10s gradient-shift animation
 
 ### Services
 
@@ -243,11 +268,51 @@ src/apps/web/backend/
 ├── config.py                   # WebBackendConfig (reads from .env)
 ├── requirements.txt            # Python dependencies
 ├── routes/
-│   ├── chat.py                 # Unified chat endpoint
+│   ├── chat.py                 # Unified chat endpoint with emoji logging
 │   ├── admin.py                # Settings management
 │   └── history.py              # Conversation history
 └── websocket/                  # Future: streaming support
 ```
+
+### Comprehensive Backend Logging
+
+The backend features **emoji-based structured logging** throughout the request lifecycle:
+
+```python
+# Example from routes/chat.py
+printer.info("📨 Incoming chat request")
+printer.info(f"💬 User message: {request.message[:100]}")
+printer.info("🎤 Initializing TTS processor")
+printer.success("✅ AI query complete")
+printer.error("❌ Error during AI processing")
+```
+
+**Emoji Categories:**
+- 📨 Request lifecycle
+- 💬 User messages
+- 🎤 TTS operations
+- 🤖 AI processing
+- ✅ Success states
+- ❌ Error states
+- 🔧 Configuration changes
+- 📋 History operations
+
+### System Instructions Support
+
+The chat endpoint now includes **system instructions** parameter in AIClient initialization:
+
+```python
+# routes/chat.py
+ai_client = AIClient(
+    provider=config.ai_provider,
+    model=config.ai_model,
+    project_id=config.ai_project_id,
+    location=config.ai_location,
+    system_instruction="You are Knik, a helpful AI assistant..."  # NEW
+)
+```
+
+This allows customizing AI personality and behavior directly from backend configuration.
 
 ### Configuration
 
