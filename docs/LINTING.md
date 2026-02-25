@@ -29,11 +29,13 @@ Linter settings are in `.ruff.toml`:
 ## VS Code Integration
 
 The `.vscode/settings.json` is configured to:
+
 - Format Python files on save
 - Auto-organize imports
 - Hide Python cache files
 
 **Recommended Extension**: Install the Ruff VS Code extension for real-time linting:
+
 ```
 code --install-extension charliermarsh.ruff
 ```

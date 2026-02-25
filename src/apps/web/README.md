@@ -71,6 +71,7 @@ from lib.services.ai_client.registry import MCPServerRegistry
 ```
 
 **No changes to:**
+
 - `src/lib/` - Core logic, services, MCP tools
 - `src/apps/console/` - Console app
 - `imports.py` - Central import hub
@@ -103,6 +104,7 @@ from lib.services.ai_client.registry import MCPServerRegistry
 ## 🚀 Development
 
 ### **Backend Development:**
+
 ```bash
 cd src/apps/web/backend
 pip install fastapi uvicorn websockets
@@ -110,6 +112,7 @@ uvicorn main:app --reload --port 8000
 ```
 
 ### **Frontend Development:**
+
 ```bash
 cd src/apps/web/frontend
 npm install
@@ -117,6 +120,7 @@ npm run dev
 ```
 
 ### **Full Stack:**
+
 ```bash
 # From project root
 npm run dev

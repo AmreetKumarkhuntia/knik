@@ -67,9 +67,7 @@ function AppContent() {
         <BackgroundEffects />
 
         {/* Hamburger menu button - hides when sidebar is open */}
-        {!sidebarOpen && (
-          <HamburgerButton onClick={() => setSidebarOpen(true)} />
-        )}
+        {!sidebarOpen && <HamburgerButton onClick={() => setSidebarOpen(true)} />}
 
         {/* Sidebar */}
         <Sidebar

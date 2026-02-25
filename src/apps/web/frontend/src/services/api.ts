@@ -1,42 +1,20 @@
-/**
- * API client for backend communication
- */
+import type { ChatResponse, CronSchedulesResponse } from '../types/api'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
-export interface ChatRequest {
-  message: string
-}
-
-export interface ChatResponse {
-  text: string
-  audio: string // base64 encoded (first chunk for backward compatibility)
-  audioChunks: string[] // all audio chunks
-  sample_rate: number
-}
-
-export const api = {
-  /**
-   * Send a chat message and get text + audio response (streaming)
-   * Audio chunks are automatically queued for playback as they arrive
-   */
-  async chat(
+class ChatAPI {
+  static async stream(
     message: string,
     onAudioChunk?: (audio: string, sampleRate: number) => void
   ): Promise<ChatResponse> {
     const response = await fetch(`${API_BASE_URL}/chat/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message }),
     })
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`)
-    }
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
 
-    // Parse SSE stream
     const reader = response.body?.getReader()
     if (!reader) throw new Error('No response body')
 
@@ -57,92 +35,93 @@ export const api = {
       for (const line of lines) {
         if (line.startsWith('event:')) {
           currentEvent = line.substring(6).trim()
-          console.log('[SSE] Event type:', currentEvent)
         } else if (line.startsWith('data:')) {
           const jsonData = line.substring(5).trim()
-          console.log(
-            '[SSE] Processing data for event:',
-            currentEvent,
-            '| Data preview:',
-            jsonData.substring(0, 50)
-          )
           try {
             const parsed = JSON.parse(jsonData)
             if (currentEvent === 'text' && parsed.text) {
               fullText += parsed.text
-              console.log('[SSE] Added text chunk')
             } else if (currentEvent === 'audio' && parsed.audio) {
               audioChunks.push(parsed.audio)
-              console.log('[SSE] Audio chunk received, length:', parsed.audio.length)
-
-              // Queue audio for immediate playback
               if (onAudioChunk) {
                 onAudioChunk(parsed.audio, parsed.sample_rate || 24000)
               }
             }
           } catch (e) {
-            console.error('Failed to parse SSE JSON:', e, jsonData)
+            console.error('Parse error:', e, jsonData)
           }
         } else if (line.trim() === '') {
-          // Empty line marks end of an event
-          console.log('[SSE] End of event, resetting currentEvent')
           currentEvent = ''
         }
       }
     }
 
-    console.log('Parsed SSE stream:')
-    console.log('- Text length:', fullText.length)
-    console.log('- Audio chunks:', audioChunks.length)
-    console.log(
-      '- Individual chunk lengths:',
-      audioChunks.map(c => c.length)
-    )
-    console.log(
-      '- Total audio data:',
-      audioChunks.reduce((sum, c) => sum + c.length, 0)
-    )
-
     return {
       text: fullText,
-      audioChunks: audioChunks, // Return array of chunks for sequential playback
-      audio: audioChunks.length > 0 ? audioChunks[0] : '', // Keep for backward compatibility
+      audioChunks,
+      audio: audioChunks.length > 0 ? audioChunks[0] : '',
       sample_rate: 24000,
     }
-  },
+  }
 
-  /**
-   * Get conversation history
-   */
-  async getHistory() {
+  static async getHistory() {
     const response = await fetch(`${API_BASE_URL}/history`)
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`)
-    }
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
-  },
+  }
 
-  /**
-   * Clear conversation history
-   */
-  async clearHistory() {
-    const response = await fetch(`${API_BASE_URL}/history/clear`, {
-      method: 'POST',
-    })
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`)
-    }
+  static async clearHistory() {
+    const response = await fetch(`${API_BASE_URL}/history/clear`, { method: 'POST' })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
-  },
+  }
+}
 
-  /**
-   * Get current settings
-   */
-  async getSettings() {
+class AdminAPI {
+  static async getSettings() {
     const response = await fetch(`${API_BASE_URL}/admin/settings`)
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`)
-    }
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
-  },
+  }
+}
+
+class CronAPI {
+  static async getSchedules(): Promise<CronSchedulesResponse> {
+    const response = await fetch(`${API_BASE_URL}/cron`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async addSchedule(workflow_id: string, cron_expression: string, timezone = 'UTC') {
+    const response = await fetch(`${API_BASE_URL}/cron`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workflow_id, cron_expression, timezone }),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async removeSchedule(schedule_id: number) {
+    const response = await fetch(`${API_BASE_URL}/cron/${schedule_id}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+}
+
+export class ApiClient {
+  static chat = ChatAPI
+  static admin = AdminAPI
+  static cron = CronAPI
+}
+
+// Backward-compatible api export map
+export const api = {
+  chat: ApiClient.chat.stream,
+  getHistory: ApiClient.chat.getHistory,
+  clearHistory: ApiClient.chat.clearHistory,
+  getSettings: ApiClient.admin.getSettings,
+  getCronSchedules: ApiClient.cron.getSchedules,
+  addCronSchedule: ApiClient.cron.addSchedule,
+  removeCronSchedule: ApiClient.cron.removeSchedule,
 }

@@ -6,12 +6,14 @@
 ## 🎨 What Was Built
 
 ### **1. Tailwind CSS Integration**
+
 - Installed Tailwind CSS v3.4.18 with PostCSS and Autoprefixer
 - Created custom `tailwind.config.js` with 5 custom animations
 - Added utility classes for animation delays
 - Configured for optimal Vite integration
 
 ### **2. Modern Design System**
+
 - **Dark Theme**: Almost-black background (`gray-950`)
 - **Animated Gradient Blobs**: 3 floating orbs (purple, teal, indigo)
   - 140px blur radius for soft, diffused glow
@@ -23,11 +25,13 @@
 ### **3. New Components**
 
 #### **ErrorBoundary** (`ErrorBoundary.tsx`)
+
 - Catches React errors and prevents app crashes
 - Displays friendly fallback UI with "Try Again" button
 - Logs errors to console for debugging
 
 #### **Toast Notifications** (`Toast.tsx` + `useToast.ts` hook)
+
 - Success, Error, and Info message types
 - Auto-dismiss after 5 seconds (configurable)
 - Positioned at top-right corner
@@ -35,6 +39,7 @@
 - Manual close button
 
 #### **Sidebar** (`Sidebar.tsx`)
+
 - ChatGPT-style collapsible sidebar (320px wide)
 - Slides in from left with smooth animation
 - Dark backdrop overlay when open
@@ -49,12 +54,14 @@
 ### **4. Custom Hooks**
 
 #### **useToast** (`useToast.ts`)
+
 - Manages toast notification state
 - Methods: `success()`, `error()`, `info()`, `showToast()`, `hideToast()`
 - Auto-increments toast IDs
 - Returns array of active toasts for rendering
 
 #### **useKeyboardShortcuts** (`useKeyboardShortcuts.ts`)
+
 - Global keyboard shortcut system
 - Supports modifier keys (Ctrl, Shift, Alt, Meta)
 - Easy to extend with new shortcuts
@@ -65,6 +72,7 @@
 ### **5. Enhanced Components**
 
 #### **App.tsx**
+
 - Removed TopBar in favor of sidebar
 - Added hamburger menu button (hides when sidebar open)
 - Integrated ErrorBoundary wrapper
@@ -73,6 +81,7 @@
 - Better error handling with user feedback
 
 #### **ChatPanel.tsx**
+
 - Auto-scroll only when messages exist (no initial scroll)
 - Fixed scrolling to allow scrolling up through messages
 - Enhanced welcome screen with gradient text and icon badge
@@ -84,6 +93,7 @@
 - Whitespace preservation for formatted text
 
 #### **InputPanel.tsx**
+
 - Forward ref support for external focus control
 - Updated placeholder with keyboard shortcut hints
 - Teal focus ring
@@ -91,6 +101,7 @@
 - Better disabled states
 
 #### **TopBar.tsx**
+
 - Enhanced design (now optional, removed from default layout)
 - Gradient icon badge
 - Processing indicator with teal dot
@@ -161,6 +172,7 @@ animations: {
 ## 📝 Files Changed (16 files, 1854 insertions, 131 deletions)
 
 ### New Files:
+
 - `postcss.config.js`
 - `tailwind.config.js`
 - `src/lib/components/ErrorBoundary.tsx`
@@ -171,6 +183,7 @@ animations: {
 - `src/lib/hooks/useToast.ts`
 
 ### Modified Files:
+
 - `package.json` / `package-lock.json`
 - `src/App.tsx`
 - `src/index.css`
@@ -182,16 +195,19 @@ animations: {
 ## 🚀 How to Use
 
 ### Run the Web App:
+
 ```bash
 npm run start:web
 ```
 
 ### Keyboard Shortcuts:
+
 - **Ctrl+K**: Focus input field
 - **Esc**: Clear input
 - **Enter**: Send message
 
 ### Sidebar Actions:
+
 - Click hamburger (☰) to open
 - Click backdrop or X to close
 - New Chat clears conversation

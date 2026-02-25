@@ -294,7 +294,7 @@ src/lib/mcp/implementations/knowledge_impl.py
 - `define_word` - Dictionary lookup
 - `convert_units` - Unit conversion (distance, temp, currency)
 
-#### **Smart Home/IoT Tools (3)** *(Optional)*
+#### **Smart Home/IoT Tools (3)** _(Optional)_
 
 ```python
 src/lib/mcp/definitions/iot_defs.py
@@ -522,14 +522,14 @@ src/lib/plugins/
 
 ## 🗓️ Timeline Summary
 
-| Phase | Focus | Duration | Status |
-|-------|-------|----------|--------|
-| **Phase 1** | Desktop UI | 2-3 weeks | ✅ Complete |
-| **Phase 2** | Voice Input | 2-3 weeks | 🔜 Next |
-| **Phase 3** | Extended Tools | 3-4 weeks | 📋 Planned |
-| **Phase 4** | Intelligence | 3-4 weeks | 📋 Planned |
-| **Phase 5** | Production | 2-3 weeks | 📋 Planned |
-| **Total** | | **12-17 weeks** | |
+| Phase       | Focus          | Duration        | Status      |
+| ----------- | -------------- | --------------- | ----------- |
+| **Phase 1** | Desktop UI     | 2-3 weeks       | ✅ Complete |
+| **Phase 2** | Voice Input    | 2-3 weeks       | 🔜 Next     |
+| **Phase 3** | Extended Tools | 3-4 weeks       | 📋 Planned  |
+| **Phase 4** | Intelligence   | 3-4 weeks       | 📋 Planned  |
+| **Phase 5** | Production     | 2-3 weeks       | 📋 Planned  |
+| **Total**   |                | **12-17 weeks** |             |
 
 ---
 

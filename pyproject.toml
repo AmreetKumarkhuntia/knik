@@ -6,5 +6,10 @@ authors = [{name = "Amreet Kumar Khuntia", email = "amreetleo123@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "ISC"}
+dependencies = [
+    "croniter>=6.0.0",
+    "nest-asyncio>=1.6.0",
+    "psycopg[binary,pool]>=3.3.3",
+]
 
 # Note: Ruff configuration is in .ruff.toml

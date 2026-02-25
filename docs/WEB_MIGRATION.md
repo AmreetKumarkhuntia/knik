@@ -8,6 +8,7 @@
 ## 🎯 **Why Electron?**
 
 ### **Problems with Current CustomTkinter GUI:**
+
 - ❌ Choppy animations (Canvas redraws expensive)
 - ❌ No true opacity/transform support
 - ❌ Grid geometry manager limits positioning
@@ -15,6 +16,7 @@
 - ❌ Limited theming capabilities
 
 ### **Benefits of Electron Stack:**
+
 - ✅ **Buttery smooth 60fps animations** with CSS/GPU acceleration
 - ✅ **Tailwind CSS** - Simple theming, responsive design
 - ✅ **Industry standard** - VS Code, Discord, Slack use Electron
@@ -181,12 +183,14 @@ knik/
 ### **Phase 1: Backend API Layer** (4-6 hours)
 
 #### **Step 1.1: Setup FastAPI Project**
+
 ```bash
 cd src/apps/web
 pip install fastapi uvicorn websockets python-multipart pydantic
 ```
 
 #### **Step 1.2: Create FastAPI App**
+
 ```python
 # src/apps/web/main.py
 from fastapi import FastAPI
@@ -221,6 +225,7 @@ def health_check():
 #### **Step 1.3: Create API Endpoints** (Examples)
 
 **Chat Endpoint:**
+
 ```python
 # src/apps/web/routes/chat.py
 from fastapi import APIRouter, HTTPException
@@ -245,6 +250,7 @@ async def chat_query(request: ChatRequest):
 ```
 
 **WebSocket Streaming:**
+
 ```python
 # src/apps/web/websocket/stream.py
 from fastapi import APIRouter, WebSocket
@@ -255,15 +261,15 @@ router = APIRouter()
 @router.websocket("/stream")
 async def websocket_stream(websocket: WebSocket):
     await websocket.accept()
-    
+
     try:
         while True:
             data = await websocket.receive_text()
-            
+
             # Stream AI response word by word
             async for chunk in ai_client.query_stream(data):
                 await websocket.send_text(chunk)
-                
+
     except WebSocketDisconnect:
         print("Client disconnected")
 ```
@@ -273,6 +279,7 @@ async def websocket_stream(websocket: WebSocket):
 ### **Phase 2: Frontend Setup** (3-4 hours)
 
 #### **Step 2.1: Create React + Vite Project**
+
 ```bash
 cd knik
 npm create vite@latest frontend -- --template react-ts
@@ -281,6 +288,7 @@ npm install
 ```
 
 #### **Step 2.2: Install Dependencies**
+
 ```bash
 npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
@@ -290,61 +298,68 @@ npm install lucide-react  # Icon library
 ```
 
 #### **Step 2.3: Configure Tailwind**
+
 ```js
 // frontend/tailwind.config.js
 export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  darkMode: 'class',
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        primary: '#5B4FFF',
-        secondary: '#8B92FF',
+        primary: "#5B4FFF",
+        secondary: "#8B92FF",
       },
       animation: {
-        'gradient-shift': 'gradient-shift 8s ease infinite',
-        'slide-in-right': 'slide-in-right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-        'slide-in-left': 'slide-in-left 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-        'fade-in': 'fade-in 0.2s ease-in',
+        "gradient-shift": "gradient-shift 8s ease infinite",
+        "slide-in-right":
+          "slide-in-right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "slide-in-left":
+          "slide-in-left 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "fade-in": "fade-in 0.2s ease-in",
       },
       keyframes: {
-        'gradient-shift': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
         },
-        'slide-in-right': {
-          '0%': { transform: 'translateX(50px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
+        "slide-in-right": {
+          "0%": { transform: "translateX(50px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
         },
-        'slide-in-left': {
-          '0%': { transform: 'translateX(-50px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
+        "slide-in-left": {
+          "0%": { transform: "translateX(-50px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
         },
-        'fade-in': {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
       },
     },
   },
   plugins: [],
-}
+};
 ```
 
 #### **Step 2.4: Create Base Components**
 
 **GradientBackground.tsx:**
+
 ```tsx
 export const GradientBackground = () => {
   return (
-    <div className="fixed inset-0 -z-10 bg-gradient-to-br 
+    <div
+      className="fixed inset-0 -z-10 bg-gradient-to-br 
                     from-blue-900 via-purple-900 to-teal-900 
-                    bg-[length:200%_200%] animate-gradient-shift" />
+                    bg-[length:200%_200%] animate-gradient-shift"
+    />
   );
 };
 ```
 
 **MessageBubble.tsx:**
+
 ```tsx
 interface MessageBubbleProps {
   message: string;
@@ -352,10 +367,16 @@ interface MessageBubbleProps {
   isSystem: boolean;
 }
 
-export const MessageBubble = ({ message, isUser, isSystem }: MessageBubbleProps) => {
+export const MessageBubble = ({
+  message,
+  isUser,
+  isSystem,
+}: MessageBubbleProps) => {
   const baseClasses = "rounded-2xl p-4 max-w-2xl";
-  const animationClass = isUser ? "animate-slide-in-right" : "animate-slide-in-left";
-  
+  const animationClass = isUser
+    ? "animate-slide-in-right"
+    : "animate-slide-in-left";
+
   if (isSystem) {
     return (
       <div className="flex justify-center animate-fade-in">
@@ -365,14 +386,16 @@ export const MessageBubble = ({ message, isUser, isSystem }: MessageBubbleProps)
       </div>
     );
   }
-  
+
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${animationClass}`}>
-      <div className={`${baseClasses} ${
-        isUser 
-          ? 'bg-primary text-white' 
-          : 'bg-gray-800 text-gray-100'
-      }`}>
+    <div
+      className={`flex ${isUser ? "justify-end" : "justify-start"} ${animationClass}`}
+    >
+      <div
+        className={`${baseClasses} ${
+          isUser ? "bg-primary text-white" : "bg-gray-800 text-gray-100"
+        }`}
+      >
         {!isUser && <div className="text-xs text-secondary mb-1">🤖 Knik</div>}
         <p className="whitespace-pre-wrap">{message}</p>
       </div>
@@ -386,33 +409,35 @@ export const MessageBubble = ({ message, isUser, isSystem }: MessageBubbleProps)
 ### **Phase 3: Electron Integration** (2-3 hours)
 
 #### **Step 3.1: Install Electron**
+
 ```bash
 cd knik
 npm install --save-dev electron electron-builder concurrently wait-on
 ```
 
 #### **Step 3.2: Create Electron Main Process**
+
 ```js
 // electron/main.js
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const { spawn } = require('child_process');
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
+const { spawn } = require("child_process");
 
 let mainWindow;
 let pythonProcess;
 
 // Start Python backend
 function startPythonBackend() {
-  const pythonPath = path.join(__dirname, '../.venv/bin/python');
-  const scriptPath = path.join(__dirname, '../src/apps/web/main.py');
-  
+  const pythonPath = path.join(__dirname, "../.venv/bin/python");
+  const scriptPath = path.join(__dirname, "../src/apps/web/main.py");
+
   pythonProcess = spawn(pythonPath, [scriptPath]);
-  
-  pythonProcess.stdout.on('data', (data) => {
+
+  pythonProcess.stdout.on("data", (data) => {
     console.log(`Python: ${data}`);
   });
-  
-  pythonProcess.stderr.on('data', (data) => {
+
+  pythonProcess.stderr.on("data", (data) => {
     console.error(`Python Error: ${data}`);
   });
 }
@@ -424,33 +449,34 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
   // Load React app
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
+  if (process.env.NODE_ENV === "development") {
+    mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, "../frontend/dist/index.html"));
   }
 }
 
 app.whenReady().then(() => {
   startPythonBackend();
-  
+
   // Wait for backend to start
   setTimeout(createWindow, 2000);
 });
 
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   if (pythonProcess) pythonProcess.kill();
   app.quit();
 });
 ```
 
 #### **Step 3.3: Update Package.json**
+
 ```json
 {
   "name": "knik",
@@ -476,12 +502,7 @@ app.on('window-all-closed', () => {
     "directories": {
       "output": "dist"
     },
-    "files": [
-      "electron/**/*",
-      "frontend/dist/**/*",
-      "src/**/*",
-      ".venv/**/*"
-    ],
+    "files": ["electron/**/*", "frontend/dist/**/*", "src/**/*", ".venv/**/*"],
     "mac": {
       "category": "public.app-category.productivity"
     },
@@ -497,13 +518,17 @@ app.on('window-all-closed', () => {
 ### **Phase 4: Animation Implementation** (2-3 hours)
 
 #### **Smooth Gradient Background**
+
 ```tsx
 // Already in Tailwind config - just use:
-<div className="bg-gradient-to-br from-blue-900 via-purple-900 to-teal-900 
-                bg-[length:200%_200%] animate-gradient-shift" />
+<div
+  className="bg-gradient-to-br from-blue-900 via-purple-900 to-teal-900 
+                bg-[length:200%_200%] animate-gradient-shift"
+/>
 ```
 
 #### **Message Animations with Stagger**
+
 ```tsx
 const MessageList = ({ messages }) => {
   return (
@@ -512,7 +537,9 @@ const MessageList = ({ messages }) => {
         <div
           key={msg.id}
           style={{ animationDelay: `${index * 50}ms` }}
-          className={msg.isUser ? 'animate-slide-in-right' : 'animate-slide-in-left'}
+          className={
+            msg.isUser ? "animate-slide-in-right" : "animate-slide-in-left"
+          }
         >
           <MessageBubble {...msg} />
         </div>
@@ -523,10 +550,11 @@ const MessageList = ({ messages }) => {
 ```
 
 #### **Word-by-Word Text Reveal**
+
 ```tsx
 const AnimatedText = ({ text }: { text: string }) => {
-  const words = text.split(' ');
-  
+  const words = text.split(" ");
+
   return (
     <span>
       {words.map((word, i) => (
@@ -535,7 +563,7 @@ const AnimatedText = ({ text }: { text: string }) => {
           className="inline-block animate-fade-in"
           style={{ animationDelay: `${i * 40}ms` }}
         >
-          {word}{' '}
+          {word}{" "}
         </span>
       ))}
     </span>
@@ -547,20 +575,21 @@ const AnimatedText = ({ text }: { text: string }) => {
 
 ## 📊 **Migration Timeline**
 
-| Phase | Task | Time | Status |
-|-------|------|------|--------|
-| 1 | Backend API Layer | 4-6h | Not Started |
-| 2 | Frontend Setup | 3-4h | Not Started |
-| 3 | Electron Integration | 2-3h | Not Started |
-| 4 | Animation Implementation | 2-3h | Not Started |
-| 5 | Testing & Polish | 3-4h | Not Started |
-| **Total** | **Full Migration** | **14-20h** | **0% Complete** |
+| Phase     | Task                     | Time       | Status          |
+| --------- | ------------------------ | ---------- | --------------- |
+| 1         | Backend API Layer        | 4-6h       | Not Started     |
+| 2         | Frontend Setup           | 3-4h       | Not Started     |
+| 3         | Electron Integration     | 2-3h       | Not Started     |
+| 4         | Animation Implementation | 2-3h       | Not Started     |
+| 5         | Testing & Polish         | 3-4h       | Not Started     |
+| **Total** | **Full Migration**       | **14-20h** | **0% Complete** |
 
 ---
 
 ## 🎯 **What We Keep vs What Changes**
 
 ### **✅ KEEP (No Changes Required):**
+
 - `src/lib/` - All core logic, services, MCP tools
 - `src/apps/console/` - Console app still works
 - `imports.py` - Central import hub
@@ -568,12 +597,14 @@ const AnimatedText = ({ text }: { text: string }) => {
 - Conversation history, TTS, AI client logic
 
 ### **🆕 NEW (Add These):**
+
 - `frontend/` - React + Tailwind UI
 - `electron/` - Electron main process
 - `src/apps/web/` - FastAPI backend API layer
 - Node.js dependencies (package.json)
 
 ### **🗑️ REMOVE (Can Archive):**
+
 - `src/apps/gui/` - CustomTkinter GUI (no longer needed)
 - CustomTkinter animations (replaced by CSS)
 
@@ -588,10 +619,11 @@ const AnimatedText = ({ text }: { text: string }) => {
    - Start with Electron setup (full stack)
 
 3. **Set up development environment:**
+
    ```bash
    # Install Node.js (if not already)
    brew install node  # macOS
-   
+
    # Verify
    node --version
    npm --version
@@ -604,6 +636,7 @@ const AnimatedText = ({ text }: { text: string }) => {
 ## 💡 **Expected Results**
 
 **After migration, you'll have:**
+
 - ✅ **Smooth 60fps animations** (gradient, slide-ins, text reveal)
 - ✅ **Modern desktop app** (single .app/.exe file)
 - ✅ **Beautiful UI** (Tailwind makes it easy)
@@ -612,6 +645,7 @@ const AnimatedText = ({ text }: { text: string }) => {
 - ✅ **Easy to extend** (React component ecosystem)
 
 **Animation comparison:**
+
 - CustomTkinter: 15-30fps, choppy, limited
 - Electron + CSS: 60fps, buttery smooth, GPU-accelerated ✨
 

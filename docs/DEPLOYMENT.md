@@ -216,6 +216,7 @@ vercel --prod
 ```
 
 Configure environment variables in Vercel dashboard:
+
 - `VITE_API_BASE_URL`: Your backend URL
 
 #### Railway / Render / Fly.io (Full Stack)
@@ -237,6 +238,7 @@ npm install
 **2. Add app icons:**
 
 Place icons in `assets/` directory:
+
 - `icon.icns` - macOS (512x512 PNG → ICNS)
 - `icon.ico` - Windows (256x256 PNG → ICO)
 - `icon.png` - Linux (512x512 PNG)
@@ -315,14 +317,17 @@ npm run electron:build:win
 ### Distribution
 
 **macOS:**
+
 - Upload `.dmg` to website
 - Or submit to Mac App Store (requires Apple Developer Program)
 
 **Windows:**
+
 - Upload `.exe` installer to website
 - Or publish to Microsoft Store
 
 **Linux:**
+
 - Upload `.AppImage` (universal) to website
 - Publish `.deb` to Ubuntu/Debian repositories
 - Publish `.rpm` to Fedora/RHEL repositories
@@ -454,6 +459,7 @@ npm install --save-dev electron electron-builder
 **Error:** `Code signing failed (macOS)`
 
 **Solution:** Either:
+
 - Skip code signing: `CSC_IDENTITY_AUTO_DISCOVERY=false npm run electron:build:mac`
 - Or set up proper certificates (see Code Signing section)
 

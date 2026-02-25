@@ -5,6 +5,7 @@ This document describes the real-time streaming system for text and audio respon
 ## Overview
 
 The streaming system delivers AI responses progressively:
+
 1. **Text streams immediately** - Users see text as it's generated (token by token)
 2. **Audio streams progressively** - Audio chunks generated and delivered as sentences complete
 3. **Non-blocking architecture** - Leverages async processing for smooth UX
@@ -38,11 +39,13 @@ AI Client (chat_stream) → Text Chunks
 **Location:** `src/lib/core/tts_async_processor.py`
 
 **Key Changes:**
+
 - Added `audio_ready_callback` parameter to constructor
 - Callback invoked in `__audio_processor__` when audio chunk ready
 - `play_voice=False` for web backend (frontend handles playback)
 
 **Usage:**
+
 ```python
 def audio_ready_callback(audio_data: bytes, sample_rate: int):
     # Stream to frontend via SSE
@@ -67,12 +70,14 @@ tts.play_async("Hello world")  # Audio ready → callback called
 **Technology:** Server-Sent Events (SSE)
 
 **Event Types:**
+
 - `text` - Text chunk from AI
 - `audio` - Base64 encoded WAV audio chunk
 - `done` - Streaming complete (includes audio chunk count)
 - `error` - Error message
 
 **Request:**
+
 ```json
 {
   "message": "Tell me a joke"
@@ -80,6 +85,7 @@ tts.play_async("Hello world")  # Audio ready → callback called
 ```
 
 **Response Stream:**
+
 ```
 event: text
 data: Why
@@ -101,6 +107,7 @@ data: 5
 ```
 
 **Key Features:**
+
 - Sentence-based audio chunking (splits on `.`, `!`, `?`, `\n`)
 - Audio queue with callback system
 - Timeout protection (30s max)
@@ -113,9 +120,10 @@ data: 5
 **Main Function:** `streamChat(message, callbacks)`
 
 **Usage:**
+
 ```typescript
-import { streamChat } from './services/streaming';
-import { queueAudio } from './services/audio';
+import { streamChat } from "./services/streaming";
+import { queueAudio } from "./services/audio";
 
 const controller = await streamChat("Hello!", {
   onText: (chunk) => {
@@ -131,7 +139,7 @@ const controller = await streamChat("Hello!", {
   },
   onError: (error) => {
     console.error(error);
-  }
+  },
 });
 
 // Cancel streaming
@@ -142,16 +150,22 @@ controller.abort();
 
 **Location:** `src/apps/web/frontend/src/services/audio/`
 
-| File | Responsibility |
-|---|---|
-| `queue.ts` | Receives chunks via `queueAudio()`, plays them sequentially |
-| `playback.ts` | Decodes base64 WAV, drives `HTMLAudioElement`, emits play/pause/stop state |
-| `queueState.ts` | Shared flag tracking whether queue is active (avoids circular imports) |
-| `mediaSession.ts` | Keeps the browser Media Session API in sync |
+| File              | Responsibility                                                             |
+| ----------------- | -------------------------------------------------------------------------- |
+| `queue.ts`        | Receives chunks via `queueAudio()`, plays them sequentially                |
+| `playback.ts`     | Decodes base64 WAV, drives `HTMLAudioElement`, emits play/pause/stop state |
+| `queueState.ts`   | Shared flag tracking whether queue is active (avoids circular imports)     |
+| `mediaSession.ts` | Keeps the browser Media Session API in sync                                |
 
 **Playback control API:**
+
 ```typescript
-import { pauseAudio, resumeAudio, stopAudio, setAudioStateCallback } from './services/audio';
+import {
+  pauseAudio,
+  resumeAudio,
+  stopAudio,
+  setAudioStateCallback,
+} from "./services/audio";
 
 // Listen to state changes (used to show/hide Pause & Stop buttons)
 setAudioStateCallback((isPaused, isPlaying) => {
@@ -159,9 +173,9 @@ setAudioStateCallback((isPaused, isPlaying) => {
   setAudioPlaying(isPlaying);
 });
 
-pauseAudio();   // Pause current chunk
-resumeAudio();  // Resume
-stopAudio();    // Stop + clear queue
+pauseAudio(); // Pause current chunk
+resumeAudio(); // Resume
+stopAudio(); // Stop + clear queue
 ```
 
 ## Implementation Details
@@ -176,15 +190,15 @@ sentence_endings = [".", "!", "?", "\n"]
 
 for text_chunk in ai_client.chat_stream(prompt):
     yield f"event: text\ndata: {text_chunk}\n\n"
-    
+
     text_buffer += text_chunk
-    
+
     for ending in sentence_endings:
         if ending in text_buffer:
             parts = text_buffer.split(ending, 1)
             sentence = parts[0] + ending
             text_buffer = parts[1] if len(parts) > 1 else ""
-            
+
             tts_processor.play_async(sentence.strip())
             break
 ```
@@ -217,23 +231,28 @@ Chunks are queued and played sequentially via the audio service layer:
 ```typescript
 // queue.ts — adds a chunk to the playback queue
 export function queueAudio(base64Audio: string, sampleRate: number): void {
-  audioQueue.push({ audio: base64Audio, sampleRate })
-  if (!isPlayingQueue) playQueue()  // start draining if idle
+  audioQueue.push({ audio: base64Audio, sampleRate });
+  if (!isPlayingQueue) playQueue(); // start draining if idle
 }
 
 // playback.ts — decodes and plays one chunk via HTMLAudioElement
 export function playAudio(base64Audio: string): Promise<void> {
   return new Promise((resolve) => {
-    const bytes = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0))
-    const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }))
-    const audio = new Audio(url)
-    audio.onended = () => { URL.revokeObjectURL(url); notifyStateChange(false, false); resolve() }
-    audio.play().then(() => notifyStateChange(false, true))
-  })
+    const bytes = Uint8Array.from(atob(base64Audio), (c) => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+    const audio = new Audio(url);
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      notifyStateChange(false, false);
+      resolve();
+    };
+    audio.play().then(() => notifyStateChange(false, true));
+  });
 }
 ```
 
 **Key design decisions:**
+
 - Audio chunks play **sequentially** (no overlap between chunks)
 - The `loading` state (stream still receiving) keeps Pause/Stop visible in the inter-chunk gap
 - `stopAudio()` + `clearAudioQueue()` abort both the current playback and any pending chunks
@@ -241,6 +260,7 @@ export function playAudio(base64Audio: string): Promise<void> {
 ## Configuration
 
 **Backend Config** (`src/apps/web/backend/config.py`):
+
 ```python
 class WebBackendConfig:
     voice_name: str = "af_sarah"
@@ -250,6 +270,7 @@ class WebBackendConfig:
 ```
 
 **Environment Variables:**
+
 - `KNIK_VOICE_NAME` - TTS voice (default: af_sarah)
 - `KNIK_SAMPLE_RATE` - Audio sample rate (default: 24000)
 - `KNIK_AI_PROVIDER` - AI provider (default: vertex)
@@ -288,11 +309,13 @@ const source = streamChat("Hello!", {
 ### Non-Stream Endpoint (`/api/chat`)
 
 **Pros:**
+
 - Simpler implementation
 - Single response (text + audio)
 - Easier error handling
 
 **Cons:**
+
 - Slower perceived response (wait for full generation)
 - No progressive feedback
 - Higher memory usage (full audio in memory)
@@ -300,12 +323,14 @@ const source = streamChat("Hello!", {
 ### Stream Endpoint (`/api/chat/stream`)
 
 **Pros:**
+
 - Instant feedback (text appears immediately)
 - Progressive audio (plays while generating)
 - Lower memory footprint (streaming chunks)
 - Better UX (feels faster and more responsive)
 
 **Cons:**
+
 - More complex implementation
 - SSE connection management
 - Requires careful cleanup
@@ -336,16 +361,19 @@ const source = streamChat("Hello!", {
 ## Future Enhancements
 
 ### Priority 1
+
 - [ ] Adaptive chunking (based on network speed)
 - [ ] Audio compression (reduce bandwidth)
 - [ ] Retry logic for failed chunks
 
 ### Priority 2
+
 - [ ] Multi-voice support (dynamic voice switching)
 - [ ] Real-time speed adjustment
 - [ ] WebSocket alternative (bidirectional streaming)
 
 ### Priority 3
+
 - [ ] Audio caching (avoid regenerating same text)
 - [ ] Client-side audio stitching (smoother playback)
 - [ ] Metrics and monitoring (latency, chunk sizes)
@@ -353,21 +381,25 @@ const source = streamChat("Hello!", {
 ## Troubleshooting
 
 ### Stream doesn't start
+
 - Check CORS settings (allow `text/event-stream`)
 - Verify EventSource browser support
 - Check network tab for SSE connection
 
 ### Audio doesn't play
+
 - Verify audio format (WAV)
 - Check base64 encoding/decoding
 - Ensure autoplay policy compliance
 
 ### Stream hangs
+
 - Check timeout settings (30s default)
 - Verify `is_processing_complete()` logic
 - Look for exceptions in audio callback
 
 ### Missing audio chunks
+
 - Check audio queue size (may be full)
 - Verify callback is set before `play_async()`
 - Ensure TTS processor is started

@@ -45,11 +45,13 @@ Knik can run as a standalone desktop application on macOS, Windows, and Linux. T
 ### Prerequisites
 
 1. **Node.js dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Python environment:**
+
    ```bash
    # Already set up if you've run the web app
    python -m venv .venv
@@ -66,11 +68,13 @@ Knik can run as a standalone desktop application on macOS, Windows, and Linux. T
 ### Running in Development Mode
 
 **Option 1: Single command (recommended)**
+
 ```bash
 npm run start:electron
 ```
 
 This script:
+
 1. Loads `.env` file
 2. Activates Python virtual environment
 3. Starts FastAPI backend (port 8000)
@@ -78,6 +82,7 @@ This script:
 5. Launches Electron window
 
 **Option 2: Manual steps**
+
 ```bash
 # Terminal 1: Backend
 npm run start:web:backend
@@ -90,6 +95,7 @@ electron .
 ```
 
 **Option 3: Direct npm script**
+
 ```bash
 npm run electron:dev
 ```
@@ -124,16 +130,19 @@ npm run electron:build
 Installers are created in `dist-electron/`:
 
 **macOS:**
+
 - `Knik-1.0.0-arm64.dmg` - Apple Silicon installer
 - `Knik-1.0.0-x64.dmg` - Intel installer
 - `Knik-1.0.0-arm64-mac.zip` - Apple Silicon portable
 - `Knik-1.0.0-mac.zip` - Intel portable
 
 **Windows:**
+
 - `Knik Setup 1.0.0.exe` - NSIS installer
 - `Knik 1.0.0.exe` - Portable executable
 
 **Linux:**
+
 - `Knik-1.0.0.AppImage` - Universal AppImage
 - `knik_1.0.0_amd64.deb` - Debian package
 
@@ -142,6 +151,7 @@ Installers are created in `dist-electron/`:
 Before building, ensure:
 
 1. **Frontend is built:**
+
    ```bash
    cd src/apps/web/frontend
    npm run build
@@ -160,12 +170,12 @@ Edit `electron-main.js` to customize:
 
 ```javascript
 const mainWindow = new BrowserWindow({
-  width: 1200,        // Default width
-  height: 800,        // Default height
-  minWidth: 800,      // Minimum width
-  minHeight: 600,     // Minimum height
-  backgroundColor: '#0a0a0a',  // Background color
-  titleBarStyle: 'hiddenInset', // macOS style
+  width: 1200, // Default width
+  height: 800, // Default height
+  minWidth: 800, // Minimum width
+  minHeight: 600, // Minimum height
+  backgroundColor: "#0a0a0a", // Background color
+  titleBarStyle: "hiddenInset", // macOS style
 });
 ```
 
@@ -185,25 +195,28 @@ Edit `electron-builder.yml` for:
 To add custom IPC handlers:
 
 **1. Add handler in `electron-main.js`:**
+
 ```javascript
-ipcMain.handle('my-custom-action', async (event, data) => {
+ipcMain.handle("my-custom-action", async (event, data) => {
   // Perform action
-  return { success: true, result: 'Done!' };
+  return { success: true, result: "Done!" };
 });
 ```
 
 **2. Expose in `electron-preload.js`:**
+
 ```javascript
-contextBridge.exposeInMainWorld('electronAPI', {
-  myCustomAction: (data) => ipcRenderer.invoke('my-custom-action', data),
+contextBridge.exposeInMainWorld("electronAPI", {
+  myCustomAction: (data) => ipcRenderer.invoke("my-custom-action", data),
 });
 ```
 
 **3. Use in React frontend:**
+
 ```typescript
 // Check if running in Electron
 if (window.electronAPI?.isElectron) {
-  const result = await window.electronAPI.myCustomAction({ foo: 'bar' });
+  const result = await window.electronAPI.myCustomAction({ foo: "bar" });
   console.log(result);
 }
 ```
@@ -234,6 +247,7 @@ if (window.electronAPI?.isElectron) {
 ### "Cannot find module" errors
 
 Ensure all dependencies are installed:
+
 ```bash
 npm install
 ```
@@ -241,6 +255,7 @@ npm install
 ### Backend fails to start
 
 1. Check if port 8000 is available:
+
    ```bash
    lsof -ti:8000 | xargs kill -9  # Kill process on port 8000
    ```
@@ -254,6 +269,7 @@ npm install
 ### Frontend not loading
 
 1. Check if port 5173 is available:
+
    ```bash
    lsof -ti:5173 | xargs kill -9  # Kill process on port 5173
    ```

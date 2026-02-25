@@ -64,11 +64,13 @@ Use `/debug` command to see history being passed.
 ### Implementation
 
 **ConversationHistory** (`src/apps/console/history.py`)
+
 - `add_entry(user_input, ai_response)` - Store conversation turn
 - `get_context(last_n=5)` - Get as formatted text string
 - `get_messages(last_n=5)` - Get as LangChain message objects
 
 **Message Flow**
+
 ```
 Console/GUI App
     ↓ get_messages(last_n=5)
@@ -82,6 +84,7 @@ LLM (with full context)
 ### Streaming Compatibility
 
 History works with both query modes:
+
 - `chat_with_agent()` - Regular blocking queries
 - `chat_with_agent_stream()` - Streaming responses
 

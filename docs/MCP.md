@@ -22,6 +22,7 @@ Clean separation: definitions (interface) vs implementations (code).
 ## Built-in Tools (20)
 
 ### Utility (6)
+
 - `calculate` - Basic math expressions
 - `advanced_calculate` - Extended math with precision
 - `get_current_time` - Current timestamp
@@ -30,6 +31,7 @@ Clean separation: definitions (interface) vs implementations (code).
 - `count_words` - Count words
 
 ### Text Processing (5)
+
 - `word_count` - Text statistics
 - `find_and_replace` - Find/replace with case options
 - `extract_emails` - Extract email addresses
@@ -37,9 +39,11 @@ Clean separation: definitions (interface) vs implementations (code).
 - `text_case_convert` - Convert case (upper, lower, snake, camel, kebab)
 
 ### Shell (1)
+
 - `run_shell_command` - Execute shell commands (safe, timeout protected)
 
 ### File System (8)
+
 - `read_file` - Read the complete contents of a file or a specific line range.
 - `list_directory` - List all files and directories in a given path.
 - `search_in_files` - Search for a pattern (text or regex) across multiple files in a directory.
@@ -110,6 +114,7 @@ MY_TOOLS_IMPLEMENTATIONS = {
 ### Step 3: Register
 
 Update `definitions/__init__.py`:
+
 ```python
 from .my_tools_defs import MY_TOOLS_DEFINITIONS
 
@@ -117,11 +122,12 @@ ALL_DEFINITIONS = UTILS_DEFINITIONS + TEXT_DEFINITIONS + MY_TOOLS_DEFINITIONS
 ```
 
 Update `implementations/__init__.py`:
+
 ```python
 from .my_tools_impl import MY_TOOLS_IMPLEMENTATIONS
 
 ALL_IMPLEMENTATIONS = {
-    **UTILS_IMPLEMENTATIONS, 
+    **UTILS_IMPLEMENTATIONS,
     **TEXT_IMPLEMENTATIONS,
     **MY_TOOLS_IMPLEMENTATIONS
 }
@@ -143,11 +149,13 @@ Tools auto-register on startup!
 ### Required Fields
 
 **Tool Definition:**
+
 - `name` - Unique identifier
 - `description` - When/how AI should use it
 - `parameters` - JSON Schema object
 
 **Parameters:**
+
 - `type` - Must be "object"
 - `properties` - Parameter definitions
 - `required` - Array of required param names (optional)
@@ -166,6 +174,7 @@ Tools auto-register on startup!
 ### Weather Tool
 
 **Definition:**
+
 ```python
 {
     "name": "get_weather",
@@ -189,6 +198,7 @@ Tools auto-register on startup!
 ```
 
 **Implementation:**
+
 ```python
 def get_weather(city: str, units: str = "celsius") -> str:
     # In real implementation, call weather API
@@ -198,6 +208,7 @@ def get_weather(city: str, units: str = "celsius") -> str:
 ### File Reader Tool
 
 **Definition:**
+
 ```python
 {
     "name": "read_file",
@@ -221,6 +232,7 @@ def get_weather(city: str, units: str = "celsius") -> str:
 ```
 
 **Implementation:**
+
 ```python
 def read_file(filepath: str, max_lines: int = 100) -> str:
     try:
@@ -234,16 +246,19 @@ def read_file(filepath: str, max_lines: int = 100) -> str:
 ## Debugging
 
 **Check registration:**
+
 ```
 You: /tools
 ```
 
 **Enable logs:**
+
 ```bash
 export KNIK_SHOW_LOGS=True
 ```
 
 **Test manually:**
+
 ```python
 from apps.console.mcp.implementations.utils_impl import calculate
 

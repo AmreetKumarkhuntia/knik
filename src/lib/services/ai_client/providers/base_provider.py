@@ -55,10 +55,10 @@ class LangChainProvider(BaseAIProvider):
         self.system_instruction = system_instruction
         self.tool_callback = tool_callback
 
-        # Agent is REQUIRED - subclass must create it
-        if not agent:
-            raise ValueError(
-                f"{provider_name}: Agent was not created. Subclass must create and provide an agent instance."
+        # Warn if tools were asked for but not created
+        if mcp_registry and not agent:
+            printer.warning(
+                f"{provider_name}: mcp_registry was provided, but no agent was created. Tools will not be available."
             )
 
         self.agent = agent
@@ -110,15 +110,16 @@ class LangChainProvider(BaseAIProvider):
 
     def chat(self, prompt: str, history: list = None, **kwargs) -> str:
         """
-        Chat with AI. Uses agent with tools if mcp_registry was provided during init.
-        Agent must exist if this is called (enforced during initialization).
+        Chat with AI. Uses agent with tools if available, otherwise direct LLM call.
         """
-        if not self.agent:
-            raise RuntimeError(
-                "Chat requires agent to be initialized. Initialize provider without mcp_registry for direct LLM calls."
-            )
-
         agent_messages = self._build_agent_messages(history, prompt)
+
+        if not self.agent:
+            # Direct LLM invocation
+            result = self.llm.invoke(agent_messages, **kwargs)
+            return self._extract_text_from_content(result.content)
+
+        # Agent invocation
         result = self.agent.invoke({"messages": agent_messages}, **kwargs)
 
         if isinstance(result, dict):
@@ -140,17 +141,25 @@ class LangChainProvider(BaseAIProvider):
 
     def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
         """
-        Stream chat with AI. Uses agent with tools if mcp_registry was provided during init.
-        Agent must exist if this is called (enforced during initialization).
+        Stream chat with AI. Uses agent with tools if available, otherwise direct LLM call.
         """
-        if not self.agent:
-            raise RuntimeError(
-                "Chat stream requires agent to be initialized. "
-                "Initialize provider without mcp_registry for direct LLM calls."
-            )
-
         agent_messages = self._build_agent_messages(history, prompt)
 
+        if not self.agent:
+            # Direct LLM stream
+            for chunk in self.llm.stream(agent_messages, **kwargs):
+                content = chunk.content
+                if isinstance(content, str) and content:
+                    yield content
+                elif isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            text = item.get("text", "")
+                            if text:
+                                yield text
+            return
+
+        # Agent stream
         for event in self.agent.stream({"messages": agent_messages}, stream_mode="messages", **kwargs):
             if isinstance(event, tuple) and len(event) >= 1:
                 message = event[0]

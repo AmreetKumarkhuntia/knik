@@ -43,6 +43,23 @@ def run_gui_app():
         sys.exit(1)
 
 
+def run_cron_app():
+    """Run the background CRON scheduler app."""
+    try:
+        import asyncio
+
+        from apps.cron_job.app import CronJobApp
+
+        app = CronJobApp()
+        asyncio.run(app.run())
+    except ImportError as e:
+        printer.error(f"Failed to import cron app: {e}")
+        sys.exit(1)
+    except Exception as e:
+        printer.error(f"Failed to start cron app: {e}")
+        sys.exit(1)
+
+
 def main():
     """Main application function with mode selection."""
     parser = argparse.ArgumentParser(
@@ -60,9 +77,9 @@ For TTS demos, use: python demo/tts/demo.py
 
     parser.add_argument(
         "--mode",
-        choices=["console", "gui"],
+        choices=["console", "gui", "cron"],
         default="gui",
-        help="Application mode: console (terminal) or gui (desktop window)",
+        help="Application mode: console, gui, or cron (background scheduler)",
     )
 
     args = parser.parse_args()
@@ -71,6 +88,8 @@ For TTS demos, use: python demo/tts/demo.py
         run_console_app()
     elif args.mode == "gui":
         run_gui_app()
+    elif args.mode == "cron":
+        run_cron_app()
     else:
         printer.error(f"Unknown mode: {args.mode}")
         sys.exit(1)

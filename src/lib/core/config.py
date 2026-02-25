@@ -115,6 +115,22 @@ Be reliable, efficient, and action focused like Jarvis."""
     sample_rate: int = field(default=24000)
     enable_voice_output: bool = field(default_factory=lambda: Config.from_env("KNIK_VOICE_OUTPUT", True, bool))
 
+    # Database configuration
+    scheduler_db_url: str = field(
+        default_factory=lambda: Config.from_env(
+            "KNIK_SCHEDULER_DB_URL", "postgresql://user:password@localhost:5432/knik_scheduler"
+        )
+    )
+
+    # Scheduler configuration
+    scheduler_check_interval: int = field(
+        default_factory=lambda: Config.from_env("KNIK_SCHEDULER_CHECK_INTERVAL", 60, int)
+    )
+    scheduler_workers: int = field(default_factory=lambda: Config.from_env("KNIK_SCHEDULER_WORKERS", 4, int))
+    scheduler_max_concurrent: int = field(
+        default_factory=lambda: Config.from_env("KNIK_SCHEDULER_MAX_CONCURRENT", 10, int)
+    )
+
     # ============================================================================
     # Initialization
     # ============================================================================

@@ -39,6 +39,7 @@ The web app provides a modern, high-performance desktop interface for Knik with 
 ## Frontend (React)
 
 ### Tech Stack
+
 - **React 18** - UI framework
 - **TypeScript 5.2** - Type safety
 - **Vite 7.2** - Build tool with lightning-fast HMR
@@ -89,12 +90,14 @@ src/apps/web/frontend/
 ### Key Components
 
 **App** (`src/App.tsx`)
+
 - Main layout orchestrator with ultra-glassmorphism design
 - Composes BackgroundEffects, HamburgerButton, Sidebar, ChatPanel, InputPanel, AudioControls
 - Logic delegated to `useAudio` and `useChat` hooks
 - Bounded scroll container with fixed input panel at bottom
 
 **ChatPanel** (`src/lib/components/ChatPanel.tsx`)
+
 - Scrollable message display with glassmorphic effects
 - **backdrop-blur-3xl** effects throughout interface
 - Animated message bubbles (slide-in-right for user, slide-in-left for AI)
@@ -103,6 +106,7 @@ src/apps/web/frontend/
 - Transparent styling matching glassmorphic theme
 
 **InputPanel** (`src/lib/components/InputPanel.tsx`)
+
 - Text input with Enter key support
 - Send button with hover effects
 - Voice toggle button (future feature)
@@ -110,18 +114,21 @@ src/apps/web/frontend/
 - Rounded corners (25px radius) for modern look
 
 **AudioControls** (`src/lib/components/AudioControls.tsx`)
+
 - **Stop audio button** during playback with proper promise resolution
 - Pause/Resume controls
 - Conditional rendering based on playback state
 - Glassmorphic button styling
 
 **Sidebar** (`src/lib/components/Sidebar.tsx`)
+
 - **History integration** with backend API and loading states
 - Transparent button styles matching glassmorphic theme
 - New chat and clear history actions
 - Slide-in animation from left
 
 **BackgroundEffects** (`src/lib/components/BackgroundEffects.tsx`)
+
 - Smooth 60fps animations with gradient blobs
 - GPU-accelerated rendering
 - 10s gradient-shift animation
@@ -129,6 +136,7 @@ src/apps/web/frontend/
 ### Services
 
 **API Client** (`src/services/api.ts`)
+
 ```typescript
 const API_BASE_URL = 'http://localhost:8000/api'
 
@@ -146,6 +154,7 @@ await api.getSettings(): Promise<Settings>
 ```
 
 **Audio Service** (`src/services/audio/`)
+
 ```typescript
 // Queue a base64 WAV chunk for sequential playback
 queueAudio(base64Audio: string, sampleRate: number): void
@@ -161,15 +170,16 @@ setAudioStateCallback((isPaused: boolean, isPlaying: boolean) => void): void
 ```
 
 **Theme** (`src/services/theme.ts`)
+
 ```typescript
 export const colors = {
-  primary: '#8b5cf6',    // Purple
-  secondary: '#3b82f6',  // Blue
+  primary: "#8b5cf6", // Purple
+  secondary: "#3b82f6", // Blue
   // ... 15+ color tokens
-}
+};
 
-export const spacing = { xs: 8, sm: 12, md: 16, lg: 24, xl: 32 }
-export const radius = { sm: 8, md: 12, lg: 16, full: 9999 }
+export const spacing = { xs: 8, sm: 12, md: 16, lg: 24, xl: 32 };
+export const radius = { sm: 8, md: 12, lg: 16, full: 9999 };
 ```
 
 ### Animations
@@ -206,6 +216,7 @@ animation: {
 **Base URL:** `http://localhost:8000`
 
 #### Chat Endpoint
+
 ```http
 POST /api/chat/
 Content-Type: application/json
@@ -223,6 +234,7 @@ Response:
 ```
 
 #### Admin Endpoints
+
 ```http
 # Get current settings
 GET /api/admin/settings
@@ -246,6 +258,7 @@ Response: { voices: [{ id, name }] }
 ```
 
 #### History Endpoints
+
 ```http
 # Get conversation history
 GET /api/history/
@@ -288,6 +301,7 @@ printer.error("❌ Error during AI processing")
 ```
 
 **Emoji Categories:**
+
 - 📨 Request lifecycle
 - 💬 User messages
 - 🎤 TTS operations
@@ -363,6 +377,7 @@ if ai_client is None:
 ### Starting the App
 
 **Option 1: Using npm scripts** (recommended)
+
 ```bash
 # Start both backend + frontend
 npm run start:web
@@ -373,6 +388,7 @@ npm run start:web:frontend   # Frontend on :5173
 ```
 
 **Option 2: Using shell scripts**
+
 ```bash
 # From project root
 ./scripts/start_web_backend.sh
@@ -380,6 +396,7 @@ npm run start:web:frontend   # Frontend on :5173
 ```
 
 **Option 3: Manual**
+
 ```bash
 # Backend (from project root)
 source .env
@@ -400,6 +417,7 @@ npm run dev
 ### Debugging
 
 **Backend Logs:**
+
 ```bash
 # Backend prints to stdout
 03:58:45 |     main:50 |     INFO | Starting Knik FastAPI backend...
@@ -407,6 +425,7 @@ npm run dev
 ```
 
 **Frontend:**
+
 - Open browser DevTools (F12)
 - Check Console for errors
 - Use Network tab to inspect API calls
@@ -436,6 +455,7 @@ npm run dev
 ## Future Enhancements
 
 ### Phase 7: Electron Integration (Next)
+
 - [ ] Install Electron + electron-builder
 - [ ] Create `electron/main.js` for window management
 - [ ] Create `electron/preload.js` for secure IPC
@@ -444,6 +464,7 @@ npm run dev
 - [ ] Window state persistence
 
 ### Phase 8: Build & Package
+
 - [ ] Configure electron-builder
 - [ ] Bundle Python backend with app
 - [ ] Create DMG installer (macOS)
@@ -451,12 +472,14 @@ npm run dev
 - [ ] Code signing
 
 ### Phase 9: Testing & Optimization
+
 - [ ] Benchmark animations (60fps confirmation)
 - [ ] Profile memory usage
 - [ ] Test app startup time
 - [ ] Optimize bundle size
 
 ### Additional Features
+
 - [ ] WebSocket support for streaming responses
 - [ ] Settings panel UI in frontend
 - [ ] Conversation history panel with search
@@ -469,6 +492,7 @@ npm run dev
 ## Troubleshooting
 
 ### Backend Won't Start
+
 ```bash
 # Check if .env file exists
 cat .env
@@ -481,6 +505,7 @@ lsof -i :8000
 ```
 
 ### Frontend Build Issues
+
 ```bash
 # Clear node_modules and reinstall
 cd src/apps/web/frontend
@@ -489,12 +514,14 @@ npm install
 ```
 
 ### Audio Not Playing
+
 1. Check browser console for errors
 2. Verify backend returns audio in response
 3. Check audio format (should be base64 WAV)
 4. Test with: `curl http://localhost:8000/api/chat/ -d '{"message":"hello"}'`
 
 ### CORS Errors
+
 - Backend allows `http://localhost:5173` only
 - If using different port, update `main.py`:
   ```python

@@ -5,6 +5,7 @@
 When starting a new session with Copilot, reference these key points:
 
 ### What Knik Is
+
 - AI assistant with voice (TTS) and chat capabilities
 - Two modes: GUI (CustomTkinter) and Console (terminal)
 - 20+ built-in MCP tools (file ops, calculations, text processing, shell commands)
@@ -12,11 +13,12 @@ When starting a new session with Copilot, reference these key points:
 - Dynamic light/dark theme switching
 
 ### Current State (December 5, 2025)
+
 ✅ Theme system fully implemented  
 ✅ Conversation history working  
 ✅ Code quality optimized (all lint checks passing)  
 ✅ Tool callback bug fixed  
-⏳ Animations planned but not implemented yet  
+⏳ Animations planned but not implemented yet
 
 ---
 
@@ -46,10 +48,12 @@ src/
 ## 🎨 Theme System (New!)
 
 ### Files
+
 - `src/apps/gui/theme.py` - **All theme logic here**
 - Defines: DarkTheme, LightTheme, ColorTheme, Fonts, Spacing
 
 ### Usage
+
 ```python
 from .theme import ColorTheme, Fonts, Spacing
 
@@ -65,6 +69,7 @@ button = ctk.CTkButton(
 ```
 
 ### Refreshing UI After Theme Change
+
 ```python
 def _refresh_theme(self):
     # Update all widgets
@@ -101,18 +106,23 @@ git push
 ## 🐛 Common Issues & Solutions
 
 ### Issue: Button text not visible
+
 **Solution:** Always add `text_color` parameter to buttons
+
 ```python
 ctk.CTkButton(..., text_color=ColorTheme.TEXT_PRIMARY)
 ```
 
 ### Issue: Theme not updating
+
 **Solution:** Call both `ColorTheme.set_mode()` AND `_refresh_theme()`
 
 ### Issue: Import errors
+
 **Solution:** Use `from imports import ...` instead of direct imports
 
 ### Issue: Emoji not showing in GUI
+
 **Solution:** Use text instead - CustomTkinter has limited emoji support
 
 ---
@@ -123,7 +133,7 @@ ctk.CTkButton(..., text_color=ColorTheme.TEXT_PRIMARY)
 2. **Small modules** - break down complex logic
 3. **Helper functions** - for shared logic
 4. **Type hints** - use them consistently
-5. **Store widget references** - as self.* for later updates
+5. **Store widget references** - as self.\* for later updates
 6. **Text colors on buttons** - always explicit for theme support
 
 ---
@@ -131,11 +141,13 @@ ctk.CTkButton(..., text_color=ColorTheme.TEXT_PRIMARY)
 ## 🎯 Next Tasks (Animation Plan)
 
 ### Recommended Order:
+
 1. **Status Pulse** (#10) - Pulse dot when processing ⭐ Start here
 2. **Typing Indicator** (#3) - 3-dot animation while AI thinks
 3. **Message Pop-in** (#8) - Scale effect on new messages
 
 ### All 10 Tasks:
+
 - [ ] Smooth sliding animations
 - [ ] Typing indicator ⭐
 - [ ] Background gradient
@@ -176,12 +188,14 @@ ColorTheme.set_mode("light")  # Switch theme
 ## 🎨 Color Palette Quick Reference
 
 ### Dark Theme
+
 - Background: `#0F1419` (almost black)
 - User bubbles: `#5B4FFF` (purple)
 - AI bubbles: `#2D3142` (dark gray)
 - Text: `#FFFFFF` (white)
 
-### Light Theme  
+### Light Theme
+
 - Background: `#FFFFFF` (white)
 - User bubbles: `#5B4FFF` (purple - same!)
 - AI bubbles: `#E5E5EA` (light gray)

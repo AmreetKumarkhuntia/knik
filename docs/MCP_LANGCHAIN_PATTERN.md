@@ -7,12 +7,14 @@ This document explains how Knik implements MCP tool binding following LangChain'
 ## Architecture Change
 
 ### Before (Query-Time Binding)
+
 ```python
 # Tools were passed at query time
 ai_client.query("prompt", use_tools=True, mcp_registry=MCPServerRegistry)
 ```
 
 ### After (Construction-Time Binding) ✅
+
 ```python
 # Tools are bound at AIClient initialization
 ai_client = AIClient(provider="vertex", mcp_registry=MCPServerRegistry)
@@ -22,6 +24,7 @@ ai_client.query("prompt", use_tools=True)  # Tools already bound
 ## Why This Change?
 
 ### Follows LangChain Standards
+
 LangChain's recommended pattern is to bind tools to an LLM at initialization:
 
 ```python
@@ -31,6 +34,7 @@ llm_with_tools = llm.bind_tools(tools)  # Bind once at initialization
 ```
 
 ### Benefits
+
 1. **Performance**: Tools are converted and bound once, not on every query
 2. **Clean API**: Simpler query interface without registry parameter
 3. **Standard Pattern**: Aligns with LangChain ecosystem conventions
@@ -41,6 +45,7 @@ llm_with_tools = llm.bind_tools(tools)  # Bind once at initialization
 ### 1. BaseAIProvider & LangChainProvider
 
 **BaseAIProvider** abstract methods no longer require `mcp_registry` parameter:
+
 ```python
 @abstractmethod
 def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
@@ -48,11 +53,12 @@ def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
 ```
 
 **LangChainProvider** accepts `mcp_registry` in constructor and binds tools immediately:
+
 ```python
 def __init__(self, llm, agent, provider_name: str, mcp_registry: Optional['MCPServerRegistry'] = None, **config):
     self._llm_raw = llm  # Raw LLM without tools
     self.mcp_registry = mcp_registry
-    
+
     # Bind tools at initialization following LangChain standard pattern
     if mcp_registry:
         tools = self._create_tool_wrappers(mcp_registry)
@@ -62,6 +68,7 @@ def __init__(self, llm, agent, provider_name: str, mcp_registry: Optional['MCPSe
 ```
 
 **Query methods** use stored registry and bound LLM:
+
 ```python
 def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
     # Use tool-bound LLM if tools requested, otherwise raw LLM
@@ -75,14 +82,16 @@ def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
 All provider classes accept `mcp_registry` in constructor:
 
 **VertexAIProvider**:
+
 ```python
 def __init__(self, ..., mcp_registry: Optional['MCPServerRegistry'] = None, **kwargs):
     llm = ChatVertexAI(...)
-    super().__init__(llm=llm, agent=None, provider_name="vertex", 
+    super().__init__(llm=llm, agent=None, provider_name="vertex",
                      mcp_registry=mcp_registry, ...)
 ```
 
 **LangChainVertexProvider**:
+
 ```python
 def __init__(self, ..., mcp_registry: Optional['MCPServerRegistry'] = None, **kwargs):
     llm = ChatVertexAI(...)
@@ -91,6 +100,7 @@ def __init__(self, ..., mcp_registry: Optional['MCPServerRegistry'] = None, **kw
 ```
 
 **MockAIProvider** (for consistency):
+
 ```python
 def __init__(self, mcp_registry: 'MCPServerRegistry' = None):
     self.mcp_registry = mcp_registry
@@ -100,16 +110,18 @@ def __init__(self, mcp_registry: 'MCPServerRegistry' = None):
 ### 3. AIClient
 
 **Constructor** accepts `mcp_registry` and passes to provider:
+
 ```python
 def __init__(self, provider: str = "vertex", mcp_registry = None, **provider_kwargs):
     # Pass mcp_registry to provider constructor
     if mcp_registry:
         provider_kwargs['mcp_registry'] = mcp_registry
-    
+
     self._provider = provider_class(**provider_kwargs)
 ```
 
 **Query methods** simplified (no registry parameter):
+
 ```python
 def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
     return self._provider.query(prompt=prompt, use_tools=use_tools, **kwargs)
@@ -148,7 +160,7 @@ def register_all_tools(registry = None) -> int:
     if registry is None:
         from lib.services.ai_client.registry import MCPServerRegistry
         registry = MCPServerRegistry
-    
+
     count = 0
     for tool_def in ALL_DEFINITIONS:
         tool_name = tool_def["name"]
@@ -156,13 +168,14 @@ def register_all_tools(registry = None) -> int:
         if implementation:
             registry.register_tool(tool_def, implementation)
             count += 1
-    
+
     return count
 ```
 
 ## Usage Examples
 
 ### Basic Usage
+
 ```python
 from lib.services.ai_client import AIClient
 from lib.services.ai_client.registry import MCPServerRegistry
@@ -179,6 +192,7 @@ response = ai_client.query("Calculate 15 * 23", use_tools=True)
 ```
 
 ### Without Tools
+
 ```python
 # Initialize without tools
 ai_client = AIClient(provider="vertex")  # No mcp_registry
@@ -188,6 +202,7 @@ response = ai_client.query("Hello, how are you?")
 ```
 
 ### Streaming with Tools
+
 ```python
 # Tools already bound at initialization
 for chunk in ai_client.query_stream("What's the date today?", use_tools=True):
@@ -199,6 +214,7 @@ for chunk in ai_client.query_stream("What's the date today?", use_tools=True):
 If you have existing code using the old pattern:
 
 ### Old Pattern ❌
+
 ```python
 ai_client = AIClient(provider="vertex")
 register_all_tools(ai_client)  # Register via AIClient
@@ -206,6 +222,7 @@ response = ai_client.query("prompt", use_tools=True, mcp_registry=MCPServerRegis
 ```
 
 ### New Pattern ✅
+
 ```python
 register_all_tools(MCPServerRegistry)  # Register to registry
 ai_client = AIClient(provider="vertex", mcp_registry=MCPServerRegistry)  # Bind at init

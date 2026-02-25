@@ -21,6 +21,7 @@ processor.start_async_processing()
 ### Methods
 
 #### `play_async(text: str)`
+
 Add text to processing queue (non-blocking).
 
 ```python
@@ -28,6 +29,7 @@ processor.play_async("Hello world")
 ```
 
 #### `is_processing_complete() -> bool`
+
 Check if all processing is done (queues empty + not playing).
 
 ```python
@@ -36,6 +38,7 @@ if processor.is_processing_complete():
 ```
 
 #### `set_voice(voice: str)`
+
 Change voice model.
 
 ```python
@@ -43,6 +46,7 @@ processor.set_voice("am_adam")
 ```
 
 #### `set_save_dir(save_dir: str)`
+
 Save audio segments to directory.
 
 ```python
@@ -77,6 +81,7 @@ app.run()
 ### Architecture
 
 The console app uses a modular design with:
+
 - **app.py** - Main ConsoleApp class
 - **history.py** - ConversationHistory for context management
 - **tools/** - Command handlers with registry pattern
@@ -86,6 +91,7 @@ The console app uses a modular design with:
 ### Methods
 
 #### `wait_until(condition_fn, timeout, check_interval)`
+
 Wait for a condition to be met.
 
 ```python
@@ -113,9 +119,11 @@ history.clear()                           # Clear history
 ## Available Voices
 
 **Female:**
+
 - `af_sarah`, `af_nicole`, `af_sky`, `af_bella`, `af_heart`
 
 **Male:**
+
 - `am_adam`, `am_michael`, `bm_george`, `bm_lewis`
 
 ## AIClient
@@ -138,6 +146,7 @@ client = AIClient(
 ### Methods
 
 #### `query(prompt, use_tools, max_tokens, temperature, system_instruction, context)`
+
 Get complete AI response.
 
 ```python
@@ -150,6 +159,7 @@ response = client.query(
 ```
 
 #### `query_stream(prompt, use_tools, ...)`
+
 Stream AI response chunks.
 
 ```python
@@ -158,6 +168,7 @@ for chunk in client.query_stream(prompt="Hello", use_tools=True):
 ```
 
 #### `register_tool(tool_dict, implementation)`
+
 Register MCP tool.
 
 ```python
@@ -174,6 +185,7 @@ client.register_tool(tool_def, my_tool_impl)
 ```
 
 #### `get_registered_tools()`
+
 List all registered tools.
 
 ```python
@@ -183,6 +195,7 @@ for tool in tools:
 ```
 
 #### `execute_tool(tool_name, **kwargs)`
+
 Manually execute a tool.
 
 ```python
@@ -195,6 +208,7 @@ result = client.execute_tool("calculate", expression="2 + 2")
 - **mock** - Testing/development
 
 List providers:
+
 ```python
 AIClient.list_available_providers()
 ```
@@ -216,26 +230,32 @@ while not processor.is_processing_complete():
 ## File System Tools
 
 ### `read_file`
+
 Read the complete contents of a file or a specific line range.
 
 **Parameters:**
+
 - `file_path` (string): Path to the file to read.
 - `encoding` (string, optional): File encoding (default: 'utf-8').
 - `start_line` (integer, optional): Starting line number.
 - `end_line` (integer, optional): Ending line number.
 
 ### `list_directory`
+
 List all files and directories in a given path.
 
 **Parameters:**
+
 - `directory_path` (string): Path to the directory to list.
 - `recursive` (boolean, optional): Whether to list files recursively.
 - `pattern` (string, optional): Glob pattern to filter files.
 
 ### `search_in_files`
+
 Search for a pattern across multiple files in a directory.
 
 **Parameters:**
+
 - `directory_path` (string): Directory to search in.
 - `pattern` (string): Text or regex pattern to search for.
 - `file_pattern` (string, optional): Glob pattern for files to search.
@@ -244,31 +264,39 @@ Search for a pattern across multiple files in a directory.
 - `max_results` (integer, optional): Maximum number of matches to return.
 
 ### `file_info`
+
 Get detailed information about a file or directory.
 
 **Parameters:**
+
 - `path` (string): Path to the file or directory.
 
 ### `write_file`
+
 Write content to a file.
 
 **Parameters:**
+
 - `file_path` (string): Path where the file should be written.
 - `content` (string): Content to write to the file.
 - `encoding` (string, optional): File encoding (default: 'utf-8').
 
 ### `append_to_file`
+
 Append content to an existing file.
 
 **Parameters:**
+
 - `file_path` (string): Path to the file to append to.
 - `content` (string): Content to append.
 - `encoding` (string, optional): File encoding (default: 'utf-8').
 
 ### `find_in_file`
+
 Search for a pattern within a specific file.
 
 **Parameters:**
+
 - `file_path` (string): Path to the file to search in.
 - `pattern` (string): Text pattern or regex to search for.
 - `is_regex` (boolean, optional): Whether the pattern is a regular expression.
@@ -278,9 +306,11 @@ Search for a pattern within a specific file.
 - `context_lines` (integer, optional): Number of context lines to show.
 
 ### `count_in_file`
+
 Count how many times a pattern appears in a file.
 
 **Parameters:**
+
 - `file_path` (string): Path to the file to analyze.
 - `pattern` (string): Text pattern or regex to count.
 - `is_regex` (boolean, optional): Whether the pattern is a regular expression.

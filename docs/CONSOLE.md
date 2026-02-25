@@ -10,19 +10,19 @@ npm run start:console
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/help` | Show commands |
-| `/exit` | Quit |
-| `/clear` | Clear history |
-| `/history` | Show history |
-| `/voice <name>` | Change voice |
-| `/info` | Show config |
-| `/toggle-voice` | Enable/disable voice |
-| `/tools` | Show available MCP tools |
-| `/provider [name]` | Switch AI provider or list available |
-| `/model [name]` | Switch AI model or show current |
-| `/debug [on/off/toggle]` | Toggle debug mode |
+| Command                  | Description                          |
+| ------------------------ | ------------------------------------ |
+| `/help`                  | Show commands                        |
+| `/exit`                  | Quit                                 |
+| `/clear`                 | Clear history                        |
+| `/history`               | Show history                         |
+| `/voice <name>`          | Change voice                         |
+| `/info`                  | Show config                          |
+| `/toggle-voice`          | Enable/disable voice                 |
+| `/tools`                 | Show available MCP tools             |
+| `/provider [name]`       | Switch AI provider or list available |
+| `/model [name]`          | Switch AI model or show current      |
+| `/debug [on/off/toggle]` | Toggle debug mode                    |
 
 ## Usage
 

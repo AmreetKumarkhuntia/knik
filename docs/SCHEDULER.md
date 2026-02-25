@@ -96,24 +96,24 @@ flowchart TD
 flowchart TD
     Start([Input: task]) --> N1[Parse Task]
     N1 --> N2{Task Type?}
-    
+
     N2 --> |data_analysis| N3[Load Data]
     N2 --> |file_ops| N4[File Operation]
     N2 --> |ai_task| N5[AI Processing]
-    
+
     N3 --> N6[Analyze Data]
     N6 --> N7{Has Errors?}
     N7 --> |true| N8[Error Report]
     N7 --> |false| N9[Success Report]
-    
+
     N4 --> N10[Verify Result]
     N5 --> N11[Format Output]
-    
+
     N8 --> Merge[Merge Results]
     N9 --> Merge
     N10 --> Merge
     N11 --> Merge
-    
+
     Merge --> Final[Final Summary]
     Final --> End([Output: result])
 ```
@@ -123,24 +123,24 @@ flowchart TD
 ```mermaid
 flowchart TD
     Cron["Cron: 0 9 * * *"] -.triggers.-> Start
-    
+
     Start([Start Workflow]) --> N1[Read Logs]
     N1 --> N2[Extract Errors]
     N1 --> N3[Count Requests]
-    
+
     N2 --> N4{"Has Errors?"}
     N4 --> |true| N5[Analyze Errors]
     N4 --> |false| N6[Skip]
-    
+
     N3 --> N7{High Traffic?}
     N7 --> |true| N8[Performance Analysis]
     N7 --> |false| N9[Skip]
-    
+
     N5 --> Merge[Merge Reports]
     N6 --> Merge
     N8 --> Merge
     N9 --> Merge
-    
+
     Merge --> N10[Daily Summary]
     N10 --> N11[Send Email]
     N11 --> End([Complete])
@@ -157,11 +157,11 @@ class BaseNode(ABC):
     def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute node logic. Return dict with results."""
         pass
-    
+
     def validate(self) -> bool:
         """Validate node configuration."""
         pass
-    
+
     def get_info(self) -> dict[str, Any]:
         """Get node metadata."""
         pass
@@ -203,11 +203,11 @@ class Workflow:
     nodes: dict[str, BaseNode]
     connections: list[NodeConnection]
     entry_node_id: str
-    
+
     def validate(self) -> bool:
         """Validate workflow structure (DAG, connected, no orphans)"""
         pass
-    
+
     def to_mermaid(self) -> str:
         """Export workflow to Mermaid diagram format"""
         pass
@@ -264,7 +264,7 @@ class Schedule:
     cron_expression: str  # Standard cron: "minute hour day month weekday"
     enabled: bool = True
     timezone: str = "UTC"
-    
+
     def next_run_time(self) -> datetime:
         """Calculate next execution time"""
         pass
@@ -486,8 +486,8 @@ def remove_schedule(self, workflow_id: str) -> bool:
     """Remove cron schedule"""
 
 def execute_workflow(
-    self, 
-    workflow_id: str, 
+    self,
+    workflow_id: str,
     inputs: dict[str, Any] = None
 ) -> dict[str, Any]:
     """Execute workflow manually"""
@@ -499,7 +499,7 @@ def stop(self) -> None:
     """Stop scheduler gracefully"""
 
 def get_execution_history(
-    self, 
+    self,
     workflow_id: str | None = None
 ) -> list[ExecutionRecord]:
     """Get workflow execution history"""
@@ -520,8 +520,8 @@ WorkflowEngine(ai_client: AIClient | None = None)
 
 ```python
 def execute_workflow(
-    self, 
-    workflow: Workflow, 
+    self,
+    workflow: Workflow,
     inputs: dict[str, Any] = None
 ) -> dict[str, Any]:
     """Execute workflow as DAG"""
@@ -586,15 +586,15 @@ class SchedulerConfig:
     # Worker pool settings
     worker_pool_size: int = 4
     max_concurrent_workflows: int = 10
-    
+
     # Schedule settings
     schedule_check_interval: float = 60.0  # seconds
-    
+
     # Execution settings
     default_timeout: int = 300  # seconds
     retry_failed_nodes: bool = False
     max_retries: int = 3
-    
+
     # History settings
     max_history_size: int = 1000
     history_retention_days: int = 30
@@ -608,8 +608,8 @@ KNIK_SCHEDULER_WORKERS=4
 KNIK_SCHEDULER_MAX_CONCURRENT=10
 KNIK_SCHEDULER_CHECK_INTERVAL=60
 
-# Database location
-KNIK_SCHEDULER_DB_PATH=~/.knik/scheduler.db
+# Database connection
+KNIK_SCHEDULER_DB_URL=postgresql://user:password@localhost:5432/knik_scheduler
 ```
 
 ## Integration Patterns
@@ -623,14 +623,14 @@ class ConsoleAppWithScheduler(ConsoleApp):
     def __init__(self):
         super().__init__()
         self.scheduler = Scheduler(ai_client=self.ai_client)
-    
+
     def initialize(self):
         super().initialize()
         self._load_workflows()
         self.scheduler.start()
-    
+
     def _load_workflows(self):
-        # Load workflows from SQLite database
+        # Load workflows from PostgreSQL database
         pass
 ```
 
@@ -651,7 +651,7 @@ class GUIAppWithScheduler(GUIApp):
         super()._initialize_backend()
         self.scheduler = Scheduler(ai_client=self.ai_client)
         self.scheduler.start()
-    
+
     def on_close(self):
         self.scheduler.stop()
         super().on_close()
@@ -692,12 +692,12 @@ async def add_schedule(schedule: ScheduleSchema):
 
 ## Persistence
 
-**SQLite Database:**
+**PostgreSQL Database:**
 
-All scheduler data (workflows, schedules, execution history) is stored in a single SQLite database for efficient querying and relational integrity.
+All scheduler data (workflows, schedules, execution history) is stored in a PostgreSQL database for efficient querying, concurrent access, and relational integrity.
 
 ```text
-~/.knik/scheduler.db  # SQLite database
+postgresql://user:password@localhost:5432/knik_scheduler  # PostgreSQL database URL
 ```
 
 **Database Schema:**
@@ -708,48 +708,48 @@ CREATE TABLE workflows (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
-    definition JSON NOT NULL,  -- Full workflow structure
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    definition JSONB NOT NULL,  -- Full workflow structure
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Schedules table
 CREATE TABLE schedules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     workflow_id TEXT NOT NULL,
     cron_expression TEXT NOT NULL,
-    enabled BOOLEAN DEFAULT 1,
+    enabled BOOLEAN DEFAULT true,
     timezone TEXT DEFAULT 'UTC',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
 );
 
 -- Execution history table
 CREATE TABLE executions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     workflow_id TEXT NOT NULL,
     status TEXT NOT NULL,  -- 'success', 'failed', 'running'
-    inputs JSON,
-    outputs JSON,
+    inputs JSONB,
+    outputs JSONB,
     error_message TEXT,
-    started_at TIMESTAMP NOT NULL,
-    completed_at TIMESTAMP,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
     duration_ms INTEGER,
     FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
 );
 
 -- Node execution trace table
 CREATE TABLE node_executions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     execution_id INTEGER NOT NULL,
     node_id TEXT NOT NULL,
     node_type TEXT NOT NULL,
     status TEXT NOT NULL,
-    inputs JSON,
-    outputs JSON,
+    inputs JSONB,
+    outputs JSONB,
     error_message TEXT,
-    started_at TIMESTAMP NOT NULL,
-    completed_at TIMESTAMP,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
     duration_ms INTEGER,
     FOREIGN KEY (execution_id) REFERENCES executions(id) ON DELETE CASCADE
 );

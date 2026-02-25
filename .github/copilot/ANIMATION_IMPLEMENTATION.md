@@ -11,6 +11,7 @@
 ### Phase 1: Foundation
 
 #### ✅ Todo 4: Animation Utilities Module
+
 **File:** `src/apps/gui/animations.py`
 
 **Components to Build:**
@@ -40,6 +41,7 @@
 ---
 
 #### ⬜ Todo 1: Animated Gradient Background
+
 **File:** `src/apps/gui/components/gradient_background.py`
 
 **Components to Build:**
@@ -51,6 +53,7 @@
    - `update_theme(theme)` - Switch color palette
 
 2. **Gradient Color Palettes** (add to `theme.py`)
+
    ```python
    # Dark Mode Gradients
    GRADIENT_DARK_COLORS = [
@@ -58,7 +61,7 @@
        "#2C1B47",  # Purple
        "#004D4D",  # Teal
    ]
-   
+
    # Light Mode Gradients
    GRADIENT_LIGHT_COLORS = [
        "#E0F2FE",  # Light blue
@@ -82,11 +85,13 @@
 ### Phase 2: Chat Animations
 
 #### ⬜ Todo 2: Slide-In Message Animation
+
 **Location:** `src/apps/gui/components/chat_panel.py`
 
 **Implementation Details:**
 
 1. **Add Animation Method**
+
    ```python
    def _animate_slide_in(self, widget, direction, duration=350):
        # direction: "left" | "right" | "center"
@@ -113,11 +118,13 @@
 ---
 
 #### ⬜ Todo 3: Word-by-Word Text Fade
+
 **Location:** `src/apps/gui/components/chat_panel.py`
 
 **Implementation Details:**
 
 1. **Add Text Animation Method**
+
    ```python
    def _animate_text_reveal(self, label, text, word_delay=40):
        # Split text into words
@@ -152,16 +159,19 @@
 ### Phase 3: Integration & Polish
 
 #### ⬜ Todo 5: Integrate Animations into ChatPanel
+
 **File:** `src/apps/gui/components/chat_panel.py`
 
 **Changes Required:**
 
 1. **Import Animations**
+
    ```python
    from ..animations import AnimationController, ease_out_back, interpolate_color
    ```
 
 2. **Add Instance Variables**
+
    ```python
    def __init__(self, master, **kwargs):
        # ... existing code ...
@@ -170,16 +180,17 @@
    ```
 
 3. **Modify `_add_message()`**
+
    ```python
    def _add_message(self, text, is_user, is_system=False):
        # ... create message_frame ...
-       
+
        if self.animations_enabled:
            # Slide animation
            direction = "right" if is_user else ("center" if is_system else "left")
            anim = self._animate_slide_in(message_frame, direction)
            self.active_animations.append(anim)
-           
+
            # Text reveal animation
            if not is_system:
                text_anim = self._animate_text_reveal(message_label, text)
@@ -202,6 +213,7 @@
 ---
 
 #### ⬜ Todo 6: Add Gradient Background to Main Window
+
 **Files:** `src/apps/gui/app.py`, `src/apps/gui/theme.py`
 
 **Changes Required:**
@@ -209,23 +221,25 @@
 1. **Update theme.py** - Add gradient colors (see Todo 1)
 
 2. **Update app.py** - Add gradient layer
+
    ```python
    def _create_ui(self):
        # Add gradient background (lowest layer)
        from .components.gradient_background import GradientBackground
-       
+
        colors = ColorTheme.GRADIENT_DARK_COLORS if ColorTheme.get_mode() == "dark" else ColorTheme.GRADIENT_LIGHT_COLORS
        self.gradient_bg = GradientBackground(self, colors=colors)
        self.gradient_bg.place(x=0, y=0, relwidth=1, relheight=1)
-       
+
        # ... existing UI components on top ...
    ```
 
 3. **Update `_refresh_theme()`**
+
    ```python
    def _refresh_theme(self):
        # ... existing theme updates ...
-       
+
        # Update gradient colors
        if hasattr(self, 'gradient_bg'):
            new_colors = ColorTheme.GRADIENT_DARK_COLORS if ColorTheme.get_mode() == "dark" else ColorTheme.GRADIENT_LIGHT_COLORS
@@ -240,6 +254,7 @@
 ---
 
 #### ⬜ Todo 7: Test and Optimize Performance
+
 **Testing Scenarios:**
 
 1. **Rapid Message Sending**
@@ -263,10 +278,11 @@
    - Check no animation artifacts remain
 
 5. **Performance Profiling**
+
    ```python
    import cProfile
    import pstats
-   
+
    profiler = cProfile.Profile()
    profiler.enable()
    # ... perform animation test ...
@@ -295,21 +311,23 @@
 
 ### Animation Parameters
 
-| Feature | Duration | FPS | Easing | Notes |
-|---------|----------|-----|--------|-------|
-| Gradient Background | 8000ms | 30 | linear | Continuous loop |
-| Message Slide-In | 350ms | 60 | ease_out_back | Slight bounce |
-| Text Fade-In | 40ms/word | 60 | ease_in | Progressive reveal |
-| System Message Fade | 200ms | 60 | ease_in_out | Center fade |
+| Feature             | Duration  | FPS | Easing        | Notes              |
+| ------------------- | --------- | --- | ------------- | ------------------ |
+| Gradient Background | 8000ms    | 30  | linear        | Continuous loop    |
+| Message Slide-In    | 350ms     | 60  | ease_out_back | Slight bounce      |
+| Text Fade-In        | 40ms/word | 60  | ease_in       | Progressive reveal |
+| System Message Fade | 200ms     | 60  | ease_in_out   | Center fade        |
 
 ### Color Specifications
 
 **Dark Mode Gradient:**
+
 - Start: `#001F3F` (Deep Blue)
 - Mid: `#2C1B47` (Purple)
 - End: `#004D4D` (Teal)
 
 **Light Mode Gradient:**
+
 - Start: `#E0F2FE` (Light Blue)
 - Mid: `#EDE9FE` (Light Purple)
 - End: `#CCFBF1` (Light Teal)
@@ -328,11 +346,13 @@
 **Last Updated:** December 6, 2025
 
 **Progress:**
+
 - [x] Planning complete
 - [x] Session tracker created
 - [ ] Implementation started
 
 **Next Steps:**
+
 1. Start with Todo 4 (Animation utilities module)
 2. Build gradient background (Todo 1)
 3. Implement message animations (Todo 2, 3)
@@ -345,12 +365,14 @@
 ## 📚 References
 
 **CustomTkinter Animation Patterns:**
+
 - Use `widget.after(ms, callback)` for frame updates
 - Store `after_id` for cancellation: `widget.after_cancel(after_id)`
 - Use `place()` for position-based animations
 - Use `configure()` for property-based animations
 
 **Color Interpolation Formula:**
+
 ```python
 def interpolate_color(color1, color2, t):
     r1, g1, b1 = hex_to_rgb(color1)
@@ -362,6 +384,7 @@ def interpolate_color(color1, color2, t):
 ```
 
 **Easing Function Examples:**
+
 ```python
 def ease_in_out(t):
     return t * t * (3 - 2 * t)

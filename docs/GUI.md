@@ -9,12 +9,14 @@ The Knik GUI application provides a modern desktop interface for interacting wit
 ### Installation
 
 1. **Install dependencies:**
+
 ```bash
 # Make sure you have the GUI dependencies
 pip install customtkinter>=5.2.0 Pillow>=10.0.0
 ```
 
 2. **Run the GUI:**
+
 ```bash
 # Using npm
 npm run start
@@ -170,19 +172,16 @@ The GUI app consists of four main components:
    - Scrollable canvas with messenger-style bubbles
    - Theme-aware colors that update on theme change
    - `refresh_theme()` method rebuilds all messages with new theme
-   
 2. **InputPanel** (`components/input_panel.py`) - Text entry
    - Modern rounded corners (25px radius)
    - Theme-aware colors for input field and buttons
    - Enter key support for quick sending
-   
 3. **SettingsPanel** (`components/settings_panel.py`) - Configuration modal
    - AI provider and model selection
    - Temperature slider (0.0-2.0)
    - Voice settings (enable/disable, voice selection)
    - Theme selection (dark, light, system)
    - Triggers full UI refresh on save
-   
 4. **GradientBackground** (`components/gradient_background.py`) - Animated background
    - Canvas-based gradient rendering
    - Smooth color transitions
@@ -198,7 +197,7 @@ The GUI app consists of four main components:
 
 - **User messages**: Blue-gray background
 - **Assistant messages**: Slightly different blue
-- **Status indicator**: 
+- **Status indicator**:
   - 🟢 Green = Ready
   - 🟠 Orange = Thinking
   - 🔵 Blue = Speaking
@@ -211,6 +210,7 @@ The GUI app consists of four main components:
 **Error: `Import "customtkinter" could not be resolved`**
 
 Solution:
+
 ```bash
 pip install customtkinter>=5.2.0 Pillow>=10.0.0
 ```
@@ -267,22 +267,24 @@ pip install customtkinter>=5.2.0 Pillow>=10.0.0
 
 ## 🆚 GUI vs Console
 
-| Feature | GUI | Console |
-|---------|-----|---------|
-| Interface | Desktop window | Terminal |
-| Easy to use | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| Settings | Visual panel | Commands |
-| History | Visual scroll | `/history` command |
-| Voice control | Button (future) | Always on |
-| Multitasking | Background window | Blocks terminal |
+| Feature       | GUI               | Console            |
+| ------------- | ----------------- | ------------------ |
+| Interface     | Desktop window    | Terminal           |
+| Easy to use   | ⭐⭐⭐⭐⭐        | ⭐⭐⭐             |
+| Settings      | Visual panel      | Commands           |
+| History       | Visual scroll     | `/history` command |
+| Voice control | Button (future)   | Always on          |
+| Multitasking  | Background window | Blocks terminal    |
 
 Choose GUI for:
+
 - Better visual experience
 - Easy settings management
 - Multitasking
 - Non-technical users
 
 Choose Console for:
+
 - SSH/remote sessions
 - Server environments
 - Scripting/automation
