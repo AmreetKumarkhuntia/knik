@@ -20,6 +20,7 @@ def get_command_registry() -> dict[str, Callable]:
     from .toggle_voice_cmd import toggle_voice_command
     from .tools_cmd import tools_command
     from .voice_cmd import voice_command
+    from .workflow_cmd import workflow_command
 
     return {
         "help": help_command,
@@ -35,6 +36,7 @@ def get_command_registry() -> dict[str, Callable]:
         "provider": provider_command,
         "model": model_command,
         "debug": debug_command,
+        "workflow": workflow_command,
     }
 
 

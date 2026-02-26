@@ -8,6 +8,11 @@ class SchedulerDB:
     """Data access layer for Workflow, Schedule, and executions."""
 
     @staticmethod
+    async def initialize() -> None:
+        """Initialize the database pool."""
+        await PostgresDB.initialize()
+
+    @staticmethod
     async def create_workflow(workflow: Workflow) -> None:
         """Insert a workflow record."""
         definition_json = json.dumps(workflow.definition)
