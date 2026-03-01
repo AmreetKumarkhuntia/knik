@@ -1,7 +1,4 @@
-/**
- * ChatPanel Component
- * Displays chat messages with smooth animations
- */
+import { MarkdownMessage } from './MarkdownMessage'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -35,18 +32,18 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-3xl border ${
-                  msg.role === 'user'
+                className={`max-w-[70%] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-3xl border ${msg.role === 'user'
                     ? 'bg-white/5 text-white border-white/50 animate-slide-in-right'
                     : 'bg-black/10 text-white border-white/30 animate-slide-in-left'
-                }`}
+                  }`}
               >
-                <p className="text-base leading-relaxed whitespace-pre-wrap">
-                  {msg.content}
-                  {isStreaming && (
-                    <span className="inline-block w-0.5 h-5 bg-white/80 ml-1 animate-pulse" />
-                  )}
-                </p>
+                {msg.role === 'user' ? (
+                  <p className="text-base leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                  </p>
+                ) : (
+                  <MarkdownMessage content={msg.content} isStreaming={isStreaming} />
+                )}
               </div>
             </div>
           )

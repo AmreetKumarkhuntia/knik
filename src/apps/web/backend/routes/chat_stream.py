@@ -22,10 +22,9 @@ sys.path.insert(0, str(src_path))
 
 from apps.console.history import ConversationHistory
 from apps.web.backend.config import WebBackendConfig
-from imports import AIClient, printer
+from imports import AIClient, KokoroVoiceModel, printer
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
-from lib.services.voice_model import KokoroVoiceModel
 
 
 router = APIRouter()

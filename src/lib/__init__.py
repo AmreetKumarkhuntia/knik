@@ -3,8 +3,9 @@ Knik Audio Library
 A modular library for text-to-speech, audio processing, and AI interactions.
 """
 
-from .core import AudioConfig, Config, TTSAsyncProcessor
-from .services import AIClient, AudioProcessor, KokoroVoiceModel, MockAIClient, VoiceModel
+from .core import AudioConfig, Config
+from .services import AIClient, MockAIClient
+from .tts import AudioProcessor, KokoroVoiceModel, TTSAsyncProcessor, VoiceModel
 from .utils import (
     BaseProcessor,
     CommandProcessor,

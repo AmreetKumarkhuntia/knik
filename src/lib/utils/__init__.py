@@ -6,7 +6,6 @@ Contains utility and helper modules.
 from .console_processor import BaseProcessor, CommandProcessor, ConsoleProcessor, create_processor
 from .printer import LogLevel, Printer, PrinterConfig, printer
 
-
 __all__ = [
     "ConsoleProcessor",
     "CommandProcessor",
