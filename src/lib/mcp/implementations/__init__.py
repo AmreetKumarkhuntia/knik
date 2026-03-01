@@ -1,3 +1,4 @@
+from .browser_impl import BROWSER_IMPLEMENTATIONS
 from .cron_impl import CRON_IMPLEMENTATIONS
 from .file_impl import (
     append_to_file_impl,
@@ -31,6 +32,7 @@ ALL_IMPLEMENTATIONS = {
     **SHELL_IMPLEMENTATIONS,
     **FILE_IMPLEMENTATIONS,
     **CRON_IMPLEMENTATIONS,
+    **BROWSER_IMPLEMENTATIONS,
 }
 
 __all__ = [
@@ -40,4 +42,5 @@ __all__ = [
     "SHELL_IMPLEMENTATIONS",
     "FILE_IMPLEMENTATIONS",
     "CRON_IMPLEMENTATIONS",
+    "BROWSER_IMPLEMENTATIONS",
 ]

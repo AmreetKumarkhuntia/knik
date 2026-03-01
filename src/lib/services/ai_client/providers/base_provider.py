@@ -47,6 +47,7 @@ class LangChainProvider(BaseAIProvider):
         mcp_registry: Optional["MCPServerRegistry"] = None,
         system_instruction: str | None = None,
         tool_callback=None,
+        skip_tool_binding: bool = False,
         **config,
     ):
         self._llm_raw = llm
@@ -55,23 +56,24 @@ class LangChainProvider(BaseAIProvider):
         self.system_instruction = system_instruction
         self.tool_callback = tool_callback
 
-        # Warn if tools were asked for but not created
-        if mcp_registry and not agent:
-            printer.warning(
-                f"{provider_name}: mcp_registry was provided, but no agent was created. Tools will not be available."
-            )
-
         self.agent = agent
         self.mcp_registry = mcp_registry
 
-        # If mcp_registry provided, bind tools to LLM
-        if mcp_registry:
+        # If mcp_registry provided and this provider doesn't manage its own binding,
+        # bind tools to the LLM now.  Providers that run their own tool loop
+        # (e.g. GLMAIProvider) pass skip_tool_binding=True so the raw LLM is
+        # stored untouched and they can bind once inside their own loop.
+        if mcp_registry and not skip_tool_binding:
             tools = mcp_registry.create_langchain_tools()
             self.llm = llm.bind_tools(tools) if tools else llm
             printer.success(f"✓ {provider_name} initialized with agent and {len(tools)} tools")
         else:
             self.llm = llm
-            printer.success(f"✓ {provider_name} initialized with agent (no tools)")
+            if mcp_registry:
+                tools = mcp_registry.create_langchain_tools()
+                printer.success(f"✓ {provider_name} initialized with {len(tools)} tools (self-managed binding)")
+            else:
+                printer.success(f"✓ {provider_name} initialized (no tools)")
 
     def _extract_text_from_content(self, content) -> str:
         """Extract text from various content formats."""

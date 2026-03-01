@@ -17,6 +17,7 @@ try:
 
     LANGCHAIN_GEMINI_AVAILABLE = True
 except ImportError:
+    printer.warning("LangChain Google GenAI not available. Gemini provider will not work. Install with: pip install langchain-google-genai")
     LANGCHAIN_GEMINI_AVAILABLE = False
     create_agent = None
 

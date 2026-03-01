@@ -33,7 +33,7 @@ def run_shell_command(command: str, timeout: int = 10) -> str:
                 response += f"Error: {error}\n"
             if output:
                 response += f"Output: {output}"
-            printer.warning(f"Command failed with exit code {result.returncode}")
+            printer.warning(f"Command failed with exit code {result.returncode} with error: {error.strip()}")
             return response.strip()
 
         result_text = output if output else "Command executed successfully (no output)"

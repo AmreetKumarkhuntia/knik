@@ -2,6 +2,7 @@
 
 from .base_provider import BaseAIProvider
 from .gemini_provider import GeminiAIProvider
+from .glm_provider import GLMAIProvider
 from .mock_provider import MockAIProvider
 from .vertex_provider import VertexAIProvider
 
@@ -10,5 +11,6 @@ __all__ = [
     "BaseAIProvider",
     "VertexAIProvider",
     "GeminiAIProvider",
+    "GLMAIProvider",
     "MockAIProvider",
 ]

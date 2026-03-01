@@ -10,6 +10,8 @@ langchain>=0.3.0              # Core LangChain framework (agents, chains)
 langchain-core>=0.3.0         # LangChain core primitives (messages, tools)
 langchain-google-genai>=2.0.0  # For Gemini AI Studio API key authentication
 langchain-google-vertexai>=2.0.0  # For Vertex AI integration
+langchain-community>=0.3.0    # Community integrations (ChatZhipuAI for GLM)
+zhipuai>=2.1.0                # ZhipuAI Python SDK (required by ChatZhipuAI)
 customtkinter>=5.2.0  # Modern GUI framework
 Pillow>=10.0.0  # Image processing for GUI
 
@@ -25,3 +27,6 @@ ruff>=0.7.0  # Modern Python linter and formatter
 croniter>=6.0.0
 nest-asyncio>=1.6.0
 psycopg[binary,pool]>=3.3.3
+
+# Browser automation (for Browser MCP tools)
+playwright>=1.40.0       # Headless Chromium/Firefox/Webkit automation
