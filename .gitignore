@@ -8,3 +8,5 @@ async_tts_output
 src/apps/web/frontend/node_modules
 
 .python-version
+
+logs

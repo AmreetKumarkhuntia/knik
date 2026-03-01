@@ -20,6 +20,7 @@ from pydantic import BaseModel
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
+from apps.console.history import ConversationHistory
 from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, printer
 from lib.mcp.index import register_all_tools
@@ -35,6 +36,9 @@ config = WebBackendConfig()
 # Global clients
 ai_client: AIClient | None = None
 tts_processor: KokoroVoiceModel | None = None
+
+# Global conversation history — persists for the lifetime of the server process
+conversation_history = ConversationHistory(max_size=50)
 
 
 class StreamChatRequest(BaseModel):
@@ -78,14 +82,22 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
             tts_processor = KokoroVoiceModel()
             printer.success(f"TTS ready: {config.voice_name}")
 
+        # Fetch recent history to give the AI conversation context
+        history_context_size = getattr(config, "history_context_size", 5)
+        history = conversation_history.get_messages(last_n=history_context_size)
+
         # Stream text and audio synchronously
         text_buffer = ""
+        full_response = ""
         sentence_endings = [".", "!", "?", "\n"]
         audio_count = 0
 
-        for text_chunk in ai_client.chat_stream(prompt=prompt):
+        for text_chunk in ai_client.chat_stream(prompt=prompt, history=history):
             # Send text chunk immediately
             yield f"event: text\ndata: {json.dumps({'text': text_chunk})}\n\n"
+
+            # Accumulate full response for history storage
+            full_response += text_chunk
 
             # Buffer text for sentence detection
             text_buffer += text_chunk
@@ -127,6 +139,11 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
             yield f"event: audio\ndata: {json.dumps({'audio': audio_b64, 'sample_rate': sr})}\n\n"
             audio_count += 1
             printer.success(f"Sent final audio chunk {audio_count}")
+
+        # Save this turn to history so future messages have context
+        if full_response.strip():
+            conversation_history.add_entry(user_input=prompt, ai_response=full_response.strip())
+            printer.info(f"Saved turn to history (total turns: {len(conversation_history.entries)})")
 
         printer.info(f"Stream complete: sent {audio_count} audio chunks")
         yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
