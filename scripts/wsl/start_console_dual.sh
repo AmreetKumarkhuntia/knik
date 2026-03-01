@@ -1,16 +1,10 @@
 #!/bin/bash
 
-# Detect WSL and conditionally run the WSL variant
-if [[ "$(uname -a)" == *[Ww][Ss][Ll]* ]] || [[ "$(uname -a)" == *microsoft* ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    exec "$SCRIPT_DIR/wsl/$(basename "$0")" "$@"
-fi
-
 # Knik Console - Dual Window Launcher
 # Opens two native Terminal windows side-by-side
 
 # Get the project root directory (parent of scripts/)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Load environment variables from .env file if it exists
 if [ -f "$SCRIPT_DIR/.env" ]; then

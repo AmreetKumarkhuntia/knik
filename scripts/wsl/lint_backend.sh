@@ -1,15 +1,9 @@
 #!/bin/bash
-
-# Detect WSL and conditionally run the WSL variant
-if [[ "$(uname -a)" == *[Ww][Ss][Ll]* ]] || [[ "$(uname -a)" == *microsoft* ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    exec "$SCRIPT_DIR/wsl/$(basename "$0")" "$@"
-fi
 # scripts/lint_backend.sh
 
 # Get directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # Activate virtual environment
 source "$ROOT_DIR/.venv/bin/activate"

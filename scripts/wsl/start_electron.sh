@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Detect WSL and conditionally run the WSL variant
-if [[ "$(uname -a)" == *[Ww][Ss][Ll]* ]] || [[ "$(uname -a)" == *microsoft* ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    exec "$SCRIPT_DIR/wsl/$(basename "$0")" "$@"
-fi
-
 # Knik Electron Dev Mode Startup Script
 # Starts backend + frontend + Electron in development mode
 

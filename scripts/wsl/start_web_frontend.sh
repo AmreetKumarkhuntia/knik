@@ -1,17 +1,11 @@
 #!/bin/bash
-
-# Detect WSL and conditionally run the WSL variant
-if [[ "$(uname -a)" == *[Ww][Ss][Ll]* ]] || [[ "$(uname -a)" == *microsoft* ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    exec "$SCRIPT_DIR/wsl/$(basename "$0")" "$@"
-fi
 # Start Knik Web App Frontend (React + Vite)
 
 # Exit on error
 set -e
 
 # Get the project root directory
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo "🎨 Starting Knik Frontend..."
 echo "📁 Project root: $PROJECT_ROOT"

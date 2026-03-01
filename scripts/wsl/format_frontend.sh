@@ -1,14 +1,8 @@
 #!/bin/bash
-
-# Detect WSL and conditionally run the WSL variant
-if [[ "$(uname -a)" == *[Ww][Ss][Ll]* ]] || [[ "$(uname -a)" == *microsoft* ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    exec "$SCRIPT_DIR/wsl/$(basename "$0")" "$@"
-fi
 # scripts/format_frontend.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 FRONTEND_DIR="$ROOT_DIR/src/apps/web/frontend"
 
 # Run prettier from root
