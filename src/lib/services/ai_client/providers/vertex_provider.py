@@ -43,7 +43,6 @@ class VertexAIProvider(LangChainProvider):
                 tools=tools,
                 system_prompt=system_instruction or "You are a helpful AI assistant with access to tools.",
             )
-            printer.success(f"Created agent with {len(tools)} tools")
             return agent
         except Exception as e:
             printer.error(f"Failed to create agent: {e}")
@@ -96,11 +95,6 @@ class VertexAIProvider(LangChainProvider):
             location=location,
             model=model_name,
         )
-
-        if agent:
-            printer.success(f"Vertex AI initialized with agent: {model_name}")
-        else:
-            printer.success(f"Vertex AI initialized: {model_name}")
 
     def is_configured(self) -> bool:
         return self.project_id is not None and LANGCHAIN_VERTEX_AVAILABLE

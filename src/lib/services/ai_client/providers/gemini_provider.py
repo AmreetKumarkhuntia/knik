@@ -44,7 +44,6 @@ class GeminiAIProvider(LangChainProvider):
                 tools=tools,
                 system_prompt=system_instruction or "You are a helpful AI assistant with access to tools.",
             )
-            printer.success(f"Created agent with {len(tools)} tools")
             return agent
         except Exception as e:
             printer.error(f"Failed to create agent: {e}")
@@ -116,11 +115,6 @@ class GeminiAIProvider(LangChainProvider):
             tool_callback=tool_callback,
             model=model_name,
         )
-
-        if agent:
-            printer.success(f"Gemini AI Studio initialized with agent: {model_name}")
-        else:
-            printer.success(f"Gemini AI Studio initialized: {model_name}")
 
     def is_configured(self) -> bool:
         return self.api_key is not None and LANGCHAIN_GEMINI_AVAILABLE

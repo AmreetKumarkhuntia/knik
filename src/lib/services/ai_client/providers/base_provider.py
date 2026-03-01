@@ -65,13 +65,23 @@ class LangChainProvider(BaseAIProvider):
         # stored untouched and they can bind once inside their own loop.
         if mcp_registry and not skip_tool_binding:
             tools = mcp_registry.create_langchain_tools()
-            self.llm = llm.bind_tools(tools) if tools else llm
-            printer.success(f"✓ {provider_name} initialized with agent and {len(tools)} tools")
+            if tools:
+                self.llm = llm.bind_tools(tools)
+                if self.agent:
+                    printer.success(f"✓ {provider_name} initialized with agent and {len(tools)} bound tools")
+                else:
+                    printer.success(f"✓ {provider_name} initialized with {len(tools)} bound tools")
+            else:
+                self.llm = llm
+                printer.success(f"✓ {provider_name} initialized (no tools available)")
         else:
             self.llm = llm
-            if mcp_registry:
+            if mcp_registry and self.agent:
                 tools = mcp_registry.create_langchain_tools()
-                printer.success(f"✓ {provider_name} initialized with {len(tools)} tools (self-managed binding)")
+                if tools:
+                    printer.success(f"✓ {provider_name} initialized with agent and {len(tools)} tools (self-managed)")
+                else:
+                    printer.success(f"✓ {provider_name} initialized with agent (no tools available)")
             else:
                 printer.success(f"✓ {provider_name} initialized (no tools)")
 

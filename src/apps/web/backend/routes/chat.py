@@ -53,7 +53,7 @@ async def chat(request: SimpleChatRequest):
         # Initialize clients if needed
         if ai_client is None:
             tools_count = register_all_tools(MCPServerRegistry)
-            printer.info(f"Registered {tools_count} MCP tools")
+            printer.debug(f"Registered {tools_count} MCP tools to registry")
 
             ai_client = AIClient(
                 provider=config.ai_provider,

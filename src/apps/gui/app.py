@@ -140,7 +140,7 @@ Just type your question below and press Enter to get started."""
 
             tools_registered = register_all_tools(MCPServerRegistry)
             if tools_registered > 0:
-                printer.success(f"✓ Registered {tools_registered} MCP tools")
+                printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
             self.ai_client = AIClient(
                 provider=self.config.ai_provider,

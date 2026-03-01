@@ -48,7 +48,7 @@ class ConsoleApp:
     def _initialize_ai_client(self):
         tools_registered = register_all_tools(MCPServerRegistry)
         if tools_registered > 0:
-            printer.success(f"✓ Registered {tools_registered} MCP tools to registry")
+            printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
         self.ai_client = AIClient(
             provider=self.config.ai_provider,

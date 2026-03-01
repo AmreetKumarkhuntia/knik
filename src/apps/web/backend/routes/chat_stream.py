@@ -62,7 +62,7 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
         # Initialize AI client if needed
         if ai_client is None:
             tools_count = register_all_tools(MCPServerRegistry)
-            printer.info(
+            printer.debug(
                 f"Registered {tools_count} MCP tools, preparing AI client... with {config.ai_provider}/{config.ai_model}"
             )
 

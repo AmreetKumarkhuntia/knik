@@ -53,7 +53,6 @@ class GLMAIProvider(LangChainProvider):
                 tools=tools,
                 system_prompt=system_instruction or "You are a helpful AI assistant with access to tools.",
             )
-            printer.success(f"GLM: Created agent with {len(tools)} tools")
             return agent
         except Exception as e:
             printer.error(f"GLM: Failed to create agent: {e}")
@@ -113,11 +112,6 @@ class GLMAIProvider(LangChainProvider):
             tool_callback=tool_callback,
             model=model_name,
         )
-
-        if agent:
-            printer.success(f"GLM (ZhipuAI) initialized with agent: {model_name}")
-        else:
-            printer.success(f"GLM (ZhipuAI) initialized: {model_name}")
 
     def is_configured(self) -> bool:
         return self.api_key is not None and LANGCHAIN_GLM_AVAILABLE
