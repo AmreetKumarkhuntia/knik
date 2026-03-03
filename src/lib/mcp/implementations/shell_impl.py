@@ -12,7 +12,7 @@ def run_shell_command(command: str, timeout: int = 10) -> str:
     # LangChain may pass None for optional tool parameters even when a default exists
     if timeout is None:
         timeout = 10
-        
+
     timeout = min(timeout, MAX_TIMEOUT)
 
     printer.info(f'Executing shell command: "{command}" with timeout {timeout}s')

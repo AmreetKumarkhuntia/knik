@@ -8,11 +8,10 @@ from collections.abc import Callable
 from pathlib import Path
 from threading import Thread
 
-from ..core.config import Config
-from ..utils.printer import printer
+from ...core.config import Config
+from ...utils.printer import printer
 from .audio.processor import AudioProcessor
 from .providers.kokoro import KokoroVoiceModel
-from .utils import filter_tts_text
 
 
 class TTSAsyncProcessor:
@@ -52,10 +51,9 @@ class TTSAsyncProcessor:
             self.save_dir.mkdir(parents=True, exist_ok=True)
 
     def play_async(self, text: str) -> None:
-        text = filter_tts_text(text)
         if not text:
             return
-        
+
         self.text_processing_queue.append(text)
         printer.info("Text added to queue")
 

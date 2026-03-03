@@ -10,7 +10,6 @@ from typing import ClassVar
 from dotenv import load_dotenv
 
 
-# Load environment variables from .env file if it exists
 load_dotenv()
 
 
@@ -38,8 +37,8 @@ class Config:
     DEFAULT_AI_TEMPERATURE: ClassVar[float] = 0.7
 
     # Logging defaults
-    DEFAULT_LOG_LEVEL: ClassVar[str] = "ERROR"
-    DEFAULT_SHOW_LOGS: ClassVar[bool] = False
+    DEFAULT_LOG_LEVEL: ClassVar[str] = "INFO"
+    DEFAULT_SHOW_LOGS: ClassVar[bool] = True
     DEFAULT_USE_COLORS: ClassVar[bool] = True
 
     # System instruction for AI assistant

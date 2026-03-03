@@ -7,9 +7,11 @@ import warnings
 import numpy as np
 from kokoro import KPipeline
 
-from ...core.config import Config
-from ...utils import printer
+from ....core.config import Config
+from ....utils import printer
+from ..utils import filter_tts_text
 from .base import VoiceModel
+
 
 # Suppress warnings from PyTorch and Kokoro
 warnings.filterwarnings("ignore", category=UserWarning, module="torch")
@@ -53,12 +55,13 @@ class KokoroVoiceModel(VoiceModel):
         if not self.is_loaded():
             self.load()
 
+        filtered_text = filter_tts_text(text)
         voice_to_use = voice or self.voice
 
         try:
             printer.info(f"Generating speech with voice '{voice_to_use}'...")
 
-            generator = self._pipeline(text, voice=voice_to_use)
+            generator = self._pipeline(filtered_text, voice=voice_to_use)
 
             audio_chunks = []
             for _, _, audio in generator:

@@ -4,8 +4,8 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
-from ...core.config import Config
-from ...utils.printer import printer
+from ....core.config import Config
+from ....utils.printer import printer
 
 
 class AudioProcessor:

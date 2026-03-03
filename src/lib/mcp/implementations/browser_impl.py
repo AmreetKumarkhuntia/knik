@@ -51,10 +51,10 @@ def _ensure_browser():
         _page = context.new_page()
         printer.success("🌐 Browser ready (headless Chromium)")
         return _page
-    except ImportError:
+    except ImportError as err:
         raise RuntimeError(
             "Playwright is not installed. Run: pip install playwright && playwright install chromium"
-        )
+        ) from err
 
 
 def _clean_text(raw: str, max_chars: int) -> str:

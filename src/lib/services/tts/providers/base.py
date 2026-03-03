@@ -8,7 +8,7 @@ from collections.abc import Generator
 
 import numpy as np
 
-from ...core.config import Config
+from ....core.config import Config
 
 
 class VoiceModel(ABC):

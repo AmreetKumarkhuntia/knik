@@ -16,6 +16,7 @@
     "start:cron": "source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode cron",
     "start:web": "concurrently \"npm run start:web:backend\" \"npm run start:web:frontend\"",
     "start:web:backend": "./scripts/start_web_backend.sh",
+    "start:web:backend:logs": "./scripts/start_web_backend.sh 2>&1 | tee logs",
     "start:web:frontend": "./scripts/start_web_frontend.sh",
     "start:electron": "./scripts/start_electron.sh",
     "electron:dev": "concurrently \"npm run start:web:backend\" \"npm run start:web:frontend\" \"wait-on http://localhost:5173 && electron .\"",

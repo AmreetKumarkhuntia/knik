@@ -14,10 +14,6 @@ from loguru import logger
 from ..core.config import Config
 
 
-# Remove default loguru handler immediately
-logger.remove()
-
-
 class LogLevel(Enum):
     """Log levels for output verbosity control."""
 
@@ -75,20 +71,23 @@ class Printer:
         self._configure_logger()
 
     def _configure_logger(self):
+        # Always wipe ALL existing loguru handlers first so we never accumulate
+        # multiple handlers (e.g. the default colored one + our custom one).
+        logger.remove()
+
         if self.config.show_logs:
-            format_str = "<green>{time:HH:mm:ss}</green> | <cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{level: <8}</level> | <level>{message}</level>"
+            if self.config.use_colors:
+                format_str = "<green>{time:HH:mm:ss}</green> | <cyan>{file.name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{level: <8}</level> | <level>{message}</level>"
+            else:
+                format_str = "{time:HH:mm:ss} | {file.name}:{function}:{line} | {level: <7} | {message}"
 
-            if not self.config.use_colors:
-                format_str = "{time:HH:mm:ss} | {function}:{line} | {level: <8} | {message}"
-
-            # Always use stderr for logs to keep stdout clean for conversation
             self._handler_id = logger.add(
-                sys.stderr,
+                sys.stdout,
                 format=format_str,
                 level=self.config.log_level,
                 colorize=self.config.use_colors,
-                diagnose=False,  # Disable diagnostic info
-                backtrace=False,  # Disable backtrace
+                diagnose=False,
+                backtrace=False,
             )
 
     def debug(self, message: str):
@@ -182,8 +181,6 @@ class Printer:
         return self.config
 
 
-# Global printer instance
-logger.remove()  # Remove default handler before creating printer
 printer = Printer()
 
 
