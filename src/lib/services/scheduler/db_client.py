@@ -2,7 +2,9 @@ import json
 
 from lib.services.postgres.db import PostgresDB
 from lib.services.scheduler.models import ExecutionRecord, Schedule, Workflow
+from lib.utils import printer
 
+is_initialized = False
 
 class SchedulerDB:
     """Data access layer for Workflow, Schedule, and executions."""
@@ -10,11 +12,23 @@ class SchedulerDB:
     @staticmethod
     async def initialize() -> None:
         """Initialize the database pool."""
+        global is_initialized
+        if is_initialized:
+            return
+        printer.info("Initializing SchedulerDB connection pool...")
         await PostgresDB.initialize()
+        is_initialized = True
+
+    @staticmethod
+    async def check_initialized() -> None:
+        """Check if the database has been initialized."""
+        if not is_initialized:
+            await SchedulerDB.initialize()
 
     @staticmethod
     async def create_workflow(workflow: Workflow) -> None:
         """Insert a workflow record."""
+        await SchedulerDB.check_initialized()
         definition_json = json.dumps(workflow.definition)
         query = """
             INSERT INTO workflows (id, name, description, definition)
@@ -30,6 +44,7 @@ class SchedulerDB:
     @staticmethod
     async def get_workflow(workflow_id: str) -> Workflow | None:
         """Retrieve a workflow by ID."""
+        await SchedulerDB.check_initialized()
         query = "SELECT * FROM workflows WHERE id = %s"
         row = await PostgresDB.fetch_one(query, (workflow_id,))
         return Workflow.from_row(row) if row else None
@@ -37,6 +52,7 @@ class SchedulerDB:
     @staticmethod
     async def list_workflows() -> list[Workflow]:
         """List all workflows."""
+        await SchedulerDB.check_initialized()
         query = "SELECT * FROM workflows ORDER BY created_at DESC"
         rows = await PostgresDB.fetch_all(query)
         return [Workflow.from_row(row) for row in rows]
@@ -44,12 +60,14 @@ class SchedulerDB:
     @staticmethod
     async def delete_workflow(workflow_id: str) -> None:
         """Delete a workflow."""
+        await SchedulerDB.check_initialized()
         query = "DELETE FROM workflows WHERE id = %s"
         await PostgresDB.execute(query, (workflow_id,))
 
     @staticmethod
     async def create_schedule(schedule: Schedule) -> int | None:
         """Create a new schedule."""
+        await SchedulerDB.check_initialized()
         query = """
             INSERT INTO schedules (workflow_id, cron_expression, enabled, timezone)
             VALUES (%s, %s, %s, %s)
@@ -69,6 +87,7 @@ class SchedulerDB:
     @staticmethod
     async def list_schedules() -> list[Schedule]:
         """List all active schedules."""
+        await SchedulerDB.check_initialized()
         query = "SELECT * FROM schedules WHERE enabled = true"
         rows = await PostgresDB.fetch_all(query)
         return [Schedule.from_row(row) for row in rows]
@@ -76,18 +95,21 @@ class SchedulerDB:
     @staticmethod
     async def toggle_schedule(schedule_id: int, enabled: bool) -> None:
         """Enable or disable a schedule."""
+        await SchedulerDB.check_initialized()
         query = "UPDATE schedules SET enabled = %s WHERE id = %s"
         await PostgresDB.execute(query, (enabled, schedule_id))
 
     @staticmethod
     async def delete_schedule(schedule_id: int) -> None:
         """Delete a schedule."""
+        await SchedulerDB.check_initialized()
         query = "DELETE FROM schedules WHERE id = %s"
         await PostgresDB.execute(query, (schedule_id,))
 
     @staticmethod
     async def create_execution(workflow_id: str, inputs: dict) -> int | None:
         """Start tracking a new execution."""
+        await SchedulerDB.check_initialized()
         inputs_json = json.dumps(inputs)
         query = """
             INSERT INTO executions (workflow_id, status, inputs, started_at)
@@ -105,6 +127,7 @@ class SchedulerDB:
         duration_ms: int | None = None,
     ) -> None:
         """Mark an execution as completed or failed."""
+        await SchedulerDB.check_initialized()
         outputs_json = json.dumps(outputs) if outputs else None
         query = """
             UPDATE executions
@@ -129,6 +152,7 @@ class SchedulerDB:
         duration_ms: int | None = None,
     ) -> None:
         """Log the execution of an individual node."""
+        await SchedulerDB.check_initialized()
         inputs_json = json.dumps(inputs)
         outputs_json = json.dumps(outputs) if outputs else None
         query = """
@@ -153,6 +177,7 @@ class SchedulerDB:
     @staticmethod
     async def get_execution_history(workflow_id: str | None = None) -> list[ExecutionRecord]:
         """Fetch historical executions, optionally scoped to a workflow."""
+        await SchedulerDB.check_initialized()
         if workflow_id:
             query = "SELECT * FROM executions WHERE workflow_id = %s ORDER BY started_at DESC LIMIT 100"
             rows = await PostgresDB.fetch_all(query, (workflow_id,))

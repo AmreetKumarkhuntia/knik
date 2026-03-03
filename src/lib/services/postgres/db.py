@@ -18,15 +18,41 @@ class PostgresDB:
     _pool: AsyncConnectionPool | None = None
 
     @classmethod
-    async def initialize(cls, dsn: str | None = None) -> None:
+    async def initialize(cls, dsn: str | None = None, **kwargs) -> None:
         """Initialize the global async connection pool."""
         if cls._pool is not None:
             return
 
-        config = Config()
-        conn_string = dsn or config.scheduler_db_url
+        from psycopg.conninfo import make_conninfo
 
-        logger.info("Initializing Postgres async connection pool...")
+        config = Config()
+
+        # If no explicit dsn or kwargs are passed, use the ones from config
+        if not dsn and not kwargs:
+            kwargs = {
+                "host": config.db_host,
+                "port": config.db_port,
+                "user": config.db_user,
+                "password": config.db_pass,
+                "dbname": config.db_name,
+            }
+            # Remove empty values like empty passwords
+            kwargs = {k: v for k, v in kwargs.items() if v}
+
+        conn_string = dsn or make_conninfo(**kwargs)
+
+        safe_log_url = conn_string
+        if not dsn:
+            safe_kwargs = {**kwargs}
+            if "password" in safe_kwargs:
+                safe_kwargs["password"] = "***"
+            safe_log_url = make_conninfo(**safe_kwargs)
+        elif "@" in conn_string:
+            parts = conn_string.split("@")
+            creds = parts[0].split("://")
+            safe_log_url = f"{creds[0]}://***:***@{parts[1]}"
+
+        logger.info(f"Initializing Postgres async connection pool for url: {safe_log_url}")
         cls._pool = AsyncConnectionPool(
             conninfo=conn_string,
             min_size=1,

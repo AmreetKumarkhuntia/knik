@@ -33,6 +33,7 @@ def list_cron_schedules() -> dict[str, Any]:
         results = [{"id": s.id, "workflow_id": s.workflow_id, "cron": s.cron_expression} for s in schedules]
         return {"success": True, "schedules": results, "total": len(results)}
     except Exception as e:
+        printer.error(f"Error listing cron schedules: {e}")
         return {"error": f"Failed to list schedules: {str(e)}"}
 
 
@@ -49,6 +50,7 @@ def add_cron_schedule(workflow_id: str, cron_expression: str) -> dict[str, Any]:
         schedule_id = _run_async(SchedulerDB.create_schedule(schedule))
         return {"success": True, "schedule_id": schedule_id, "workflow_id": workflow_id}
     except Exception as e:
+        printer.error(f"Error listing cron schedules: {e}")
         return {"error": f"Failed to add schedule: {str(e)}"}
 
 
@@ -59,6 +61,7 @@ def remove_cron_schedule(schedule_id: int) -> dict[str, Any]:
         _run_async(SchedulerDB.delete_schedule(schedule_id))
         return {"success": True, "schedule_id": schedule_id, "message": "Schedule removed"}
     except Exception as e:
+        printer.error(f"Error listing cron schedules: {e}")
         return {"error": f"Failed to remove schedule: {str(e)}"}
 
 

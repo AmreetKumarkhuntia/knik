@@ -10,3 +10,4 @@ src/apps/web/frontend/node_modules
 .python-version
 
 logs
+logs/*

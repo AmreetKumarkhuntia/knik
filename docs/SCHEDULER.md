@@ -609,7 +609,11 @@ KNIK_SCHEDULER_MAX_CONCURRENT=10
 KNIK_SCHEDULER_CHECK_INTERVAL=60
 
 # Database connection
-KNIK_SCHEDULER_DB_URL=postgresql://user:password@localhost:5432/knik_scheduler
+KNIK_DB_HOST=localhost
+KNIK_DB_PORT=5432
+KNIK_DB_USER=user
+KNIK_DB_PASS=password
+KNIK_DB_NAME=knik
 ```
 
 ## Integration Patterns

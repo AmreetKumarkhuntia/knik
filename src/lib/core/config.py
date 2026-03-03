@@ -7,10 +7,17 @@ import os
 from dataclasses import dataclass, field
 from typing import ClassVar
 
+import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-
-load_dotenv()
+# Always load the .env file relative to the project root
+_ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
+_ENV_PATH = _ROOT_DIR / ".env"
+if _ENV_PATH.exists():
+    load_dotenv(dotenv_path=_ENV_PATH)
+else:
+    load_dotenv()
 
 
 @dataclass
@@ -119,11 +126,11 @@ Be reliable, efficient, and action focused like Jarvis."""
     enable_voice_output: bool = field(default_factory=lambda: Config.from_env("KNIK_VOICE_OUTPUT", True, bool))
 
     # Database configuration
-    scheduler_db_url: str = field(
-        default_factory=lambda: Config.from_env(
-            "KNIK_SCHEDULER_DB_URL", "postgresql://user:password@localhost:5432/knik_scheduler"
-        )
-    )
+    db_host: str = field(default_factory=lambda: Config.from_env("KNIK_DB_HOST", "localhost"))
+    db_port: int = field(default_factory=lambda: Config.from_env("KNIK_DB_PORT", 5432, int))
+    db_user: str = field(default_factory=lambda: Config.from_env("KNIK_DB_USER", "postgres"))
+    db_pass: str = field(default_factory=lambda: Config.from_env("KNIK_DB_PASS", ""))
+    db_name: str = field(default_factory=lambda: Config.from_env("KNIK_DB_NAME", "knik"))
 
     # Scheduler configuration
     scheduler_check_interval: int = field(

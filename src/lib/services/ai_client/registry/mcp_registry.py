@@ -87,9 +87,6 @@ class MCPServerRegistry:
                     Field(description=prop.get("description", ""), default=None if not is_required else ...),
                 )
 
-            if not fields:
-                continue
-
             ArgsModel = create_model(f"{tool_name}Args", **fields)
 
             tools.append(
