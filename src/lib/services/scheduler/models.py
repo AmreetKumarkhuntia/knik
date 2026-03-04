@@ -14,6 +14,9 @@ class Workflow:
     description: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    last_executed_at: datetime | None = None
+    updated_at: datetime | None = None
+    last_executed_at: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the workflow to a dictionary."""
@@ -38,6 +41,7 @@ class Workflow:
             definition=definition or {},
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
+            last_executed_at=row.get("last_executed_at"),
         )
 
 
@@ -47,10 +51,12 @@ class Schedule:
 
     id: int
     workflow_id: str
-    cron_expression: str
+    trigger_workflow_id: str
     enabled: bool = True
     timezone: str = "UTC"
     created_at: datetime | None = None
+    updated_at: datetime | None = None
+    last_executed_at: datetime | None = None
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Schedule":
@@ -58,10 +64,12 @@ class Schedule:
         return cls(
             id=row["id"],
             workflow_id=row["workflow_id"],
-            cron_expression=row["cron_expression"],
+            trigger_workflow_id=row["trigger_workflow_id"],
             enabled=row.get("enabled", True),
             timezone=row.get("timezone", "UTC"),
             created_at=row.get("created_at"),
+            updated_at=row.get("updated_at"),
+            last_executed_at=row.get("last_executed_at"),
         )
 
 

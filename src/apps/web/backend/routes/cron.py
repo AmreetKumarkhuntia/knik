@@ -12,7 +12,7 @@ router = APIRouter()
 
 class ScheduleCreateRequest(BaseModel):
     workflow_id: str
-    cron_expression: str
+    trigger_workflow_id: str
     timezone: str = "UTC"
 
 
@@ -26,8 +26,11 @@ async def list_schedules():
             {
                 "id": s.id,
                 "workflow_id": s.workflow_id,
-                "cron_expression": s.cron_expression,
+                "trigger_workflow_id": s.trigger_workflow_id,
                 "timezone": s.timezone,
+                "created_at": s.created_at,
+                "updated_at": s.updated_at,
+                "last_executed_at": s.last_executed_at,
             }
             for s in schedules
         ]
@@ -43,7 +46,7 @@ async def add_schedule(req: ScheduleCreateRequest):
         schedule = Schedule(
             id=0,  # Auto-assigned by DB
             workflow_id=req.workflow_id,
-            cron_expression=req.cron_expression,
+            trigger_workflow_id=req.trigger_workflow_id,
             timezone=req.timezone,
             enabled=True,
         )

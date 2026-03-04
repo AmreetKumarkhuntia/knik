@@ -92,11 +92,11 @@ class CronAPI {
     return response.json()
   }
 
-  static async addSchedule(workflow_id: string, cron_expression: string, timezone = 'UTC') {
+  static async addSchedule(workflow_id: string, trigger_workflow_id: string, timezone = 'UTC') {
     const response = await fetch(`${API_BASE_URL}/cron`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workflow_id, cron_expression, timezone }),
+      body: JSON.stringify({ workflow_id, trigger_workflow_id, timezone }),
     })
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()

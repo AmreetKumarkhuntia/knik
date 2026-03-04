@@ -5,11 +5,11 @@ Supports loading configuration from environment variables with sensible defaults
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import ClassVar
 
-import os
-from pathlib import Path
 from dotenv import load_dotenv
+
 
 # Always load the .env file relative to the project root
 _ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent

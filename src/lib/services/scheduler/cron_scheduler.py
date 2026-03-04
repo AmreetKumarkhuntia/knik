@@ -1,8 +1,6 @@
 import asyncio
 from datetime import UTC, datetime
 
-from croniter import croniter
-
 from imports import printer as logger
 from lib.core.config import Config
 from lib.services.scheduler.db_client import SchedulerDB
@@ -57,30 +55,46 @@ class CronScheduler:
 
         schedules = await SchedulerDB.list_schedules()
 
-        picked_up = 0
-        skipped = 0
-
         for schedule in schedules:
             try:
+                # We skip evaluating if it ran successfully already this minute
                 last_run = self._last_run_map.get(schedule.id)
                 if last_run and last_run >= current_minute:
-                    skipped += 1
                     continue
 
-                if croniter.match(schedule.cron_expression, current_minute):
-                    logger.info(f"Cron match for Schedule ID {schedule.id} -> Workflow ID {schedule.workflow_id}")
+                # Run the trigger workflow dynamically
+                trigger_wf = await SchedulerDB.get_workflow(schedule.trigger_workflow_id)
+                if not trigger_wf:
+                    logger.error(
+                        f"Trigger workflow {schedule.trigger_workflow_id} not found for schedule {schedule.id}"
+                    )
+                    continue
+
+                # Execute trigger workflow. We inject current_minute so its logic can evaluate if needed
+                logger.info(f"Evaluating schedule ID {schedule.id} -> trigger workflow {schedule.trigger_workflow_id}")
+                result = await self.engine.execute_workflow(
+                    trigger_wf, inputs={"current_minute": current_minute.isoformat()}
+                )
+
+                # Check if it signaled to trigger the target
+                should_trigger = False
+                for _node_id, output in result.items():
+                    if isinstance(output, dict) and output.get("trigger_target") is True:
+                        should_trigger = True
+                        break
+
+                if should_trigger:
+                    logger.info(
+                        f"Trigger workflow signaled execution! Triggering Target Workflow ID {schedule.workflow_id}"
+                    )
                     asyncio.create_task(self._trigger_workflow(schedule.workflow_id))
+                    await SchedulerDB.record_schedule_execution(schedule.id)
                     self._last_run_map[schedule.id] = current_minute
-                    picked_up += 1
                 else:
-                    skipped += 1
+                    logger.debug(f"Trigger workflow {schedule.trigger_workflow_id} did not signal execution.")
 
             except Exception as e:
                 logger.error(f"Error evaluating schedule {schedule.id}: {e}")
-                skipped += 1
-
-        if schedules:
-            logger.info(f"Evaluated {len(schedules)} schedules: picked up {picked_up}, skipped {skipped}")
 
     async def _trigger_workflow(self, workflow_id: str):
         """Background trigger wrapper to prevent failing the loop on unhandled DAG faults."""

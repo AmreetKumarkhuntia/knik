@@ -4,7 +4,9 @@ from lib.services.postgres.db import PostgresDB
 from lib.services.scheduler.models import ExecutionRecord, Schedule, Workflow
 from lib.utils import printer
 
+
 is_initialized = False
+
 
 class SchedulerDB:
     """Data access layer for Workflow, Schedule, and executions."""
@@ -69,15 +71,15 @@ class SchedulerDB:
         """Create a new schedule."""
         await SchedulerDB.check_initialized()
         query = """
-            INSERT INTO schedules (workflow_id, cron_expression, enabled, timezone)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO schedules (workflow_id, trigger_workflow_id, enabled, timezone, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             RETURNING id
         """
         id_val = await PostgresDB.fetch_val(
             query,
             (
                 schedule.workflow_id,
-                schedule.cron_expression,
+                schedule.trigger_workflow_id,
                 schedule.enabled,
                 schedule.timezone,
             ),
@@ -96,7 +98,7 @@ class SchedulerDB:
     async def toggle_schedule(schedule_id: int, enabled: bool) -> None:
         """Enable or disable a schedule."""
         await SchedulerDB.check_initialized()
-        query = "UPDATE schedules SET enabled = %s WHERE id = %s"
+        query = "UPDATE schedules SET enabled = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
         await PostgresDB.execute(query, (enabled, schedule_id))
 
     @staticmethod
@@ -186,3 +188,12 @@ class SchedulerDB:
             rows = await PostgresDB.fetch_all(query)
 
         return [ExecutionRecord.from_row(row) for row in rows]
+
+    @staticmethod
+    async def record_schedule_execution(schedule_id: int) -> None:
+        """Record the timestamp when a schedule successfully triggered a target workflow."""
+        await SchedulerDB.check_initialized()
+        query = (
+            "UPDATE schedules SET last_executed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+        )
+        await PostgresDB.execute(query, (schedule_id,))
