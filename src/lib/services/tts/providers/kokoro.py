@@ -17,6 +17,7 @@ from .base import VoiceModel
 warnings.filterwarnings("ignore", category=UserWarning, module="torch")
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch")
 
+
 class KokoroVoiceModel(VoiceModel):
     """
     Kokoro TTS model implementation.

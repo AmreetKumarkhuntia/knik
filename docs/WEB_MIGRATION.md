@@ -1,6 +1,6 @@
 # Electron Migration Plan - Knik Web UI
 
-**Date:** December 6, 2025  
+**Date:** December 6, 2025
 **Goal:** Migrate from CustomTkinter to Electron + React + Tailwind CSS for smooth animations and modern UI
 
 ---
@@ -350,8 +350,8 @@ export default {
 export const GradientBackground = () => {
   return (
     <div
-      className="fixed inset-0 -z-10 bg-gradient-to-br 
-                    from-blue-900 via-purple-900 to-teal-900 
+      className="fixed inset-0 -z-10 bg-gradient-to-br
+                    from-blue-900 via-purple-900 to-teal-900
                     bg-[length:200%_200%] animate-gradient-shift"
     />
   );
@@ -522,7 +522,7 @@ app.on("window-all-closed", () => {
 ```tsx
 // Already in Tailwind config - just use:
 <div
-  className="bg-gradient-to-br from-blue-900 via-purple-900 to-teal-900 
+  className="bg-gradient-to-br from-blue-900 via-purple-900 to-teal-900
                 bg-[length:200%_200%] animate-gradient-shift"
 />
 ```

@@ -32,15 +32,14 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-3xl border ${msg.role === 'user'
+                className={`max-w-[70%] px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 backdrop-blur-3xl border ${
+                  msg.role === 'user'
                     ? 'bg-white/5 text-white border-white/50 animate-slide-in-right'
                     : 'bg-black/10 text-white border-white/30 animate-slide-in-left'
-                  }`}
+                }`}
               >
                 {msg.role === 'user' ? (
-                  <p className="text-base leading-relaxed whitespace-pre-wrap">
-                    {msg.content}
-                  </p>
+                  <p className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 ) : (
                   <MarkdownMessage content={msg.content} isStreaming={isStreaming} />
                 )}

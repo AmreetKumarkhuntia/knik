@@ -16,21 +16,21 @@ DB_NAME="knik"
 # Load the database config from .env if it exists
 if [ -f .env ]; then
     echo "📝 Loading environment variables from .env..."
-    
+
     # Try parsing export format first
     HOST_VAL=$(grep "^export KNIK_DB_HOST=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
     PORT_VAL=$(grep "^export KNIK_DB_PORT=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
     USER_VAL=$(grep "^export KNIK_DB_USER=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
     PASS_VAL=$(grep "^export KNIK_DB_PASS=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
     NAME_VAL=$(grep "^export KNIK_DB_NAME=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    
+
     # Fallback to standard format if empty
     if [ -z "$HOST_VAL" ]; then HOST_VAL=$(grep "^KNIK_DB_HOST=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
     if [ -z "$PORT_VAL" ]; then PORT_VAL=$(grep "^KNIK_DB_PORT=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
     if [ -z "$USER_VAL" ]; then USER_VAL=$(grep "^KNIK_DB_USER=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
     if [ -z "$PASS_VAL" ]; then PASS_VAL=$(grep "^KNIK_DB_PASS=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
     if [ -z "$NAME_VAL" ]; then NAME_VAL=$(grep "^KNIK_DB_NAME=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
-    
+
     [ -n "$HOST_VAL" ] && DB_HOST="$HOST_VAL"
     [ -n "$PORT_VAL" ] && DB_PORT="$PORT_VAL"
     [ -n "$USER_VAL" ] && DB_USER="$USER_VAL"

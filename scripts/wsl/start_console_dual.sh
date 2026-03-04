@@ -32,16 +32,16 @@ rm -f "$LOG_FILE"
 osascript <<EOF
 tell application "Terminal"
     activate
-    
+
     -- First window: Main Console (left side)
     do script "cd '$SCRIPT_DIR' && clear && echo '🤖 Knik Console - Main Window' && echo '================================' && echo '' && source .env && source .venv/bin/activate && arch -arm64 python src/main.py --mode console 2> '$LOG_FILE'"
-    
+
     -- Wait a moment for first window to start
     delay 1
-    
-    -- Second window: Debug Logs (right side)  
+
+    -- Second window: Debug Logs (right side)
     do script "clear && echo '🐛 Debug Logs' && echo '================================' && echo '' && echo 'Waiting for logs...' && echo '' && tail -f '$LOG_FILE'"
-    
+
     -- Position windows side by side
     set the bounds of window 1 to {0, 50, 600, 850}
     set the bounds of window 2 to {620, 50, 1420, 850}

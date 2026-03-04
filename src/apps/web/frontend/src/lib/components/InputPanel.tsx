@@ -42,7 +42,7 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
           onKeyPress={handleKeyPress}
           placeholder="Type your message... (Ctrl+K to focus, Esc to clear)"
           disabled={disabled}
-          className="w-full bg-white/10 text-white placeholder-white/40 px-6 py-4 rounded-lg 
+          className="w-full bg-white/10 text-white placeholder-white/40 px-6 py-4 rounded-lg
                    focus:outline-none focus:ring-2 focus:ring-white/20 border border-white/10
                    disabled:opacity-50 disabled:cursor-not-allowed
                    transition-all duration-200"

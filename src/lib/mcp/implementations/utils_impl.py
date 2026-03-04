@@ -44,7 +44,7 @@ def calculate(expression: str, precision: int = -1) -> str:
         safe_dict = {"__builtins__": {}, **_SAFE_MATH_FUNCTIONS}
         result = eval(expression, safe_dict)
 
-        if isinstance(result, (int, float)) and precision >= 0:
+        if isinstance(result, int | float) and precision >= 0:
             result = round(result, precision)
 
         return str(result)

@@ -8,14 +8,14 @@ When the user specifies they are in **Plan Mode** (or when the agent is operatin
 
 ## Required Steps for AI Agents:
 
-1. **ENTRY POINT - Read Copilot Instructions:** 
+1. **ENTRY POINT - Read Copilot Instructions:**
    - ALWAYS read `.github/copilot-instructions.md` first. This is the entry point for understanding the project architecture, context, and rules. You must read it before proposing any solutions to ensure your plan aligns with the Knik architecture (e.g., using `imports.py`, respecting the 3-layer structure).
-   
+
 2. **Deep Dive Investigation:**
    - Use `glob`, `grep`, and `read` to locate and analyze the relevant files.
    - If investigating a bug, check log files (e.g., `logs/cron.log`, `logs/web_backend.log`) or query the database state using safe, read-only `SELECT` queries via `psql`.
 
-3. **Strict Read-Only Enforcement:** 
+3. **Strict Read-Only Enforcement:**
    - NEVER use tools like `edit` or `write` while in Plan Mode.
    - NEVER run state-modifying bash commands (e.g., no `rm`, `sed`, `git commit`, `UPDATE`, `INSERT`, etc.).
 

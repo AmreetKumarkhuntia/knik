@@ -34,8 +34,7 @@
     "format:all": "npm run format && npm run format:frontend",
     "typecheck": "./scripts/typecheck_backend.sh",
     "typecheck:frontend": "cd src/apps/web/frontend && tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "build": {
     "appId": "com.knik.app",
@@ -77,8 +76,6 @@
     "electron": "^39.2.6",
     "electron-builder": "^26.0.12",
     "electron-is-dev": "^3.0.1",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
     "wait-on": "^8.0.5"
   }
 }

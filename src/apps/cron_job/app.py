@@ -32,7 +32,7 @@ class CronJobApp:
         logger.info("Initializing Cron Job Service...")
 
         # Initialize Database Map
-        await PostgresDB.initialize(self.config.scheduler_db_url)
+        await PostgresDB.initialize()
 
         # Setup graceful shutdown handlers
         loop = asyncio.get_running_loop()

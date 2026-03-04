@@ -60,7 +60,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-80 bg-black/10 backdrop-blur-3xl border-r border-white/30 
+        className={`fixed top-0 left-0 h-full w-80 bg-black/10 backdrop-blur-3xl border-r border-white/30
                     z-40 transform transition-transform duration-300 ease-in-out shadow-2xl
                     ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
@@ -122,7 +122,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
           <div className="border-t border-white/20 pt-4 space-y-2">
             <button
               onClick={handleClearHistory}
-              className="w-full text-left px-4 py-3 text-white/70 hover:text-white hover:bg-white/10 
+              className="w-full text-left px-4 py-3 text-white/70 hover:text-white hover:bg-white/10
                        rounded-lg transition-all flex items-center gap-3"
             >
               <TrashIcon />
@@ -130,7 +130,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
             </button>
 
             <button
-              className="w-full text-left px-4 py-3 text-white/70 hover:text-white hover:bg-white/10 
+              className="w-full text-left px-4 py-3 text-white/70 hover:text-white hover:bg-white/10
                        rounded-lg transition-all flex items-center gap-3"
             >
               <SettingsIcon />

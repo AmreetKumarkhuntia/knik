@@ -70,8 +70,7 @@ class GLMAIProvider(LangChainProvider):
     ):
         if not LANGCHAIN_GLM_AVAILABLE:
             raise ImportError(
-                "LangChain Community or zhipuai not installed. "
-                "Run: pip install langchain-community zhipuai"
+                "LangChain Community or zhipuai not installed. Run: pip install langchain-community zhipuai"
             )
 
         self.api_key = os.getenv("ZHIPUAI_API_KEY")
@@ -87,14 +86,15 @@ class GLMAIProvider(LangChainProvider):
             model_name = self.model_name
 
         filtered_kwargs = {
-            k: v for k, v in kwargs.items()
+            k: v
+            for k, v in kwargs.items()
             if k not in ["model", "model_name", "zhipuai_api_key", "temperature", "max_tokens"]
         }
 
         # streaming=False avoids SSE header issues
         llm = ChatZhipuAI(
             model=self.model_name,
-            zhipuai_api_key=self.api_key,
+            api_key=self.api_key,
             temperature=temperature,
             max_tokens=max_tokens,
             streaming=False,

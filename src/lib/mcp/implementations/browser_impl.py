@@ -71,6 +71,7 @@ def _clean_text(raw: str, max_chars: int) -> str:
 # Tool implementations
 # ---------------------------------------------------------------------------
 
+
 def browser_navigate(url: str, wait_until: str = "domcontentloaded") -> str:
     """Navigate to a URL and return the page title."""
     if wait_until is None:
