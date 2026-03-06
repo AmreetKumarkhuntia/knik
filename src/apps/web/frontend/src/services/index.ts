@@ -6,4 +6,5 @@
 export * from './api'
 export * from './audio'
 export * from './theme'
+export * from './workflowApi'
 export { streamChat } from './streaming'

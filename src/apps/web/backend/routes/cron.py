@@ -16,6 +16,10 @@ class ScheduleCreateRequest(BaseModel):
     timezone: str = "UTC"
 
 
+class ScheduleToggleRequest(BaseModel):
+    enabled: bool
+
+
 @router.get("/")
 async def list_schedules():
     """List all active cron schedules."""
@@ -62,5 +66,28 @@ async def remove_schedule(schedule_id: int):
     try:
         await SchedulerDB.delete_schedule(schedule_id)
         return {"success": True, "schedule_id": schedule_id, "message": "Schedule removed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.patch("/{schedule_id}/toggle")
+async def toggle_schedule(schedule_id: int, req: ScheduleToggleRequest):
+    """Toggle a schedule's enabled status."""
+    try:
+        schedule = await SchedulerDB.toggle_schedule(schedule_id, req.enabled)
+        if not schedule:
+            raise HTTPException(status_code=404, detail="Schedule not found")
+        return {
+            "success": True,
+            "schedule": {
+                "id": schedule.id,
+                "workflow_id": schedule.workflow_id,
+                "trigger_workflow_id": schedule.trigger_workflow_id,
+                "enabled": schedule.enabled,
+                "timezone": schedule.timezone,
+            },
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

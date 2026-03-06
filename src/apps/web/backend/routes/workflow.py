@@ -95,3 +95,29 @@ async def workflow_history(workflow_id: str):
         return {"success": True, "history": results, "total": len(results)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/{workflow_id}/executions/{execution_id}/nodes")
+async def get_node_executions(workflow_id: str, execution_id: int):
+    """Get node execution traces for a specific workflow execution."""
+    try:
+        node_executions = await SchedulerDB.get_node_executions(execution_id)
+        results = [
+            {
+                "id": ne.id,
+                "execution_id": ne.execution_id,
+                "node_id": ne.node_id,
+                "node_type": ne.node_type,
+                "status": ne.status,
+                "started_at": ne.started_at,
+                "completed_at": ne.completed_at,
+                "duration_ms": ne.duration_ms,
+                "error_message": ne.error_message,
+                "inputs": ne.inputs,
+                "outputs": ne.outputs,
+            }
+            for ne in node_executions
+        ]
+        return {"success": True, "node_executions": results, "total": len(results)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

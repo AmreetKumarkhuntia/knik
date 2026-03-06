@@ -1,7 +1,7 @@
 import json
 
 from lib.services.postgres.db import PostgresDB
-from lib.services.scheduler.models import ExecutionRecord, Schedule, Workflow
+from lib.services.scheduler.models import ExecutionRecord, NodeExecutionRecord, Schedule, Workflow
 from lib.utils import printer
 
 
@@ -95,11 +95,17 @@ class SchedulerDB:
         return [Schedule.from_row(row) for row in rows]
 
     @staticmethod
-    async def toggle_schedule(schedule_id: int, enabled: bool) -> None:
+    async def toggle_schedule(schedule_id: int, enabled: bool) -> Schedule | None:
         """Enable or disable a schedule."""
         await SchedulerDB.check_initialized()
-        query = "UPDATE schedules SET enabled = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
-        await PostgresDB.execute(query, (enabled, schedule_id))
+        query = """
+            UPDATE schedules
+            SET enabled = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            RETURNING *
+        """
+        row = await PostgresDB.fetch_one(query, (enabled, schedule_id))
+        return Schedule.from_row(row) if row else None
 
     @staticmethod
     async def delete_schedule(schedule_id: int) -> None:
@@ -197,3 +203,11 @@ class SchedulerDB:
             "UPDATE schedules SET last_executed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
         )
         await PostgresDB.execute(query, (schedule_id,))
+
+    @staticmethod
+    async def get_node_executions(execution_id: int) -> list[NodeExecutionRecord]:
+        """Fetch all node execution records for a given execution."""
+        await SchedulerDB.check_initialized()
+        query = "SELECT * FROM node_executions WHERE execution_id = %s ORDER BY started_at ASC"
+        rows = await PostgresDB.fetch_all(query, (execution_id,))
+        return [NodeExecutionRecord.from_row(row) for row in rows]

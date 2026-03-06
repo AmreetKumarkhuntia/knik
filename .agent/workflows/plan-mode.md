@@ -23,4 +23,4 @@ When the user specifies they are in **Plan Mode** (or when the agent is operatin
    - Outline the exact files you intend to modify.
    - Briefly describe the logical changes or additions for each file.
    - Highlight any potential side-effects or edge cases.
-   - Explicitly stop and ask the user: *"Does this plan look good? Let me know if I should switch to Build Mode to implement this."*
+   - Explicitly stop and ask the user: _"Does this plan look good? Let me know if I should switch to Build Mode to implement this."_
