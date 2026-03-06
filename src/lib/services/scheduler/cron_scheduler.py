@@ -18,6 +18,7 @@ class CronScheduler:
         self.engine = WorkflowEngine(ai_client=self.ai_client)
 
         self._last_run_map: dict[int, datetime] = {}
+        self._poll_count = 0
 
     def start(self):
         """Start the background poll loop."""
@@ -38,10 +39,17 @@ class CronScheduler:
 
     async def _poll_loop(self):
         interval = self.config.scheduler_check_interval
+        # Log heartbeat every ~1 minute (or at least every interval)
+        heartbeat_frequency = max(1, 60 // interval)
 
         while self._running:
+            self._poll_count += 1
             try:
-                await self._check_schedules()
+                schedules = await SchedulerDB.list_schedules()
+                if self._poll_count % heartbeat_frequency == 0:
+                    logger.info(f"CronScheduler heartbeat: {len(schedules)} active schedules polling...")
+
+                await self._check_schedules(schedules)
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -49,11 +57,12 @@ class CronScheduler:
 
             await asyncio.sleep(interval)
 
-    async def _check_schedules(self):
+    async def _check_schedules(self, schedules: list | None = None):
         now = datetime.now(UTC)
         current_minute = now.replace(second=0, microsecond=0)
 
-        schedules = await SchedulerDB.list_schedules()
+        if schedules is None:
+            schedules = await SchedulerDB.list_schedules()
 
         for schedule in schedules:
             try:
