@@ -10,7 +10,6 @@ A flexible button component with variant and size options.
 
 ```tsx
 import { ActionButton } from '$common'
-
 ;<ActionButton
   label="Click me"
   variant="primary"
@@ -36,7 +35,6 @@ Displays execution status with appropriate styling and icons.
 
 ```tsx
 import { StatusBadge } from '$common'
-
 ;<StatusBadge status="running" size="sm" />
 ```
 
@@ -51,7 +49,6 @@ A simple loading indicator with size variants.
 
 ```tsx
 import { LoadingSpinner } from '$common'
-
 ;<LoadingSpinner size="md" />
 ```
 
@@ -66,7 +63,6 @@ A modal dialog for confirming destructive or important actions.
 
 ```tsx
 import { ConfirmDialog } from '$common'
-
 ;<ConfirmDialog
   isOpen={true}
   title="Delete this item?"
@@ -95,7 +91,6 @@ A toggle switch component for boolean values.
 
 ```tsx
 import { ToggleSwitch } from '$common'
-
 ;<ToggleSwitch checked={enabled} onChange={setEnabled} label="Enable feature" />
 ```
 
@@ -113,7 +108,6 @@ A generic modal wrapper component.
 
 ```tsx
 import { Modal } from '$common'
-
 ;<Modal isOpen={true} onClose={() => setIsOpen(false)} title="Modal Title">
   <p>Modal content goes here</p>
 </Modal>
@@ -133,7 +127,6 @@ A component for displaying empty states with icon and message.
 
 ```tsx
 import { EmptyState } from '$common'
-
 ;<EmptyState
   icon="📜"
   title="No items yet"

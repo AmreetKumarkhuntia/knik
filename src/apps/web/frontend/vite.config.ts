@@ -9,9 +9,6 @@ export default defineConfig({
     react(),
     checker({
       typescript: true,
-      eslint: {
-        lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
-      },
       overlay: {
         position: 'br',
         initialIsOpen: false,
@@ -26,6 +23,9 @@ export default defineConfig({
       $components: path.resolve(__dirname, './src/lib/components'),
       $hooks: path.resolve(__dirname, './src/lib/hooks'),
       $assets: path.resolve(__dirname, './src/assets'),
+      $common: path.resolve(__dirname, './src/lib/components/common'),
+      $utils: path.resolve(__dirname, './src/lib/utils'),
+      $constants: path.resolve(__dirname, './src/lib/constants'),
     },
   },
 })

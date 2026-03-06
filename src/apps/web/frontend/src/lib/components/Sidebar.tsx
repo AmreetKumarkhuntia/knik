@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { api } from '../../services'
 import { CloseIcon, TrashIcon, SettingsIcon } from './icons'
 import type { Message } from '$types/hooks'
@@ -16,6 +17,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: SidebarProps) {
+  const location = useLocation()
   const [history, setHistory] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -87,6 +89,39 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
           >
             New Chat
           </button>
+
+          {/* Navigation Links */}
+          <div className="mb-6 border-b border-white/10 pb-4">
+            <h3 className="text-sm font-semibold text-white/50 mb-3 px-2">Navigation</h3>
+            <div className="space-y-1">
+              <Link
+                to="/"
+                onClick={onClose}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-all
+                  ${
+                    location.pathname === '/'
+                      ? 'text-white bg-white/10'
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
+                  }`}
+              >
+                <span>💬</span>
+                <span>Chat</span>
+              </Link>
+              <Link
+                to="/workflows"
+                onClick={onClose}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-all
+                  ${
+                    location.pathname === '/workflows'
+                      ? 'text-white bg-white/10'
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
+                  }`}
+              >
+                <span>⚙️</span>
+                <span>Workflows</span>
+              </Link>
+            </div>
+          </div>
 
           {/* Conversations Section */}
           <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide">
