@@ -4,18 +4,7 @@
  */
 
 import { forwardRef, useImperativeHandle, useRef } from 'react'
-
-interface InputPanelProps {
-  value: string
-  onChange: (value: string) => void
-  onSend: () => void
-  disabled?: boolean
-}
-
-export interface InputPanelRef {
-  focus: () => void
-  clear: () => void
-}
+import type { InputPanelProps, InputPanelRef } from '../../types/components'
 
 const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
   ({ value, onChange, onSend, disabled }, ref) => {

@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import type { ToastType } from '../components/Toast'
+import type { ToastType } from '../../types/components'
 
 interface ToastState {
   id: number

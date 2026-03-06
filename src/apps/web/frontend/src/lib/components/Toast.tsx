@@ -4,8 +4,7 @@
  */
 
 import { useEffect } from 'react'
-
-export type ToastType = 'success' | 'error' | 'info'
+import type { ToastType } from '../../types/components'
 
 interface ToastProps {
   message: string

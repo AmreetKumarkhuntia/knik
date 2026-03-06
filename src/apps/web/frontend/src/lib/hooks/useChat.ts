@@ -1,17 +1,6 @@
 import { useState } from 'react'
 import { streamChat, queueAudio, clearAudioQueue } from '../../services'
-
-export interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-interface UseChatProps {
-  setAudioPlaying: (playing: boolean) => void
-  streamControllerRef: React.MutableRefObject<AbortController | null>
-  success: (msg: string) => void
-  error: (msg: string) => void
-}
+import type { Message, UseChatProps } from '../../types/hooks'
 
 export function useChat({ setAudioPlaying, streamControllerRef, success, error }: UseChatProps) {
   const [messages, setMessages] = useState<Message[]>([])

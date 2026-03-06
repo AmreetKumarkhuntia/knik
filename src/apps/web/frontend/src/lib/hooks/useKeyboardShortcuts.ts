@@ -4,15 +4,7 @@
  */
 
 import { useEffect } from 'react'
-
-export interface KeyboardShortcut {
-  key: string
-  ctrlKey?: boolean
-  shiftKey?: boolean
-  altKey?: boolean
-  metaKey?: boolean
-  handler: () => void
-}
+import type { KeyboardShortcut } from '../../types/hooks'
 
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   useEffect(() => {
