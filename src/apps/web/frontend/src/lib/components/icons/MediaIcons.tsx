@@ -1,6 +1,4 @@
-interface IconProps {
-  className?: string
-}
+import type { IconProps } from '$types/common'
 
 export function MenuIcon({ className = 'w-6 h-6' }: IconProps) {
   return (

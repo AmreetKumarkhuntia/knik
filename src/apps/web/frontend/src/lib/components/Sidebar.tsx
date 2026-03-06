@@ -6,11 +6,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../services'
 import { CloseIcon, TrashIcon, SettingsIcon } from './icons'
-
-interface Message {
-  role: string
-  content: string
-}
+import type { Message } from '$types/hooks'
 
 interface SidebarProps {
   isOpen: boolean
@@ -26,7 +22,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
   // Fetch history when sidebar opens
   useEffect(() => {
     if (isOpen) {
-      fetchHistory()
+      void fetchHistory()
     }
   }, [isOpen])
 
@@ -42,8 +38,8 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
     }
   }
 
-  const handleClearHistory = async () => {
-    await onClearHistory()
+  const handleClearHistory = () => {
+    onClearHistory()
     setHistory([])
     onClose()
   }
@@ -121,7 +117,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
           {/* Bottom Actions */}
           <div className="border-t border-white/20 pt-4 space-y-2">
             <button
-              onClick={handleClearHistory}
+              onClick={() => void handleClearHistory()}
               className="w-full text-left px-4 py-3 text-white/70 hover:text-white hover:bg-white/10
                        rounded-lg transition-all flex items-center gap-3"
             >

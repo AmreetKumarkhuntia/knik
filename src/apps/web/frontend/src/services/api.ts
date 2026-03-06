@@ -23,7 +23,8 @@ class ChatAPI {
     const audioChunks: string[] = []
     let buffer = ''
 
-    while (true) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    while (reader) {
       const { done, value } = await reader.read()
       if (done) break
 

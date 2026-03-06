@@ -1,22 +1,6 @@
 import { useEffect, useRef } from 'react'
-
-interface ConfirmDialogProps {
-  isOpen: boolean
-  title: string
-  message: string
-  confirmLabel?: string
-  cancelLabel?: string
-  variant?: 'danger' | 'warning' | 'info'
-  onConfirm: () => void
-  onCancel: () => void
-  loading?: boolean
-}
-
-const variantConfig = {
-  danger: { icon: '⚠', confirmBtn: 'bg-red-500 hover:bg-red-600' },
-  warning: { icon: '⚡', confirmBtn: 'bg-yellow-500 hover:bg-yellow-600' },
-  info: { icon: 'ℹ', confirmBtn: 'bg-blue-500 hover:bg-blue-600' },
-}
+import { confirmDialogVariants } from '$lib/constants'
+import type { ConfirmDialogProps } from '$types/components'
 
 export default function ConfirmDialog({
   isOpen,
@@ -30,7 +14,7 @@ export default function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
-  const config = variantConfig[variant]
+  const config = confirmDialogVariants[variant]
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

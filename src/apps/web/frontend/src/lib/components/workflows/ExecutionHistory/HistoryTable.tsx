@@ -1,23 +1,12 @@
 import type { ExecutionRecord } from '$types/workflow'
-import { StatusBadge } from '../common'
+import { StatusBadge, EmptyState } from '$common'
+import { formatDuration, formatDate } from '$utils'
 
 interface HistoryTableProps {
   executions: ExecutionRecord[]
   loading: boolean
   onViewDetail: (execution: ExecutionRecord) => void
   onRetry?: (execution: ExecutionRecord) => void
-}
-
-function formatDuration(ms: number | undefined): string {
-  if (!ms) return '-'
-  if (ms < 1000) return `${ms}ms`
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-  return `${(ms / 60000).toFixed(1)}m`
-}
-
-function formatDate(date: string | undefined): string {
-  if (!date) return '-'
-  return new Date(date).toLocaleString()
 }
 
 export default function HistoryTable({
@@ -37,11 +26,11 @@ export default function HistoryTable({
 
   if (executions.length === 0) {
     return (
-      <div className="text-center py-20 text-white/50">
-        <p className="text-4xl mb-4">📜</p>
-        <p>No execution history yet</p>
-        <p className="text-sm mt-2">Run a workflow to see its history here</p>
-      </div>
+      <EmptyState
+        icon="📜"
+        title="No execution history yet"
+        description="Run a workflow to see its history here"
+      />
     )
   }
 

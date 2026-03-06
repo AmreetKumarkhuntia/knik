@@ -1,10 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { FunctionNodeDefinition } from '$types/workflow'
-
-interface FunctionNodeData extends FunctionNodeDefinition {
-  label?: string
-}
+import type { FunctionNodeData } from '$types/workflow-components'
 
 export default memo(function FunctionNode({ data }: NodeProps) {
   const nodeData = data as unknown as FunctionNodeData

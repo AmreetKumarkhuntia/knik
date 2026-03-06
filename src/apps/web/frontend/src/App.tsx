@@ -103,7 +103,7 @@ function AppContent() {
               ref={inputRef}
               value={inputText}
               onChange={setInputText}
-              onSend={handleSend}
+              onSend={() => void handleSend()}
               disabled={loading}
             />
           </div>

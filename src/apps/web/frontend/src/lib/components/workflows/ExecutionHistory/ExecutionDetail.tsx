@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ExecutionRecord, NodeExecutionRecord } from '$types/workflow'
-import { LoadingSpinner, StatusBadge } from '../common'
+import { LoadingSpinner, StatusBadge } from '$common'
 
 interface ExecutionDetailProps {
   execution: ExecutionRecord | null
@@ -46,7 +46,7 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
       }
     }
 
-    fetchNodeExecutions()
+    void fetchNodeExecutions()
   }, [isOpen, execution])
 
   useEffect(() => {

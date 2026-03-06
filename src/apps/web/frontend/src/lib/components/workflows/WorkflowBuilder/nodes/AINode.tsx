@@ -1,10 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { AINodeDefinition } from '$types/workflow'
-
-interface AINodeData extends AINodeDefinition {
-  label?: string
-}
+import type { AINodeData } from '$types/workflow-components'
 
 export default memo(function AINode({ data }: NodeProps) {
   const nodeData = data as unknown as AINodeData

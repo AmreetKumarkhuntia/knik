@@ -1,5 +1,5 @@
 import type { Schedule } from '$types/workflow'
-import { LoadingSpinner } from '../common'
+import { LoadingSpinner } from '$common'
 import ScheduleCard from './ScheduleCard'
 
 interface ScheduleListProps {

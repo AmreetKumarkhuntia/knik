@@ -1,9 +1,5 @@
 import { MarkdownMessage } from './MarkdownMessage'
-
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
+import type { Message } from '$types/hooks'
 
 interface ChatPanelProps {
   messages: Message[]

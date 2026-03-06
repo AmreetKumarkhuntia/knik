@@ -1,10 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { MergeNodeDefinition } from '$types/workflow'
-
-interface MergeNodeData extends MergeNodeDefinition {
-  label?: string
-}
+import type { MergeNodeData } from '$types/workflow-components'
 
 export default memo(function MergeNode({ data }: NodeProps) {
   const nodeData = data as unknown as MergeNodeData

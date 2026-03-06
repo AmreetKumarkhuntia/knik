@@ -17,7 +17,7 @@ export function useChat({ setAudioPlaying, streamControllerRef, success, error }
     success('History cleared!')
   }
 
-  const handleSend = async () => {
+  const handleSend = async (): Promise<void> => {
     if (!inputText.trim() || loading) return
 
     const userMessage: Message = { role: 'user', content: inputText }

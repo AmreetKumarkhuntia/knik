@@ -19,17 +19,17 @@ This document describes the path aliases configured for this project to simplify
 
 ```typescript
 // From src/lib/components/workflows/WorkflowDashboard.tsx
-import type { ExecutionRecord, Schedule } from '../../../types/workflow'
-import { workflowApi } from '../../../services/workflowApi'
-import { ActionButton } from './common'
+import type { ExecutionRecord, Schedule } from "../../../types/workflow";
+import { workflowApi } from "../../../services/workflowApi";
+import { ActionButton } from "./common";
 ```
 
 ### After (Path Aliases)
 
 ```typescript
-import type { ExecutionRecord, Schedule } from '$types/workflow'
-import { workflowApi } from '$services/workflowApi'
-import { ActionButton } from '$components/workflows/common'
+import type { ExecutionRecord, Schedule } from "$types/workflow";
+import { workflowApi } from "$services/workflowApi";
+import { ActionButton } from "$components/workflows/common";
 ```
 
 ## Configuration Files

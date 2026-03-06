@@ -1,10 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { ConditionalNodeDefinition } from '$types/workflow'
-
-interface ConditionalNodeData extends ConditionalNodeDefinition {
-  label?: string
-}
+import type { ConditionalNodeData } from '$types/workflow-components'
 
 export default memo(function ConditionalNode({ data }: NodeProps) {
   const nodeData = data as unknown as ConditionalNodeData

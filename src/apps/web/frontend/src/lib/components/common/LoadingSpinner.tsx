@@ -1,12 +1,8 @@
+import { spinnerSizes } from '$lib/constants'
+
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'
   className?: string
-}
-
-const sizeConfig = {
-  sm: 'w-4 h-4 border-2',
-  md: 'w-8 h-8 border-3',
-  lg: 'w-12 h-12 border-4',
 }
 
 export default function LoadingSpinner({ size = 'md', className = '' }: LoadingSpinnerProps) {
@@ -15,7 +11,7 @@ export default function LoadingSpinner({ size = 'md', className = '' }: LoadingS
       <div
         className={`
           animate-spin rounded-full border-white/30 border-t-white
-          ${sizeConfig[size]}
+          ${spinnerSizes[size]}
         `}
       />
     </div>

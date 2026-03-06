@@ -62,7 +62,8 @@ export async function streamChat(
     let buffer = ''
 
     let currentEvent = ''
-    while (true) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- reader is always truthy when ReadableStream exists
+    while (reader) {
       const { done, value } = await reader.read()
       if (done) break
 
@@ -100,8 +101,8 @@ export async function streamChat(
         }
       }
     }
-  } catch (error: any) {
-    if (error.name !== 'AbortError' && callbacks.onError) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name !== 'AbortError' && callbacks.onError) {
       callbacks.onError(error.message || 'Stream error')
     }
   }

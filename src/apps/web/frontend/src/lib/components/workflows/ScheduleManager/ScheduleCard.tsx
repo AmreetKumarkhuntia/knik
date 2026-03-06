@@ -1,5 +1,5 @@
 import type { Schedule } from '$types/workflow'
-import { ActionButton } from '../common'
+import { ActionButton, ToggleSwitch } from '$common'
 
 interface ScheduleCardProps {
   schedule: Schedule
@@ -29,15 +29,10 @@ export default function ScheduleCard({
             Trigger: {triggerWorkflowName || schedule.trigger_workflow_id}
           </p>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={schedule.enabled}
-            onChange={() => onToggle(schedule.id, !schedule.enabled)}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500" />
-        </label>
+        <ToggleSwitch
+          checked={schedule.enabled}
+          onChange={(checked: boolean) => onToggle(schedule.id, checked)}
+        />
       </div>
 
       <div className="flex items-center gap-4 text-xs text-white/60 mb-4">

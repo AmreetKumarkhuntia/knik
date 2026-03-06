@@ -4,6 +4,9 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { Components } from 'react-markdown'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CodeProps = any & { _node: unknown; inline: boolean; className: string; children: unknown }
+
 interface MarkdownMessageProps {
   content: string
   isStreaming?: boolean
@@ -11,21 +14,21 @@ interface MarkdownMessageProps {
 
 export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) {
   const components: Components = {
-    code({ _node, inline, className, children, ...props }: any) {
-      const match = /language-(\w+)/.exec(className || '')
-      return !inline && match ? (
+    code(props: CodeProps) {
+      const match = /language-(\w+)/.exec(props.className || '')
+      return !props.inline && match ? (
         <div className="my-4 rounded-md overflow-hidden bg-[#1E1E1E] border border-white/10">
           <div className="flex items-center px-4 py-2 bg-white/5 border-b border-white/10 text-xs text-white/50">
             {match[1]}
           </div>
           <SyntaxHighlighter
-            style={vscDarkPlus as any}
+            style={vscDarkPlus as unknown as React.CSSProperties}
             language={match[1]}
             PreTag="div"
             customStyle={{ margin: 0, background: 'transparent' }}
             {...props}
           >
-            {String(children).replace(/\n$/, '')}
+            {String(props.children).replace(/\n$/, '')}
           </SyntaxHighlighter>
         </div>
       ) : (
@@ -33,7 +36,7 @@ export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) 
           className="px-1.5 py-0.5 rounded-md bg-white/10 text-white/90 font-mono text-sm"
           {...props}
         >
-          {children}
+          {props.children}
         </code>
       )
     },

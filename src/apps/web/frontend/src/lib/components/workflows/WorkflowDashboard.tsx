@@ -5,14 +5,13 @@ import type {
   ScheduleCreateRequest,
   WorkflowDefinition,
 } from '$types/workflow'
+import type { TabType } from '$types/workflow-components'
 import { workflowApi } from '$services/workflowApi'
-import { ActionButton, ConfirmDialog, LoadingSpinner } from './common'
+import { ActionButton, ConfirmDialog, LoadingSpinner } from '$common'
 import { ScheduleList, ScheduleForm } from './ScheduleManager'
 import { HistoryTable, ExecutionDetail } from './ExecutionHistory'
 import { Canvas } from './WorkflowBuilder'
 import { useWorkflows, useSchedules, useExecutions, useRealtimeStatus } from './hooks'
-
-type TabType = 'schedules' | 'history' | 'builder'
 
 export default function WorkflowDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('schedules')
@@ -44,9 +43,9 @@ export default function WorkflowDashboard() {
   )
 
   const handleRefresh = useCallback(() => {
-    refetchWorkflows()
-    refetchSchedules()
-    refetchExecutions()
+    void refetchWorkflows()
+    void refetchSchedules()
+    void refetchExecutions()
   }, [refetchWorkflows, refetchSchedules, refetchExecutions])
 
   useRealtimeStatus(handleRefresh, 10000)
@@ -77,7 +76,7 @@ export default function WorkflowDashboard() {
       try {
         setIsExecuting(true)
         await workflowApi.workflows.execute(workflowId)
-        refetchExecutions()
+        void refetchExecutions()
       } catch (error) {
         console.error('Failed to execute workflow:', error)
       } finally {
@@ -91,7 +90,7 @@ export default function WorkflowDashboard() {
     async (data: ScheduleCreateRequest) => {
       try {
         await workflowApi.schedules.create(data)
-        refetchSchedules()
+        void refetchSchedules()
       } catch (error) {
         console.error('Failed to create schedule:', error)
       }
@@ -104,7 +103,7 @@ export default function WorkflowDashboard() {
   }, [])
 
   const handleSaveWorkflow = useCallback(
-    async (definition: WorkflowDefinition) => {
+    (definition: WorkflowDefinition) => {
       console.log('Save workflow:', selectedWorkflowId, definition)
     },
     [selectedWorkflowId]
@@ -132,7 +131,12 @@ export default function WorkflowDashboard() {
               </p>
             </div>
             <div className="flex gap-3">
-              <ActionButton icon="↻" label="Refresh" variant="ghost" onClick={handleRefresh} />
+              <ActionButton
+                icon="↻"
+                label="Refresh"
+                variant="ghost"
+                onClick={() => void handleRefresh()}
+              />
               <ActionButton
                 icon="+"
                 label="New Schedule"
@@ -176,13 +180,13 @@ export default function WorkflowDashboard() {
                 schedules={schedules}
                 loading={schedulesLoading}
                 workflowNames={workflowNames}
-                onToggle={handleToggleSchedule}
+                onToggle={(id, enabled) => void handleToggleSchedule(id, enabled)}
                 onEdit={schedule => {
                   setEditingSchedule(schedule)
                   setShowScheduleForm(true)
                 }}
                 onDelete={id => setDeleteConfirmId(id)}
-                onRun={handleRunWorkflow}
+                onRun={workflowId => void handleRunWorkflow(workflowId)}
               />
             </div>
           )}
@@ -199,7 +203,7 @@ export default function WorkflowDashboard() {
                 executions={executions}
                 loading={executionsLoading}
                 onViewDetail={handleViewExecution}
-                onRetry={exec => handleRunWorkflow(exec.workflow_id)}
+                onRetry={exec => void handleRunWorkflow(exec.workflow_id)}
               />
             </div>
           )}
@@ -221,7 +225,7 @@ export default function WorkflowDashboard() {
                     label={isExecuting ? 'Running...' : 'Execute'}
                     variant="primary"
                     loading={isExecuting}
-                    onClick={() => handleRunWorkflow(selectedWorkflowId)}
+                    onClick={() => void handleRunWorkflow(selectedWorkflowId)}
                   />
                 )}
               </div>
@@ -230,7 +234,7 @@ export default function WorkflowDashboard() {
                 definition={workflowDefinition}
                 onSave={handleSaveWorkflow}
                 onExecute={
-                  selectedWorkflowId ? () => handleRunWorkflow(selectedWorkflowId) : undefined
+                  selectedWorkflowId ? () => void handleRunWorkflow(selectedWorkflowId) : undefined
                 }
               />
             </div>
@@ -244,7 +248,7 @@ export default function WorkflowDashboard() {
           setShowScheduleForm(false)
           setEditingSchedule(null)
         }}
-        onSubmit={handleCreateSchedule}
+        onSubmit={data => void handleCreateSchedule(data)}
         workflows={workflows}
         initialData={editingSchedule || undefined}
       />

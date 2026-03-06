@@ -22,7 +22,7 @@ import type {
   NodeTypeName,
   WorkflowDefinition,
 } from '$types/workflow'
-import { ActionButton } from '../common'
+import { ActionButton } from '$common'
 import NodePalette from './NodePalette'
 import { FunctionNode, ConditionalNode, MergeNode, AINode, StartNode, EndNode } from './nodes'
 import { CustomEdge } from './edges'
@@ -146,7 +146,6 @@ export default function Canvas({
         | NodeTypeName
         | 'StartNode'
         | 'EndNode'
-      if (!type) return
 
       const bounds = (event.target as HTMLElement).closest('.react-flow')?.getBoundingClientRect()
       if (!bounds) return

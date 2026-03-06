@@ -1,9 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-
-interface StartNodeData {
-  label?: string
-}
+import type { StartNodeData } from '$types/workflow-components'
 
 export default memo(function StartNode({ data }: NodeProps) {
   const nodeData = data as unknown as StartNodeData

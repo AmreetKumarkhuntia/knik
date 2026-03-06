@@ -23,6 +23,9 @@
       "$services/*": ["./src/services/*"],
       "$lib/*": ["./src/lib/*"],
       "$components/*": ["./src/lib/components/*"],
+      "$common/*": ["./src/lib/components/common/*"],
+      "$utils/*": ["./src/lib/utils/*"],
+      "$constants/*": ["./src/lib/constants/*"],
       "$hooks/*": ["./src/lib/hooks/*"],
       "$assets/*": ["./src/assets/*"]
     },

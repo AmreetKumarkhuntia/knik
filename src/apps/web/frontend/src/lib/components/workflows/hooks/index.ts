@@ -28,7 +28,7 @@ export function useWorkflows(): UseWorkflowsReturn {
   }, [])
 
   useEffect(() => {
-    fetchWorkflows()
+    void fetchWorkflows()
   }, [fetchWorkflows])
 
   return { workflows, loading, error, refetch: fetchWorkflows }
@@ -72,7 +72,7 @@ export function useSchedules(): UseSchedulesReturn {
   }, [])
 
   useEffect(() => {
-    fetchSchedules()
+    void fetchSchedules()
   }, [fetchSchedules])
 
   return { schedules, loading, error, refetch: fetchSchedules, toggleSchedule, deleteSchedule }
@@ -108,7 +108,7 @@ export function useExecutions(workflowId: string | null): UseExecutionsReturn {
   }, [workflowId])
 
   useEffect(() => {
-    fetchExecutions()
+    void fetchExecutions()
   }, [fetchExecutions])
 
   return { executions, loading, error, refetch: fetchExecutions }

@@ -4,14 +4,7 @@
  */
 
 import { useEffect } from 'react'
-import type { ToastType } from '../../types/components'
-
-interface ToastProps {
-  message: string
-  type: ToastType
-  onClose: () => void
-  duration?: number
-}
+import type { ToastProps } from '$types/components'
 
 export default function Toast({ message, type, onClose, duration = 5000 }: ToastProps) {
   useEffect(() => {

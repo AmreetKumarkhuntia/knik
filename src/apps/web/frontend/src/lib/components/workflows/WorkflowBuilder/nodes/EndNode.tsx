@@ -1,9 +1,6 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-
-interface EndNodeData {
-  label?: string
-}
+import type { EndNodeData } from '$types/workflow-components'
 
 export default memo(function EndNode({ data }: NodeProps) {
   const nodeData = data as unknown as EndNodeData
