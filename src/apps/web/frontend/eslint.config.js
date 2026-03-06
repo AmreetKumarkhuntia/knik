@@ -18,6 +18,10 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -25,6 +29,11 @@ export default defineConfig([
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+      '@typescript-eslint/no-unnecessary-condition': 'warn',
     },
   },
 ])
