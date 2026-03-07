@@ -4,17 +4,20 @@ Model Context Protocol (MCP) tools extend AI capabilities with executable functi
 
 ## Architecture
 
-```text
-src/lib/mcp/
-├── definitions/          # Tool schemas
-│   ├── utils_defs.py
-│   ├── text_defs.py
-│   └── shell_defs.py
-├── implementations/      # Tool code
-│   ├── utils_impl.py
-│   ├── text_impl.py
-│   └── shell_impl.py
-└── index.py             # Registry
+```mermaid
+mindmap
+  root((src/lib/mcp))
+    definitions
+      utils_defs.py
+      text_defs.py
+      shell_defs.py
+      file_defs.py
+    implementations
+      utils_impl.py
+      text_impl.py
+      shell_impl.py
+      file_impl.py
+    index.py
 ```
 
 Clean separation: definitions (interface) vs implementations (code).

@@ -166,11 +166,16 @@ pip install vosk>=0.3.45
 
 #### **New Components**
 
-```python
-src/lib/core/
-├── stt_processor.py        # Speech-to-text engine
-├── hotword_detector.py     # Wake word detection
-└── audio_manager.py        # Unified audio I/O management
+```mermaid
+flowchart LR
+    src[src/lib/core] --> stt[stt_processor.py]
+    src --> hotword[hotword_detector.py]
+    src --> audio[audio_manager.py]
+    
+    style src fill:#7ed321
+    style stt fill:#90caf9
+    style hotword fill:#90caf9
+    style audio fill:#90caf9
 ```
 
 #### **Features**
@@ -395,12 +400,18 @@ src/lib/services/screen_analyzer.py
 
 #### **Automation Workflows**
 
-```python
-src/lib/workflows/
-├── __init__.py
-├── workflow_engine.py      # Workflow execution
-├── workflow_parser.py      # Parse user-defined workflows
-└── builtin_workflows.py    # Pre-built workflows
+```mermaid
+flowchart LR
+    workflows[src/lib/workflows] --> init[__init__.py]
+    workflows --> engine[workflow_engine.py]
+    workflows --> parser[workflow_parser.py]
+    workflows --> builtin[builtin_workflows.py]
+    
+    style workflows fill:#7ed321
+    style init fill:#90caf9
+    style engine fill:#90caf9
+    style parser fill:#90caf9
+    style builtin fill:#90caf9
 ```
 
 **Features:**
@@ -444,14 +455,22 @@ pyyaml>=6.0               # Workflow definitions
 
 #### **Plugin Architecture**
 
-```python
-src/lib/plugins/
-├── __init__.py
-├── plugin_manager.py
-├── plugin_loader.py
-└── examples/
-    ├── weather_plugin.py
-    └── spotify_plugin.py
+```mermaid
+flowchart LR
+    plugins[src/lib/plugins] --> init[__init__.py]
+    plugins --> manager[plugin_manager.py]
+    plugins --> loader[plugin_loader.py]
+    plugins --> examples[examples]
+    examples --> weather[weather_plugin.py]
+    examples --> spotify[spotify_plugin.py]
+    
+    style plugins fill:#7ed321
+    style init fill:#90caf9
+    style manager fill:#90caf9
+    style loader fill:#90caf9
+    style examples fill:#90caf9
+    style weather fill:#f5a623
+    style spotify fill:#f5a623
 ```
 
 **Features:**

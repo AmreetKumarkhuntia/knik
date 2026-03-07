@@ -163,9 +163,9 @@ ctk.CTkButton(..., text_color=ColorTheme.TEXT_PRIMARY)
 ## 📚 Key Documentation
 
 - `.github/copilot-instructions.md` - **Main reference** (updated!)
-- `docs/GUI.md` - GUI architecture
-- `docs/CONVERSATION_HISTORY.md` - History system
-- `docs/MCP.md` - MCP tools reference
+- `docs/guides/gui.md` - GUI architecture
+- `docs/reference/conversation-history.md` - History system
+- `docs/guides/mcp.md` - MCP tools reference
 - `SESSION_SUMMARY.md` - This session's work
 
 ---

@@ -4,11 +4,16 @@ This directory contains demonstration scripts organized by functionality.
 
 ## Directory Structure
 
-```
-demo/
-├── tts/          # Text-to-Speech demos
-├── ai/           # AI integration demos
-└── console/      # Console processor demos
+```mermaid
+flowchart LR
+    demo[demo] --> tts[tts]
+    demo --> ai[ai]
+    demo --> console[console]
+    
+    style demo fill:#7ed321
+    style tts fill:#90caf9
+    style ai fill:#90caf9
+    style console fill:#90caf9
 ```
 
 ## TTS Demos (`tts/`)

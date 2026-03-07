@@ -65,7 +65,7 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 - **Scripts**: `scripts/start_web_backend.sh`, `scripts/start_web_frontend.sh`
 - **Config Pattern**: All settings from .env (KNIK_AI_PROVIDER, KNIK_AI_MODEL, KNIK_VOICE_NAME, etc.)
 - **Usage**: `npm run start:web` (starts both backend + frontend)
-- **See**: `docs/WEB_APP.md` for complete architecture and API reference
+- **See**: `docs/guides/web-app.md` for complete architecture and API reference
 
 **Console Commands** (`src/apps/console/tools/`)
 
@@ -244,7 +244,7 @@ npm run format:check
 
 - **Required:** `espeak-ng` (install via `brew install espeak-ng` on macOS)
 - **Optional:** Set `GOOGLE_CLOUD_PROJECT` for Vertex AI (falls back to mock provider)
-- See `docs/ENVIRONMENT_VARIABLES.md` for voice/AI model configuration
+- See `docs/reference/environment-variables.md` for voice/AI model configuration
 
 ### Testing
 
@@ -270,7 +270,7 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 - `src/lib/services/ai_client/registry/` - Registry pattern implementations
 - `src/lib/mcp/` - MCP tool definitions and implementations (AI-callable tools)
 - `src/apps/console/tools/` - Console command handlers (user-callable commands)
-- `docs/` - Comprehensive documentation (MCP.md, CONSOLE.md, API.md, etc.)
+- `docs/` - Comprehensive documentation (organized by category)
 - `demo/mcp/` - Test files for MCP tools (test_file_operations.py, TEST_PROMPTS.md)
 
 **Entry points:**
@@ -305,13 +305,13 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 ### User Documentation
 
-- `docs/README.md` - Doc index and quick links
-- `docs/ROADMAP.md` - **Development roadmap: what's built, what's planned, and how to extend Knik into a JARVIS-like assistant**
-- `docs/MCP.md` - MCP tools architecture (100+ lines with examples)
-- `docs/CONSOLE.md` - Console app commands and usage
-- `docs/GUI.md` - GUI app architecture and components
-- `docs/CONVERSATION_HISTORY.md` - Conversation memory system implementation
-- `docs/ENVIRONMENT_VARIABLES.md` - All config options
+- `docs/README.md` - Documentation index and quick links
+- `docs/development/roadmap.md` - **Development roadmap: what's built, what's planned, and how to extend Knik into a JARVIS-like assistant**
+- `docs/guides/mcp.md` - MCP tools architecture (100+ lines with examples)
+- `docs/guides/console.md` - Console app commands and usage
+- `docs/guides/gui.md` - GUI app architecture and components
+- `docs/reference/conversation-history.md` - Conversation memory system implementation
+- `docs/reference/environment-variables.md` - All config options
 
 ### AI/Copilot Context
 
@@ -328,7 +328,7 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 - electron-preload.js - Secure IPC bridge between main and renderer
 - electron-builder.yml - Build configuration for multi-platform packaging
 - scripts/start_electron.sh - Startup script for development
-- docs/ELECTRON.md - Comprehensive documentation (307 lines)
+- docs/guides/electron.md - Comprehensive documentation (307 lines)
 - Runs with: `npm run start:electron`
 
 ### Ultra-Glassmorphism UI (December 2025)

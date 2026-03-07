@@ -14,22 +14,16 @@ Knik can run as a standalone desktop application on macOS, Windows, and Linux. T
 
 ## Architecture
 
-```
-┌─────────────────────────────────────┐
-│      Electron Main Process          │
-│  (electron-main.js)                 │
-│  - Window management                │
-│  - IPC handlers                     │
-│  - System integration               │
-└─────────────┬───────────────────────┘
-              │
-    ┌─────────┴─────────┐
-    │                   │
-┌───▼────────┐  ┌───────▼────────┐
-│  Renderer  │  │  Python Backend │
-│  (React)   │  │  (FastAPI)     │
-│  Port 5173 │  │  Port 8000     │
-└────────────┘  └────────────────┘
+```mermaid
+flowchart TD
+    A[Electron Main Process electron-main.js] --> B[Branch]
+    B -->|HTTP Requests| C[Renderer React Port 5173]
+    B -->|Direct Process| D[Python Backend FastAPI Port 8000]
+    
+    style A fill:#4a90e2
+    style B fill:#f5a623
+    style C fill:#7ed321
+    style D fill:#50c878
 ```
 
 ### Files

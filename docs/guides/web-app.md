@@ -10,30 +10,16 @@ The web app provides a modern, high-performance desktop interface for Knik with 
 
 ### Three-Layer Stack
 
-```
-┌─────────────────────────────────────────┐
-│              Electron ✅                 │
-│  Desktop window management & packaging  │
-│   See docs/ELECTRON.md for details     │
-└─────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────┐
-│    React + TypeScript + Tailwind        │
-│  Ultra-glassmorphism UI with 60fps    │
-│  http://localhost:5173                  │
-└─────────────────────────────────────────┘
-              ↓ REST API
-┌─────────────────────────────────────────┐
-│        FastAPI Backend                  │
-│  AI + TTS + MCP Tools + History        │
-│  Comprehensive emoji-based logging     │
-│  http://localhost:8000                  │
-└─────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────┐
-│     Python Services (lib/)              │
-│  AIClient, TTSProcessor, MCP Tools      │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind 60fps UI Port 5173]
+    B -->|REST API| C[FastAPI Backend AI TTS MCP Tools Port 8000]
+    C -->|Direct imports| D[Python Services AIClient TTSProcessor MCP Tools]
+    
+    style A fill:#e1f5ff
+    style B fill:#f3e5f5
+    style C fill:#fff3e0
+    style D fill:#e8f5e9
 ```
 
 ## Frontend (React)
@@ -48,43 +34,55 @@ The web app provides a modern, high-performance desktop interface for Knik with 
 
 ### Project Structure
 
-```
-src/apps/web/frontend/
-├── src/
-│   ├── App.tsx                     # Main application component
-│   ├── index.css                   # Global styles + Tailwind imports
-│   ├── main.tsx                    # Entry point
-│   ├── lib/
-│   │   ├── components/             # Reusable UI components
-│   │   │   ├── AudioControls.tsx   # Playback buttons (Pause/Stop)
-│   │   │   ├── BackgroundEffects.tsx # Animated background blobs
-│   │   │   ├── ChatPanel.tsx       # Message display with animations
-│   │   │   ├── HamburgerButton.tsx # Sidebar toggle button
-│   │   │   ├── InputPanel.tsx      # Text input + send button
-│   │   │   ├── Sidebar.tsx         # New chat / clear history
-│   │   │   ├── icons/              # SVG icon components
-│   │   │   └── index.ts            # Component exports
-│   │   └── hooks/                  # Custom React hooks
-│   │       ├── useAudio.ts         # Audio playback state
-│   │       ├── useChat.ts          # Chat state and streaming
-│   │       ├── useKeyboardShortcuts.ts # Global shortcuts
-│   │       ├── useToast.ts         # Toast notifications
-│   │       └── index.ts            # Hooks barrel export
-│   └── services/                   # Business logic
-│       ├── api.ts                  # Backend API client
-│       ├── streaming.ts            # SSE streaming client (streamChat)
-│       ├── theme.ts                # Design tokens and colors
-│       ├── audio/                  # Audio playback service layer
-│       │   ├── queue.ts            # Sequential chunk queue
-│       │   ├── playback.ts         # HTMLAudioElement driver + state
-│       │   ├── queueState.ts       # Shared active-queue flag
-│       │   ├── mediaSession.ts     # Browser Media Session API
-│       │   └── index.ts            # Audio exports
-│       └── index.ts                # Service barrel exports
-├── tailwind.config.js              # Custom animations
-├── tsconfig.json                   # TypeScript configuration
-├── vite.config.ts                  # Vite build configuration
-└── package.json                    # Dependencies
+```mermaid
+flowchart LR
+    root((src/apps/web/frontend)) --> src
+    root --> config[config files]
+    root --> package[package.json]
+    
+    src --> App[App.tsx]
+    src --> indexCSS[index.css]
+    src --> main[main.tsx]
+    src --> lib
+    
+    lib --> components
+    lib --> hooks
+    lib --> services
+    
+    components --> Audio[AudioControls.tsx]
+    components --> Background[BackgroundEffects.tsx]
+    components --> Chat[ChatPanel.tsx]
+    components --> Hamburger[HamburgerButton.tsx]
+    components --> Input[InputPanel.tsx]
+    components --> Sidebar[Sidebar.tsx]
+    components --> icons
+    
+    hooks --> useAudio[useAudio.ts]
+    hooks --> useChat[useChat.ts]
+    hooks --> useKeys[useKeyboardShortcuts.ts]
+    hooks --> useToast[useToast.ts]
+    
+    services --> api[api.ts]
+    services --> streaming[streaming.ts]
+    services --> theme[theme.ts]
+    services --> audio
+    
+    audio --> queue[queue.ts]
+    audio --> playback[playback.ts]
+    audio --> queueState[queueState.ts]
+    audio --> mediaSession[mediaSession.ts]
+    
+    config --> tailwind[tailwind.config.js]
+    config --> tsconfig[tsconfig.json]
+    config --> vite[vite.config.ts]
+    
+    style root fill:#4a90e2
+    style src fill:#7ed321
+    style lib fill:#50c878
+    style components fill:#90caf9
+    style hooks fill:#90caf9
+    style services fill:#90caf9
+    style config fill:#f5a623
 ```
 
 ### Key Components

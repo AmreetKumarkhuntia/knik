@@ -19,27 +19,37 @@ Knik's Workflow Scheduler is a cron-like system with node-based workflow executi
 
 ### Three-Layer Structure
 
-```text
-scheduler/
-├── models/              # Data structures (Workflow, Node, Schedule)
-├── nodes/               # Node implementations (AI, Function, Condition, Merge)
-├── workflow_engine.py   # DAG execution engine
-├── cron_scheduler.py    # Cron-based scheduling
-├── scheduler.py         # Main orchestrator
-└── config.py           # Configuration
+```mermaid
+mindmap
+  root((scheduler))
+    models
+      Workflow
+      Node
+      Schedule
+    nodes
+      AIExecutionNode
+      FunctionExecutionNode
+      ConditionalBranchNode
+      FlowMergeNode
+    workflow_engine.py
+    cron_scheduler.py
+    scheduler.py
+    config.py
 ```
 
 ### Component Hierarchy
 
-```text
-Scheduler (orchestrator)
-├── CronScheduler (schedule management)
-│   ├── Schedule checking thread
-│   └── Execution queue
-└── WorkflowEngine (workflow execution)
-    ├── DAG validation
-    ├── Topological sort execution
-    └── Node registry
+```mermaid
+mindmap
+  root((Scheduler))
+    orchestrator
+      CronScheduler
+        Schedule checking thread
+        Execution queue
+      WorkflowEngine
+        DAG validation
+        Topological sort execution
+        Node registry
 ```
 
 ## Node Flow Diagrams
