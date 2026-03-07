@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { MainLayout, ErrorBoundary } from './lib/components'
-import { Home, Workflows } from './lib/pages'
-import { useToast, useAudio, useChat } from './lib/hooks'
-import type { InputPanelRef } from './lib/components'
+import MainLayout from '$sections/layout/MainLayout'
+import ErrorBoundary from '$sections/feedback/ErrorBoundary'
+import { Home, Workflows } from '$pages'
+import { useToast, useAudio, useChat } from '$hooks'
+import type { InputPanelRef } from '$types/components'
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false)

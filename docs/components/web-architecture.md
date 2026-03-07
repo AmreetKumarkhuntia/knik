@@ -76,7 +76,7 @@ from lib.services.ai_client.registry import MCPServerRegistry
 flowchart TD
     A[React Frontend Electron Window] -->|REST API / WebSocket| B[FastAPI Backend Python API Layer]
     B -->|Direct imports| C[Existing Knik Code AIClient TTSAsyncProcessor MCP Tools ConversationHistory]
-    
+
     style A fill:#e1f5ff
     style B fill:#fff3e0
     style C fill:#e8f5e9

@@ -1,8 +1,5 @@
 import { MenuIcon } from './index'
-
-interface HamburgerButtonProps {
-  onClick: () => void
-}
+import type { HamburgerButtonProps } from '$types/components'
 
 export default function HamburgerButton({ onClick }: HamburgerButtonProps) {
   return (

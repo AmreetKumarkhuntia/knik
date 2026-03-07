@@ -19,7 +19,7 @@ flowchart TD
     A[Electron Main Process electron-main.js] --> B[Branch]
     B -->|HTTP Requests| C[Renderer React Port 5173]
     B -->|Direct Process| D[Python Backend FastAPI Port 8000]
-    
+
     style A fill:#4a90e2
     style B fill:#f5a623
     style C fill:#7ed321

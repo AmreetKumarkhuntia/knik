@@ -9,13 +9,13 @@ This directory contains globally reusable UI components for the frontend applica
 A flexible button component with variant and size options.
 
 ```tsx
-import { ActionButton } from '$common'
-;<ActionButton
+import { ActionButton } from "$common";
+<ActionButton
   label="Click me"
   variant="primary"
   size="md"
-  onClick={() => console.log('clicked')}
-/>
+  onClick={() => console.log("clicked")}
+/>;
 ```
 
 **Props:**
@@ -34,8 +34,8 @@ import { ActionButton } from '$common'
 Displays execution status with appropriate styling and icons.
 
 ```tsx
-import { StatusBadge } from '$common'
-;<StatusBadge status="running" size="sm" />
+import { StatusBadge } from "$common";
+<StatusBadge status="running" size="sm" />;
 ```
 
 **Props:**
@@ -48,8 +48,8 @@ import { StatusBadge } from '$common'
 A simple loading indicator with size variants.
 
 ```tsx
-import { LoadingSpinner } from '$common'
-;<LoadingSpinner size="md" />
+import { LoadingSpinner } from "$common";
+<LoadingSpinner size="md" />;
 ```
 
 **Props:**
@@ -62,15 +62,15 @@ import { LoadingSpinner } from '$common'
 A modal dialog for confirming destructive or important actions.
 
 ```tsx
-import { ConfirmDialog } from '$common'
-;<ConfirmDialog
+import { ConfirmDialog } from "$common";
+<ConfirmDialog
   isOpen={true}
   title="Delete this item?"
   message="This action cannot be undone."
   variant="danger"
   onConfirm={() => handleDelete()}
   onCancel={() => setIsOpen(false)}
-/>
+/>;
 ```
 
 **Props:**
@@ -90,8 +90,8 @@ import { ConfirmDialog } from '$common'
 A toggle switch component for boolean values.
 
 ```tsx
-import { ToggleSwitch } from '$common'
-;<ToggleSwitch checked={enabled} onChange={setEnabled} label="Enable feature" />
+import { ToggleSwitch } from "$common";
+<ToggleSwitch checked={enabled} onChange={setEnabled} label="Enable feature" />;
 ```
 
 **Props:**
@@ -107,10 +107,10 @@ import { ToggleSwitch } from '$common'
 A generic modal wrapper component.
 
 ```tsx
-import { Modal } from '$common'
-;<Modal isOpen={true} onClose={() => setIsOpen(false)} title="Modal Title">
+import { Modal } from "$common";
+<Modal isOpen={true} onClose={() => setIsOpen(false)} title="Modal Title">
   <p>Modal content goes here</p>
-</Modal>
+</Modal>;
 ```
 
 **Props:**
@@ -126,13 +126,13 @@ import { Modal } from '$common'
 A component for displaying empty states with icon and message.
 
 ```tsx
-import { EmptyState } from '$common'
-;<EmptyState
+import { EmptyState } from "$common";
+<EmptyState
   icon="📜"
   title="No items yet"
   description="Add items to get started"
   action={<Button>Add Item</Button>}
-/>
+/>;
 ```
 
 **Props:**
@@ -190,11 +190,11 @@ import { FormField } from '$common'
 Import components from the common directory:
 
 ```tsx
-import { ActionButton, StatusBadge, Modal } from '$common'
+import { ActionButton, StatusBadge, Modal } from "$common";
 ```
 
 Or import directly from the component file:
 
 ```tsx
-import ActionButton from '$components/common/ActionButton'
+import ActionButton from "$components/common/ActionButton";
 ```

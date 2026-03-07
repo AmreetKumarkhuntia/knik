@@ -171,7 +171,7 @@ flowchart LR
     src[src/lib/core] --> stt[stt_processor.py]
     src --> hotword[hotword_detector.py]
     src --> audio[audio_manager.py]
-    
+
     style src fill:#7ed321
     style stt fill:#90caf9
     style hotword fill:#90caf9
@@ -406,7 +406,7 @@ flowchart LR
     workflows --> engine[workflow_engine.py]
     workflows --> parser[workflow_parser.py]
     workflows --> builtin[builtin_workflows.py]
-    
+
     style workflows fill:#7ed321
     style init fill:#90caf9
     style engine fill:#90caf9
@@ -463,7 +463,7 @@ flowchart LR
     plugins --> examples[examples]
     examples --> weather[weather_plugin.py]
     examples --> spotify[spotify_plugin.py]
-    
+
     style plugins fill:#7ed321
     style init fill:#90caf9
     style manager fill:#90caf9

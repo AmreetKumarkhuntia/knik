@@ -1,18 +1,10 @@
 import { useRef, useEffect } from 'react'
-import { ChatPanel, InputPanel, AudioControls } from '../components'
-import type { InputPanelRef } from '../components'
-import { useKeyboardShortcuts, useChat } from '../hooks'
-
-interface HomeProps {
-  setAudioPlaying: (playing: boolean) => void
-  audioPlaying: boolean
-  audioPaused: boolean
-  streamControllerRef: React.MutableRefObject<AbortController | null>
-  handleStopAudio: () => void
-  handleTogglePause: () => void
-  success: (message: string) => void
-  error: (message: string) => void
-}
+import ChatPanel from '$sections/chat/ChatPanel'
+import InputPanel from '$sections/chat/InputPanel'
+import AudioControls from '$sections/audio/AudioControls'
+import type { HomeProps } from '$types/pages'
+import type { InputPanelRef } from '$types/sections/chat'
+import { useKeyboardShortcuts, useChat } from '$hooks'
 
 export default function Home({
   setAudioPlaying,
@@ -27,13 +19,7 @@ export default function Home({
   const inputRef = useRef<InputPanelRef>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
-  const {
-    messages,
-    inputText,
-    setInputText,
-    loading,
-    handleSend,
-  } = useChat({
+  const { messages, inputText, setInputText, loading, handleSend } = useChat({
     setAudioPlaying,
     streamControllerRef,
     success,

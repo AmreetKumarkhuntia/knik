@@ -40,14 +40,14 @@ flowchart TD
             H[SettingsPanel.tsx]
             I[TopBar.tsx]
         end
-        
+
         subgraph J[ELECTRON MAIN PROCESS Node.js]
             K[Window management]
             L[IPC communication]
             M[Python subprocess control]
             N[Auto-start backend]
         end
-        
+
         subgraph O[PYTHON BACKEND FastAPI]
             P[POST /api/chat]
             Q[WS /ws/stream]
@@ -58,10 +58,10 @@ flowchart TD
             V[Existing Code Unchanged]
         end
     end
-    
+
     C -->|REST API / WebSocket| J
     J -->|Control| O
-    
+
     style A fill:#e1f5ff
     style B fill:#f3e5f5
     style J fill:#fff3e0

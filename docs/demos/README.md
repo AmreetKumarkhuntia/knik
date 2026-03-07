@@ -9,7 +9,7 @@ flowchart LR
     demo[demo] --> tts[tts]
     demo --> ai[ai]
     demo --> console[console]
-    
+
     style demo fill:#7ed321
     style tts fill:#90caf9
     style ai fill:#90caf9

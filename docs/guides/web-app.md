@@ -15,7 +15,7 @@ flowchart TD
     A[Electron Desktop Window Management] --> B[React TypeScript Tailwind 60fps UI Port 5173]
     B -->|REST API| C[FastAPI Backend AI TTS MCP Tools Port 8000]
     C -->|Direct imports| D[Python Services AIClient TTSProcessor MCP Tools]
-    
+
     style A fill:#e1f5ff
     style B fill:#f3e5f5
     style C fill:#fff3e0
@@ -39,16 +39,16 @@ flowchart LR
     root((src/apps/web/frontend)) --> src
     root --> config[config files]
     root --> package[package.json]
-    
+
     src --> App[App.tsx]
     src --> indexCSS[index.css]
     src --> main[main.tsx]
     src --> lib
-    
+
     lib --> components
     lib --> hooks
     lib --> services
-    
+
     components --> Audio[AudioControls.tsx]
     components --> Background[BackgroundEffects.tsx]
     components --> Chat[ChatPanel.tsx]
@@ -56,26 +56,26 @@ flowchart LR
     components --> Input[InputPanel.tsx]
     components --> Sidebar[Sidebar.tsx]
     components --> icons
-    
+
     hooks --> useAudio[useAudio.ts]
     hooks --> useChat[useChat.ts]
     hooks --> useKeys[useKeyboardShortcuts.ts]
     hooks --> useToast[useToast.ts]
-    
+
     services --> api[api.ts]
     services --> streaming[streaming.ts]
     services --> theme[theme.ts]
     services --> audio
-    
+
     audio --> queue[queue.ts]
     audio --> playback[playback.ts]
     audio --> queueState[queueState.ts]
     audio --> mediaSession[mediaSession.ts]
-    
+
     config --> tailwind[tailwind.config.js]
     config --> tsconfig[tsconfig.json]
     config --> vite[vite.config.ts]
-    
+
     style root fill:#4a90e2
     style src fill:#7ed321
     style lib fill:#50c878

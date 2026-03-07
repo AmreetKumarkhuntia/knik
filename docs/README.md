@@ -49,16 +49,19 @@ npm run start:console
 ## Quick Links
 
 **User Documentation:**
+
 - [Quick Start Guide](guides/gui.md)
 - [Setup Instructions](development/setup.md)
 - [Web App Guide](guides/web-app.md)
 
 **Developer Documentation:**
+
 - [API Reference](reference/api.md)
 - [Development Roadmap](development/roadmap.md)
 - [Code Quality](development/linting.md)
 
 **Technical Reference:**
+
 - [MCP Tools](guides/mcp.md)
 - [Environment Variables](reference/environment-variables.md)
 - [Conversation History](reference/conversation-history.md)
@@ -78,7 +81,7 @@ flowchart LR
     lib --> services
     lib --> mcp
     lib --> utils
-    
+
     style src fill:#4a90e2
     style imports fill:#f5a623
     style main fill:#f5a623
@@ -96,16 +99,21 @@ flowchart LR
 ## Documentation Categories
 
 ### Guides
+
 Step-by-step instructions for using Knik applications and features.
 
 ### Development
+
 Information about setting up, developing, and maintaining Knik.
 
 ### Reference
+
 Technical documentation and API references for developers.
 
 ### Components
+
 Detailed documentation about specific components and their architecture.
 
 ### Demos
+
 Examples and test scripts demonstrating Knik functionality.
