@@ -4,7 +4,7 @@ import MainLayout from '$sections/layout/MainLayout'
 import ErrorBoundary from '$sections/feedback/ErrorBoundary'
 import { Home, Workflows } from '$pages'
 import { useToast, useAudio, useChat } from '$hooks'
-import type { InputPanelRef } from '$types/components'
+import type { InputPanelRef } from '$types/sections/chat'
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false)

@@ -2,9 +2,6 @@ import type { ReactNode } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { ExecutionStatus } from '$types/workflow'
 
-// Re-export section types for backward compatibility
-export type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
-
 // Existing types
 export type ToastType = 'success' | 'error' | 'info'
 
