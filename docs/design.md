@@ -4,32 +4,33 @@ Get the images and code for the following Stitch project's screens:
 
 ## Project
 
+Title: Knik AI - Chat View
 ID: 17831477964101770123
 
 ## Screens:
 
-1. {757277FF-2834-4615-9C12-944E90DD6F9A}.png
-   ID: 11269151020090638418
+1. Refined Workflow Dashboard View
+   ID: 42bf93f342b341a5a88946a35f35f7f4
 
-2. {AE12AF51-B093-42C9-B72B-08716B009042}.png
-   ID: 11269151020090639649
+2. Knik AI - Navigation Sidebar (Updated)
+   ID: e0689eaf750643c19db6bb55152af142
 
-3. {33C442B9-57D4-4945-8DA4-3BCF5BAB5B9D}.png
-   ID: 11269151020090641559
+3. Knik AI - Chat View
+   ID: 632e693707a24ad09e6350c7dbe3d006
 
-4. {15FA6FF3-57CD-42AE-8497-D0A61571C176}.png
-   ID: 11269151020090640604
+4. Knik AI - Active Conversation (Updated)
+   ID: 74de0b59247b44f49eb8c836b88187e8
 
-5. Knik AI - Chat View
-   ID: aeaeb8afeb4e4efb94b4017340fad13f
+5. Knik AI - Voice Chat Redesign
+   ID: a0c4f949dd104a129fe946f00021e1a0
 
-6. Knik AI - Workflow Dashboard
-   ID: ccffd1e513cd4909b16141ebe2558e6e
+6. Workflow Builder Redesign
+   ID: f24f64f92d2d478a876b0c93204397d1
 
-7. Knik AI - Active Conversation
-   ID: df5e98b1e7484996a8a531cbfda20426
+7. Expandable Navigation Sidebar
+   ID: 742bd77f517e421a88e7d1b2974b4ddd
 
-8. Knik AI - Navigation Sidebar
-   ID: 8affa07c38554020bc06124cf83cfd94
+8. Collapsed Navigation Sidebar
+   ID: 806aac0575a549ec963fbc3a26f3f77f
 
 Use a utility like `curl -L` to download the hosted URLs.

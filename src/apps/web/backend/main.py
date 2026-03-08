@@ -19,6 +19,7 @@ from apps.web.backend.config import WebBackendConfig
 
 # Import routers
 from apps.web.backend.routes.admin import router as admin_router
+from apps.web.backend.routes.analytics import router as analytics_router
 from apps.web.backend.routes.chat import router as chat_router
 from apps.web.backend.routes.chat_stream import router as chat_stream_router
 from apps.web.backend.routes.cron import router as cron_router
@@ -50,6 +51,7 @@ app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 app.include_router(history_router, prefix="/api/history", tags=["history"])
 app.include_router(cron_router, prefix="/api/cron", tags=["cron"])
 app.include_router(workflow_router, prefix="/api/workflows", tags=["workflows"])
+app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 
 # Startup and shutdown using lifespan (modern FastAPI pattern)

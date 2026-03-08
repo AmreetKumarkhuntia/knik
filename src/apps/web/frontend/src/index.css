@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -12,19 +12,22 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --color-background: #0a0a0a;
+  --color-background: #0d021f;
   --color-surface: #171717;
   --color-surface-glass: rgba(23, 23, 23, 0.7);
   --color-text: #fafafa;
   --color-text-secondary: #a3a3a3;
-  --color-primary: #8b5cf6;
-  --color-primary-hover: #a78bfa;
+  --color-primary: #7f0df2;
+  --color-primary-hover: #9d31f5;
   --color-accent: #00d9f4;
   --color-accent-hover: #00e5ff;
+  --color-accent-teal: #14b8a6;
+  --color-accent-teal-hover: #0d9488;
   --color-border: rgba(255, 255, 255, 0.1);
   --color-border-light: rgba(255, 255, 255, 0.2);
   --color-success: #10b981;
   --color-error: #ef4444;
+  --color-primary-rgb: 127, 13, 242;
 }
 
 html,
@@ -45,4 +48,49 @@ body,
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
+}
+
+/* Glass Effects */
+.glass {
+  background: rgba(127, 13, 242, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-primary {
+  background: rgba(127, 13, 242, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(127, 13, 242, 0.4);
+}
+
+.bg-gradient-mesh {
+  background-color: #0d021f;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(127, 13, 242, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.1) 0px, transparent 50%);
+}
+
+/* Material Symbols Outlined */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  font-size: 24px;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
 }

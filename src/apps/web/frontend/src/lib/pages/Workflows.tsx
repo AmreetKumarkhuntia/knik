@@ -1,5 +1,5 @@
-import WorkflowDashboard from '$sections/workflows/WorkflowDashboard'
+import WorkflowHub from '$sections/workflows/WorkflowHub'
 
 export default function Workflows() {
-  return <WorkflowDashboard />
+  return <WorkflowHub />
 }

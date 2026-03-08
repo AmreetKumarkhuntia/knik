@@ -155,3 +155,44 @@ export interface ScheduleCreateResponse {
   schedule_id: number
   workflow_id: string
 }
+
+export type ActivityType = 'success' | 'error' | 'update' | 'info'
+
+export interface Activity {
+  id: string
+  type: ActivityType
+  title: string
+  description?: string
+  time: string
+  icon?: string
+}
+
+export interface TopWorkflow {
+  id: string
+  name: string
+  icon: string
+  status: 'active' | 'inactive' | 'error'
+  executions: number
+  successRate: number
+}
+
+export interface WorkflowMetrics {
+  totalWorkflows: number
+  executionsToday: number
+  successRate: number
+}
+
+export interface WorkflowMetricsResponse {
+  success: boolean
+  metrics: WorkflowMetrics
+}
+
+export interface TopWorkflowsResponse {
+  success: boolean
+  workflows: TopWorkflow[]
+}
+
+export interface ActivityResponse {
+  success: boolean
+  activities: Activity[]
+}

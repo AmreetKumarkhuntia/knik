@@ -1,6 +1,4 @@
-export { default as WorkflowDashboard } from './WorkflowDashboard'
-export { default as WorkflowHeader } from './WorkflowHeader'
-export { default as WorkflowStats } from './WorkflowStats'
+export { default as WorkflowHub } from './WorkflowHub'
 export * from './ScheduleManager'
 export * from './ExecutionHistory'
 export * from './WorkflowBuilder'

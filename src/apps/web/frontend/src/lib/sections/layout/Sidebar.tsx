@@ -151,12 +151,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
 
           <div className="space-y-3">
             <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface border-border">
-              <UserProfile
-                avatar="AR"
-                name="Alex Rivera"
-                account="Pro Account"
-                displayOnly={true}
-              />
+              <UserProfile avatar="AK" name="AMREET" displayOnly={true} />
               <ThemeToggle />
             </div>
 
