@@ -46,6 +46,10 @@ npm run start:console
 
 - [Demo Scripts](demos/README.md) - Demo scripts by functionality
 
+### 📖 Design Documentation
+
+- [Design](design.md) - UI/screen designs from Stitch project
+
 ## Quick Links
 
 **User Documentation:**
@@ -65,6 +69,10 @@ npm run start:console
 - [MCP Tools](guides/mcp.md)
 - [Environment Variables](reference/environment-variables.md)
 - [Conversation History](reference/conversation-history.md)
+
+**Design:**
+
+- [UI Designs](design.md) - Stitch project screen designs
 
 ## Project Structure
 
