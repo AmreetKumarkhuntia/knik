@@ -50,13 +50,13 @@ export default function Home({
         ref={chatScrollRef}
         className="flex-1 overflow-y-auto px-6 pt-6 pb-40 scroll-smooth scrollbar-hide"
       >
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full">
           <ChatPanel messages={messages} isLoading={loading} />
         </div>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-20 p-6 pointer-events-none">
-        <div className="max-w-4xl mx-auto pointer-events-auto">
+        <div className="w-full pointer-events-auto">
           <AudioControls
             isPlayingOrLoading={audioPlaying || loading}
             isPaused={audioPaused}

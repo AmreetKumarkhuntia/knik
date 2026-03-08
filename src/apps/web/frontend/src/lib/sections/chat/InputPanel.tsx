@@ -24,13 +24,14 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
     }
 
     return (
-      <div className="bg-white/5 backdrop-blur-lg rounded-xl p-4 shadow-2xl border border-white/10">
+      <div className="bg-white/5 backdrop-blur-lg rounded-xl p-2 shadow-2xl border border-white/10">
         <Input
           ref={inputRef}
           type="text"
           value={value}
           onChange={e => onChange(e.target.value)}
           onKeyPress={handleKeyPress}
+          fullWidth={true}
           placeholder="Type your message... (Ctrl+K to focus, Esc to clear)"
           disabled={disabled}
         />
