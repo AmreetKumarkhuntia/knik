@@ -1,12 +1,5 @@
 import { motion } from 'framer-motion'
-
-interface StatCardProps {
-  icon: string
-  label: string
-  value: number | string
-  subtext?: string
-  color?: string
-}
+import type { StatCardProps } from '$types/components'
 
 export default function StatCard({
   icon,

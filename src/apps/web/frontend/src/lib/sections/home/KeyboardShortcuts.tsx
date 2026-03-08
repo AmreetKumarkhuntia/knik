@@ -1,11 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Close } from '@mui/icons-material'
 import Backdrop from '$components/Backdrop'
-
-interface KeyboardShortcutsProps {
-  isOpen: boolean
-  onClose: () => void
-}
+import type { KeyboardShortcutsProps } from '$types/sections/home'
 
 const shortcuts = [
   { key: 'Ctrl + K', description: 'Focus input field' },

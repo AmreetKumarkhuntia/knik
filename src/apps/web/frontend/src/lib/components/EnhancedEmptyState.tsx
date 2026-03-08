@@ -2,15 +2,7 @@ import { motion } from 'framer-motion'
 
 import ActionButton from './ActionButton'
 
-import type { EmptyStateProps } from '$types/components'
-
-interface EnhancedEmptyStateProps extends EmptyStateProps {
-  actionLabel?: string
-  onAction?: () => void
-  secondaryActionLabel?: string
-  onSecondaryAction?: () => void
-  iconSize?: number
-}
+import type { EnhancedEmptyStateProps } from '$types/components'
 
 export default function EnhancedEmptyState({
   title = 'No workflows yet',

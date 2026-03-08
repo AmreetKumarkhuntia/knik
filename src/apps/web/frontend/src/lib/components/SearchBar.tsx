@@ -1,8 +1,5 @@
 import { Search } from '@mui/icons-material'
-
-interface SearchBarProps {
-  placeholder?: string
-}
+import type { SearchBarProps } from '$types/components'
 
 export default function SearchBar({ placeholder = 'Search...' }: SearchBarProps) {
   return (

@@ -20,9 +20,7 @@ const suggestions = [
   { icon: <Description />, title: 'Create API documentation', subtitle: 'For REST endpoints' },
 ]
 
-interface SuggestionCardsProps {
-  onSelectPrompt: (prompt: string) => void
-}
+import type { SuggestionCardsProps } from '$types/sections/home'
 
 export default function SuggestionCards({ onSelectPrompt }: SuggestionCardsProps) {
   const container = {

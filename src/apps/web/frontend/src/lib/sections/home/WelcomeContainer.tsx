@@ -1,9 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-
-interface WelcomeContainerProps {
-  isVisible: boolean
-  children: React.ReactNode
-}
+import type { WelcomeContainerProps } from '$types/sections/home'
 
 export default function WelcomeContainer({ isVisible, children }: WelcomeContainerProps) {
   return (

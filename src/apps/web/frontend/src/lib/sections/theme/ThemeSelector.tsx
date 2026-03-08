@@ -2,11 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, Close } from '@mui/icons-material'
 import Backdrop from '$components/Backdrop'
 import { useTheme } from '$hooks/useTheme'
-
-interface ThemeSelectorProps {
-  isOpen: boolean
-  onClose: () => void
-}
+import type { ThemeSelectorProps } from '$types/theme'
 
 const accentColors = [
   { name: 'purple' as const, label: 'Purple', color: '#8B5CF6' },

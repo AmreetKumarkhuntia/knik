@@ -161,3 +161,76 @@ export interface HamburgerButtonProps {
   onClick: () => void
   className?: string
 }
+
+// Activity, Metrics, Breadcrumb types
+export interface ActivityItemProps {
+  type: 'success' | 'error' | 'update' | 'info'
+  title: string
+  description?: string
+  time: string
+  icon?: string
+}
+
+export interface MetricCardProps {
+  icon: string
+  label: string
+  value: number | string
+  subtext?: string
+  trend?: number
+  color?: 'primary' | 'teal' | 'rose' | 'blue'
+  loading?: boolean
+}
+
+export interface BreadcrumbItem {
+  label: string
+  path?: string
+}
+
+export interface BreadcrumbProps {
+  items: BreadcrumbItem[]
+  className?: string
+}
+
+// Extended component types
+export interface EnhancedEmptyStateProps extends EmptyStateProps {
+  actionLabel?: string
+  onAction?: () => void
+  secondaryActionLabel?: string
+  onSecondaryAction?: () => void
+  iconSize?: number
+}
+
+export interface NavLinkProps {
+  icon: string
+  label: string
+  active?: boolean
+  href?: string
+  onClick?: () => void
+}
+
+export interface NotificationButtonProps {
+  badgeCount?: number
+  onClick?: () => void
+}
+
+export interface SearchBarProps {
+  placeholder?: string
+}
+
+export interface StatCardProps {
+  icon: string
+  label: string
+  value: number | string
+  subtext?: string
+  color?: string
+}
+
+export interface UserProfileProps {
+  avatar?: string
+  avatarColor?: string
+  name?: string
+  account?: string
+  displayOnly?: boolean
+  showBadge?: boolean
+  badgeType?: 'pro' | 'basic' | 'admin'
+}

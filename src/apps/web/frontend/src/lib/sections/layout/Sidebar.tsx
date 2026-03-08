@@ -1,35 +1,41 @@
 /**
- * Sidebar Component
- * ChatGPT-style collapsible sidebar with history, profile, and theme selector
+ * Collapsible Sidebar Component
+ * Permanently visible sidebar that expands on hover
  */
 
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Close, Delete as TrashIcon, Settings, ChevronRight, Palette } from '@mui/icons-material'
-import Backdrop from '$components/Backdrop'
+import {
+  Delete as TrashIcon,
+  Settings,
+  Palette,
+  Chat as ChatIcon,
+  AccountTree,
+} from '@mui/icons-material'
 import LoadingSpinner from '$components/LoadingSpinner'
 import EmptyState from '$components/EmptyState'
-import LinkButton from '$components/LinkButton'
 import { ThemeToggle, ThemeSelector } from '$sections/theme'
 import UserProfile from '$components/UserProfile'
 import type { SidebarProps } from '$types/sections/layout'
 import type { Message } from '$types/hooks'
 import { api } from '$services/api'
 
-export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: SidebarProps) {
+export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [history, setHistory] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
   const [themeSelectorOpen, setThemeSelectorOpen] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
-  // Fetch history when sidebar opens
+  const isExpanded = isHovered
+
   useEffect(() => {
-    if (isOpen) {
+    if (isExpanded) {
       void fetchHistory()
     }
-  }, [isOpen])
+  }, [isExpanded])
 
   const fetchHistory = async () => {
     try {
@@ -46,134 +52,175 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
   const handleClearHistory = () => {
     onClearHistory()
     setHistory([])
-    onClose()
   }
 
   return (
-    <>
-      <Backdrop visible={isOpen} onClick={onClose} blur="sm" />
-
+    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       <motion.div
-        initial={{ x: '-100%' }}
-        animate={{ x: isOpen ? '0' : '-100%' }}
+        initial={false}
+        animate={{ width: isExpanded ? '320px' : '80px' }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 h-full w-80 bg-surfaceGlass backdrop-blur-3xl border-r border-borderLight z-40 shadow-2xl"
+        className="h-full bg-surfaceGlass backdrop-blur-3xl border-r border-borderLight z-50 shadow-2xl flex-shrink-0"
         style={{
           boxShadow: '4px 0 24px rgba(0, 0, 0, 0.15)',
         }}
       >
-        <div className="flex flex-col h-full p-6">
-          <div className="flex items-center justify-between mb-6 pt-2">
-            <h2 className="text-xl font-bold text-text flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10">
-                <Palette style={{ color: 'var(--color-primary)', fontSize: '20px' }} />
-              </div>
-              Knik AI
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-textSecondary hover:text-text hover:bg-white/10 transition-all"
-              aria-label="Close sidebar"
-            >
-              <Close />
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
-              onNewChat()
-              onClose()
-            }}
-            className="w-full text-textSecondary hover:text-text hover:bg-white/10 px-4 py-3 rounded-lg font-medium mb-6 transition-all"
+        <div className="flex flex-col h-full py-4">
+          {/* Header */}
+          <div
+            className={`flex items-center mb-6 ${isExpanded ? 'px-6 justify-between' : 'justify-center'}`}
           >
-            New Chat
-          </button>
-
-          <div className="mb-6 border-b border-border pb-4">
-            <h3 className="text-sm font-semibold text-textSecondary mb-3 px-2">Navigation</h3>
-            <div className="space-y-1">
-              <LinkButton
-                icon="💬"
-                label="Chat"
-                active={location.pathname === '/'}
-                onClick={() => {
-                  void navigate('/')
-                  onClose()
-                }}
-              />
-              <LinkButton
-                icon="⚙️"
-                label="Workflows"
-                active={location.pathname === '/workflows'}
-                onClick={() => {
-                  void navigate('/workflows')
-                  onClose()
-                }}
-              />
+            <div className={`flex items-center gap-2 ${isExpanded ? '' : 'justify-center w-full'}`}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
+                <Palette style={{ color: 'var(--color-primary)', fontSize: '24px' }} />
+              </div>
+              {isExpanded && <h2 className="text-xl font-bold text-text">Knik AI</h2>}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide">
-            <h3 className="text-sm font-semibold text-textSecondary mb-3 px-2">
-              Recent Conversations
+          {/* New Chat Button */}
+          <div className={`mb-6 ${isExpanded ? 'px-6' : 'flex justify-center'}`}>
+            <button
+              onClick={() => {
+                onNewChat()
+              }}
+              className={`
+                font-medium transition-all
+                ${
+                  isExpanded
+                    ? 'w-full text-textSecondary hover:text-text hover:bg-white/10 px-4 py-3 rounded-lg'
+                    : 'w-12 h-12 flex items-center justify-center text-textSecondary hover:text-text hover:bg-white/10 rounded-lg'
+                }
+              `}
+              title={isExpanded ? undefined : 'New Chat'}
+            >
+              <Palette />
+              {isExpanded && <span className="ml-3">New Chat</span>}
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <div className="mb-6 border-b border-border pb-4">
+            <h3
+              className={`text-sm font-semibold text-textSecondary mb-3 ${isExpanded ? 'px-6' : 'hidden'}`}
+            >
+              Navigation
             </h3>
-            <div className="space-y-1">
-              {loading ? (
-                <LoadingSpinner size="sm" className="py-8" />
-              ) : history.length === 0 ? (
-                <EmptyState
-                  icon="💬"
-                  title="No history yet"
-                  description="Start a conversation to see it here"
-                />
-              ) : (
-                history.slice(0, 5).map((msg, idx) => (
-                  <motion.div
-                    key={idx}
-                    whileHover={{ x: 4 }}
-                    className="px-3 py-3 rounded-lg text-sm text-textSecondary hover:bg-white/5 transition-all cursor-pointer flex items-center justify-between group"
-                  >
-                    <div className="flex-1 min-w-0">
+            <div className={`flex flex-col gap-1 ${isExpanded ? 'px-4' : 'items-center'}`}>
+              <button
+                onClick={() => {
+                  void navigate('/')
+                }}
+                className={`
+                  flex items-center transition-all rounded-lg
+                  ${
+                    location.pathname === '/'
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-textSecondary hover:bg-white/5 hover:text-text'
+                  }
+                  ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
+                `}
+                title={isExpanded ? undefined : 'Chat'}
+              >
+                <ChatIcon className={isExpanded ? 'mr-3' : ''} />
+                {isExpanded && <span className="font-medium">Chat</span>}
+              </button>
+
+              <button
+                onClick={() => {
+                  void navigate('/workflows')
+                }}
+                className={`
+                  flex items-center transition-all rounded-lg
+                  ${
+                    location.pathname === '/workflows'
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-textSecondary hover:bg-white/5 hover:text-text'
+                  }
+                  ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
+                `}
+                title={isExpanded ? undefined : 'Workflows'}
+              >
+                <AccountTree className={isExpanded ? 'mr-3' : ''} />
+                {isExpanded && <span className="font-medium">Workflows</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* Recent Conversations - Only visible when expanded */}
+          {isExpanded && (
+            <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide px-6">
+              <h3 className="text-sm font-semibold text-textSecondary mb-3">
+                Recent Conversations
+              </h3>
+              <div className="space-y-1">
+                {loading ? (
+                  <LoadingSpinner size="sm" className="py-8" />
+                ) : history.length === 0 ? (
+                  <EmptyState
+                    icon="💬"
+                    title="No history yet"
+                    description="Start a conversation to see it here"
+                  />
+                ) : (
+                  history.slice(0, 5).map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className="px-3 py-3 rounded-lg text-sm text-textSecondary hover:bg-white/5 transition-all cursor-pointer"
+                    >
                       <div className="font-medium text-textSecondary text-xs mb-1">
                         {msg.role === 'user' ? 'You' : 'Knik'}
                       </div>
                       <div className="line-clamp-2">{msg.content}</div>
                     </div>
-                    <ChevronRight
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ fontSize: 16 }}
-                    />
-                  </motion.div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface border-border">
-              <UserProfile avatar="AK" name="AMREET" displayOnly={true} />
-              <ThemeToggle />
-            </div>
+          {/* Footer */}
+          <div className={`space-y-3 ${isExpanded ? 'px-6' : 'items-center flex flex-col'}`}>
+            {isExpanded && (
+              <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface border-border">
+                <UserProfile avatar="AK" name="AMREET" displayOnly={true} />
+                <ThemeToggle />
+              </div>
+            )}
 
             <button
               onClick={() => setThemeSelectorOpen(true)}
-              className="w-full text-left px-4 py-3 text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center gap-3"
+              className={`
+                text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
+                ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
+              `}
+              title={isExpanded ? undefined : 'Theme Settings'}
             >
               <Palette />
-              Theme Settings
+              {isExpanded && <span>Theme Settings</span>}
             </button>
 
             <button
               onClick={() => void handleClearHistory()}
-              className="w-full text-left px-4 py-3 text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center gap-3"
+              className={`
+                text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
+                ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
+              `}
+              title={isExpanded ? undefined : 'Clear History'}
             >
               <TrashIcon />
-              Clear History
+              {isExpanded && <span>Clear History</span>}
             </button>
 
-            <button className="w-full text-left px-4 py-3 text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center gap-3">
+            <button
+              className={`
+                text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
+                ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
+              `}
+              title={isExpanded ? undefined : 'Settings'}
+            >
               <Settings />
-              Settings
+              {isExpanded && <span>Settings</span>}
             </button>
           </div>
         </div>
@@ -192,6 +239,6 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   )
 }

@@ -1,13 +1,10 @@
 import Sidebar from './Sidebar'
 import BackgroundEffects from '$sections/effects/BackgroundEffects'
-import HamburgerButton from '$components/HamburgerButton'
 import Toast from '$sections/feedback/Toast'
 import type { MainLayoutProps } from '$types/sections/layout'
 
 export default function MainLayout({
   children,
-  sidebarOpen,
-  setSidebarOpen,
   toasts,
   hideToast,
   onNewChat,
@@ -18,16 +15,11 @@ export default function MainLayout({
       <div className="h-screen bg-background relative overflow-hidden flex flex-col">
         <BackgroundEffects />
 
-        {!sidebarOpen && <HamburgerButton onClick={() => setSidebarOpen(true)} />}
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar onNewChat={onNewChat} onClearHistory={onClearHistory} />
 
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onNewChat={onNewChat}
-          onClearHistory={onClearHistory}
-        />
-
-        {children}
+          <div className="flex-1 overflow-hidden">{children}</div>
+        </div>
       </div>
 
       {toasts.map(toast => (

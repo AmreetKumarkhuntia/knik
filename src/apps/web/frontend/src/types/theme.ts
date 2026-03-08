@@ -30,3 +30,8 @@ export interface ThemeContextType {
   setMode: (mode: ThemeMode) => void
   setAccent: (accent: ThemeName) => void
 }
+
+export interface ThemeSelectorProps {
+  isOpen: boolean
+  onClose: () => void
+}

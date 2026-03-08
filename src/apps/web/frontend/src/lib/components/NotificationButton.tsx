@@ -1,9 +1,5 @@
 import { Notifications } from '@mui/icons-material'
-
-interface NotificationButtonProps {
-  badgeCount?: number
-  onClick?: () => void
-}
+import type { NotificationButtonProps } from '$types/components'
 
 export default function NotificationButton({ badgeCount = 0, onClick }: NotificationButtonProps) {
   return (

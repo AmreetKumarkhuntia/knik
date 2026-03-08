@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '$sections/theme'
 import MainLayout from '$sections/layout/MainLayout'
@@ -8,7 +8,6 @@ import { useToast, useAudio, useChat } from '$hooks'
 import type { InputPanelRef } from '$types/sections/chat'
 
 function AppContent() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const inputRef = useRef<InputPanelRef>(null)
   const { toasts, hideToast, success, error } = useToast()
 
@@ -38,8 +37,6 @@ function AppContent() {
   return (
     <BrowserRouter>
       <MainLayout
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
         toasts={toasts}
         hideToast={hideToast}
         onNewChat={onNewChat}

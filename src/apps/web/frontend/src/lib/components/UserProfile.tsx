@@ -1,12 +1,4 @@
-interface UserProfileProps {
-  avatar?: string
-  avatarColor?: string
-  name?: string
-  account?: string
-  displayOnly?: boolean
-  showBadge?: boolean
-  badgeType?: 'pro' | 'basic' | 'admin'
-}
+import type { UserProfileProps } from '$types/components'
 
 export default function UserProfile({
   avatar = 'AR',
