@@ -205,6 +205,9 @@ result = client.execute_tool("calculate", expression="2 + 2")
 ### Provider Support
 
 - **vertex** - Google Vertex AI with LangChain (recommended)
+- **gemini** - Google Gemini AI Studio API
+- **glm** - ZhipuAI GLM models
+- **zai** - Z.AI Platform (OpenAI-compatible)
 - **mock** - Testing/development
 
 List providers:
@@ -212,6 +215,29 @@ List providers:
 ```python
 AIClient.list_available_providers()
 ```
+
+#### Z.AI Provider Configuration
+
+```python
+from lib.services.ai_client import AIClient
+
+client = AIClient(
+    provider="zai",
+    model_name="glm-5",  # or glm-4, glm-4-flash
+    temperature=0.7,
+    max_tokens=1024
+)
+```
+
+**Environment Variables:**
+
+- `ZAI_API_KEY` - Your Z.AI API key (required)
+- `ZAI_API_BASE` - Custom API base URL (default: https://api.z.ai/api/paas/v4/)
+- `KNIK_AI_PROVIDER=zai` - Set Z.AI as default provider
+
+**Get API Key:** https://z.ai/model-api
+
+**Documentation:** https://docs.z.ai/guides/develop/langchain/introduction
 
 ## Example
 

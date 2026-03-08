@@ -25,16 +25,14 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <Card
-                variant={msg.role === 'user' ? 'bordered' : 'default'}
+                variant="default"
                 padding="md"
-                className={`max-w-[70%] shadow-2xl transition-all duration-300 ${
-                  msg.role === 'user'
-                    ? 'bg-white/5 border-white/50 animate-slide-in-right'
-                    : 'animate-slide-in-left'
+                className={`max-w-[70%] shadow-2xl transition-all duration-300 border border-white/20 ${
+                  msg.role === 'user' ? 'animate-slide-in-right' : 'animate-slide-in-left'
                 }`}
               >
                 {msg.role === 'user' ? (
-                  <p className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  <MarkdownMessage content={msg.content} />
                 ) : (
                   <MarkdownMessage content={msg.content} isStreaming={isStreaming} />
                 )}

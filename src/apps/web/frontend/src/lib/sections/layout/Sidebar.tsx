@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '$services'
 import { CloseIcon, TrashIcon, SettingsIcon } from '$components/icons'
 import Backdrop from '$components/Backdrop'
@@ -17,6 +17,7 @@ import type { Message } from '$types/hooks'
 
 export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: SidebarProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [history, setHistory] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -81,13 +82,19 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
                 icon="💬"
                 label="Chat"
                 active={location.pathname === '/'}
-                onClick={() => onClose()}
+                onClick={() => {
+                  void navigate('/')
+                  onClose()
+                }}
               />
               <LinkButton
                 icon="⚙️"
                 label="Workflows"
                 active={location.pathname === '/workflows'}
-                onClick={() => onClose()}
+                onClick={() => {
+                  void navigate('/workflows')
+                  onClose()
+                }}
               />
             </div>
           </div>

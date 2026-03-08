@@ -51,7 +51,7 @@
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "eslint --fix",
+      "./node_modules/.bin/eslint --fix",
       "prettier --write"
     ]
   }

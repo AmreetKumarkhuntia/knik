@@ -31,10 +31,10 @@ except ImportError:
     create_agent = None
 
 
-class GLMAIProvider(LangChainProvider):
+class ZhipuAIProvider(LangChainProvider):
     @classmethod
     def get_provider_name(cls) -> str:
-        return "glm"
+        return "zhipuai"
 
     def _create_agent(self, llm, mcp_registry, system_instruction):
         """Create a LangChain agent using new v1.x create_agent pattern"""
@@ -128,4 +128,4 @@ class GLMAIProvider(LangChainProvider):
         }
 
 
-ProviderRegistry.register(GLMAIProvider.get_provider_name(), GLMAIProvider)
+ProviderRegistry.register(ZhipuAIProvider.get_provider_name(), ZhipuAIProvider)

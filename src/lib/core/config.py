@@ -101,6 +101,9 @@ Be reliable, efficient, and action focused like Jarvis."""
         "gemini-1.5-flash-8b": "Smaller, faster flash variant",
         "gemini-1.5-pro": "More capable, slower model",
         "gemini-1.0-pro": "Legacy stable model",
+        "glm-5": "Z.AI GLM-5 model (recommended)",
+        "glm-4": "Z.AI GLM-4 model",
+        "glm-4-flash": "Faster GLM-4 variant",
     }
 
     # ============================================================================

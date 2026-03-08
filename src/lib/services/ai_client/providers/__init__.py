@@ -2,15 +2,17 @@
 
 from .base_provider import BaseAIProvider
 from .gemini_provider import GeminiAIProvider
-from .glm_provider import GLMAIProvider
 from .mock_provider import MockAIProvider
 from .vertex_provider import VertexAIProvider
+from .zai_provider import ZAIProvider
+from .zhipuai_provider import ZhipuAIProvider
 
 
 __all__ = [
     "BaseAIProvider",
     "VertexAIProvider",
     "GeminiAIProvider",
-    "GLMAIProvider",
+    "ZhipuAIProvider",
+    "ZAIProvider",
     "MockAIProvider",
 ]
