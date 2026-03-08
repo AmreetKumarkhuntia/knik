@@ -3,6 +3,8 @@ export type NodeTypeName =
   | 'ConditionalBranchNode'
   | 'FlowMergeNode'
   | 'AIExecutionNode'
+  | 'StartNode'
+  | 'EndNode'
 
 export type ExecutionStatus = 'pending' | 'running' | 'success' | 'failed'
 
@@ -37,15 +39,17 @@ export type NodeDefinition =
   | MergeNodeDefinition
   | AINodeDefinition
 
-export interface Connection {
+export interface WorkflowConnection {
   from_id: string
   to_id: string
   condition?: string
 }
 
+export type Connection = WorkflowConnection
+
 export interface WorkflowDefinition {
   nodes: Record<string, NodeDefinition>
-  connections: Connection[]
+  connections: WorkflowConnection[]
 }
 
 export interface Workflow {
@@ -95,7 +99,19 @@ export interface NodeExecutionRecord {
   outputs?: Record<string, unknown>
 }
 
-export interface WorkflowsListResponse {
+export interface WorkflowStats {
+  totalExecutions: number
+  activeJobs: number
+  successRate: string
+  hasData: boolean
+}
+
+export interface WorkflowStatsResponse {
+  success: boolean
+  stats: WorkflowStats
+}
+
+export interface WorkflowListResponse {
   success: boolean
   workflows: Pick<Workflow, 'id' | 'name' | 'description'>[]
   total: number

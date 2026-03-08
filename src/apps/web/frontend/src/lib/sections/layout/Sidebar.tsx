@@ -5,24 +5,17 @@
 
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import {
-  Close,
-  Delete as TrashIcon,
-  Settings,
-  ChevronRight,
-  SmartToy,
-  ChatBubbleOutline,
-  AccountTree,
-  Palette,
-} from '@mui/icons-material'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Close, Delete as TrashIcon, Settings, ChevronRight, Palette } from '@mui/icons-material'
 import Backdrop from '$components/Backdrop'
 import LoadingSpinner from '$components/LoadingSpinner'
 import EmptyState from '$components/EmptyState'
+import LinkButton from '$components/LinkButton'
 import { ThemeToggle, ThemeSelector } from '$sections/theme'
+import UserProfile from '$components/UserProfile'
 import type { SidebarProps } from '$types/sections/layout'
 import type { Message } from '$types/hooks'
-import { api } from '$services'
+import { api } from '$services/api'
 
 export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: SidebarProps) {
   const location = useLocation()
@@ -31,6 +24,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
   const [loading, setLoading] = useState(false)
   const [themeSelectorOpen, setThemeSelectorOpen] = useState(false)
 
+  // Fetch history when sidebar opens
   useEffect(() => {
     if (isOpen) {
       void fetchHistory()
@@ -71,14 +65,14 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between mb-6 pt-2">
             <h2 className="text-xl font-bold text-text flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                <SmartToy style={{ color: 'var(--color-primary)' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10">
+                <Palette style={{ color: 'var(--color-primary)', fontSize: '20px' }} />
               </div>
               Knik AI
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-textSecondary hover:text-text hover:bg-white/10 transition-all duration-200"
+              className="p-2 rounded-lg text-textSecondary hover:text-text hover:bg-white/10 transition-all"
               aria-label="Close sidebar"
             >
               <Close />
@@ -90,7 +84,7 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
               onNewChat()
               onClose()
             }}
-            className="w-full text-textSecondary hover:text-text hover:bg-white/10 px-4 py-3 rounded-lg font-medium mb-6 transition-all duration-200"
+            className="w-full text-textSecondary hover:text-text hover:bg-white/10 px-4 py-3 rounded-lg font-medium mb-6 transition-all"
           >
             New Chat
           </button>
@@ -98,34 +92,24 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
           <div className="mb-6 border-b border-border pb-4">
             <h3 className="text-sm font-semibold text-textSecondary mb-3 px-2">Navigation</h3>
             <div className="space-y-1">
-              <button
+              <LinkButton
+                icon="💬"
+                label="Chat"
+                active={location.pathname === '/'}
                 onClick={() => {
                   void navigate('/')
                   onClose()
                 }}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-3 ${
-                  location.pathname === '/'
-                    ? 'bg-primary/10 text-text'
-                    : 'text-textSecondary hover:text-text hover:bg-white/5'
-                }`}
-              >
-                <ChatBubbleOutline />
-                Chat
-              </button>
-              <button
+              />
+              <LinkButton
+                icon="⚙️"
+                label="Workflows"
+                active={location.pathname === '/workflows'}
                 onClick={() => {
                   void navigate('/workflows')
                   onClose()
                 }}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-3 ${
-                  location.pathname === '/workflows'
-                    ? 'bg-primary/10 text-text'
-                    : 'text-textSecondary hover:text-text hover:bg-white/5'
-                }`}
-              >
-                <AccountTree />
-                Workflows
-              </button>
+              />
             </div>
           </div>
 
@@ -166,16 +150,13 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-3 py-3 rounded-lg bg-surface border border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-text font-semibold bg-primary/20">
-                  AR
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-text">Alex Rivera</div>
-                  <div className="text-xs text-textSecondary">Pro Account</div>
-                </div>
-              </div>
+            <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface border-border">
+              <UserProfile
+                avatar="AR"
+                name="Alex Rivera"
+                account="Pro Account"
+                displayOnly={true}
+              />
               <ThemeToggle />
             </div>
 
@@ -203,7 +184,19 @@ export default function Sidebar({ isOpen, onClose, onClearHistory, onNewChat }: 
         </div>
       </motion.div>
 
-      <ThemeSelector isOpen={themeSelectorOpen} onClose={() => setThemeSelectorOpen(false)} />
+      <AnimatePresence>
+        {themeSelectorOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+          >
+            <ThemeSelector isOpen={themeSelectorOpen} onClose={() => setThemeSelectorOpen(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

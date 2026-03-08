@@ -12,11 +12,11 @@ export default function ScheduleCard({
   onRun,
 }: ScheduleCardProps) {
   return (
-    <div className="bg-black/10 backdrop-blur-3xl border border-white/20 rounded-xl p-4 hover:border-white/30 transition-all">
+    <div className="bg-surfaceGlass backdrop-blur-3xl border border-borderLight rounded-xl p-4 hover:border-primary transition-all">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="text-white font-medium">{workflowName || schedule.workflow_id}</h3>
-          <p className="text-white/50 text-sm">
+          <h3 className="font-medium">{workflowName || schedule.workflow_id}</h3>
+          <p className="text-textSecondary text-sm">
             Trigger: {triggerWorkflowName || schedule.trigger_workflow_id}
           </p>
         </div>
@@ -26,7 +26,7 @@ export default function ScheduleCard({
         />
       </div>
 
-      <div className="flex items-center gap-4 text-xs text-white/60 mb-4">
+      <div className="flex items-center gap-4 text-xs text-textSecondary mb-4">
         <span>TZ: {schedule.timezone}</span>
         {schedule.last_executed_at && (
           <span>Last: {new Date(schedule.last_executed_at).toLocaleString()}</span>

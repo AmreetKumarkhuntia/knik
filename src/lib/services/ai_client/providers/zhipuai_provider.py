@@ -88,7 +88,17 @@ class ZhipuAIProvider(LangChainProvider):
         filtered_kwargs = {
             k: v
             for k, v in kwargs.items()
-            if k not in ["model", "model_name", "zhipuai_api_key", "temperature", "max_tokens"]
+            if k
+            not in [
+                "model",
+                "model_name",
+                "zhipuai_api_key",
+                "temperature",
+                "max_tokens",
+                "project_id",
+                "location",
+                "project",
+            ]
         }
 
         # streaming=False avoids SSE header issues

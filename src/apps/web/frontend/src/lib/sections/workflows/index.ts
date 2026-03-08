@@ -1,5 +1,6 @@
 export { default as WorkflowDashboard } from './WorkflowDashboard'
-export * from '$common'
+export { default as WorkflowHeader } from './WorkflowHeader'
+export { default as WorkflowStats } from './WorkflowStats'
 export * from './ScheduleManager'
 export * from './ExecutionHistory'
 export * from './WorkflowBuilder'

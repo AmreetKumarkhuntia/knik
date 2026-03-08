@@ -9,12 +9,13 @@ import type { TabType } from '$types/workflow-components'
 import { workflowApi } from '$services/workflowApi'
 import ActionButton from '$components/ActionButton'
 import ConfirmDialog from '$components/ConfirmDialog'
-import LoadingSpinner from '$components/LoadingSpinner'
 import Tabs from '$components/Tabs'
 import { ScheduleList, ScheduleForm } from './ScheduleManager'
 import { HistoryTable, ExecutionDetail } from './ExecutionHistory'
 import { Canvas } from './WorkflowBuilder'
-import { useWorkflows, useSchedules, useExecutions, useRealtimeStatus } from './hooks'
+import WorkflowHeader from './WorkflowHeader'
+import WorkflowStats from './WorkflowStats'
+import EnhancedEmptyState from '$components/EnhancedEmptyState'
 
 export default function WorkflowDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('schedules')
@@ -26,32 +27,28 @@ export default function WorkflowDashboard() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [workflowDefinition] = useState<WorkflowDefinition | undefined>()
 
-  const { workflows, loading: workflowsLoading, refetch: refetchWorkflows } = useWorkflows()
-  const {
-    schedules,
-    loading: schedulesLoading,
-    refetch: refetchSchedules,
-    toggleSchedule,
-    deleteSchedule,
-  } = useSchedules()
-  const {
-    executions,
-    loading: executionsLoading,
-    refetch: refetchExecutions,
-  } = useExecutions(selectedWorkflowId)
+  // Temporary placeholders until hooks are implemented
+  const [workflows] = useState<Array<{ id: string; name: string; description?: string }>>([])
+  const [schedules] = useState<Schedule[]>([])
+  const [executions] = useState<ExecutionRecord[]>([])
+  const schedulesLoading = false
+  const executionsLoading = false
 
   const workflowNames = useMemo(
-    () => Object.fromEntries(workflows.map(w => [w.id, w.name])),
+    () =>
+      Object.fromEntries(
+        workflows.map((w: { id: string; name: string; description?: string }) => [w.id, w.name])
+      ),
     [workflows]
   )
 
-  const handleRefresh = useCallback(() => {
-    void refetchWorkflows()
-    void refetchSchedules()
-    void refetchExecutions()
-  }, [refetchWorkflows, refetchSchedules, refetchExecutions])
+  const toggleSchedule = useCallback(async (id: number, enabled: boolean) => {
+    console.log('Toggle schedule:', id, enabled)
+  }, [])
 
-  useRealtimeStatus(handleRefresh, 10000)
+  const deleteSchedule = useCallback(async (id: number) => {
+    console.log('Delete schedule:', id)
+  }, [])
 
   const handleToggleSchedule = useCallback(
     async (id: number, enabled: boolean) => {
@@ -74,32 +71,24 @@ export default function WorkflowDashboard() {
     }
   }, [deleteConfirmId, deleteSchedule])
 
-  const handleRunWorkflow = useCallback(
-    async (workflowId: string) => {
-      try {
-        setIsExecuting(true)
-        await workflowApi.workflows.execute(workflowId)
-        void refetchExecutions()
-      } catch (error) {
-        console.error('Failed to execute workflow:', error)
-      } finally {
-        setIsExecuting(false)
-      }
-    },
-    [refetchExecutions]
-  )
+  const handleRunWorkflow = useCallback(async (workflowId: string) => {
+    try {
+      setIsExecuting(true)
+      await workflowApi.workflows.execute(workflowId)
+    } catch (error) {
+      console.error('Failed to execute workflow:', error)
+    } finally {
+      setIsExecuting(false)
+    }
+  }, [])
 
-  const handleCreateSchedule = useCallback(
-    async (data: ScheduleCreateRequest) => {
-      try {
-        await workflowApi.schedules.create(data)
-        void refetchSchedules()
-      } catch (error) {
-        console.error('Failed to create schedule:', error)
-      }
-    },
-    [refetchSchedules]
-  )
+  const handleCreateSchedule = useCallback(async (data: ScheduleCreateRequest) => {
+    try {
+      await workflowApi.schedules.create(data)
+    } catch (error) {
+      console.error('Failed to create schedule:', error)
+    }
+  }, [])
 
   const handleViewExecution = useCallback((execution: ExecutionRecord) => {
     setSelectedExecution(execution)
@@ -118,78 +107,70 @@ export default function WorkflowDashboard() {
     { id: 'builder', label: 'Builder', icon: '🔧' },
   ]
 
-  if (workflowsLoading && schedulesLoading) {
-    return <LoadingSpinner size="lg" className="h-screen" />
-  }
-
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background text-text p-6">
+      <div className="max-w-7xl mx-auto flex flex-col">
         <header className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Workflow Dashboard</h1>
-              <p className="text-white/60 mt-1">
-                Manage cron jobs, view execution history, and build workflows
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <ActionButton
-                icon="↻"
-                label="Refresh"
-                variant="ghost"
-                onClick={() => void handleRefresh()}
-              />
-              <ActionButton
-                icon="+"
-                label="New Schedule"
-                variant="primary"
-                onClick={() => setShowScheduleForm(true)}
-              />
-            </div>
-          </div>
-
+          <WorkflowHeader />
           <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} variant="underline" />
         </header>
 
-        <main>
+        <main className="flex-1 pb-40">
           {activeTab === 'schedules' && (
             <div>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-white mb-2">Active Schedules</h2>
-                <p className="text-white/50 text-sm">
+                <h2 className="text-xl font-semibold mb-2">Active Schedules</h2>
+                <p className="text-textSecondary text-sm">
                   {schedules.length} schedule{schedules.length !== 1 ? 's' : ''} configured
                 </p>
               </div>
-              <ScheduleList
-                schedules={schedules}
-                loading={schedulesLoading}
-                workflowNames={workflowNames}
-                onToggle={(id, enabled) => void handleToggleSchedule(id, enabled)}
-                onEdit={schedule => {
-                  setEditingSchedule(schedule)
-                  setShowScheduleForm(true)
-                }}
-                onDelete={id => setDeleteConfirmId(id)}
-                onRun={workflowId => void handleRunWorkflow(workflowId)}
-              />
+              {schedules.length === 0 ? (
+                <EnhancedEmptyState
+                  title="No schedules yet"
+                  description="Create a schedule to automate workflow execution and run your workflows on a timer."
+                  actionLabel="Create Schedule"
+                  secondaryActionLabel="Learn More"
+                />
+              ) : (
+                <ScheduleList
+                  schedules={schedules}
+                  loading={schedulesLoading}
+                  workflowNames={workflowNames}
+                  onToggle={(id, enabled) => void handleToggleSchedule(id, enabled)}
+                  onEdit={schedule => {
+                    setEditingSchedule(schedule)
+                    setShowScheduleForm(true)
+                  }}
+                  onDelete={id => setDeleteConfirmId(id)}
+                  onRun={workflowId => void handleRunWorkflow(workflowId)}
+                />
+              )}
             </div>
           )}
 
           {activeTab === 'history' && (
             <div>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-white mb-2">Execution History</h2>
-                <p className="text-white/50 text-sm">
+                <h2 className="text-xl font-semibold mb-2">Execution History</h2>
+                <p className="text-textSecondary text-sm">
                   Select a schedule and run it to see execution history
                 </p>
               </div>
-              <HistoryTable
-                executions={executions}
-                loading={executionsLoading}
-                onViewDetail={handleViewExecution}
-                onRetry={exec => void handleRunWorkflow(exec.workflow_id)}
-              />
+              {executions.length === 0 ? (
+                <EnhancedEmptyState
+                  title="No executions yet"
+                  description="Run your workflow to see execution history and detailed performance metrics."
+                  actionLabel="Run Workflow"
+                  secondaryActionLabel="Learn More"
+                />
+              ) : (
+                <HistoryTable
+                  executions={executions}
+                  loading={executionsLoading}
+                  onViewDetail={handleViewExecution}
+                  onRetry={exec => void handleRunWorkflow(exec.workflow_id)}
+                />
+              )}
             </div>
           )}
 
@@ -197,8 +178,8 @@ export default function WorkflowDashboard() {
             <div className="h-[600px]">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-2">Workflow Builder</h2>
-                  <p className="text-white/50 text-sm">
+                  <h2 className="text-xl font-semibold mb-2">Workflow Builder</h2>
+                  <p className="text-textSecondary text-sm">
                     {selectedWorkflowId
                       ? `Editing: ${workflowNames[selectedWorkflowId] || selectedWorkflowId}`
                       : 'Create a new workflow'}
@@ -214,18 +195,31 @@ export default function WorkflowDashboard() {
                   />
                 )}
               </div>
-              <Canvas
-                workflowId={selectedWorkflowId || undefined}
-                definition={workflowDefinition}
-                onSave={handleSaveWorkflow}
-                onExecute={
-                  selectedWorkflowId ? () => void handleRunWorkflow(selectedWorkflowId) : undefined
-                }
-              />
+              {!selectedWorkflowId ? (
+                <EnhancedEmptyState
+                  title="No workflow selected"
+                  description="Select an existing workflow or create a new one to start building your automation."
+                  actionLabel="Create New Workflow"
+                  secondaryActionLabel="Learn More"
+                />
+              ) : (
+                <Canvas
+                  workflowId={selectedWorkflowId}
+                  definition={workflowDefinition}
+                  onSave={handleSaveWorkflow}
+                  onExecute={
+                    selectedWorkflowId
+                      ? () => void handleRunWorkflow(selectedWorkflowId)
+                      : undefined
+                  }
+                />
+              )}
             </div>
           )}
         </main>
       </div>
+
+      <WorkflowStats />
 
       <ScheduleForm
         isOpen={showScheduleForm}
@@ -233,7 +227,7 @@ export default function WorkflowDashboard() {
           setShowScheduleForm(false)
           setEditingSchedule(null)
         }}
-        onSubmit={data => void handleCreateSchedule(data)}
+        onSubmit={data => handleCreateSchedule(data)}
         workflows={workflows}
         initialData={editingSchedule || undefined}
       />

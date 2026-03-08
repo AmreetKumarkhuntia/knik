@@ -5,17 +5,19 @@ import type { FunctionNodeData } from '$types/workflow-components'
 export default memo(function FunctionNode({ data }: NodeProps) {
   const nodeData = data as unknown as FunctionNodeData
   return (
-    <div className="bg-gray-800 border-2 border-blue-500/50 rounded-lg p-3 min-w-[180px] shadow-lg">
-      <Handle type="target" position={Position.Top} className="!bg-blue-400 !w-3 !h-3" />
+    <div className="bg-surface border-2 border-primary/50 rounded-lg p-3 min-w-[180px] shadow-lg">
+      <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">⚡</span>
-        <span className="text-white font-medium text-sm">Function</span>
+        <span className="text-text font-medium text-sm">Function</span>
       </div>
-      <p className="text-white/60 text-xs truncate">{nodeData.function_name || 'Unnamed'}</p>
+      <p className="text-textSecondary text-xs truncate">{nodeData.function_name || 'Unnamed'}</p>
       {nodeData.params && Object.keys(nodeData.params).length > 0 && (
-        <p className="text-white/40 text-xs mt-1">{Object.keys(nodeData.params).length} params</p>
+        <p className="text-textSecondary/60 text-xs mt-1">
+          {Object.keys(nodeData.params).length} params
+        </p>
       )}
-      <Handle type="source" position={Position.Bottom} className="!bg-blue-400 !w-3 !h-3" />
+      <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" />
     </div>
   )
 })

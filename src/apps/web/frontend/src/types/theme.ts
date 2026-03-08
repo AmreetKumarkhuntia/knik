@@ -9,6 +9,8 @@ export interface ThemeColors {
   textSecondary: string
   primary: string
   primaryHover: string
+  accent: string
+  accentHover: string
   border: string
   borderLight: string
   success: string

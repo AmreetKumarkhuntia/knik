@@ -166,7 +166,7 @@ export default function Canvas({
   }, [nodes, edges, onSave])
 
   return (
-    <div className="h-full w-full bg-gray-950 rounded-xl overflow-hidden border border-white/10">
+    <div className="h-full w-full bg-surface rounded-xl overflow-hidden border border-border">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -191,9 +191,9 @@ export default function Canvas({
           size={1}
           color="rgba(255,255,255,0.1)"
         />
-        <Controls className="!bg-black/30 !border-white/10 !rounded-lg" />
+        <Controls className="!bg-surface !border-border !rounded-lg" />
         <MiniMap
-          className="!bg-black/30 !border-white/10"
+          className="!bg-surface !border-border"
           nodeColor="rgba(255,255,255,0.3)"
           maskColor="rgba(0,0,0,0.8)"
         />

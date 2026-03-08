@@ -85,7 +85,18 @@ class ZAIProvider(LangChainProvider):
         filtered_kwargs = {
             k: v
             for k, v in kwargs.items()
-            if k not in ["model", "model_name", "zai_api_key", "api_base", "temperature", "max_tokens"]
+            if k
+            not in [
+                "model",
+                "model_name",
+                "zai_api_key",
+                "api_base",
+                "temperature",
+                "max_tokens",
+                "project_id",
+                "location",
+                "project",
+            ]
         }
 
         llm = ChatOpenAI(

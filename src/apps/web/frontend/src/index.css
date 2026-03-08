@@ -19,6 +19,8 @@
   --color-text-secondary: #a3a3a3;
   --color-primary: #8b5cf6;
   --color-primary-hover: #a78bfa;
+  --color-accent: #00d9f4;
+  --color-accent-hover: #00e5ff;
   --color-border: rgba(255, 255, 255, 0.1);
   --color-border-light: rgba(255, 255, 255, 0.2);
   --color-success: #10b981;

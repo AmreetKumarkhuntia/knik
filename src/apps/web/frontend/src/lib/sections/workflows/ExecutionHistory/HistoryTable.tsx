@@ -1,6 +1,6 @@
 import StatusBadge from '$components/StatusBadge'
 import EmptyState from '$components/EmptyState'
-import { formatDuration, formatDate } from '$utils'
+import { formatDuration, formatDate } from '$lib/utils/format'
 import type { HistoryTableProps } from '$types/sections/execution-history'
 
 export default function HistoryTable({
@@ -11,8 +11,8 @@ export default function HistoryTable({
 }: HistoryTableProps) {
   if (loading) {
     return (
-      <div className="text-center py-10 text-white/50">
-        <span className="animate-spin inline-block w-6 h-6 border-2 border-white/30 border-t-white rounded-full" />
+      <div className="text-center py-10 text-textSecondary">
+        <span className="animate-spin inline-block w-6 h-6 border-2 border-border-t-text rounded-full" />
         <p className="mt-2">Loading history...</p>
       </div>
     )
@@ -32,39 +32,39 @@ export default function HistoryTable({
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-white/10 text-left">
-            <th className="px-4 py-3 text-white/60 font-medium text-sm">ID</th>
-            <th className="px-4 py-3 text-white/60 font-medium text-sm">Status</th>
-            <th className="px-4 py-3 text-white/60 font-medium text-sm">Started</th>
-            <th className="px-4 py-3 text-white/60 font-medium text-sm">Duration</th>
-            <th className="px-4 py-3 text-white/60 font-medium text-sm">Error</th>
-            <th className="px-4 py-3 text-white/60 font-medium text-sm">Actions</th>
+          <tr className="border-b border-border text-left">
+            <th className="px-4 py-3 text-textSecondary font-medium text-sm">ID</th>
+            <th className="px-4 py-3 text-textSecondary font-medium text-sm">Status</th>
+            <th className="px-4 py-3 text-textSecondary font-medium text-sm">Started</th>
+            <th className="px-4 py-3 text-textSecondary font-medium text-sm">Duration</th>
+            <th className="px-4 py-3 text-textSecondary font-medium text-sm">Error</th>
+            <th className="px-4 py-3 text-textSecondary font-medium text-sm">Actions</th>
           </tr>
         </thead>
         <tbody>
           {executions.map(execution => (
             <tr
               key={execution.id}
-              className="border-b border-white/5 hover:bg-white/5 transition-colors"
+              className="border-b border-borderLight hover:bg-white/5 transition-colors"
             >
-              <td className="px-4 py-3 text-white/80 font-mono text-sm">#{execution.id}</td>
+              <td className="px-4 py-3 text-textSecondary font-mono text-sm">#{execution.id}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={execution.status} size="sm" />
               </td>
-              <td className="px-4 py-3 text-white/60 text-sm">
+              <td className="px-4 py-3 text-textSecondary text-sm">
                 {formatDate(execution.started_at)}
               </td>
-              <td className="px-4 py-3 text-white/60 text-sm font-mono">
+              <td className="px-4 py-3 text-textSecondary text-sm font-mono">
                 {formatDuration(execution.duration_ms)}
               </td>
-              <td className="px-4 py-3 text-red-400 text-sm max-w-xs truncate">
+              <td className="px-4 py-3 text-error text-sm max-w-xs truncate">
                 {execution.error_message || '-'}
               </td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
                   <button
                     onClick={() => onViewDetail(execution)}
-                    className="text-white/60 hover:text-white text-sm transition-colors"
+                    className="text-textSecondary hover:text-text text-sm transition-colors"
                   >
                     View
                   </button>
