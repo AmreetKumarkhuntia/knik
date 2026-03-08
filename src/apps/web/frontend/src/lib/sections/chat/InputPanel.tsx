@@ -1,10 +1,11 @@
 /**
  * InputPanel Component
- * Text input with send button and keyboard shortcuts
+ * Enhanced text input with attach, mic, and send buttons
  */
 
 import { forwardRef, useImperativeHandle, useRef } from 'react'
-import Input from '$components/Input'
+import { motion } from 'framer-motion'
+import { AttachFile, Mic, Send as SendIcon } from '@mui/icons-material'
 import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
 const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
@@ -24,17 +25,62 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
     }
 
     return (
-      <div className="bg-white/5 backdrop-blur-lg rounded-xl p-2 shadow-2xl border border-white/10">
-        <Input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          onKeyPress={handleKeyPress}
-          fullWidth={true}
-          placeholder="Type your message... (Ctrl+K to focus, Esc to clear)"
-          disabled={disabled}
-        />
+      <div
+        className="bg-surfaceGlass backdrop-blur-lg rounded-xl p-3 shadow-2xl border border-borderLight"
+        style={{
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-textSecondary hover:text-text transition-colors duration-200"
+            aria-label="Attach file"
+            disabled={disabled}
+          >
+            <AttachFile />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-textSecondary hover:text-text transition-colors duration-200"
+            aria-label="Voice input"
+            disabled={disabled}
+          >
+            <Mic />
+          </motion.button>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type your message..."
+            disabled={disabled}
+            className="flex-1 bg-transparent text-text placeholder-textSecondary outline-none border-none text-base transition-all duration-200 focus:ring-0"
+          />
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onSend}
+            disabled={disabled || !value.trim()}
+            className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+              !value.trim() || disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            }`}
+            style={{
+              backgroundColor: 'var(--color-primary)',
+              boxShadow:
+                value.trim() && !disabled ? '0 4px 15px -3px var(--color-primary)' : 'none',
+            }}
+            aria-label="Send message"
+          >
+            <SendIcon style={{ color: 'white', fontSize: 20 }} />
+          </motion.button>
+        </div>
       </div>
     )
   }

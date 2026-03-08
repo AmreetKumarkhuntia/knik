@@ -15,7 +15,7 @@ export default function MainLayout({
 }: MainLayoutProps) {
   return (
     <>
-      <div className="h-screen bg-gray-950 relative overflow-hidden flex flex-col">
+      <div className="h-screen bg-background relative overflow-hidden flex flex-col">
         <BackgroundEffects />
 
         {!sidebarOpen && <HamburgerButton onClick={() => setSidebarOpen(true)} />}
