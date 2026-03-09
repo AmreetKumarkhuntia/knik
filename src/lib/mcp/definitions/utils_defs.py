@@ -1,29 +1,18 @@
 UTILS_DEFINITIONS = [
     {
         "name": "calculate",
-        "description": "Safely evaluate mathematical expressions. Supports basic operations (+, -, *, /, **, %), and functions like sqrt, sin, cos, log, etc.",
+        "description": "Safely evaluate mathematical expressions. Supports basic operations (+, -, *, /, **, %), and functions like sqrt, sin, cos, log, etc. Use precision=-1 for no rounding, or specify decimal places.",
         "parameters": {
             "type": "object",
             "properties": {
                 "expression": {
                     "type": "string",
                     "description": "Mathematical expression to evaluate (e.g., '2 + 2', 'sqrt(16)', 'sin(pi/2)')",
-                }
-            },
-            "required": ["expression"],
-        },
-    },
-    {
-        "name": "advanced_calculate",
-        "description": "Advanced calculator supporting complex mathematical expressions with functions like sqrt, sin, cos, tan, log, factorial, etc. Includes precision control.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "expression": {"type": "string", "description": "Mathematical expression to evaluate"},
+                },
                 "precision": {
                     "type": "integer",
-                    "description": "Decimal precision for result (default: 2)",
-                    "default": 2,
+                    "description": "Decimal precision for result (default: -1 for no rounding)",
+                    "default": -1,
                 },
             },
             "required": ["expression"],
@@ -50,15 +39,6 @@ UTILS_DEFINITIONS = [
         "parameters": {
             "type": "object",
             "properties": {"text": {"type": "string", "description": "String to reverse"}},
-            "required": ["text"],
-        },
-    },
-    {
-        "name": "count_words",
-        "description": "Count words in a text",
-        "parameters": {
-            "type": "object",
-            "properties": {"text": {"type": "string", "description": "Text to count words in"}},
             "required": ["text"],
         },
     },

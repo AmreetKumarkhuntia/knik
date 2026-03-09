@@ -138,6 +138,14 @@ class SchedulerDB:
         await PostgresDB.execute(query, (schedule_id,))
 
     @staticmethod
+    async def delete_schedules_by_workflow(workflow_id: str) -> int:
+        """Delete all schedules for a given workflow_id. Returns count of deleted schedules."""
+        await SchedulerDB.check_initialized()
+        query = "DELETE FROM schedules WHERE target_workflow_id = %s"
+        result = await PostgresDB.execute(query, (workflow_id,))
+        return result.rowcount if hasattr(result, "rowcount") else 0
+
+    @staticmethod
     async def create_execution(workflow_id: str, inputs: dict) -> int | None:
         """Start tracking a new execution."""
         await SchedulerDB.check_initialized()

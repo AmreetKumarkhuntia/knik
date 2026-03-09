@@ -96,56 +96,6 @@ def _calculate_first_run(schedule_description: str, timezone: str):
     return parsed.astimezone(UTC)
 
 
-def schedule_workflow(
-    target_workflow_id: str, schedule_description: str, trigger_type: str, timezone: str = "GMT+5:30"
-) -> dict[str, Any]:
-    """Schedule a workflow using natural language timing.
-
-    Parses schedule description to calculate first run and recurrence interval.
-    """
-    try:
-        printer.info(f"Scheduling workflow {target_workflow_id}: {schedule_description}")
-
-        workflow = _run_async(SchedulerDB.get_workflow(target_workflow_id))
-        if not workflow:
-            return {"error": f"Workflow {target_workflow_id} not found", "workflow_id": target_workflow_id}
-
-        _validate_timezone(timezone)
-
-        first_run = _calculate_first_run(schedule_description, timezone)
-        recurrence_seconds = _parse_recurrence_seconds(schedule_description)
-
-        schedule = Schedule(
-            id=0,
-            target_workflow_id=target_workflow_id,
-            enabled=True,
-            timezone=timezone,
-            schedule_description=schedule_description,
-            next_run_at=first_run,
-            recurrence_seconds=recurrence_seconds,
-        )
-
-        schedule_id = _run_async(SchedulerDB.create_schedule(schedule))
-
-        printer.info(f"Workflow scheduled successfully: {schedule_id}, next run: {first_run}")
-        return {
-            "success": True,
-            "schedule_id": schedule_id,
-            "target_workflow_id": target_workflow_id,
-            "schedule_description": schedule_description,
-            "next_run_at": first_run.isoformat(),
-            "recurrence_seconds": recurrence_seconds,
-            "timezone": timezone,
-        }
-
-    except ValueError as e:
-        printer.error(f"Validation error scheduling workflow: {e}")
-        return {"error": str(e), "workflow_id": target_workflow_id}
-    except Exception as e:
-        printer.error(f"Error scheduling workflow: {e}")
-        return {"error": f"Failed to schedule workflow: {str(e)}", "workflow_id": target_workflow_id}
-
-
 def list_workflows() -> dict[str, Any]:
     """List all registered workflows."""
     try:
@@ -167,6 +117,31 @@ def list_workflows() -> dict[str, Any]:
     except Exception as e:
         printer.error(f"Error listing workflows: {e}")
         return {"error": f"Failed to list workflows: {str(e)}"}
+
+
+def remove_workflow(workflow_id: str) -> dict[str, Any]:
+    """Remove a workflow and its associated schedules."""
+    printer.info(f"Removing workflow: {workflow_id}")
+    try:
+        workflow = _run_async(SchedulerDB.get_workflow(workflow_id))
+        if not workflow:
+            return {"error": f"Workflow {workflow_id} not found", "workflow_id": workflow_id}
+
+        deleted_schedules = _run_async(SchedulerDB.delete_schedules_by_workflow(workflow_id))
+
+        _run_async(SchedulerDB.delete_workflow(workflow_id))
+
+        printer.info(f"Workflow {workflow_id} removed successfully with {deleted_schedules} associated schedules")
+        return {
+            "success": True,
+            "workflow_id": workflow_id,
+            "deleted_schedules": deleted_schedules,
+            "message": f"Workflow and {deleted_schedules} associated schedules removed",
+        }
+
+    except Exception as e:
+        printer.error(f"Error removing workflow: {e}")
+        return {"error": f"Failed to remove workflow: {str(e)}", "workflow_id": workflow_id}
 
 
 def _validate_workflow_definition(definition: dict[str, Any]) -> dict[str, Any]:
@@ -274,17 +249,6 @@ def _check_acyclic(nodes: dict[str, Any], connections: list[dict[str, Any]]) -> 
                 queue.append(neighbor)
 
     return visited_count == len(nodes)
-
-
-def _validate_timezone(timezone_str: str) -> None:
-    """Validate timezone string."""
-    try:
-        if timezone_str.startswith("GMT") or timezone_str.startswith("UTC"):
-            return
-
-        ZoneInfo(timezone_str)
-    except Exception as e:
-        raise ValueError(f"Invalid timezone: {timezone_str}. Error: {e}") from None
 
 
 def get_workflow_templates() -> dict[str, Any]:
@@ -560,7 +524,7 @@ def get_workflow_templates() -> dict[str, Any]:
 
 WORKFLOW_IMPLEMENTATIONS = {
     "create_workflow": create_workflow,
-    "schedule_workflow": schedule_workflow,
+    "remove_workflow": remove_workflow,
     "list_workflows": list_workflows,
     "get_workflow_templates": get_workflow_templates,
 }

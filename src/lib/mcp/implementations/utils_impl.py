@@ -52,11 +52,6 @@ def calculate(expression: str, precision: int = -1) -> str:
         return f"Error: {str(e)}"
 
 
-def advanced_calculate(expression: str, precision: int = 2) -> str:
-    """Wrapper for calculate() with default precision=2 for backward compatibility."""
-    return calculate(expression, precision)
-
-
 def get_current_time(timezone: str = "local") -> str:
     printer.info(f"🔧 Getting current time (timezone: {timezone})")
     now = datetime.now()
@@ -74,17 +69,9 @@ def reverse_string(text: str) -> str:
     return text[::-1]
 
 
-def count_words(text: str) -> str:
-    printer.info("🔧 Counting words in text")
-    words = text.split()
-    return str(len(words))
-
-
 UTILS_IMPLEMENTATIONS = {
     "calculate": calculate,
-    "advanced_calculate": advanced_calculate,
     "get_current_time": get_current_time,
     "get_current_date": get_current_date,
     "reverse_string": reverse_string,
-    "count_words": count_words,
 }

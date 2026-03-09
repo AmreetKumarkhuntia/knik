@@ -1,7 +1,7 @@
 CRON_DEFINITIONS = [
     {
         "name": "list_cron_schedules",
-        "description": "List all active cron schedules for workflows. When asked for cron jobs use this function until explictily asked to  check for system cron jobs.",
+        "description": "List all active cron schedules for workflows. When asked for cron jobs use this function until explicitly asked to check for system cron jobs.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -10,21 +10,30 @@ CRON_DEFINITIONS = [
     },
     {
         "name": "add_cron_schedule",
-        "description": "Add a new cron schedule where a trigger workflow dynamically determines when to run a target workflow. The trigger workflow must output {'workflow_id': 'target_workflow_id'} to trigger execution.",
+        "description": "Add a new cron schedule with natural language description. The schedule will trigger the target workflow at the specified times.",
         "parameters": {
             "type": "object",
             "properties": {
-                "trigger_workflow_id": {
+                "target_workflow_id": {
                     "type": "string",
-                    "description": "The ID of the workflow that acts as the trigger/scheduler",
+                    "description": "The ID of the workflow to be triggered when this schedule fires",
+                },
+                "schedule_description": {
+                    "type": "string",
+                    "description": "Natural language description of when the schedule should trigger (e.g., 'daily at 9am', 'every Monday at 2pm', 'every 6 hours')",
+                },
+                "timezone": {
+                    "type": "string",
+                    "description": "Timezone string like 'UTC', 'GMT+5:30', 'America/New_York'. Default: 'UTC'",
+                    "default": "UTC",
                 },
             },
-            "required": ["trigger_workflow_id"],
+            "required": ["target_workflow_id", "schedule_description"],
         },
     },
     {
         "name": "remove_cron_schedule",
-        "description": "Remove an existing cron schedule by ID. When asked for cron jobs use this function until explictily asked to  check for system cron jobs.",
+        "description": "Remove an existing cron schedule by ID. When asked for cron jobs use this function until explicitly asked to check for system cron jobs.",
         "parameters": {
             "type": "object",
             "properties": {

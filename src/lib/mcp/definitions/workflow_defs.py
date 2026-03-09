@@ -35,29 +35,17 @@ WORKFLOW_DEFINITIONS = [
         },
     },
     {
-        "name": "schedule_workflow",
-        "description": "Schedule a workflow using natural language timing. Creates a trigger workflow that outputs the target workflow_id when triggered. Example: schedule_workflow(target_workflow_id='workflow_abc123', schedule_description='daily at 9am', trigger_type='code', timezone='GMT+5:30').",
+        "name": "remove_workflow",
+        "description": "Remove a workflow and all its associated schedules by workflow ID. This will permanently delete the workflow and any schedules that trigger it.",
         "parameters": {
             "type": "object",
             "properties": {
-                "target_workflow_id": {
+                "workflow_id": {
                     "type": "string",
-                    "description": "ID of workflow to schedule (must exist from create_workflow output)",
-                },
-                "schedule_description": {
-                    "type": "string",
-                    "description": "Natural language schedule describing when to run, e.g., 'daily at 9am', 'every Monday at 2pm', 'every 6 hours'",
-                },
-                "timezone": {
-                    "type": "string",
-                    "description": "Timezone string like 'GMT+5:30', 'UTC', 'America/New_York'. Default: 'GMT+5:30'",
-                },
-                "trigger_type": {
-                    "type": "string",
-                    "description": "Required. Type of trigger evaluation: 'ai' for AI-based evaluation (flexible, handles complex patterns), 'code' for code-based using dateparser (faster, best for simple patterns). Choose one: ai OR code.",
+                    "description": "The ID of the workflow to remove (e.g., 'workflow_abc123def456')",
                 },
             },
-            "required": ["target_workflow_id", "schedule_description", "trigger_type"],
+            "required": ["workflow_id"],
         },
     },
     {
