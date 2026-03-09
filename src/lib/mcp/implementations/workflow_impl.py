@@ -1,12 +1,10 @@
 import asyncio
 import uuid
 from collections import defaultdict, deque
-from datetime import UTC, datetime
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from lib.services.scheduler.db_client import SchedulerDB
-from lib.services.scheduler.models import Schedule, Workflow
+from lib.services.scheduler.models import Workflow
 from lib.utils.printer import printer
 
 
@@ -74,26 +72,6 @@ def _parse_recurrence_seconds(schedule_description: str) -> int | None:
             return converter(match)
 
     return None
-
-
-def _calculate_first_run(schedule_description: str, timezone: str):
-    """Calculate first run time from natural language description."""
-    from zoneinfo import ZoneInfo
-
-    import dateparser
-
-    tz = ZoneInfo(timezone)
-    current_time = datetime.now(tz)
-
-    parsed = dateparser.parse(
-        schedule_description,
-        settings={"RELATIVE_BASE": current_time, "TIMEZONE": str(tz), "RETURN_AS_TIMEZONE_AWARE": True},
-    )
-
-    if not parsed:
-        parsed = current_time
-
-    return parsed.astimezone(UTC)
 
 
 def list_workflows() -> dict[str, Any]:
@@ -304,6 +282,111 @@ def get_workflow_templates() -> dict[str, Any]:
                 },
                 "customizable_fields": ["prompt", "model", "provider", "use_tools", "temperature"],
                 "difficulty": "intermediate",
+            },
+            "simple_http": {
+                "name": "Simple HTTP Request",
+                "description": "Make an HTTP GET request to fetch data",
+                "use_cases": [
+                    "fetching data from APIs",
+                    "web scraping",
+                    "checking service status",
+                ],
+                "example_definition": {
+                    "nodes": {
+                        "http_get": {
+                            "type": "FunctionExecutionNode",
+                            "function": "http_get",
+                            "params": {
+                                "url": "https://api.example.com/data",
+                            },
+                        },
+                        "process": {
+                            "type": "AIExecutionNode",
+                            "prompt": "Analyze the fetched data: {http_get.data}",
+                        },
+                    },
+                    "connections": [
+                        {"from_id": "http_get", "to_id": "process"},
+                    ],
+                },
+                "customizable_fields": ["url", "headers", "timeout"],
+                "difficulty": "beginner",
+            },
+            "json_processing": {
+                "name": "JSON Processing",
+                "description": "Parse and process JSON data",
+                "use_cases": [
+                    "data transformation",
+                    "API response parsing",
+                    "format conversion",
+                ],
+                "example_definition": {
+                    "nodes": {
+                        "fetch": {
+                            "type": "FunctionExecutionNode",
+                            "function": "http_get",
+                            "params": {
+                                "url": "https://api.example.com/json",
+                            },
+                        },
+                        "parse": {
+                            "type": "FunctionExecutionNode",
+                            "function": "json_parse",
+                            "params": {
+                                "data": "{fetch.data}",
+                            },
+                        },
+                        "transform": {
+                            "type": "FunctionExecutionNode",
+                            "function": "dict_merge",
+                            "params": {
+                                "source": "{parse.data}",
+                                "extra": {"key": "value"},
+                            },
+                        },
+                    },
+                    "connections": [
+                        {"from_id": "fetch", "to_id": "parse"},
+                        {"from_id": "parse", "to_id": "transform"},
+                    ],
+                },
+                "customizable_fields": ["data", "keys", "dicts"],
+                "difficulty": "beginner",
+            },
+            "utility": {
+                "name": "Utility Functions",
+                "description": "Common utility functions for workflows",
+                "use_cases": [
+                    "adding delays",
+                    "generating IDs",
+                    "data encoding/decoding",
+                    "text manipulation",
+                ],
+                "example_definition": {
+                    "nodes": {
+                        "wait": {
+                            "type": "FunctionExecutionNode",
+                            "function": "sleep",
+                            "params": {
+                                "seconds": "5",
+                            },
+                        },
+                        "generate_id": {
+                            "type": "FunctionExecutionNode",
+                            "function": "uuid_generate",
+                        },
+                        "process": {
+                            "type": "AIExecutionNode",
+                            "prompt": "Process with ID: {generate_id.uuid} and timestamp: {generate_id.current_timestamp}",
+                        },
+                    },
+                    "connections": [
+                        {"from_id": "wait", "to_id": "generate_id"},
+                        {"from_id": "generate_id", "to_id": "process"},
+                    ],
+                },
+                "customizable_fields": ["seconds"],
+                "difficulty": "beginner",
             },
             "sequential_pipeline": {
                 "name": "Sequential Multi-Step Workflow",

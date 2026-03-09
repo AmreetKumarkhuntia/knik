@@ -553,7 +553,7 @@ AIExecutionNode(
     prompt: str,
     model: str = "gemini-1.5-flash",
     temperature: float = 0.7,
-    use_tools: bool = False,
+    use_tools: bool = True,
     streaming: bool = False
 )
 ```

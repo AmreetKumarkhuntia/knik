@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -45,7 +46,7 @@ class FunctionExecutionNode(BaseNode):
         self.code = code
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        """Execute the configured function or raw Python code."""
+        """Execute configured function from registry or raw Python code."""
         logger.info(f"[{self.node_id}] Executing FunctionExecutionNode: {self.function_name}")
 
         resolved_params = self._resolve_params(inputs)
@@ -63,10 +64,28 @@ class FunctionExecutionNode(BaseNode):
                 code_output = local_env.get("output", local_env.get("result"))
                 return {"status": "success", "executed_code": True, "params": resolved_params, "output": code_output}
             except Exception as e:
-                logger.error(f"[{self.node_id}] Python execution failed: {e}")
+                logger.error(f"[{self.node_id}] Python code execution failed: {e}")
                 raise RuntimeError(f"Python code evaluation failed: {e}") from e
 
-        # Fallback to standard mock
+        # Look up and execute function from registry
+        from .function_implementations import WORKFLOW_FUNCTIONS
+
+        func = WORKFLOW_FUNCTIONS.get(self.function_name)
+        if func:
+            try:
+                result = await func(**resolved_params)
+
+                # Check if function returned error
+                if isinstance(result, dict) and "error" in result:
+                    # Put error into workflow execution context
+                    raise RuntimeError(result["error"])
+
+                return {"status": "success", "executed_function": self.function_name, "params": resolved_params, **result}
+            except Exception as e:
+                logger.error(f"[{self.node_id}] Function {self.function_name} execution failed: {e}")
+                raise RuntimeError(f"Function {self.function_name} execution failed: {e}") from e
+
+        # Fallback to standard mock if function not found
         result = {"status": "success", "mock_executed": self.function_name, "params": resolved_params}
         return result
 
@@ -146,7 +165,7 @@ class AIExecutionNode(BaseNode):
         model: str = "gemini-1.5-flash",
         provider: str = "vertex",
         temperature: float = 0.7,
-        use_tools: bool = False,
+        use_tools: bool = True,
     ):
         super().__init__(node_id)
         self.prompt = prompt
@@ -176,7 +195,14 @@ class AIExecutionNode(BaseNode):
             raise RuntimeError(f"AI execution failed: {e}") from e
 
     def _resolve_prompt(self, inputs: dict[str, Any], prompt_template: str) -> str:
-        """Resolve template variables in prompt from inputs."""
+        """
+        Resolve prompt with automatic previous execution context.
+
+        Hybrid approach:
+        1. Traditional template replacement (backward compatible)
+        2. Auto-append structured context from previous connected nodes
+        """
+        # Traditional template replacement
         resolved = prompt_template
         for key, val in inputs.items():
             if isinstance(val, dict):
@@ -184,4 +210,26 @@ class AIExecutionNode(BaseNode):
                     resolved = resolved.replace(f"{{{key}.{sub_k}}}", str(sub_v))
             else:
                 resolved = resolved.replace(f"{{{key}}}", str(val))
+
+        # Build previous execution context
+        context_parts = []
+
+        for node_id, node_output in inputs.items():
+            if node_id == "input":
+                continue
+
+            if not node_output:
+                continue
+
+            try:
+                output_str = json.dumps(node_output, indent=2, default=str)
+            except Exception:
+                output_str = str(node_output)
+
+            context_parts.append(f'<node id="{node_id}">\n{output_str}\n</node>')
+
+        if context_parts:
+            context_xml = "<previous_execution>\n" + "\n".join(context_parts) + "\n</previous_execution>"
+            return f"{resolved}\n\n{context_xml}"
+
         return resolved

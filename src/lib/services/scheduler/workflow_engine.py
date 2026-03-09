@@ -45,7 +45,14 @@ class WorkflowEngine:
                 curr_id = queue.popleft()
                 node = nodes[curr_id]
 
-                node_inputs = {**context}
+                # Find direct predecessor nodes
+                predecessor_ids = [from_id for from_id, targets in adj_list.items() if curr_id in targets]
+
+                # Filter context to include only initial input and direct predecessors
+                node_inputs = {
+                    "input": context.get("input"),
+                    **{nid: context[nid] for nid in predecessor_ids if nid in context},
+                }
 
                 try:
                     logger.debug(f"Executing node {curr_id}")
@@ -154,7 +161,7 @@ class WorkflowEngine:
                 prompt=data.get("prompt", ""),
                 model=data.get("model", "gemini-3.0-flash"),
                 provider=data.get("provider", "vertex"),
-                use_tools=data.get("use_tools", False),
+                use_tools=data.get("use_tools", True),
             )
             return ai_node
         else:

@@ -3,6 +3,7 @@ import ActionButton from '$components/ActionButton'
 import Modal from '$components/Modal'
 import FormField from '$components/FormField'
 import type { ScheduleFormProps } from '$types/sections/schedule-manager'
+import type { ScheduleCreateRequest } from '$types/workflow'
 
 export default function ScheduleForm({
   isOpen,

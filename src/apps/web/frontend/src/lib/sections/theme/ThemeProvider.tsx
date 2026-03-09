@@ -45,6 +45,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--color-text-secondary', colors.textSecondary)
     root.style.setProperty('--color-primary', colors.primary)
     root.style.setProperty('--color-primary-hover', colors.primaryHover)
+    root.style.setProperty('--color-accent', colors.accent)
+    root.style.setProperty('--color-accent-hover', colors.accentHover)
     root.style.setProperty('--color-border', colors.border)
     root.style.setProperty('--color-border-light', colors.borderLight)
     root.style.setProperty('--color-success', colors.success)

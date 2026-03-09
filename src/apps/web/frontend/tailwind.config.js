@@ -11,6 +11,8 @@ export default {
         textSecondary: 'var(--color-text-secondary)',
         primary: 'var(--color-primary)',
         primaryHover: 'var(--color-primary-hover)',
+        accent: 'var(--color-accent)',
+        accentHover: 'var(--color-accent-hover)',
         border: 'var(--color-border)',
         borderLight: 'var(--color-border-light)',
         success: 'var(--color-success)',

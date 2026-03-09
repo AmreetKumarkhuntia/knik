@@ -47,14 +47,14 @@ export default function ConfirmDialog({
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <button
-            onClick={onCancel}
+            onClick={() => void onCancel()}
             disabled={loading}
             className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors"
           >
             {cancelLabel}
           </button>
           <button
-            onClick={onConfirm}
+            onClick={() => void onConfirm()}
             disabled={loading}
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ${config.confirmBtn}`}
           >

@@ -51,7 +51,7 @@ Successfully implemented four new MCP tools for workflow creation and scheduling
    - Required: `type` = "AIExecutionNode"
    - Required: `prompt` (string for AI to process)
    - Optional: `model` (string, default: "gemini-1.5-flash")
-   - Optional: `use_tools` (boolean, default: False)
+   - Optional: `use_tools` (boolean, default: True)
    - Optional: `temperature` (number 0.0-2.0, default: 0.7)
 
 3. **ConditionalBranchNode**
