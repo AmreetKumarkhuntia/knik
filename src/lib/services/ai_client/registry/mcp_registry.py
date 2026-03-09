@@ -5,6 +5,7 @@ from typing import Any
 
 from lib.utils.printer import printer
 
+
 try:
     from langchain_core.tools import StructuredTool
     from pydantic import Field, create_model
@@ -17,6 +18,7 @@ except ImportError:
 
 def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
     """Wrap a tool function with input/output logging."""
+
     def wrapper(**kwargs):
         printer.info(f"Tool Input: {tool_name}({kwargs})")
         try:
@@ -25,7 +27,8 @@ def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
             return result
         except Exception as e:
             printer.error(f"Tool Error: {tool_name} -> {e}")
-            raise
+            return {"error": str(e)}
+
     return wrapper
 
 
@@ -73,7 +76,14 @@ class MCPServerRegistry:
             return []
 
         tools = []
-        type_mapping = {"string": str, "integer": int, "number": float, "boolean": bool}
+        type_mapping = {
+            "string": str,
+            "integer": int,
+            "number": float,
+            "boolean": bool,
+            "object": dict[str, Any],
+            "array": list[Any],
+        }
 
         for schema in cls._tools:
             func_def = schema.get("function", schema)
@@ -94,16 +104,32 @@ class MCPServerRegistry:
             fields = {}
             for name, prop in params.get("properties", {}).items():
                 prop_type = prop.get("type", "string")
-                if prop_type not in type_mapping:
-                    continue
-
-                py_type = type_mapping.get(prop_type, str)
                 is_required = name in params.get("required", [])
 
-                fields[name] = (
-                    py_type if is_required else py_type | None,
-                    Field(description=prop.get("description", ""), default=None if not is_required else ...),
-                )
+                if prop_type not in type_mapping:
+                    printer.warning(
+                        f"Unknown parameter type '{prop_type}' for tool '{tool_name}', defaulting to 'string'"
+                    )
+                    prop_type = "string"
+
+                if prop_type == "object":
+                    fields[name] = (
+                        dict[str, Any] if is_required else dict[str, Any] | None,
+                        Field(description=prop.get("description", ""), default=None if not is_required else ...),
+                    )
+                elif prop_type == "array":
+                    fields[name] = (
+                        list[Any] if is_required else list[Any] | None,
+                        Field(description=prop.get("description", ""), default=None if not is_required else ...),
+                    )
+                else:
+                    py_type = type_mapping.get(prop_type, str)
+                    is_required = name in params.get("required", [])
+
+                    fields[name] = (
+                        py_type if is_required else py_type | None,
+                        Field(description=prop.get("description", ""), default=None if not is_required else ...),
+                    )
 
             ArgsModel = create_model(f"{tool_name}Args", **fields)
 
