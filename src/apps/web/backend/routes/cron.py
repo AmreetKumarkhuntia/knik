@@ -11,7 +11,6 @@ router = APIRouter()
 
 
 class ScheduleCreateRequest(BaseModel):
-    workflow_id: str
     trigger_workflow_id: str
     timezone: str = "UTC"
 
@@ -29,7 +28,6 @@ async def list_schedules():
         results = [
             {
                 "id": s.id,
-                "workflow_id": s.workflow_id,
                 "trigger_workflow_id": s.trigger_workflow_id,
                 "timezone": s.timezone,
                 "created_at": s.created_at,
@@ -49,13 +47,12 @@ async def add_schedule(req: ScheduleCreateRequest):
     try:
         schedule = Schedule(
             id=0,  # Auto-assigned by DB
-            workflow_id=req.workflow_id,
             trigger_workflow_id=req.trigger_workflow_id,
             timezone=req.timezone,
             enabled=True,
         )
         schedule_id = await SchedulerDB.create_schedule(schedule)
-        return {"success": True, "schedule_id": schedule_id, "workflow_id": req.workflow_id}
+        return {"success": True, "schedule_id": schedule_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -81,7 +78,6 @@ async def toggle_schedule(schedule_id: int, req: ScheduleToggleRequest):
             "success": True,
             "schedule": {
                 "id": schedule.id,
-                "workflow_id": schedule.workflow_id,
                 "trigger_workflow_id": schedule.trigger_workflow_id,
                 "enabled": schedule.enabled,
                 "timezone": schedule.timezone,

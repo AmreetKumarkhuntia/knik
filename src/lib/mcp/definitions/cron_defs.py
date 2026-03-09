@@ -10,20 +10,16 @@ CRON_DEFINITIONS = [
     },
     {
         "name": "add_cron_schedule",
-        "description": "Add a new cron schedule where a trigger workflow dynamically determines when to run a target workflow.",
+        "description": "Add a new cron schedule where a trigger workflow dynamically determines when to run a target workflow. The trigger workflow must output {'workflow_id': 'target_workflow_id'} to trigger execution.",
         "parameters": {
             "type": "object",
             "properties": {
-                "workflow_id": {
-                    "type": "string",
-                    "description": "The ID of the target workflow to run",
-                },
                 "trigger_workflow_id": {
                     "type": "string",
                     "description": "The ID of the workflow that acts as the trigger/scheduler",
                 },
             },
-            "required": ["workflow_id", "trigger_workflow_id"],
+            "required": ["trigger_workflow_id"],
         },
     },
     {

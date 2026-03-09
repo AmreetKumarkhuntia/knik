@@ -50,7 +50,6 @@ class Schedule:
     """Represents a cron schedule for a Workflow."""
 
     id: int
-    workflow_id: str
     trigger_workflow_id: str
     enabled: bool = True
     timezone: str = "UTC"
@@ -63,7 +62,6 @@ class Schedule:
         """Instantiate a Schedule from a database row."""
         return cls(
             id=row["id"],
-            workflow_id=row["workflow_id"],
             trigger_workflow_id=row["trigger_workflow_id"],
             enabled=row.get("enabled", True),
             timezone=row.get("timezone", "UTC"),

@@ -144,17 +144,51 @@ class AIExecutionNode(BaseNode):
         node_id: str,
         prompt: str,
         model: str = "gemini-1.5-flash",
+        provider: str = "vertex",
         temperature: float = 0.7,
         use_tools: bool = False,
     ):
         super().__init__(node_id)
         self.prompt = prompt
         self.model = model
+        self.provider = provider
         self.temperature = temperature
         self.use_tools = use_tools
+        self.ai_client = None
+
+    def set_ai_client(self, ai_client):
+        """Set AI client for this node."""
+        self.ai_client = ai_client
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         logger.info(f"[{self.node_id}] Executing AI Node with prompt: {self.prompt}")
-        resolved_prompt = self.prompt
+        resolved_prompt = self._resolve_prompt(inputs, self.prompt)
 
-        return {"output": "Mock AI Response", "resolved_prompt": resolved_prompt}
+        if not self.ai_client:
+            logger.warning(f"[{self.node_id}] No AI client available, returning mock response")
+            return {"output": "Mock AI Response", "resolved_prompt": resolved_prompt}
+
+        try:
+            from lib.services.ai_client import AIClient
+            from lib.services.ai_client.registry import MCPServerRegistry
+
+            ai = AIClient(provider=self.provider, mcp_registry=MCPServerRegistry)
+            response = ai.chat(
+                prompt=resolved_prompt,
+                temperature=self.temperature,
+            )
+            return {"output": response, "resolved_prompt": resolved_prompt}
+        except Exception as e:
+            logger.error(f"[{self.node_id}] AI execution failed: {e}")
+            raise RuntimeError(f"AI execution failed: {e}") from e
+
+    def _resolve_prompt(self, inputs: dict[str, Any], prompt_template: str) -> str:
+        """Resolve template variables in prompt from inputs."""
+        resolved = prompt_template
+        for key, val in inputs.items():
+            if isinstance(val, dict):
+                for sub_k, sub_v in val.items():
+                    resolved = resolved.replace(f"{{{key}.{sub_k}}}", str(sub_v))
+            else:
+                resolved = resolved.replace(f"{{{key}}}", str(val))
+        return resolved

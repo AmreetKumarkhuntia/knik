@@ -30,25 +30,24 @@ def list_cron_schedules() -> dict[str, Any]:
     printer.info("🔧 Listing active cron schedules")
     try:
         schedules = _run_async(SchedulerDB.list_schedules())
-        results = [{"id": s.id, "workflow_id": s.workflow_id, "trigger": s.trigger_workflow_id} for s in schedules]
+        results = [{"id": s.id, "trigger": s.trigger_workflow_id} for s in schedules]
         return {"success": True, "schedules": results, "total": len(results)}
     except Exception as e:
         printer.error(f"Error listing cron schedules: {e}")
         return {"error": f"Failed to list schedules: {str(e)}"}
 
 
-def add_cron_schedule(workflow_id: str, trigger_workflow_id: str) -> dict[str, Any]:
-    """Add a new cron schedule."""
-    printer.info(f"🔧 Adding cron schedule for workflow '{workflow_id}' triggered by '{trigger_workflow_id}'")
+def add_cron_schedule(trigger_workflow_id: str) -> dict[str, Any]:
+    """Add a new cron schedule. The trigger workflow must output {'workflow_id': 'target_workflow_id'} to trigger execution."""
+    printer.info(f"🔧 Adding cron schedule with trigger workflow '{trigger_workflow_id}'")
     try:
         schedule = Schedule(
             id=0,  # DB will auto-assign
-            workflow_id=workflow_id,
             trigger_workflow_id=trigger_workflow_id,
             enabled=True,
         )
         schedule_id = _run_async(SchedulerDB.create_schedule(schedule))
-        return {"success": True, "schedule_id": schedule_id, "workflow_id": workflow_id}
+        return {"success": True, "schedule_id": schedule_id}
     except Exception as e:
         printer.error(f"Error listing cron schedules: {e}")
         return {"error": f"Failed to add schedule: {str(e)}"}

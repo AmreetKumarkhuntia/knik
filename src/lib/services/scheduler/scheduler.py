@@ -44,7 +44,7 @@ class Scheduler:
         """Add a cron schedule."""
         schedule_id = await SchedulerDB.create_schedule(schedule)
         if schedule_id:
-            logger.info(f"Added schedule ID {schedule_id} for workflow {schedule.workflow_id}")
+            logger.info(f"Added schedule ID {schedule_id} with trigger workflow {schedule.trigger_workflow_id}")
         return schedule_id
 
     async def remove_schedule(self, schedule_id: int) -> bool:

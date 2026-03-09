@@ -1,7 +1,7 @@
 WORKFLOW_DEFINITIONS = [
     {
         "name": "create_workflow",
-        "description": "Create a new workflow from a JSON definition. Auto-generates a UUID for workflow_id. CRITICAL: Before calling this, always use get_workflow_templates to see example definitions and choose the best template for your task. DEFINITION STRUCTURE: definition = {'nodes': NODES_OBJECT, 'connections': CONNECTIONS_ARRAY}. NODES_OBJECT format: {'node_id': {'type': NODE_TYPE, ...fields}} where node_id matches pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores, no spaces). SUPPORTED NODE TYPES (choose exactly one): 1) FunctionExecutionNode: {'type': 'FunctionExecutionNode', 'function': 'function_name', 'params': {}} OR {'type': 'FunctionExecutionNode', 'code': 'python_code', 'params': {}}. 2) AIExecutionNode: {'type': 'AIExecutionNode', 'prompt': 'prompt_string', 'model': 'gemini-1.5-flash', 'use_tools': False, 'temperature': 0.7}. 3) ConditionalBranchNode: {'type': 'ConditionalBranchNode', 'condition': 'boolean_expression'}. 4) FlowMergeNode: {'type': 'FlowMergeNode', 'merge_strategy': 'concat' or 'merge'}. CONNECTIONS_ARRAY format: [{'from_id': 'source_node_id', 'to_id': 'target_node_id', 'condition': 'true' or 'false' (optional)}]. Both from_id and to_id must exist in nodes. Optional condition field used only with ConditionalBranchNode connections ('true' for condition=True branch, 'false' for condition=False branch). Workflow must be acyclic (DAG - no cycles).",
+        "description": "Create a new workflow from a JSON definition. Auto-generates a UUID for workflow_id. CRITICAL: Before calling this, always use get_workflow_templates to see example definitions and choose the best template for your task. DEFINITION STRUCTURE: definition = {'nodes': NODES_OBJECT, 'connections': CONNECTIONS_ARRAY}. NODES_OBJECT format: {'node_id': {'type': NODE_TYPE, ...fields}} where node_id matches pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores, no spaces). SUPPORTED NODE TYPES (choose exactly one): 1) FunctionExecutionNode: {'type': 'FunctionExecutionNode', 'function': 'function_name', 'params': {}} OR {'type': 'FunctionExecutionNode', 'code': 'python_code', 'params': {}}. 2) AIExecutionNode: {'type': 'AIExecutionNode', 'prompt': 'prompt_string', 'model': 'gemini-1.5-flash', 'provider': 'vertex', 'use_tools': False, 'temperature': 0.7}. 3) ConditionalBranchNode: {'type': 'ConditionalBranchNode', 'condition': 'boolean_expression'}. 4) FlowMergeNode: {'type': 'FlowMergeNode', 'merge_strategy': 'concat' or 'merge'}. CONNECTIONS_ARRAY format: [{'from_id': 'source_node_id', 'to_id': 'target_node_id', 'condition': 'true' or 'false' (optional)}]. Both from_id and to_id must exist in nodes. Optional condition field used only with ConditionalBranchNode connections ('true' for condition=True branch, 'false' for condition=False branch). Workflow must be acyclic (DAG - no cycles).",
         "parameters": {
             "type": "object",
             "properties": {
@@ -15,7 +15,7 @@ WORKFLOW_DEFINITIONS = [
                 },
                 "definition": {
                     "type": "object",
-                    "description": "Complete workflow DAG with required 'nodes' object and 'connections' array. STRUCTURE: {'nodes': {'node_id': NODE_DEFINITION}, 'connections': [CONNECTION_DEFINITION]}. NODES: map of node_id strings to node definitions. Each node must specify one type: FunctionExecutionNode (requires 'function' OR 'code'), AIExecutionNode (requires 'prompt', optional 'model', 'use_tools', 'temperature'), ConditionalBranchNode (requires 'condition'), FlowMergeNode (optional 'merge_strategy' with values 'concat' or 'merge'). CONNECTIONS: array of objects with 'from_id', 'to_id' strings matching node IDs, optional 'condition' field (values 'true' or 'false'). Node IDs must match pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores only). Workflow must be a DAG (no cycles, directed acyclic graph).",
+                    "description": "Complete workflow DAG with required 'nodes' object and 'connections' array. STRUCTURE: {'nodes': {'node_id': NODE_DEFINITION}, 'connections': [CONNECTION_DEFINITION]}. NODES: map of node_id strings to node definitions. Each node must specify one type: FunctionExecutionNode (requires 'function' OR 'code'), AIExecutionNode (requires 'prompt', optional 'model', 'provider', 'use_tools', 'temperature'), ConditionalBranchNode (requires 'condition'), FlowMergeNode (optional 'merge_strategy' with values 'concat' or 'merge'). CONNECTIONS: array of objects with 'from_id', 'to_id' strings matching node IDs, optional 'condition' field (values 'true' or 'false'). Node IDs must match pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores only). Workflow must be a DAG (no cycles, directed acyclic graph).",
                     "required": ["nodes", "connections"],
                     "properties": {
                         "nodes": {
@@ -36,11 +36,11 @@ WORKFLOW_DEFINITIONS = [
     },
     {
         "name": "schedule_workflow",
-        "description": "Schedule an existing workflow using natural language timing. Creates a trigger workflow and links it to target workflow. Example: schedule_workflow(workflow_id='workflow_abc123', schedule_description='daily at 9am', trigger_type='code', timezone='GMT+5:30').",
+        "description": "Schedule a workflow using natural language timing. Creates a trigger workflow that outputs the target workflow_id when triggered. Example: schedule_workflow(target_workflow_id='workflow_abc123', schedule_description='daily at 9am', trigger_type='code', timezone='GMT+5:30').",
         "parameters": {
             "type": "object",
             "properties": {
-                "workflow_id": {
+                "target_workflow_id": {
                     "type": "string",
                     "description": "ID of workflow to schedule (must exist from create_workflow output)",
                 },
@@ -57,7 +57,7 @@ WORKFLOW_DEFINITIONS = [
                     "description": "Required. Type of trigger evaluation: 'ai' for AI-based evaluation (flexible, handles complex patterns), 'code' for code-based using dateparser (faster, best for simple patterns). Choose one: ai OR code.",
                 },
             },
-            "required": ["workflow_id", "schedule_description", "trigger_type"],
+            "required": ["target_workflow_id", "schedule_description", "trigger_type"],
         },
     },
     {

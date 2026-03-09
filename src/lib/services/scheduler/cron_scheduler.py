@@ -85,18 +85,18 @@ class CronScheduler:
                     trigger_wf, inputs={"current_minute": current_minute.isoformat()}
                 )
 
-                # Check if it signaled to trigger the target
-                should_trigger = False
+                # Check if it signaled to trigger the target and extract the target workflow ID
+                target_workflow_id = None
                 for _node_id, output in result.items():
-                    if isinstance(output, dict) and output.get("trigger_target") is True:
-                        should_trigger = True
+                    if isinstance(output, dict) and "workflow_id" in output:
+                        target_workflow_id = output["workflow_id"]
                         break
 
-                if should_trigger:
+                if target_workflow_id:
                     logger.info(
-                        f"Trigger workflow signaled execution! Triggering Target Workflow ID {schedule.workflow_id}"
+                        f"Trigger workflow signaled execution! Triggering Target Workflow ID {target_workflow_id}"
                     )
-                    asyncio.create_task(self._trigger_workflow(schedule.workflow_id))
+                    asyncio.create_task(self._trigger_workflow(target_workflow_id))
                     await SchedulerDB.record_schedule_execution(schedule.id)
                     self._last_run_map[schedule.id] = current_minute
                 else:

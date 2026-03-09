@@ -72,14 +72,13 @@ class SchedulerDB:
         """Create a new schedule."""
         await SchedulerDB.check_initialized()
         query = """
-            INSERT INTO schedules (workflow_id, trigger_workflow_id, enabled, timezone, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO schedules (trigger_workflow_id, enabled, timezone, created_at, updated_at)
+            VALUES (%s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             RETURNING id
         """
         id_val = await PostgresDB.fetch_val(
             query,
             (
-                schedule.workflow_id,
                 schedule.trigger_workflow_id,
                 schedule.enabled,
                 schedule.timezone,

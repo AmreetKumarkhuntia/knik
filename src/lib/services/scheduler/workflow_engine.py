@@ -150,11 +150,14 @@ class WorkflowEngine:
         elif node_type == "FlowMergeNode":
             return FlowMergeNode(node_id=node_id, merge_strategy=data.get("merge_strategy", "concat"))
         elif node_type == "AIExecutionNode":
-            return AIExecutionNode(
+            ai_node = AIExecutionNode(
                 node_id=node_id,
                 prompt=data.get("prompt", ""),
                 model=data.get("model", "gemini-3.0-flash"),
+                provider=data.get("provider", "vertex"),
                 use_tools=data.get("use_tools", False),
             )
+            ai_node.set_ai_client(self.ai_client)
+            return ai_node
         else:
             raise ValueError(f"Unknown node type map {node_type} for node {node_id}")
