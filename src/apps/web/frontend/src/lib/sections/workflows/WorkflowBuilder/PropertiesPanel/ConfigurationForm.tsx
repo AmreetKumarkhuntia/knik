@@ -1,7 +1,7 @@
 interface ConfigurationFormProps {
   nodeType: string
-  data: any
-  onDataChange: (field: string, value: any) => void
+  data: Record<string, unknown>
+  onDataChange: (field: string, value: unknown) => void
 }
 
 export default function ConfigurationForm({

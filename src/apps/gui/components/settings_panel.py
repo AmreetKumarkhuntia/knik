@@ -27,7 +27,7 @@ class SettingsPanel(ctk.CTkToplevel):
         """Create all settings widgets."""
         row = 0
 
-        title = ctk.CTkLabel(self, text="Knik Settings", font=ctk.CTkFont(size=20, weight="bold"))
+        title = ctk.CTkLabel(self, text="Knik AI Settings", font=ctk.CTkFont(size=20, weight="bold"))
         title.grid(row=row, column=0, padx=20, pady=(20, 10), sticky="w")
         row += 1
 

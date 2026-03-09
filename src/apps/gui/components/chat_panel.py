@@ -92,7 +92,7 @@ class ChatPanel(ctk.CTkScrollableFrame):
             header.pack(fill="x", padx=Spacing.PAD_MEDIUM, pady=(Spacing.PAD_SMALL + 2, 4))
 
             badge = ctk.CTkLabel(
-                header, text="🤖 Knik", font=ctk.CTkFont(**Fonts.badge()), text_color=ColorTheme.TEXT_ACCENT
+                header, text="🤖 Knik AI", font=ctk.CTkFont(**Fonts.badge()), text_color=ColorTheme.TEXT_ACCENT
             )
             badge.pack(anchor="w")
 

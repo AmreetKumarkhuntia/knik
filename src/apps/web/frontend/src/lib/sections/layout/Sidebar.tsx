@@ -9,14 +9,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Delete as TrashIcon,
   Settings,
-  Palette,
+  SmartToy,
+  AddComment,
   Chat as ChatIcon,
   AccountTree,
 } from '@mui/icons-material'
 import LoadingSpinner from '$components/LoadingSpinner'
 import EmptyState from '$components/EmptyState'
-import { ThemeToggle, ThemeSelector } from '$sections/theme'
-import UserProfile from '$components/UserProfile'
+import { ThemeSelector } from '$sections/theme'
 import type { SidebarProps } from '$types/sections/layout'
 import type { Message } from '$types/hooks'
 import { api } from '$services/api'
@@ -73,7 +73,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
           >
             <div className={`flex items-center gap-2 ${isExpanded ? '' : 'justify-center w-full'}`}>
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
-                <Palette style={{ color: 'var(--color-primary)', fontSize: '24px' }} />
+                <SmartToy style={{ color: 'var(--color-primary)', fontSize: '24px' }} />
               </div>
               {isExpanded && <h2 className="text-xl font-bold text-text">Knik AI</h2>}
             </div>
@@ -95,7 +95,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
               `}
               title={isExpanded ? undefined : UI_TEXT.nav.newChat}
             >
-              <Palette />
+              <AddComment />
               {isExpanded && <span className="ml-3">{UI_TEXT.nav.newChat}</span>}
             </button>
           </div>
@@ -169,13 +169,6 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
 
           {/* Footer */}
           <div className={`space-y-3 ${isExpanded ? 'px-6' : 'items-center flex flex-col'}`}>
-            {isExpanded && (
-              <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface border-border">
-                <UserProfile avatar="AK" name="AMREET" displayOnly={true} />
-                <ThemeToggle />
-              </div>
-            )}
-
             <button
               onClick={() => setThemeSelectorOpen(true)}
               className={`
@@ -184,7 +177,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
               `}
               title={isExpanded ? undefined : UI_TEXT.nav.themeSettings}
             >
-              <Palette />
+              <SmartToy />
               {isExpanded && <span>{UI_TEXT.nav.themeSettings}</span>}
             </button>
 

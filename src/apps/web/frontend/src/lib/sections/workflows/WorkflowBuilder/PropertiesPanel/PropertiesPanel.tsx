@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { Node } from '@xyflow/react'
 import NodeProperties from './NodeProperties'
 
 interface PropertiesPanelProps {
-  selectedNode: any
+  selectedNode: Node | null
   isOpen: boolean
   onClose: () => void
-  onNodeUpdate: (nodeId: string, data: any) => void
+  onNodeUpdate: (nodeId: string, data: Record<string, unknown>) => void
 }
 
 export default function PropertiesPanel({

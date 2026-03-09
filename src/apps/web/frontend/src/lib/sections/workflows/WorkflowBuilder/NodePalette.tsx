@@ -1,9 +1,10 @@
 import type { NodeTypeName } from '$types/workflow'
 import type { NodePaletteProps } from '$types/workflow-components'
+import { SmartToy } from '@mui/icons-material'
 
 const nodeTypes: Array<{
   type: NodeTypeName
-  icon: string
+  icon: string | JSX.Element
   label: string
   color: string
 }> = [
@@ -29,7 +30,7 @@ const nodeTypes: Array<{
   },
   {
     type: 'AIExecutionNode',
-    icon: '🤖',
+    icon: <SmartToy style={{ fontSize: 20 }} />,
     label: 'AI',
     color: 'border-success bg-success/10',
   },
@@ -54,7 +55,7 @@ export default function NodePalette({ onDragStart }: NodePaletteProps) {
               hover:scale-105 transition-transform ${node.color}
             `}
           >
-            <span className="text-lg">{node.icon}</span>
+            <span className="text-lg">{typeof node.icon === 'string' ? node.icon : node.icon}</span>
             <span className="text-textSecondary text-sm">{node.label}</span>
           </div>
         ))}

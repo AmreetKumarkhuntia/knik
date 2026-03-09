@@ -41,7 +41,7 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
                     msg.role === 'user' ? 'animate-slide-in-right' : 'animate-slide-in-left'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col items-start justify-between gap-3">
                     <div className="flex-1">
                       {msg.role === 'user' ? (
                         <MarkdownMessage content={msg.content} />
@@ -50,43 +50,45 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
                       )}
                     </div>
 
-                    {msg.role === 'assistant' && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex items-center gap-1 flex-shrink-0"
-                      >
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleCopy(msg.content)}
-                          className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
-                          aria-label="Copy message"
+                    <div>
+                      {msg.role === 'assistant' && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.2 }}
+                          className="flex items-center gap-1 flex-shrink-0"
                         >
-                          <ContentCopy style={{ fontSize: 16 }} />
-                        </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleCopy(msg.content)}
+                            className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
+                            aria-label="Copy message"
+                          >
+                            <ContentCopy style={{ fontSize: 16 }} />
+                          </motion.button>
 
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
-                          aria-label="Like message"
-                        >
-                          <ThumbUp style={{ fontSize: 16 }} />
-                        </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
+                            aria-label="Like message"
+                          >
+                            <ThumbUp style={{ fontSize: 16 }} />
+                          </motion.button>
 
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={handleRegenerate}
-                          className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
-                          aria-label="Regenerate response"
-                        >
-                          <Refresh style={{ fontSize: 16 }} />
-                        </motion.button>
-                      </motion.div>
-                    )}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handleRegenerate}
+                            className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
+                            aria-label="Regenerate response"
+                          >
+                            <Refresh style={{ fontSize: 16 }} />
+                          </motion.button>
+                        </motion.div>
+                      )}
+                    </div>
                   </div>
                 </Card>
               </motion.div>

@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from typing import Any
 
+from lib.utils.printer import printer
 
 try:
     from langchain_core.tools import StructuredTool
@@ -12,6 +13,20 @@ try:
 except ImportError:
     LANGCHAIN_AVAILABLE = False
     StructuredTool = None
+
+
+def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
+    """Wrap a tool function with input/output logging."""
+    def wrapper(**kwargs):
+        printer.info(f"Tool Input: {tool_name}({kwargs})")
+        try:
+            result = func(**kwargs)
+            printer.info(f"Tool Output: {tool_name} -> {result}")
+            return result
+        except Exception as e:
+            printer.error(f"Tool Error: {tool_name} -> {e}")
+            raise
+    return wrapper
 
 
 class MCPServerRegistry:
@@ -72,6 +87,9 @@ class MCPServerRegistry:
             impl = cls._implementations.get(tool_name)
             if not impl:
                 continue
+
+            # Wrap implementation with logging
+            impl = _wrap_with_logging(tool_name, impl)
 
             fields = {}
             for name, prop in params.get("properties", {}).items():

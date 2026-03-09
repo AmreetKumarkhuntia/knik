@@ -154,7 +154,7 @@ function CanvasContent({
   }, [])
 
   const handleNodeUpdate = useCallback(
-    (nodeId: string, data: any) => {
+    (nodeId: string, data: Record<string, unknown>) => {
       setNodes(nodes => nodes.map(node => (node.id === nodeId ? { ...node, data } : node)))
     },
     [setNodes]

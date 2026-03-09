@@ -234,3 +234,19 @@ export interface UserProfileProps {
   showBadge?: boolean
   badgeType?: 'pro' | 'basic' | 'admin'
 }
+
+// Workflow types
+export interface WorkflowItem {
+  id: string
+  name: string
+  icon: string
+  status: string
+  executions: number
+  successRate: number
+}
+
+export interface TopWorkflowsTableProps {
+  workflows: WorkflowItem[]
+  loading?: boolean
+  onRowClick?: (workflow: WorkflowItem) => void
+}

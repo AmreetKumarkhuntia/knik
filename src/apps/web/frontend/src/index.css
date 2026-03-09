@@ -161,3 +161,21 @@ body,
 .connection-animated {
   animation: dash 1s linear infinite;
 }
+
+/* Chat scrolling improvements */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.chat-scroll-area {
+  overflow-y: auto;
+  will-change: scroll-position;
+  contain: strict;
+}
+
+.message-transition {
+  transition: all 0.3s ease;
+}

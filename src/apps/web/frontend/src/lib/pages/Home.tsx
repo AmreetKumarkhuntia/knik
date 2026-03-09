@@ -5,7 +5,7 @@ import AudioControls from '$sections/audio/AudioControls'
 import { WelcomePrompt, SuggestionCards, WelcomeContainer, KeyboardShortcuts } from '$sections/home'
 import type { HomeProps } from '$types/pages'
 import type { InputPanelRef } from '$types/sections/chat'
-import { useKeyboardShortcuts, useChat } from '$hooks'
+import { useKeyboardShortcuts, useChat } from '$hooks/index'
 import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS, LAYOUT } from '$lib/constants'
 
 export default function Home({
@@ -34,16 +34,25 @@ export default function Home({
     const chatContainer = chatScrollRef.current
     if (!chatContainer) return
 
+    let scrollTimeout: number
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = chatContainer
-      const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50
-      setIsUserScrolling(!isAtBottom)
+      // Clear any existing timeout to debounce
+      if (scrollTimeout) clearTimeout(scrollTimeout)
+
+      // Set new timeout with 100ms delay
+      scrollTimeout = window.setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = chatContainer
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+        // Increased threshold and more aggressive detection
+        setIsUserScrolling(distanceFromBottom > 300)
+      }, 100)
     }
 
     chatContainer.addEventListener('scroll', handleScroll)
 
     return () => {
       chatContainer.removeEventListener('scroll', handleScroll)
+      if (scrollTimeout) clearTimeout(scrollTimeout)
     }
   }, [])
 
@@ -51,12 +60,24 @@ export default function Home({
     const chatContainer = chatScrollRef.current
     if (!chatContainer) return
 
-    const { scrollTop, scrollHeight, clientHeight } = chatContainer
-    const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50
+    const scrollToBottom = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+      const isAtBottom = distanceFromBottom < 150
 
-    if (!isUserScrolling || isAtBottom) {
-      chatContainer.scrollTop = chatContainer.scrollHeight
+      if (!isUserScrolling || isAtBottom) {
+        requestAnimationFrame(() => {
+          chatContainer.scrollTo({
+            top: chatContainer.scrollHeight,
+            behavior: 'smooth',
+          })
+        })
+      }
     }
+
+    // Small delay to allow DOM updates to complete
+    const timer = setTimeout(scrollToBottom, 50)
+    return () => clearTimeout(timer)
   }, [messages, loading, isUserScrolling])
 
   useEffect(() => {
@@ -91,8 +112,8 @@ export default function Home({
   }
 
   return (
-    <div className="relative z-10 flex-1 flex flex-col p-6">
-      <div className="flex-1 flex flex-col items-center">
+    <div className="relative z-10 flex flex-col h-full p-6 pb-24">
+      <div className="flex-1 flex flex-col items-center min-h-0">
         {messages.length === 0 ? (
           <div
             className="flex-1 flex flex-col justify-center w-full"
@@ -104,11 +125,11 @@ export default function Home({
             </WelcomeContainer>
           </div>
         ) : (
-          <div className="flex-1 w-full" style={{ maxWidth: LAYOUT.maxWidthPercentage }}>
+          <div className="flex-1 w-full h-full" style={{ maxWidth: LAYOUT.maxWidthPercentage }}>
             <div
               ref={chatScrollRef}
               className="flex-1 overflow-y-auto py-6 scroll-smooth scrollbar-hide"
-              style={{ minHeight: 0 }}
+              style={{ height: '100%', contain: 'content' }}
             >
               <ChatPanel messages={messages} isLoading={loading} />
             </div>
@@ -116,7 +137,10 @@ export default function Home({
         )}
       </div>
 
-      <div className="w-full mx-auto mt-6" style={{ maxWidth: LAYOUT.maxWidthPercentage }}>
+      <div
+        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 mx-auto"
+        style={{ maxWidth: LAYOUT.maxWidthPercentage, width: '50vw' }}
+      >
         <AudioControls
           isPlayingOrLoading={audioPlaying || loading}
           isPaused={audioPaused}

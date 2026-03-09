@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '$sections/theme'
 import MainLayout from '$sections/layout/MainLayout'
 import ErrorBoundary from '$sections/feedback/ErrorBoundary'
-import { Home, Workflows, WorkflowBuilder } from '$pages'
-import { useToast, useAudio, useChat } from '$hooks'
+import { Home, Workflows, WorkflowBuilder } from '$pages/index'
+import { useToast, useAudio, useChat } from '$hooks/index'
 import type { InputPanelRef } from '$types/sections/chat'
 
 function AppContent() {
