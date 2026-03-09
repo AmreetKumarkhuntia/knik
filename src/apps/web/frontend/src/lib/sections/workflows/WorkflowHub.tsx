@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import PageHeader from '$components/PageHeader'
 import type { WorkflowMetrics, TopWorkflow, Activity } from '$types/workflow'
 import { workflowApi } from '$services/workflowApi'
 
@@ -36,29 +37,28 @@ export default function WorkflowHub() {
 
   return (
     <main className="flex-1 bg-transparent flex flex-col overflow-y-auto">
-      <header className="h-16 border-b border-white/5 glass flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium">Workflows</span>
-          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
-          <span className="text-slate-900 dark:text-slate-100 font-semibold">Workflow Hub</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center bg-white/5 rounded-lg border border-white/10 px-3 py-1.5">
-            <span className="material-symbols-outlined text-slate-400 text-lg mr-2">search</span>
-            <input
-              type="text"
-              className="bg-transparent border-none focus:ring-0 text-sm text-slate-100 placeholder:text-slate-500 w-48"
-              placeholder="Search workflows..."
-            />
+      <PageHeader
+        breadcrumbs={['Workflows', 'Workflow Hub']}
+        rightContent={
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center bg-white/5 rounded-lg border border-white/10 px-3 py-1.5">
+              <span className="material-symbols-outlined text-slate-400 text-lg mr-2">search</span>
+              <input
+                type="text"
+                className="bg-transparent border-none focus:ring-0 text-sm text-slate-100 placeholder:text-slate-500 w-48"
+                placeholder="Search workflows..."
+              />
+            </div>
+            <span className="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition-colors">
+              notifications
+            </span>
+            <span className="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition-colors">
+              help
+            </span>
           </div>
-          <span className="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition-colors">
-            notifications
-          </span>
-          <span className="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition-colors">
-            help
-          </span>
-        </div>
-      </header>
+        }
+        sticky={true}
+      />
 
       <div className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -71,7 +71,7 @@ export default function WorkflowHub() {
             </p>
           </div>
           <button
-            onClick={() => void navigate('/workflows')}
+            onClick={() => void navigate('/workflows/create')}
             className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/30 transition-all"
           >
             <span className="material-symbols-outlined">add</span>
@@ -190,8 +190,19 @@ export default function WorkflowHub() {
                         <td className="px-6 py-4 text-sm text-slate-400">
                           {workflow.executions.toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 text-right text-sm font-medium text-teal-400">
-                          {workflow.successRate.toFixed(1)}%
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-sm font-medium text-teal-400">
+                              {workflow.successRate.toFixed(1)}%
+                            </span>
+                            <button
+                              onClick={() => void navigate(`/workflows/${workflow.id}/edit`)}
+                              className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-textSecondary hover:text-text transition-colors"
+                              title="Edit Workflow"
+                            >
+                              <span className="material-symbols-outlined text-sm">edit</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

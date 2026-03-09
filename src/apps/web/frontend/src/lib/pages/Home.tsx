@@ -6,6 +6,7 @@ import { WelcomePrompt, SuggestionCards, WelcomeContainer, KeyboardShortcuts } f
 import type { HomeProps } from '$types/pages'
 import type { InputPanelRef } from '$types/sections/chat'
 import { useKeyboardShortcuts, useChat } from '$hooks'
+import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS, LAYOUT } from '$lib/constants'
 
 export default function Home({
   setAudioPlaying,
@@ -20,6 +21,7 @@ export default function Home({
   const inputRef = useRef<InputPanelRef>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [isUserScrolling, setIsUserScrolling] = useState(false)
 
   const { messages, inputText, setInputText, loading, handleSend } = useChat({
     setAudioPlaying,
@@ -29,10 +31,33 @@ export default function Home({
   })
 
   useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    const chatContainer = chatScrollRef.current
+    if (!chatContainer) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer
+      const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50
+      setIsUserScrolling(!isAtBottom)
     }
-  }, [messages, loading])
+
+    chatContainer.addEventListener('scroll', handleScroll)
+
+    return () => {
+      chatContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    const chatContainer = chatScrollRef.current
+    if (!chatContainer) return
+
+    const { scrollTop, scrollHeight, clientHeight } = chatContainer
+    const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50
+
+    if (!isUserScrolling || isAtBottom) {
+      chatContainer.scrollTop = chatContainer.scrollHeight
+    }
+  }, [messages, loading, isUserScrolling])
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -48,12 +73,12 @@ export default function Home({
 
   useKeyboardShortcuts([
     {
-      key: 'k',
-      ctrlKey: true,
+      key: KEYBOARD_SHORTCUTS.focusInput.key,
+      ctrlKey: KEYBOARD_SHORTCUTS.focusInput.ctrlKey,
       handler: () => inputRef.current?.focus(),
     },
     {
-      key: 'Escape',
+      key: KEYBOARD_SHORTCUTS.clearInput.key,
       handler: () => inputRef.current?.clear(),
     },
   ])
@@ -62,24 +87,28 @@ export default function Home({
     setInputText(prompt)
     setTimeout(() => {
       void handleSend()
-    }, 100)
+    }, CHAT_DEFAULTS.promptSelectionTimeout)
   }
 
   return (
-    <div className="relative z-10 flex-1 overflow-hidden flex flex-col p-6">
-      <div className="flex-1 overflow-hidden flex flex-col items-center">
+    <div className="relative z-10 flex-1 flex flex-col p-6">
+      <div className="flex-1 flex flex-col items-center">
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col justify-center w-full" style={{ maxWidth: '70%' }}>
+          <div
+            className="flex-1 flex flex-col justify-center w-full"
+            style={{ maxWidth: LAYOUT.maxWidthPercentage }}
+          >
             <WelcomeContainer isVisible={messages.length === 0}>
               <WelcomePrompt />
               <SuggestionCards onSelectPrompt={handleSelectPrompt} />
             </WelcomeContainer>
           </div>
         ) : (
-          <div className="flex-1 overflow-hidden flex flex-col w-full" style={{ maxWidth: '70%' }}>
+          <div className="flex-1 w-full" style={{ maxWidth: LAYOUT.maxWidthPercentage }}>
             <div
               ref={chatScrollRef}
               className="flex-1 overflow-y-auto py-6 scroll-smooth scrollbar-hide"
+              style={{ minHeight: 0 }}
             >
               <ChatPanel messages={messages} isLoading={loading} />
             </div>
@@ -87,22 +116,20 @@ export default function Home({
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-20 p-6 pointer-events-none">
-        <div className="w-full mx-auto pointer-events-auto" style={{ maxWidth: '70%' }}>
-          <AudioControls
-            isPlayingOrLoading={audioPlaying || loading}
-            isPaused={audioPaused}
-            onTogglePause={handleTogglePause}
-            onStop={handleStopAudio}
-          />
-          <InputPanel
-            ref={inputRef}
-            value={inputText}
-            onChange={setInputText}
-            onSend={() => void handleSend()}
-            disabled={loading}
-          />
-        </div>
+      <div className="w-full mx-auto mt-6" style={{ maxWidth: LAYOUT.maxWidthPercentage }}>
+        <AudioControls
+          isPlayingOrLoading={audioPlaying || loading}
+          isPaused={audioPaused}
+          onTogglePause={handleTogglePause}
+          onStop={handleStopAudio}
+        />
+        <InputPanel
+          ref={inputRef}
+          value={inputText}
+          onChange={setInputText}
+          onSend={() => void handleSend()}
+          disabled={loading}
+        />
       </div>
 
       <KeyboardShortcuts isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />

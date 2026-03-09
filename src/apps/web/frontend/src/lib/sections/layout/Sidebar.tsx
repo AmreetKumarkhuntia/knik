@@ -20,6 +20,7 @@ import UserProfile from '$components/UserProfile'
 import type { SidebarProps } from '$types/sections/layout'
 import type { Message } from '$types/hooks'
 import { api } from '$services/api'
+import { UI_TEXT, NAV_ITEMS, EMPTY_STATE_DEFAULTS } from '$lib/constants'
 
 export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
   const location = useLocation()
@@ -92,10 +93,10 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                     : 'w-12 h-12 flex items-center justify-center text-textSecondary hover:text-text hover:bg-white/10 rounded-lg'
                 }
               `}
-              title={isExpanded ? undefined : 'New Chat'}
+              title={isExpanded ? undefined : UI_TEXT.nav.newChat}
             >
               <Palette />
-              {isExpanded && <span className="ml-3">New Chat</span>}
+              {isExpanded && <span className="ml-3">{UI_TEXT.nav.newChat}</span>}
             </button>
           </div>
 
@@ -104,46 +105,33 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
             <h3
               className={`text-sm font-semibold text-textSecondary mb-3 ${isExpanded ? 'px-6' : 'hidden'}`}
             >
-              Navigation
+              {UI_TEXT.nav.navigation}
             </h3>
             <div className={`flex flex-col gap-1 ${isExpanded ? 'px-4' : 'items-center'}`}>
-              <button
-                onClick={() => {
-                  void navigate('/')
-                }}
-                className={`
-                  flex items-center transition-all rounded-lg
-                  ${
-                    location.pathname === '/'
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-textSecondary hover:bg-white/5 hover:text-text'
-                  }
-                  ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
-                `}
-                title={isExpanded ? undefined : 'Chat'}
-              >
-                <ChatIcon className={isExpanded ? 'mr-3' : ''} />
-                {isExpanded && <span className="font-medium">Chat</span>}
-              </button>
-
-              <button
-                onClick={() => {
-                  void navigate('/workflows')
-                }}
-                className={`
-                  flex items-center transition-all rounded-lg
-                  ${
-                    location.pathname === '/workflows'
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-textSecondary hover:bg-white/5 hover:text-text'
-                  }
-                  ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
-                `}
-                title={isExpanded ? undefined : 'Workflows'}
-              >
-                <AccountTree className={isExpanded ? 'mr-3' : ''} />
-                {isExpanded && <span className="font-medium">Workflows</span>}
-              </button>
+              {NAV_ITEMS.map(item => (
+                <button
+                  key={item.path}
+                  onClick={() => {
+                    void navigate(item.path)
+                  }}
+                  className={`
+                    flex items-center transition-all rounded-lg
+                    ${
+                      location.pathname === item.path
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-textSecondary hover:bg-white/5 hover:text-text'
+                    }
+                    ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
+                  `}
+                  title={isExpanded ? undefined : item.label}
+                >
+                  {item.icon === 'Chat' && <ChatIcon className={isExpanded ? 'mr-3' : ''} />}
+                  {item.icon === 'AccountTree' && (
+                    <AccountTree className={isExpanded ? 'mr-3' : ''} />
+                  )}
+                  {isExpanded && <span className="font-medium">{item.label}</span>}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -151,16 +139,16 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
           {isExpanded && (
             <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide px-6">
               <h3 className="text-sm font-semibold text-textSecondary mb-3">
-                Recent Conversations
+                {UI_TEXT.nav.recentConversations}
               </h3>
               <div className="space-y-1">
                 {loading ? (
                   <LoadingSpinner size="sm" className="py-8" />
                 ) : history.length === 0 ? (
                   <EmptyState
-                    icon="💬"
-                    title="No history yet"
-                    description="Start a conversation to see it here"
+                    icon={EMPTY_STATE_DEFAULTS.icon}
+                    title={UI_TEXT.empty.noHistoryTitle}
+                    description={UI_TEXT.empty.noHistoryDescription}
                   />
                 ) : (
                   history.slice(0, 5).map((msg, idx) => (
@@ -194,10 +182,10 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                 text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
                 ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
               `}
-              title={isExpanded ? undefined : 'Theme Settings'}
+              title={isExpanded ? undefined : UI_TEXT.nav.themeSettings}
             >
               <Palette />
-              {isExpanded && <span>Theme Settings</span>}
+              {isExpanded && <span>{UI_TEXT.nav.themeSettings}</span>}
             </button>
 
             <button
@@ -206,10 +194,10 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                 text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
                 ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
               `}
-              title={isExpanded ? undefined : 'Clear History'}
+              title={isExpanded ? undefined : UI_TEXT.nav.clearHistory}
             >
               <TrashIcon />
-              {isExpanded && <span>Clear History</span>}
+              {isExpanded && <span>{UI_TEXT.nav.clearHistory}</span>}
             </button>
 
             <button
@@ -217,10 +205,10 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                 text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
                 ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
               `}
-              title={isExpanded ? undefined : 'Settings'}
+              title={isExpanded ? undefined : UI_TEXT.nav.settings}
             >
               <Settings />
-              {isExpanded && <span>Settings</span>}
+              {isExpanded && <span>{UI_TEXT.nav.settings}</span>}
             </button>
           </div>
         </div>

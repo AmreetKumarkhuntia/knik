@@ -1,34 +1,35 @@
 import type { UserProfileProps } from '$types/components'
+import { USER_PROFILE_DEFAULTS, UI_TEXT, BADGE, STYLE_CONFIG, ACCOUNT } from '$lib/constants'
 
 export default function UserProfile({
-  avatar = 'AR',
-  avatarColor = 'var(--color-primary)',
-  name = 'Alex Rivera',
-  account = 'Pro Account',
-  displayOnly = true,
-  showBadge = true,
-  badgeType = 'pro',
+  avatar = USER_PROFILE_DEFAULTS.initials,
+  avatarColor = USER_PROFILE_DEFAULTS.avatarColor,
+  name = USER_PROFILE_DEFAULTS.name,
+  account = USER_PROFILE_DEFAULTS.accountType,
+  displayOnly = USER_PROFILE_DEFAULTS.displayOnly,
+  showBadge = USER_PROFILE_DEFAULTS.showBadge,
+  badgeType = USER_PROFILE_DEFAULTS.badgeType,
 }: UserProfileProps) {
   const getBadgeColor = () => {
     switch (badgeType) {
-      case 'pro':
-        return 'bg-primary'
-      case 'admin':
-        return 'bg-error'
-      case 'basic':
+      case BADGE.types.pro:
+        return STYLE_CONFIG.badgeTypes.pro.bg
+      case BADGE.types.admin:
+        return STYLE_CONFIG.badgeTypes.admin.bg
+      case BADGE.types.basic:
       default:
-        return 'bg-surface'
+        return STYLE_CONFIG.badgeTypes.basic.bg
     }
   }
 
   const getBadgeText = () => {
     switch (badgeType) {
-      case 'pro':
-        return 'PRO'
-      case 'admin':
-        return 'ADMIN'
-      case 'basic':
-        return 'BASIC'
+      case BADGE.types.pro:
+        return UI_TEXT.status.pro
+      case BADGE.types.admin:
+        return UI_TEXT.status.admin
+      case BADGE.types.basic:
+        return UI_TEXT.status.basic
       default:
         return ''
     }
@@ -39,7 +40,7 @@ export default function UserProfile({
       <div
         className={`w-10 h-10 rounded-full flex items-center justify-center text-text font-semibold ${!displayOnly ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
         style={{ backgroundColor: avatarColor }}
-        aria-label={`${name}'s profile`}
+        aria-label={ACCOUNT.profileLabel(name)}
       >
         {avatar}
       </div>

@@ -6,6 +6,7 @@ import type {
   ScheduleCreateResponse,
   SchedulesListResponse,
   TopWorkflowsResponse,
+  WorkflowDefinition,
   WorkflowDetailResponse,
   WorkflowExecuteRequest,
   WorkflowExecuteResponse,
@@ -43,6 +44,33 @@ class WorkflowAPI {
 
   static async delete(workflowId: string): Promise<{ success: boolean; message: string }> {
     const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async create(
+    name: string,
+    definition: WorkflowDefinition
+  ): Promise<WorkflowDetailResponse> {
+    const response = await fetch(`${API_BASE_URL}/workflows`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, definition }),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async update(
+    workflowId: string,
+    name: string,
+    definition: WorkflowDefinition
+  ): Promise<WorkflowDetailResponse> {
+    const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, definition }),
+    })
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }

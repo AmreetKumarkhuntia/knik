@@ -1,26 +1,26 @@
 import type { FormFieldProps } from '$types/components'
+import { FORM_FIELD_DEFAULTS, UI_TEXT, CSS_CLASSES } from '$lib/constants'
 
 export default function FormField({
   label,
-  type = 'text',
+  type = FORM_FIELD_DEFAULTS.type,
   name,
   value,
   onChange,
   options,
   placeholder,
-  required = false,
-  disabled = false,
-  className = '',
+  required = FORM_FIELD_DEFAULTS.required,
+  disabled = FORM_FIELD_DEFAULTS.disabled,
+  className = FORM_FIELD_DEFAULTS.className,
 }: FormFieldProps) {
-  const inputClassName =
-    'w-full bg-surface border border-border rounded-lg px-4 py-2 text-text focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all'
+  const inputClassName = CSS_CLASSES.input
 
   return (
     <div className={className}>
       {label && (
         <label className="block text-textSecondary text-sm mb-2">
           {label}
-          {required && <span className="ml-1">*</span>}
+          {required && <span className="ml-1">{UI_TEXT.form.requiredIndicator}</span>}
         </label>
       )}
       {type === 'select' && options ? (
@@ -32,7 +32,7 @@ export default function FormField({
           className={inputClassName}
           required={required}
         >
-          <option value="">{placeholder || 'Select an option'}</option>
+          <option value="">{placeholder || UI_TEXT.form.selectPlaceholder}</option>
           {options.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}

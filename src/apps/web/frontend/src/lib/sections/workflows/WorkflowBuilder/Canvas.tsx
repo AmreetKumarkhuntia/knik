@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
+  ReactFlowProvider,
   ReactFlow,
-  Controls,
   Background,
   MiniMap,
   addEdge,
@@ -11,7 +11,6 @@ import {
   type Edge,
   type Node,
   type OnConnect,
-  Panel,
   BackgroundVariant,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -22,8 +21,9 @@ import type {
   NodeTypeName,
   WorkflowDefinition,
 } from '$types/workflow'
-import ActionButton from '$components/ActionButton'
-import NodePalette from './NodePalette'
+import NodePalette from './NodePalette/NodePalette'
+import FloatingControls from './CanvasControls/FloatingControls'
+import PropertiesPanel from './PropertiesPanel/PropertiesPanel'
 import { FunctionNode, ConditionalNode, MergeNode, AINode, StartNode, EndNode } from './nodes'
 import { CustomEdge } from './edges'
 import type { NodeTypes } from '@xyflow/react'
@@ -72,35 +72,16 @@ function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[];
   return { nodes, edges }
 }
 
-function reactFlowToDefinition(nodes: Node[], edges: Edge[]): WorkflowDefinition {
-  const definitionNodes: Record<string, NodeDefinition> = {}
-  const connections: WorkflowConnection[] = []
-
-  nodes.forEach(node => {
-    if (node.type === 'StartNode' || node.type === 'EndNode') return
-    const nodeData = node.data as unknown
-    if (!nodeData || typeof nodeData !== 'object') return
-    definitionNodes[node.id] = nodeData as NodeDefinition
-  })
-
-  edges.forEach(edge => {
-    connections.push({
-      from_id: edge.source,
-      to_id: edge.target,
-      condition: edge.sourceHandle ?? undefined,
-    })
-  })
-
-  return { nodes: definitionNodes, connections }
-}
-
-export default function Canvas({
+function CanvasContent({
   workflowId: _workflowId,
   definition,
   onSave,
   onExecute,
   readOnly = false,
 }: CanvasProps) {
+  void onSave
+  void onExecute
+
   const initialFlow = useMemo(() => {
     if (definition) {
       return definitionToReactFlow(definition)
@@ -117,6 +98,8 @@ export default function Canvas({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialFlow.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialFlow.edges)
   const [isDragging, setIsDragging] = useState(false)
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(false)
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
@@ -160,59 +143,81 @@ export default function Canvas({
     [setNodes]
   )
 
-  const handleSave = useCallback(() => {
-    const def = reactFlowToDefinition(nodes, edges)
-    onSave?.(def)
-  }, [nodes, edges, onSave])
+  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node)
+    setPropertiesPanelOpen(true)
+  }, [])
+
+  const onPaneClick = useCallback(() => {
+    setPropertiesPanelOpen(false)
+    setSelectedNode(null)
+  }, [])
+
+  const handleNodeUpdate = useCallback(
+    (nodeId: string, data: any) => {
+      setNodes(nodes => nodes.map(node => (node.id === nodeId ? { ...node, data } : node)))
+    },
+    [setNodes]
+  )
 
   return (
-    <div className="h-full w-full bg-surface rounded-xl overflow-hidden border border-border">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={readOnly ? undefined : onNodesChange}
-        onEdgesChange={readOnly ? undefined : onEdgesChange}
-        onConnect={readOnly ? undefined : onConnect}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={() => setIsDragging(false)}
-        fitView
-        className={isDragging ? 'cursor-copy' : ''}
-        nodesDraggable={!readOnly}
-        nodesConnectable={!readOnly}
-        elementsSelectable={!readOnly}
-      >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="rgba(255,255,255,0.1)"
-        />
-        <Controls className="!bg-surface !border-border !rounded-lg" />
-        <MiniMap
-          className="!bg-surface !border-border"
-          nodeColor="rgba(255,255,255,0.3)"
-          maskColor="rgba(0,0,0,0.8)"
-        />
-        <Panel position="top-right" className="flex gap-2">
-          {onExecute && (
-            <ActionButton icon="▶" label="Execute" variant="primary" onClick={onExecute} />
-          )}
-          {onSave && !readOnly && (
-            <ActionButton icon="💾" label="Save" variant="secondary" onClick={handleSave} />
-          )}
-        </Panel>
-      </ReactFlow>
+    <div className="h-full w-full flex flex-col">
+      <div className="flex flex-1 overflow-hidden relative">
+        <NodePalette onDragStart={() => setIsDragging(true)} />
 
-      {!readOnly && (
-        <div className="absolute left-4 top-4 z-10">
-          <NodePalette onDragStart={() => setIsDragging(true)} />
+        <div className="flex-1 relative bg-background-canvas workflow-grid">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={readOnly ? undefined : onNodesChange}
+            onEdgesChange={readOnly ? undefined : onEdgesChange}
+            onConnect={readOnly ? undefined : onConnect}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={() => setIsDragging(false)}
+            fitView
+            className={isDragging ? 'cursor-copy' : ''}
+            nodesDraggable={!readOnly}
+            nodesConnectable={!readOnly}
+            elementsSelectable={!readOnly}
+          >
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={20}
+              size={1}
+              color="rgba(255,255,255,0.05)"
+            />
+            <MiniMap
+              className="!bg-surface !border-borderLight"
+              nodeColor="rgba(255,255,255,0.3)"
+              maskColor="rgba(0,0,0,0.8)"
+            />
+          </ReactFlow>
+
+          <FloatingControls />
+
+          <PropertiesPanel
+            selectedNode={selectedNode}
+            isOpen={propertiesPanelOpen}
+            onClose={() => setPropertiesPanelOpen(false)}
+            onNodeUpdate={handleNodeUpdate}
+          />
         </div>
-      )}
+      </div>
     </div>
+  )
+}
+
+export default function Canvas(props: CanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <CanvasContent {...props} />
+    </ReactFlowProvider>
   )
 }
 

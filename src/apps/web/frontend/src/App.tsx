@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '$sections/theme'
 import MainLayout from '$sections/layout/MainLayout'
 import ErrorBoundary from '$sections/feedback/ErrorBoundary'
-import { Home, Workflows } from '$pages'
+import { Home, Workflows, WorkflowBuilder } from '$pages'
 import { useToast, useAudio, useChat } from '$hooks'
 import type { InputPanelRef } from '$types/sections/chat'
 
@@ -59,6 +59,8 @@ function AppContent() {
             }
           />
           <Route path="/workflows" element={<Workflows />} />
+          <Route path="/workflows/create" element={<WorkflowBuilder />} />
+          <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>

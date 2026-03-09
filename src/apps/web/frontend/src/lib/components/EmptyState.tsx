@@ -1,11 +1,12 @@
 import type { EmptyStateProps } from '$types/components'
+import { EMPTY_STATE_DEFAULTS } from '$lib/constants'
 
 export default function EmptyState({
-  icon = '📜',
+  icon = EMPTY_STATE_DEFAULTS.icon,
   title,
   description,
   action,
-  className = '',
+  className = EMPTY_STATE_DEFAULTS.className,
 }: EmptyStateProps) {
   return (
     <div className={`text-center py-20 text-white/50 ${className}`}>
