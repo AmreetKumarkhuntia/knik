@@ -1,6 +1,7 @@
 import ActionButton from '$components/ActionButton'
 import ToggleSwitch from '$components/ToggleSwitch'
 import type { ScheduleCardProps } from '$types/sections/schedule-manager'
+import { PlayArrow, Edit, Delete } from '@mui/icons-material'
 
 export default function ScheduleCard({
   schedule,
@@ -35,21 +36,21 @@ export default function ScheduleCard({
 
       <div className="flex gap-2">
         <ActionButton
-          icon="▶"
+          icon={<PlayArrow />}
           label="Run"
           size="sm"
           variant="primary"
           onClick={() => onRun(schedule.workflow_id)}
         />
         <ActionButton
-          icon="✎"
+          icon={<Edit />}
           label="Edit"
           size="sm"
           variant="secondary"
           onClick={() => onEdit(schedule)}
         />
         <ActionButton
-          icon="🗑"
+          icon={<Delete />}
           label="Delete"
           size="sm"
           variant="danger"

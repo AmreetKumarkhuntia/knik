@@ -12,12 +12,16 @@ export interface ToastProps {
   duration?: number
 }
 
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
+
 export interface ModalProps {
   isOpen: boolean
   onClose: () => void
   children: ReactNode
   title?: string
   className?: string
+  size?: ModalSize
+  animationEnabled?: boolean
 }
 
 export interface ConfirmDialogProps {
@@ -27,7 +31,7 @@ export interface ConfirmDialogProps {
   confirmLabel?: string
   cancelLabel?: string
   variant?: 'danger' | 'warning' | 'info'
-  onConfirm: () => void
+  onConfirm: () => void | Promise<void>
   onCancel: () => void
   loading?: boolean
 }
@@ -35,13 +39,14 @@ export interface ConfirmDialogProps {
 // Component props
 export interface ActionButtonProps {
   icon?: ReactNode
-  label: string
+  label?: string
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   onClick?: () => void
   disabled?: boolean
   loading?: boolean
   className?: string
+  title?: string
 }
 
 export interface BackdropProps {
@@ -60,7 +65,7 @@ export interface CardProps {
 }
 
 export interface EmptyStateProps {
-  icon?: string
+  icon?: string | ReactNode
   title: string
   description?: string
   action?: ReactNode
@@ -107,6 +112,7 @@ export interface LinkButtonProps {
 export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  text?: string
 }
 
 export interface MarkdownMessageProps {
@@ -126,13 +132,16 @@ export interface TableColumn<T> {
   render?: (value: unknown, row: T) => ReactNode
 }
 
-export interface TableProps<T> {
+export interface TableProps<T = Record<string, unknown>> {
   columns: TableColumn<T>[]
   data: T[]
   onRowClick?: (row: T) => void
   loading?: boolean
   empty?: ReactNode
   className?: string
+  maxHeight?: string
+  stickyHeader?: boolean
+  glassContainer?: boolean
 }
 
 export interface Tab<T extends string> {
@@ -162,12 +171,9 @@ export interface HamburgerButtonProps {
   className?: string
 }
 
-// Activity, Metrics, Breadcrumb types
-export interface ActivityItemProps {
-  type: 'success' | 'error' | 'update' | 'info'
-  title: string
-  description?: string
-  time: string
+export interface Trend {
+  direction: 'up' | 'down' | 'neutral'
+  value: string
   icon?: string
 }
 
@@ -176,7 +182,7 @@ export interface MetricCardProps {
   label: string
   value: number | string
   subtext?: string
-  trend?: number
+  trend?: Trend
   color?: 'primary' | 'teal' | 'rose' | 'blue'
   loading?: boolean
 }
@@ -217,12 +223,12 @@ export interface SearchBarProps {
   placeholder?: string
 }
 
-export interface StatCardProps {
-  icon: string
-  label: string
-  value: number | string
-  subtext?: string
-  color?: string
+export interface SectionHeaderProps {
+  title: string
+  actionText?: string
+  onActionClick?: () => void
+  badge?: string
+  className?: string
 }
 
 export interface UserProfileProps {
@@ -233,20 +239,4 @@ export interface UserProfileProps {
   displayOnly?: boolean
   showBadge?: boolean
   badgeType?: 'pro' | 'basic' | 'admin'
-}
-
-// Workflow types
-export interface WorkflowItem {
-  id: string
-  name: string
-  icon: string
-  status: string
-  executions: number
-  successRate: number
-}
-
-export interface TopWorkflowsTableProps {
-  workflows: WorkflowItem[]
-  loading?: boolean
-  onRowClick?: (workflow: WorkflowItem) => void
 }

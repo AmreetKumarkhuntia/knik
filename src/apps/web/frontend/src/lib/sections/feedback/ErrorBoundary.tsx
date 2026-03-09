@@ -4,6 +4,7 @@
  */
 
 import { Component } from 'react'
+import { Warning } from '@mui/icons-material'
 import type { ErrorBoundaryProps, ErrorBoundaryState } from '$types/sections/feedback'
 
 export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -35,8 +36,8 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
       return (
         <div className="min-h-screen bg-gradient-to-br from-red-600 via-purple-500 to-red-800 flex items-center justify-center p-6">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md text-center shadow-2xl">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h1 className="text-3xl font-bold text-white mb-4">Oops! Something went wrong</h1>
+            <Warning style={{ fontSize: 80, color: 'white' }} />
+            <h1 className="text-3xl font-bold text-white mb-4 mt-4">Oops! Something went wrong</h1>
             <p className="text-white/80 mb-6">
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>

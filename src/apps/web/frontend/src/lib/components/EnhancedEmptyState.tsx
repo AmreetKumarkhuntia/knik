@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
-
+import { FlashOn, MenuBook } from '@mui/icons-material'
 import ActionButton from './ActionButton'
-
 import type { EnhancedEmptyStateProps } from '$types/components'
 
 export default function EnhancedEmptyState({
@@ -38,8 +37,11 @@ export default function EnhancedEmptyState({
             opacity: 0.4,
           }}
         />
-        <div className="relative z-10 text-6xl" style={{ color: 'var(--color-accent)' }}>
-          ⚡
+        <div
+          className="relative z-10 flex items-center justify-center"
+          style={{ color: 'var(--color-accent)' }}
+        >
+          <FlashOn style={{ fontSize: 80 }} />
         </div>
       </motion.div>
 
@@ -56,10 +58,15 @@ export default function EnhancedEmptyState({
         <p className="text-textSecondary text-sm mt-6">{description}</p>
 
         <div className="flex gap-3 mt-6">
-          <ActionButton icon="⚡" label={actionLabel} variant="primary" onClick={onAction} />
+          <ActionButton
+            icon={<FlashOn />}
+            label={actionLabel}
+            variant="primary"
+            onClick={onAction}
+          />
           {onSecondaryAction && (
             <ActionButton
-              icon="📚"
+              icon={<MenuBook />}
               label={secondaryActionLabel}
               variant="secondary"
               onClick={onSecondaryAction}

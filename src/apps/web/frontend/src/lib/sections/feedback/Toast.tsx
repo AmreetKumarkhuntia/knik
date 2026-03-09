@@ -4,6 +4,7 @@
  */
 
 import { useEffect } from 'react'
+import { CheckCircle, Cancel, Info, Close } from '@mui/icons-material'
 import type { ToastProps } from '$types/components'
 
 export default function Toast({ message, type, onClose, duration = 5000 }: ToastProps) {
@@ -19,9 +20,9 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
   }
 
   const icons = {
-    success: '✓',
-    error: '✕',
-    info: 'ℹ',
+    success: <CheckCircle />,
+    error: <Cancel />,
+    info: <Info />,
   }
 
   return (
@@ -32,7 +33,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
         <span className="text-2xl">{icons[type]}</span>
         <p className="flex-1">{message}</p>
         <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-          ✕
+          <Close />
         </button>
       </div>
     </div>

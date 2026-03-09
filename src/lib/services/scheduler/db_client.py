@@ -1,5 +1,5 @@
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 
 from lib.services.postgres.db import PostgresDB
 from lib.services.scheduler.models import ExecutionRecord, NodeExecutionRecord, Schedule, Workflow
@@ -236,24 +236,6 @@ class SchedulerDB:
         return [NodeExecutionRecord.from_row(row) for row in rows]
 
     @staticmethod
-    def get_date_range(time_range: str) -> tuple[datetime | None, datetime]:
-        """Returns (start_date, end_date) tuple for given time range in UTC.
-
-        Supported time ranges: 'today', '7days', '30days', '90days', 'all'
-        """
-        end_date = datetime.now(UTC)
-
-        ranges = {
-            "today": (end_date.replace(hour=0, minute=0, second=0, microsecond=0), end_date),
-            "7days": (end_date - timedelta(days=7), end_date),
-            "30days": (end_date - timedelta(days=30), end_date),
-            "90days": (end_date - timedelta(days=90), end_date),
-            "all": (None, end_date),
-        }
-
-        return ranges.get(time_range, ranges["today"])
-
-    @staticmethod
     async def get_total_workflows() -> int:
         """Get total count of workflows."""
         await SchedulerDB.check_initialized()
@@ -303,132 +285,63 @@ class SchedulerDB:
         return 0.0
 
     @staticmethod
-    async def get_top_workflows(
-        limit: int = 10, start_date: datetime | None = None, end_date: datetime | None = None
-    ) -> list[dict]:
-        """Get top performing workflows sorted by execution count in date range."""
+    async def get_recent_workflows_summary(limit: int = 20) -> list[dict]:
+        """Get recent workflows with minimal fields for dashboard."""
         await SchedulerDB.check_initialized()
-
-        if start_date:
-            query = """
-                SELECT
-                    w.id,
-                    w.name,
-                    COUNT(e.id) as executions,
-                    SUM(CASE WHEN e.status = 'success' THEN 1 ELSE 0 END)::FLOAT /
-                        NULLIF(COUNT(e.id), 0) * 100 as success_rate
-                FROM workflows w
-                LEFT JOIN executions e ON w.id = e.workflow_id
-                    AND e.started_at >= %s AND e.started_at <= %s
-                GROUP BY w.id, w.name
-                HAVING COUNT(e.id) > 0
-                ORDER BY executions DESC
-                LIMIT %s
-            """
-            rows = await PostgresDB.fetch_all(query, (start_date, end_date, limit))
-        else:
-            query = """
-                SELECT
-                    w.id,
-                    w.name,
-                    COUNT(e.id) as executions,
-                    SUM(CASE WHEN e.status = 'success' THEN 1 ELSE 0 END)::FLOAT /
-                        NULLIF(COUNT(e.id), 0) * 100 as success_rate
-                FROM workflows w
-                LEFT JOIN executions e ON w.id = e.workflow_id
-                GROUP BY w.id, w.name
-                HAVING COUNT(e.id) > 0
-                ORDER BY executions DESC
-                LIMIT %s
-            """
-            rows = await PostgresDB.fetch_all(query, (limit,))
-
+        query = """
+            SELECT
+                w.id,
+                w.name,
+                MAX(e.started_at) as last_executed_at,
+                COUNT(e.id) as total_executions,
+                CASE
+                    WHEN MAX(e.started_at) >= NOW() - INTERVAL '7 days' THEN 'active'
+                    ELSE 'inactive'
+                END as status
+            FROM workflows w
+            LEFT JOIN executions e ON w.id = e.workflow_id
+            GROUP BY w.id, w.name
+            ORDER BY last_executed_at DESC NULLS LAST, w.created_at DESC
+            LIMIT %s
+        """
+        rows = await PostgresDB.fetch_all(query, (limit,))
         return [
             {
                 "id": row["id"],
                 "name": row["name"],
-                "executions": row["executions"],
-                "success_rate": round(row["success_rate"] or 0, 2),
+                "lastExecutedAt": row["last_executed_at"],
+                "totalExecutions": row["total_executions"],
+                "status": row["status"],
             }
             for row in rows
         ]
 
     @staticmethod
-    async def get_recent_activity(limit: int = 20, hours_back: int = 24) -> list[dict]:
-        """Get recent activity combining executions and workflow updates."""
+    async def get_recent_executions_summary(limit: int = 100) -> list[dict]:
+        """Get recent executions with minimal fields and workflow name."""
         await SchedulerDB.check_initialized()
-
-        start_date = datetime.now(UTC) - timedelta(hours=hours_back)
-
         query = """
             SELECT
-                'execution' as activity_type,
                 e.id,
                 e.workflow_id,
+                w.name as workflow_name,
                 e.status,
-                e.started_at as timestamp,
-                e.error_message,
-                w.name as workflow_name
+                e.started_at,
+                e.duration_ms
             FROM executions e
             JOIN workflows w ON e.workflow_id = w.id
-            WHERE e.started_at >= %s
-
-            UNION ALL
-
-            SELECT
-                'update' as activity_type,
-                NULL::integer as id,
-                w.id as workflow_id,
-                'updated' as status,
-                w.updated_at as timestamp,
-                NULL as error_message,
-                w.name as workflow_name
-            FROM workflows w
-            WHERE w.updated_at >= %s AND w.created_at != w.updated_at
-
-            ORDER BY timestamp DESC
+            ORDER BY e.started_at DESC
             LIMIT %s
         """
-
-        rows = await PostgresDB.fetch_all(query, (start_date, start_date, limit))
-
-        activities = []
-        for row in rows:
-            activity_type = row["activity_type"]
-            status = row["status"]
-
-            if activity_type == "execution":
-                if status == "success":
-                    act_type = "success"
-                    title = f"{row['workflow_name']} Executed Successfully"
-                elif status == "failed":
-                    act_type = "error"
-                    title = f"{row['workflow_name']} Failed"
-                else:
-                    act_type = "info"
-                    title = f"{row['workflow_name']} Started"
-            else:
-                act_type = "update"
-                title = f"{row['workflow_name']} Updated"
-
-            time_ago = datetime.now(UTC) - row["timestamp"]
-            if time_ago.total_seconds() < 60:
-                time_str = "Just now"
-            elif time_ago.total_seconds() < 3600:
-                time_str = f"{int(time_ago.total_seconds() / 60)}m ago"
-            elif time_ago.total_seconds() < 86400:
-                time_str = f"{int(time_ago.total_seconds() / 3600)}h ago"
-            else:
-                time_str = f"{int(time_ago.total_seconds() / 86400)}d ago"
-
-            activities.append(
-                {
-                    "id": f"{activity_type}_{row['id'] or row['workflow_id']}_{row['timestamp'].timestamp()}",
-                    "type": act_type,
-                    "title": title,
-                    "description": time_str,
-                    "time": time_str,
-                }
-            )
-
-        return activities
+        rows = await PostgresDB.fetch_all(query, (limit,))
+        return [
+            {
+                "id": row["id"],
+                "workflowId": row["workflow_id"],
+                "workflowName": row["workflow_name"],
+                "status": row["status"],
+                "startedAt": row["started_at"],
+                "durationMs": row["duration_ms"],
+            }
+            for row in rows
+        ]

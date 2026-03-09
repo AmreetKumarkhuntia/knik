@@ -6,6 +6,7 @@ export const buttonVariants = {
 }
 
 export const sizeVariants = {
+  xs: 'px-2 py-2 text-xs gap-0',
   sm: 'px-2 py-1 text-xs gap-1',
   md: 'px-3 py-1.5 text-sm gap-1.5',
   lg: 'px-4 py-2 text-base gap-2',

@@ -108,13 +108,3 @@ export const STYLE_CONFIG = {
     maskColor: 'rgba(0,0,0,0.8)',
   },
 }
-
-// Workflow activity icons
-export const ACTIVITY_ICONS = {
-  created: { icon: '📝', color: 'text-blue-400' },
-  updated: { icon: '🔄', color: 'text-yellow-400' },
-  executed: { icon: '▶️', color: 'text-green-400' },
-  failed: { icon: '❌', color: 'text-red-400' },
-  completed: { icon: '✅', color: 'text-green-400' },
-  scheduled: { icon: '⏰', color: 'text-purple-400' },
-}

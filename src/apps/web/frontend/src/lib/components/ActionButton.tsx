@@ -10,11 +10,15 @@ export default function ActionButton({
   disabled = false,
   loading = false,
   className = '',
+  title,
 }: ActionButtonProps) {
+  const isIconOnly = !label && icon
+
   return (
     <button
       onClick={onClick}
       disabled={disabled || loading}
+      title={title || (isIconOnly ? label : undefined)}
       className={`
         inline-flex items-center justify-center rounded-lg border font-medium
         transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
@@ -24,9 +28,9 @@ export default function ActionButton({
       {loading ? (
         <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
       ) : (
-        icon
+        icon && <span className={isIconOnly ? '' : ''}>{icon}</span>
       )}
-      {label}
+      {label && <span>{label}</span>}
     </button>
   )
 }

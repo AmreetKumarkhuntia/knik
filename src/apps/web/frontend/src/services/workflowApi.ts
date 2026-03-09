@@ -1,17 +1,15 @@
 import type {
-  ActivityResponse,
+  DashboardResponse,
   ExecutionHistoryResponse,
   Schedule,
   ScheduleCreateRequest,
   ScheduleCreateResponse,
   SchedulesListResponse,
-  TopWorkflowsResponse,
   WorkflowDefinition,
   WorkflowDetailResponse,
   WorkflowExecuteRequest,
   WorkflowExecuteResponse,
   WorkflowListResponse,
-  WorkflowMetricsResponse,
 } from '../types/workflow'
 
 const API_BASE_URL = 'http://localhost:8000/api'
@@ -120,25 +118,13 @@ class ScheduleAPI {
 }
 
 class AnalyticsAPI {
-  static async getMetrics(timeRange: string = 'today'): Promise<WorkflowMetricsResponse> {
-    const response = await fetch(`${API_BASE_URL}/analytics/metrics?time_range=${timeRange}`)
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
-    return response.json()
-  }
-
-  static async getTopWorkflows(
-    limit: number = 10,
-    timeRange: string = 'today'
-  ): Promise<TopWorkflowsResponse> {
+  static async getDashboard(
+    workflowsLimit: number = 20,
+    executionsLimit: number = 100
+  ): Promise<DashboardResponse> {
     const response = await fetch(
-      `${API_BASE_URL}/analytics/top-workflows?limit=${limit}&time_range=${timeRange}`
+      `${API_BASE_URL}/analytics/dashboard?workflows_limit=${workflowsLimit}&executions_limit=${executionsLimit}`
     )
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
-    return response.json()
-  }
-
-  static async getActivity(limit: number = 20): Promise<ActivityResponse> {
-    const response = await fetch(`${API_BASE_URL}/analytics/activity?limit=${limit}`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }

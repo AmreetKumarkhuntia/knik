@@ -14,22 +14,18 @@ export default function MetricCard({
     primary: {
       bg: 'bg-primary/20',
       text: 'text-primary',
-      iconBg: 'bg-primary',
     },
     teal: {
       bg: 'bg-teal-500/20',
       text: 'text-teal-500',
-      iconBg: 'bg-teal-500',
     },
     rose: {
       bg: 'bg-rose-500/20',
       text: 'text-rose-500',
-      iconBg: 'bg-rose-500',
     },
     blue: {
       bg: 'bg-blue-500/20',
       text: 'text-blue-500',
-      iconBg: 'bg-blue-500',
     },
   }
 
@@ -54,7 +50,7 @@ export default function MetricCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -4, boxShadow: '0 8px 20px -6px var(--color-primary)' }}
       className="flex flex-col gap-4 rounded-xl p-6 glass border border-white/10 shadow-sm"
     >
       <div className="flex justify-between items-start">

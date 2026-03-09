@@ -28,8 +28,6 @@ export const UI_TEXT = {
 
   // Workflow Hub
   workflow: {
-    title: 'Workflow Hub',
-    description: 'Monitor and manage your enterprise automation pipelines.',
     create: 'Create Workflow',
     metrics: {
       total: 'Total Workflows',
@@ -37,19 +35,16 @@ export const UI_TEXT = {
       successRate: 'Success Rate',
     },
     sections: {
-      topWorkflows: 'Top Performing Workflows',
-      recentActivity: 'Recent Activity',
-    },
-    table: {
-      workflowName: 'Workflow Name',
-      status: 'Status',
-      executions: 'Executions',
-      success: 'Success',
+      workflows: 'Workflows',
+      recentExecutions: 'Recent Executions',
     },
     buttons: {
       viewAll: 'View All',
-      clearAll: 'Clear all',
-      viewDetails: 'View detailed activity log',
+    },
+    delete: {
+      title: 'Delete Workflow',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
     },
   },
 

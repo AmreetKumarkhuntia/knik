@@ -1,6 +1,8 @@
 import LoadingSpinner from '$components/LoadingSpinner'
+import EmptyState from '$components/EmptyState'
 import ScheduleCard from './ScheduleCard'
 import type { ScheduleListProps } from '$types/sections/schedule-manager'
+import { Schedule as ScheduleIcon } from '@mui/icons-material'
 
 export default function ScheduleList({
   schedules,
@@ -17,11 +19,11 @@ export default function ScheduleList({
 
   if (schedules.length === 0) {
     return (
-      <div className="text-center py-20 text-textSecondary">
-        <p className="text-4xl mb-4">📅</p>
-        <p>No schedules configured yet</p>
-        <p className="text-sm mt-2">Create a schedule to automate workflow execution</p>
-      </div>
+      <EmptyState
+        icon={<ScheduleIcon style={{ fontSize: 40 }} />}
+        title="No schedules configured yet"
+        description="Create a schedule to automate workflow execution"
+      />
     )
   }
 

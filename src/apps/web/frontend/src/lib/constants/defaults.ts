@@ -68,10 +68,3 @@ export const EXECUTION_DETAIL_DEFAULTS = {
 export const CHAT_DEFAULTS = {
   promptSelectionTimeout: 100,
 }
-
-// Workflow defaults
-export const WORKFLOW_DEFAULTS = {
-  topWorkflowsLimit: 10,
-  activityLimit: 20,
-  timeParameter: 'today',
-}
