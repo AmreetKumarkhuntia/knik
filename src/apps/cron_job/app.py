@@ -4,7 +4,6 @@ import signal
 
 from imports import printer as logger
 from lib.core.config import Config
-from lib.services.ai_client.client import AIClient
 from lib.services.postgres.db import PostgresDB
 from lib.services.scheduler.scheduler import Scheduler
 
@@ -14,18 +13,7 @@ class CronJobApp:
 
     def __init__(self):
         self.config = Config()
-
-        # Instantiate an AI client if nodes need it to perform AI actions
-        self.ai_client = AIClient(
-            provider=self.config.ai_provider,
-            model=self.config.ai_model,
-            system_instruction=self.config.system_instruction,
-            temperature=self.config.temperature,
-            max_tokens=self.config.max_tokens,
-        )
-
-        # Initialize orchestrator
-        self.scheduler = Scheduler(ai_client=self.ai_client)
+        self.scheduler = Scheduler()
 
     async def run(self):
         """Run the application until interrupted."""

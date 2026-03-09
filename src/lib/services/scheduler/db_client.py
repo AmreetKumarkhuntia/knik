@@ -72,19 +72,42 @@ class SchedulerDB:
         """Create a new schedule."""
         await SchedulerDB.check_initialized()
         query = """
-            INSERT INTO schedules (trigger_workflow_id, enabled, timezone, created_at, updated_at)
-            VALUES (%s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO schedules (
+                target_workflow_id,
+                enabled,
+                timezone,
+                schedule_description,
+                next_run_at,
+                recurrence_seconds,
+                created_at,
+                updated_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             RETURNING id
         """
         id_val = await PostgresDB.fetch_val(
             query,
             (
-                schedule.trigger_workflow_id,
+                schedule.target_workflow_id,
                 schedule.enabled,
                 schedule.timezone,
+                schedule.schedule_description,
+                schedule.next_run_at,
+                schedule.recurrence_seconds,
             ),
         )
         return id_val
+
+    @staticmethod
+    async def update_schedule_next_run(schedule_id: int, next_run_at: datetime) -> None:
+        """Update next_run_at for a schedule."""
+        await SchedulerDB.check_initialized()
+        query = """
+            UPDATE schedules
+            SET next_run_at = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """
+        await PostgresDB.execute(query, (next_run_at, schedule_id))
 
     @staticmethod
     async def list_schedules() -> list[Schedule]:

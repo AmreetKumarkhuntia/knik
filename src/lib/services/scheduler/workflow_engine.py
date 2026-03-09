@@ -16,8 +16,7 @@ from lib.services.scheduler.nodes import (
 class WorkflowEngine:
     """Executes a parsed Workflow definition resolving its nodes topologically."""
 
-    def __init__(self, ai_client: Any | None = None):
-        self.ai_client = ai_client
+    def __init__(self):
         self._execution_trace = []
 
     async def execute_workflow(self, workflow: Workflow, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -157,7 +156,6 @@ class WorkflowEngine:
                 provider=data.get("provider", "vertex"),
                 use_tools=data.get("use_tools", False),
             )
-            ai_node.set_ai_client(self.ai_client)
             return ai_node
         else:
             raise ValueError(f"Unknown node type map {node_type} for node {node_id}")

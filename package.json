@@ -17,7 +17,7 @@
     "start:cron:logs": "bash -c '. .env && .venv/bin/python -u src/main.py --mode cron' 2>&1 | tee logs/cron.log",
     "start:web:backend": "./scripts/start_web_backend.sh",
     "start:web:backend:logs": "./scripts/start_web_backend.sh 2>&1 | tee logs/web_backend.log",
-    "start:web:frontend": "./scripts/start_web_frontend.sh",
+    "start:web:frontend": "./scripts/start_web_frontend.sh 2>&1 | tee logs/frontend.log",
     "start:electron": "./scripts/start_electron.sh",
     "electron:dev": "concurrently \"npm run start:web:backend\" \"npm run start:web:frontend\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "electron-builder",

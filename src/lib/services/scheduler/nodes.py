@@ -154,29 +154,22 @@ class AIExecutionNode(BaseNode):
         self.provider = provider
         self.temperature = temperature
         self.use_tools = use_tools
-        self.ai_client = None
-
-    def set_ai_client(self, ai_client):
-        """Set AI client for this node."""
-        self.ai_client = ai_client
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         logger.info(f"[{self.node_id}] Executing AI Node with prompt: {self.prompt}")
         resolved_prompt = self._resolve_prompt(inputs, self.prompt)
 
-        if not self.ai_client:
-            logger.warning(f"[{self.node_id}] No AI client available, returning mock response")
-            return {"output": "Mock AI Response", "resolved_prompt": resolved_prompt}
-
         try:
-            from lib.services.ai_client import AIClient
-            from lib.services.ai_client.registry import MCPServerRegistry
+            from lib.services.ai_client.client import AIClient
+            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
-            ai = AIClient(provider=self.provider, mcp_registry=MCPServerRegistry)
-            response = ai.chat(
-                prompt=resolved_prompt,
+            ai_client = AIClient(
+                provider=self.provider,
+                model=self.model,
                 temperature=self.temperature,
+                mcp_registry=MCPServerRegistry if self.use_tools else None,
             )
+            response = ai_client.chat(prompt=resolved_prompt)
             return {"output": response, "resolved_prompt": resolved_prompt}
         except Exception as e:
             logger.error(f"[{self.node_id}] AI execution failed: {e}")

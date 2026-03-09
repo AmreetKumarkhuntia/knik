@@ -1,5 +1,5 @@
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from imports import printer as logger
 from lib.core.config import Config
@@ -10,12 +10,11 @@ from lib.services.scheduler.workflow_engine import WorkflowEngine
 class CronScheduler:
     """Background service that polls the DB for Schedules and triggers Workflows."""
 
-    def __init__(self, ai_client=None):
-        self.ai_client = ai_client
+    def __init__(self):
         self._running = False
         self._task: asyncio.Task | None = None
         self.config = Config()
-        self.engine = WorkflowEngine(ai_client=self.ai_client)
+        self.engine = WorkflowEngine()
 
         self._last_run_map: dict[int, datetime] = {}
         self._poll_count = 0
@@ -59,51 +58,32 @@ class CronScheduler:
 
     async def _check_schedules(self, schedules: list | None = None):
         now = datetime.now(UTC)
-        current_minute = now.replace(second=0, microsecond=0)
 
         if schedules is None:
             schedules = await SchedulerDB.list_schedules()
 
         for schedule in schedules:
             try:
-                # We skip evaluating if it ran successfully already this minute
-                last_run = self._last_run_map.get(schedule.id)
-                if last_run and last_run >= current_minute:
+                if not schedule.enabled or not schedule.next_run_at:
                     continue
 
-                # Run the trigger workflow dynamically
-                trigger_wf = await SchedulerDB.get_workflow(schedule.trigger_workflow_id)
-                if not trigger_wf:
-                    logger.error(
-                        f"Trigger workflow {schedule.trigger_workflow_id} not found for schedule {schedule.id}"
-                    )
-                    continue
-
-                # Execute trigger workflow. We inject current_minute so its logic can evaluate if needed
-                logger.info(f"Evaluating schedule ID {schedule.id} -> trigger workflow {schedule.trigger_workflow_id}")
-                result = await self.engine.execute_workflow(
-                    trigger_wf, inputs={"current_minute": current_minute.isoformat()}
-                )
-
-                # Check if it signaled to trigger the target and extract the target workflow ID
-                target_workflow_id = None
-                for _node_id, output in result.items():
-                    if isinstance(output, dict) and "workflow_id" in output:
-                        target_workflow_id = output["workflow_id"]
-                        break
-
-                if target_workflow_id:
+                if schedule.next_run_at <= now:
                     logger.info(
-                        f"Trigger workflow signaled execution! Triggering Target Workflow ID {target_workflow_id}"
+                        f"Schedule ID {schedule.id} triggered at {schedule.next_run_at}. "
+                        f"Executing Target Workflow ID {schedule.target_workflow_id}"
                     )
-                    asyncio.create_task(self._trigger_workflow(target_workflow_id))
+
+                    asyncio.create_task(self._trigger_workflow(schedule.target_workflow_id))
+
+                    if schedule.recurrence_seconds:
+                        next_run = now + timedelta(seconds=schedule.recurrence_seconds)
+                        await SchedulerDB.update_schedule_next_run(schedule.id, next_run)
+                        logger.info(f"Schedule ID {schedule.id} next run: {next_run}")
+
                     await SchedulerDB.record_schedule_execution(schedule.id)
-                    self._last_run_map[schedule.id] = current_minute
-                else:
-                    logger.debug(f"Trigger workflow {schedule.trigger_workflow_id} did not signal execution.")
 
             except Exception as e:
-                logger.error(f"Error evaluating schedule {schedule.id}: {e}")
+                logger.error(f"Error processing schedule {schedule.id}: {e}")
 
     async def _trigger_workflow(self, workflow_id: str):
         """Background trigger wrapper to prevent failing the loop on unhandled DAG faults."""

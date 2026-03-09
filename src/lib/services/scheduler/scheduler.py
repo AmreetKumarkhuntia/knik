@@ -10,10 +10,9 @@ from lib.services.scheduler.workflow_engine import WorkflowEngine
 class Scheduler:
     """Main orchestrator for the Workflow Scheduler system."""
 
-    def __init__(self, ai_client: Any | None = None):
-        self.ai_client = ai_client
-        self.workflow_engine = WorkflowEngine(ai_client=self.ai_client)
-        self.cron_scheduler = CronScheduler(ai_client=self.ai_client)
+    def __init__(self):
+        self.workflow_engine = WorkflowEngine()
+        self.cron_scheduler = CronScheduler()
         self._running = False
 
     async def register_workflow(self, workflow: Workflow) -> bool:
@@ -44,7 +43,7 @@ class Scheduler:
         """Add a cron schedule."""
         schedule_id = await SchedulerDB.create_schedule(schedule)
         if schedule_id:
-            logger.info(f"Added schedule ID {schedule_id} with trigger workflow {schedule.trigger_workflow_id}")
+            logger.info(f"Added schedule ID {schedule_id} with target workflow {schedule.target_workflow_id}")
         return schedule_id
 
     async def remove_schedule(self, schedule_id: int) -> bool:

@@ -30,26 +30,54 @@ def list_cron_schedules() -> dict[str, Any]:
     printer.info("🔧 Listing active cron schedules")
     try:
         schedules = _run_async(SchedulerDB.list_schedules())
-        results = [{"id": s.id, "trigger": s.trigger_workflow_id} for s in schedules]
+        results = [
+            {
+                "id": s.id,
+                "target_workflow_id": s.target_workflow_id,
+                "schedule_description": s.schedule_description,
+                "next_run_at": s.next_run_at.isoformat() if s.next_run_at else None,
+                "recurrence_seconds": s.recurrence_seconds,
+                "enabled": s.enabled,
+            }
+            for s in schedules
+        ]
         return {"success": True, "schedules": results, "total": len(results)}
     except Exception as e:
         printer.error(f"Error listing cron schedules: {e}")
         return {"error": f"Failed to list schedules: {str(e)}"}
 
 
-def add_cron_schedule(trigger_workflow_id: str) -> dict[str, Any]:
-    """Add a new cron schedule. The trigger workflow must output {'workflow_id': 'target_workflow_id'} to trigger execution."""
-    printer.info(f"🔧 Adding cron schedule with trigger workflow '{trigger_workflow_id}'")
+def add_cron_schedule(target_workflow_id: str, schedule_description: str, timezone: str = "UTC") -> dict[str, Any]:
+    """Add a new cron schedule with natural language description."""
+    printer.info(f"🔧 Adding cron schedule for target workflow '{target_workflow_id}'")
     try:
+        if not schedule_description:
+            return {"error": "schedule_description is required"}
+
+        from lib.mcp.implementations.workflow_impl import _calculate_first_run, _parse_recurrence_seconds
+
+        first_run = _calculate_first_run(schedule_description, timezone)
+        recurrence_seconds = _parse_recurrence_seconds(schedule_description)
+
         schedule = Schedule(
-            id=0,  # DB will auto-assign
-            trigger_workflow_id=trigger_workflow_id,
+            id=0,
+            target_workflow_id=target_workflow_id,
             enabled=True,
+            timezone=timezone,
+            schedule_description=schedule_description,
+            next_run_at=first_run,
+            recurrence_seconds=recurrence_seconds,
         )
+
         schedule_id = _run_async(SchedulerDB.create_schedule(schedule))
-        return {"success": True, "schedule_id": schedule_id}
+        return {
+            "success": True,
+            "schedule_id": schedule_id,
+            "next_run_at": first_run.isoformat(),
+            "recurrence_seconds": recurrence_seconds,
+        }
     except Exception as e:
-        printer.error(f"Error listing cron schedules: {e}")
+        printer.error(f"Error adding cron schedule: {e}")
         return {"error": f"Failed to add schedule: {str(e)}"}
 
 

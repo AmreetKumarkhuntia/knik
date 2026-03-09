@@ -50,9 +50,12 @@ class Schedule:
     """Represents a cron schedule for a Workflow."""
 
     id: int
-    trigger_workflow_id: str
+    target_workflow_id: str
     enabled: bool = True
     timezone: str = "UTC"
+    schedule_description: str | None = None
+    next_run_at: datetime | None = None
+    recurrence_seconds: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     last_executed_at: datetime | None = None
@@ -62,9 +65,12 @@ class Schedule:
         """Instantiate a Schedule from a database row."""
         return cls(
             id=row["id"],
-            trigger_workflow_id=row["trigger_workflow_id"],
+            target_workflow_id=row["target_workflow_id"],
             enabled=row.get("enabled", True),
             timezone=row.get("timezone", "UTC"),
+            schedule_description=row.get("schedule_description"),
+            next_run_at=row.get("next_run_at"),
+            recurrence_seconds=row.get("recurrence_seconds"),
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
             last_executed_at=row.get("last_executed_at"),

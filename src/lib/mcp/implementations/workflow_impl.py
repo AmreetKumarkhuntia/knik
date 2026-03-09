@@ -1,6 +1,7 @@
 import asyncio
 import uuid
 from collections import defaultdict, deque
+from datetime import UTC, datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -51,16 +52,59 @@ def create_workflow(name: str, definition: dict[str, Any], description: str | No
         return {"error": f"Failed to create workflow: {str(e)}"}
 
 
+def _parse_recurrence_seconds(schedule_description: str) -> int | None:
+    """Parse natural language schedule to recurrence interval in seconds."""
+    import re
+
+    description_lower = schedule_description.lower()
+
+    patterns = [
+        (r"every\s+(\d+)\s+hours?", lambda m: int(m.group(1)) * 3600),
+        (r"every\s+(\d+)\s+days?", lambda m: int(m.group(1)) * 86400),
+        (r"every\s+(\d+)\s+minutes?", lambda m: int(m.group(1)) * 60),
+        (r"every\s+(\d+)\s+weeks?", lambda m: int(m.group(1)) * 604800),
+        (r"hourly", lambda m: 3600),
+        (r"daily", lambda m: 86400),
+        (r"weekly", lambda m: 604800),
+    ]
+
+    for pattern, converter in patterns:
+        match = re.search(pattern, description_lower)
+        if match:
+            return converter(match)
+
+    return None
+
+
+def _calculate_first_run(schedule_description: str, timezone: str):
+    """Calculate first run time from natural language description."""
+    from zoneinfo import ZoneInfo
+
+    import dateparser
+
+    tz = ZoneInfo(timezone)
+    current_time = datetime.now(tz)
+
+    parsed = dateparser.parse(
+        schedule_description,
+        settings={"RELATIVE_BASE": current_time, "TIMEZONE": str(tz), "RETURN_AS_TIMEZONE_AWARE": True},
+    )
+
+    if not parsed:
+        parsed = current_time
+
+    return parsed.astimezone(UTC)
+
+
 def schedule_workflow(
     target_workflow_id: str, schedule_description: str, trigger_type: str, timezone: str = "GMT+5:30"
 ) -> dict[str, Any]:
     """Schedule a workflow using natural language timing.
 
-    Creates a trigger workflow that outputs the target workflow_id when it triggers.
-    The target workflow will be executed when the trigger workflow outputs {'workflow_id': target_workflow_id}.
+    Parses schedule description to calculate first run and recurrence interval.
     """
     try:
-        printer.info(f"Scheduling workflow {target_workflow_id} with trigger type: {trigger_type}")
+        printer.info(f"Scheduling workflow {target_workflow_id}: {schedule_description}")
 
         workflow = _run_async(SchedulerDB.get_workflow(target_workflow_id))
         if not workflow:
@@ -68,25 +112,29 @@ def schedule_workflow(
 
         _validate_timezone(timezone)
 
-        trigger_workflow_id = f"{target_workflow_id}_trigger_{uuid.uuid4().hex[:8]}"
-        trigger_workflow = _generate_trigger_workflow(
-            trigger_workflow_id, schedule_description, timezone, trigger_type, target_workflow_id
+        first_run = _calculate_first_run(schedule_description, timezone)
+        recurrence_seconds = _parse_recurrence_seconds(schedule_description)
+
+        schedule = Schedule(
+            id=0,
+            target_workflow_id=target_workflow_id,
+            enabled=True,
+            timezone=timezone,
+            schedule_description=schedule_description,
+            next_run_at=first_run,
+            recurrence_seconds=recurrence_seconds,
         )
-
-        _run_async(SchedulerDB.create_workflow(trigger_workflow))
-
-        schedule = Schedule(id=0, trigger_workflow_id=trigger_workflow_id, enabled=True, timezone=timezone)
 
         schedule_id = _run_async(SchedulerDB.create_schedule(schedule))
 
-        printer.info(f"Workflow scheduled successfully: {schedule_id}")
+        printer.info(f"Workflow scheduled successfully: {schedule_id}, next run: {first_run}")
         return {
             "success": True,
             "schedule_id": schedule_id,
             "target_workflow_id": target_workflow_id,
-            "trigger_workflow_id": trigger_workflow_id,
             "schedule_description": schedule_description,
-            "trigger_type": trigger_type,
+            "next_run_at": first_run.isoformat(),
+            "recurrence_seconds": recurrence_seconds,
             "timezone": timezone,
         }
 
@@ -237,92 +285,6 @@ def _validate_timezone(timezone_str: str) -> None:
         ZoneInfo(timezone_str)
     except Exception as e:
         raise ValueError(f"Invalid timezone: {timezone_str}. Error: {e}") from None
-
-
-def _generate_trigger_workflow(
-    trigger_id: str, schedule_description: str, timezone: str, trigger_type: str, target_workflow_id: str
-) -> Workflow:
-    """Generate a trigger workflow based on trigger type."""
-    name = f"Trigger: {schedule_description}"
-
-    if trigger_type == "code":
-        definition = _generate_code_based_trigger(schedule_description, timezone, target_workflow_id)
-    elif trigger_type == "ai":
-        definition = _generate_ai_based_trigger(schedule_description, timezone, target_workflow_id)
-    else:
-        raise ValueError(f"Invalid trigger_type '{trigger_type}'. Must be 'ai' or 'code'")
-
-    return Workflow(
-        id=trigger_id, name=name, definition=definition, description=f"Trigger workflow for: {schedule_description}"
-    )
-
-
-def _generate_code_based_trigger(schedule_description: str, timezone: str, target_workflow_id: str) -> dict[str, Any]:
-    """Generate code-based trigger workflow using dateparser."""
-    code = f"""import dateparser
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-def evaluate_schedule(current_minute):
-    \"\"\"Evaluate if schedule should trigger based on current time.\"\"\"
-    try:
-        tz = ZoneInfo("{timezone}")
-        current_time = datetime.now(tz)
-
-        parsed = dateparser.parse(
-            "{schedule_description}",
-            settings={{
-                "RELATIVE_BASE": current_time,
-                "TIMEZONE": str(tz),
-                "RETURN_AS_TIMEZONE_AWARE": True
-            }}
-        )
-
-        if not parsed:
-            return {{"workflow_id": None, "reason": "Could not parse schedule"}}
-
-        time_diff = abs((current_time - parsed).total_seconds())
-        should_trigger = time_diff <= 60
-
-        if should_trigger:
-            return {{"workflow_id": "{target_workflow_id}", "parsed_time": parsed.isoformat()}}
-        else:
-            return {{"workflow_id": None, "parsed_time": parsed.isoformat()}}
-    except Exception as e:
-        error_result = {{"workflow_id": None, "error": str(e)}}
-        return error_result
-
-result = evaluate_schedule({{current_minute}})
-output = result.get("workflow_id")
-"""
-
-    return {
-        "nodes": {
-            "evaluate_schedule": {
-                "type": "FunctionExecutionNode",
-                "code": code,
-                "params": {"current_minute": "{current_minute}"},
-            }
-        },
-        "connections": [],
-    }
-
-
-def _generate_ai_based_trigger(schedule_description: str, timezone: str, target_workflow_id: str) -> dict[str, Any]:
-    """Generate AI-based trigger workflow."""
-    prompt = (
-        f"Current time: {{current_minute}}. "
-        f"Schedule description: '{schedule_description}'. "
-        f"Timezone: {timezone}. "
-        f"Evaluate if this schedule should trigger now. "
-        f"If it should trigger, return a JSON response with 'workflow_id': '{target_workflow_id}'. "
-        f"If it should not trigger, return 'workflow_id': null."
-    )
-
-    return {
-        "nodes": {"evaluate_schedule": {"type": "AIExecutionNode", "prompt": prompt, "model": "gemini-1.5-flash"}},
-        "connections": [],
-    }
 
 
 def get_workflow_templates() -> dict[str, Any]:

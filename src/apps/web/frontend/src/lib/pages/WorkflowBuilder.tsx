@@ -70,7 +70,7 @@ export default function WorkflowBuilder() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
       <PageHeader
         breadcrumbs={['Workflows', pageTitle]}
         showBackButton={true}

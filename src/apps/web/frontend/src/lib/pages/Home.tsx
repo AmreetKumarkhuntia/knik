@@ -119,7 +119,7 @@ export default function Home({
             className="flex-1 flex flex-col justify-center w-full"
             style={{ maxWidth: LAYOUT.maxWidthPercentage }}
           >
-            <WelcomeContainer isVisible={messages.length === 0}>
+            <WelcomeContainer isVisible={true}>
               <WelcomePrompt />
               <SuggestionCards onSelectPrompt={handleSelectPrompt} />
             </WelcomeContainer>
