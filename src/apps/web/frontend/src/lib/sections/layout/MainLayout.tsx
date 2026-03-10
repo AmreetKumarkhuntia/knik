@@ -12,13 +12,13 @@ export default function MainLayout({
 }: MainLayoutProps) {
   return (
     <>
-      <div className="h-screen bg-background relative overflow-hidden flex flex-col">
+      <div className="h-screen bg-background relative flex flex-col">
         <BackgroundEffects />
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0">
           <Sidebar onNewChat={onNewChat} onClearHistory={onClearHistory} />
 
-          <div className="flex-1 overflow-hidden">{children}</div>
+          <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
         </div>
       </div>
 

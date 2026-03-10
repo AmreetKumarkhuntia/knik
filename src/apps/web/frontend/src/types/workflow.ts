@@ -160,6 +160,9 @@ export interface WorkflowMetrics {
   totalWorkflows: number
   executionsToday: number
   successRate: number
+  avgDurationMs?: number
+  activeExecutions?: number
+  totalExecutions?: number
 }
 
 export interface DashboardWorkflow {
@@ -185,5 +188,52 @@ export interface DashboardResponse {
     metrics: WorkflowMetrics
     recentWorkflows: DashboardWorkflow[]
     recentExecutions: DashboardExecution[]
+  }
+}
+
+// Execution detail types
+export interface ExecutionDetail {
+  id: number
+  workflow_id: string
+  workflow_name: string
+  status: ExecutionStatus
+  inputs: Record<string, unknown>
+  outputs: Record<string, unknown>
+  error_message?: string
+  started_at: string
+  completed_at?: string
+  duration_ms?: number
+}
+
+export interface NodeExecutionStep {
+  node_id: string
+  node_type: string
+  status: ExecutionStatus
+  inputs: Record<string, unknown>
+  outputs: Record<string, unknown>
+  error_message?: string
+  started_at: string
+  completed_at?: string
+  duration_ms?: number
+}
+
+export interface ExecutionDetailResponse {
+  success: boolean
+  execution: ExecutionDetail
+  timeline: NodeExecutionStep[]
+}
+
+// Dynamic metric card
+export interface DynamicMetric {
+  id: string
+  label: string
+  value: string | number
+  icon: string
+  color?: 'primary' | 'teal' | 'rose' | 'blue'
+  subtext?: string
+  trend?: {
+    value: string
+    direction: 'up' | 'down' | 'neutral'
+    icon?: string
   }
 }

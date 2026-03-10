@@ -1,11 +1,16 @@
 import asyncio
+import re
 import uuid
 from collections import defaultdict, deque
+from datetime import datetime, timedelta
 from typing import Any
+
+import dateparser
 
 from lib.services.scheduler.db_client import SchedulerDB
 from lib.services.scheduler.models import Workflow
 from lib.utils.printer import printer
+from lib.utils.timezone_utils import parse_timezone
 
 
 def _run_async(coro):
@@ -52,8 +57,6 @@ def create_workflow(name: str, definition: dict[str, Any], description: str | No
 
 def _parse_recurrence_seconds(schedule_description: str) -> int | None:
     """Parse natural language schedule to recurrence interval in seconds."""
-    import re
-
     description_lower = schedule_description.lower()
 
     patterns = [
@@ -72,6 +75,155 @@ def _parse_recurrence_seconds(schedule_description: str) -> int | None:
             return converter(match)
 
     return None
+
+
+def _calculate_first_run(schedule_description: str, timezone: str = "UTC") -> datetime:
+    """
+    Calculate the first run time for a schedule based on natural language description.
+
+    This function parses natural language schedule descriptions and calculates the next
+    appropriate execution time. If the calculated time is in the past, it automatically
+    moves to the next occurrence (e.g., tomorrow for daily schedules).
+
+    Args:
+        schedule_description: Natural language schedule description. Supported formats:
+            - Simple intervals: "every 1 minute", "every 5 minutes", "hourly", "daily"
+            - Time-of-day: "daily at 9am", "daily at 14:30", "daily at 09:00"
+            - Weekday-based: "every Monday at 2pm", "every Friday at 17:00"
+            - Relative times: "in 5 minutes", "tomorrow at 3pm"
+        timezone: Timezone string in IANA format (e.g., "America/New_York", "Asia/Kolkata")
+                 or GMT/UTC offset format (e.g., "GMT+5:30", "UTC-5"). Defaults to "UTC".
+
+    Returns:
+        datetime: Timezone-aware datetime for the first execution
+
+    Raises:
+        ValueError: If schedule_description cannot be parsed or timezone is invalid
+
+    Examples:
+        >>> _calculate_first_run("every 5 minutes", "UTC")
+        datetime(2026, 3, 11, 10, 5, 0, tzinfo=ZoneInfo('UTC'))
+
+        >>> _calculate_first_run("daily at 9am", "America/New_York")
+        datetime(2026, 3, 12, 9, 0, 0, tzinfo=ZoneInfo('America/New_York'))  # Tomorrow if past 9am
+
+        >>> _calculate_first_run("every Monday at 2pm", "GMT+5:30")
+        datetime(2026, 3, 16, 14, 0, 0, tzinfo=timezone(timedelta(hours=5, minutes=30)))
+    """
+    # Parse timezone and get current time
+    tz = parse_timezone(timezone)
+    now = datetime.now(tz)
+
+    description_lower = schedule_description.lower().strip()
+
+    interval_patterns = [
+        r"^every\s+(\d+)\s+minutes?$",
+        r"^every\s+(\d+)\s+hours?$",
+        r"^every\s+(\d+)\s+days?$",
+        r"^every\s+(\d+)\s+weeks?$",
+        r"^hourly$",
+        r"^daily$",
+        r"^weekly$",
+    ]
+
+    for pattern in interval_patterns:
+        if re.match(pattern, description_lower):
+            recurrence = _parse_recurrence_seconds(schedule_description)
+            if recurrence:
+                first_run = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
+                return first_run
+
+    time_pattern = r"(?:daily|everyday)\s+at\s+(.+)"
+    time_match = re.search(time_pattern, description_lower)
+
+    if time_match:
+        time_str = time_match.group(1).strip()
+
+        parsed_time = dateparser.parse(
+            time_str,
+            settings={
+                "TIMEZONE": timezone,
+                "RETURN_AS_TIMEZONE_AWARE": True,
+                "PREFER_DATES_FROM": "future",
+            },
+        )
+
+        if parsed_time:
+            target_hour = parsed_time.hour
+            target_minute = parsed_time.minute
+            target_time = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
+
+            if target_time <= now:
+                target_time = target_time + timedelta(days=1)
+
+            return target_time
+
+    weekday_pattern = r"every\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+at\s+(.+)"
+    weekday_match = re.search(weekday_pattern, description_lower)
+
+    if weekday_match:
+        weekday_str = weekday_match.group(1)
+        time_str = weekday_match.group(2).strip()
+
+        weekday_map = {
+            "monday": 0,
+            "tuesday": 1,
+            "wednesday": 2,
+            "thursday": 3,
+            "friday": 4,
+            "saturday": 5,
+            "sunday": 6,
+        }
+        target_weekday = weekday_map[weekday_str]
+
+        parsed_time = dateparser.parse(
+            time_str,
+            settings={
+                "TIMEZONE": timezone,
+                "RETURN_AS_TIMEZONE_AWARE": True,
+            },
+        )
+
+        if parsed_time:
+            target_hour = parsed_time.hour
+            target_minute = parsed_time.minute
+            current_weekday = now.weekday()
+            days_ahead = target_weekday - current_weekday
+
+            if days_ahead == 0:
+                target_time = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
+                if target_time <= now:
+                    days_ahead = 7
+            elif days_ahead < 0:
+                days_ahead += 7
+
+            target_date = now + timedelta(days=days_ahead)
+            target_time = target_date.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
+
+            return target_time
+
+    parsed_datetime = dateparser.parse(
+        schedule_description,
+        settings={
+            "TIMEZONE": timezone,
+            "RETURN_AS_TIMEZONE_AWARE": True,
+            "PREFER_DATES_FROM": "future",
+            "RELATIVE_BASE": now.replace(tzinfo=None),
+        },
+    )
+
+    if parsed_datetime:
+        if parsed_datetime <= now:
+            recurrence = _parse_recurrence_seconds(schedule_description)
+            parsed_datetime = now + timedelta(seconds=recurrence) if recurrence else parsed_datetime + timedelta(days=1)
+
+        return parsed_datetime
+
+    raise ValueError(
+        f"Could not parse schedule description: '{schedule_description}'. "
+        f"Try formats like 'every 5 minutes', 'daily at 9am', 'every Monday at 2pm', "
+        f"'hourly', 'in 10 minutes', or 'tomorrow at 3pm'"
+    )
 
 
 def list_workflows() -> dict[str, Any]:
@@ -250,7 +402,7 @@ def get_workflow_templates() -> dict[str, Any]:
                         "fetch_data": {
                             "type": "FunctionExecutionNode",
                             "function": "http_get",
-                            "params": {"url": "https://api.example.com/data", "method": "GET"},
+                            "params": {"url": "https://api.example.com/data"},
                         }
                     },
                     "connections": [],
@@ -559,7 +711,6 @@ def get_workflow_templates() -> dict[str, Any]:
                             "function": "http_get",
                             "params": {
                                 "url": "https://weather.tomorrow.io/",
-                                "method": "GET",
                                 "headers": {"Accept": "application/json"},
                             },
                         }

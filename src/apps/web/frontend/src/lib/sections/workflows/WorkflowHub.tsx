@@ -64,7 +64,7 @@ export default function WorkflowHub() {
   }
 
   const handleViewExecution = (execution: DashboardExecution) => {
-    console.log('View execution:', execution)
+    void navigate(`/executions/${execution.id}`)
   }
 
   if (loading) {
@@ -76,7 +76,7 @@ export default function WorkflowHub() {
   }
 
   return (
-    <main className="flex-1 bg-transparent flex flex-col overflow-y-auto">
+    <main className="flex-1 bg-transparent flex flex-col">
       <PageHeader
         breadcrumbs={['Workflows', 'Workflow Hub']}
         rightContent={

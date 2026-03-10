@@ -22,7 +22,7 @@ export default function Table<T>({
     return <div className={className}>{empty}</div>
   }
 
-  const tableWrapperClass = `overflow-x-auto ${maxHeight ? `max-h-[${maxHeight}] overflow-y-auto` : ''}`
+  const tableWrapperClass = maxHeight ? 'overflow-x-auto overflow-y-auto' : 'overflow-x-auto'
   const containerClass = `${glassContainer ? 'glass border border-white/10 rounded-xl overflow-hidden' : ''}`
   const theadClass = stickyHeader
     ? 'sticky top-0 bg-slate-900/90 backdrop-blur-sm z-10'
@@ -30,7 +30,7 @@ export default function Table<T>({
 
   return (
     <div className={`${containerClass} ${className}`}>
-      <div className={tableWrapperClass}>
+      <div className={tableWrapperClass} style={maxHeight ? { maxHeight } : undefined}>
         <table className="w-full text-left border-collapse">
           <thead className={theadClass}>
             <tr className="bg-white/5">

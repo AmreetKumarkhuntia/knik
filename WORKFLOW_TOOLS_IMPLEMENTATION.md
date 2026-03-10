@@ -469,8 +469,7 @@ create_workflow(
                 "type": "FunctionExecutionNode",
                 "function": "http_get",
                 "params": {
-                    "url": "https://weather.tomorrow.io/",
-                    "method": "GET"
+                    "url": "https://weather.tomorrow.io/"
                 }
             }
         },

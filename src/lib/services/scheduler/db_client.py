@@ -353,3 +353,140 @@ class SchedulerDB:
             }
             for row in rows
         ]
+
+    @staticmethod
+    async def get_recent_activity(limit: int = 20, hours_back: int = 24) -> list[dict]:
+        """Get recent activity feed with workflow executions and updates."""
+        await SchedulerDB.check_initialized()
+        from datetime import UTC, timedelta
+
+        start_date = datetime.now(UTC) - timedelta(hours=hours_back)
+
+        query = """
+            SELECT
+                'execution' as activity_type,
+                e.id,
+                e.workflow_id,
+                w.name as workflow_name,
+                e.status,
+                e.started_at as timestamp
+            FROM executions e
+            JOIN workflows w ON e.workflow_id = w.id
+            WHERE e.started_at >= %s
+            UNION ALL
+            SELECT
+                'update' as activity_type,
+                NULL as id,
+                w.id as workflow_id,
+                w.name as workflow_name,
+                'active' as status,
+                w.updated_at as timestamp
+            FROM workflows w
+            WHERE w.updated_at >= %s
+            ORDER BY timestamp DESC
+            LIMIT %s
+        """
+
+        rows = await PostgresDB.fetch_all(query, (start_date, start_date, limit))
+
+        activities = []
+        for row in rows:
+            activity_type = row["activity_type"]
+            status = row["status"]
+
+            if activity_type == "execution":
+                if status == "success":
+                    act_type = "success"
+                    title = f"{row['workflow_name']} Executed Successfully"
+                elif status == "failed":
+                    act_type = "error"
+                    title = f"{row['workflow_name']} Failed"
+                else:
+                    act_type = "info"
+                    title = f"{row['workflow_name']} Started"
+            else:
+                act_type = "update"
+                title = f"{row['workflow_name']} Updated"
+
+            time_ago = datetime.now(UTC) - row["timestamp"]
+            if time_ago.total_seconds() < 60:
+                time_str = "Just now"
+            elif time_ago.total_seconds() < 3600:
+                time_str = f"{int(time_ago.total_seconds() / 60)}m ago"
+            elif time_ago.total_seconds() < 86400:
+                time_str = f"{int(time_ago.total_seconds() / 3600)}h ago"
+            else:
+                time_str = f"{int(time_ago.total_seconds() / 86400)}d ago"
+
+            activities.append(
+                {
+                    "id": f"{activity_type}_{row['id'] or row['workflow_id']}_{row['timestamp'].timestamp()}",
+                    "type": act_type,
+                    "title": title,
+                    "description": time_str,
+                    "time": time_str,
+                }
+            )
+
+        return activities
+
+    @staticmethod
+    async def get_execution_detail(execution_id: int) -> tuple[ExecutionRecord | None, list[NodeExecutionRecord]]:
+        """Fetch execution record along with all its node executions in chronological order."""
+        await SchedulerDB.check_initialized()
+
+        # Get execution record
+        exec_query = "SELECT * FROM executions WHERE id = %s"
+        exec_row = await PostgresDB.fetch_one(exec_query, (execution_id,))
+
+        if not exec_row:
+            return None, []
+
+        execution = ExecutionRecord.from_row(exec_row)
+
+        # Get all node executions for this execution, ordered chronologically
+        nodes_query = "SELECT * FROM node_executions WHERE execution_id = %s ORDER BY started_at ASC"
+        node_rows = await PostgresDB.fetch_all(nodes_query, (execution_id,))
+
+        node_executions = [NodeExecutionRecord.from_row(row) for row in node_rows]
+
+        return execution, node_executions
+
+    @staticmethod
+    async def get_active_executions_count() -> int:
+        """Count executions with status='running'."""
+        await SchedulerDB.check_initialized()
+        query = "SELECT COUNT(*) as count FROM executions WHERE status = 'running'"
+        result = await PostgresDB.fetch_one(query)
+        return result["count"] if result else 0
+
+    @staticmethod
+    async def get_workflow_name(workflow_id: str) -> str | None:
+        """Get workflow name by ID."""
+        await SchedulerDB.check_initialized()
+        query = "SELECT name FROM workflows WHERE id = %s"
+        result = await PostgresDB.fetch_one(query, (workflow_id,))
+        return result["name"] if result else None
+
+    @staticmethod
+    async def get_average_duration(start_date: datetime | None = None, end_date: datetime | None = None) -> float:
+        """Calculate average execution duration in milliseconds."""
+        await SchedulerDB.check_initialized()
+
+        if start_date:
+            query = """
+                SELECT AVG(duration_ms)::FLOAT as avg_duration
+                FROM executions
+                WHERE duration_ms IS NOT NULL
+                  AND started_at >= %s AND started_at <= %s
+            """
+            result = await PostgresDB.fetch_one(query, (start_date, end_date))
+        else:
+            query = """
+                SELECT AVG(duration_ms)::FLOAT as avg_duration
+                FROM executions
+                WHERE duration_ms IS NOT NULL
+            """
+            result = await PostgresDB.fetch_one(query)
+
+        return round(result["avg_duration"] or 0, 2) if result else 0.0

@@ -49,8 +49,18 @@ async def http_get(
     url: str,
     headers: dict[str, str] = None,
     timeout: int = 30,
+    method: str = None,  # Ignored parameter for backward compatibility
 ) -> dict[str, Any]:
-    """Make HTTP GET request with configurable timeout."""
+    """Make HTTP GET request with configurable timeout.
+
+    Note: The 'method' parameter is accepted but ignored for backward compatibility.
+    Use http_request() if you need to specify a different HTTP method.
+    """
+    if method and method.upper() != "GET":
+        logger.warning(
+            f"http_get called with method='{method}' - parameter ignored. Use http_request() for non-GET methods."
+        )
+
     if not HTTP_LIB_AVAILABLE:
         return {"error": "No HTTP library available (httpx/aiohttp/requests not installed)"}
 

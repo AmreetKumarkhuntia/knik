@@ -1,7 +1,8 @@
 import math
 from datetime import datetime
 
-from ...utils.printer import printer
+from lib.utils.printer import printer
+from lib.utils.timezone_utils import get_current_time_in_timezone
 
 
 # Shared safe functions for both simple and advanced calculations
@@ -52,10 +53,16 @@ def calculate(expression: str, precision: int = -1) -> str:
         return f"Error: {str(e)}"
 
 
-def get_current_time(timezone: str = "local") -> str:
+def get_current_time(timezone: str = "UTC") -> str:
+    """Get the current date and time in the specified timezone."""
     printer.info(f"🔧 Getting current time (timezone: {timezone})")
-    now = datetime.now()
-    return now.strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        now = get_current_time_in_timezone(timezone)
+        return now.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError as e:
+        printer.error(f"Invalid timezone '{timezone}': {e}")
+        return f"Error: {str(e)}"
 
 
 def get_current_date() -> str:

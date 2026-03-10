@@ -4,6 +4,7 @@ from typing import Any
 from lib.services.scheduler.db_client import SchedulerDB
 from lib.services.scheduler.models import Schedule
 from lib.utils.printer import printer
+from lib.utils.timezone_utils import validate_timezone
 
 
 def _run_async(coro):
@@ -50,14 +51,40 @@ def list_cron_schedules() -> dict[str, Any]:
 def add_cron_schedule(target_workflow_id: str, schedule_description: str, timezone: str = "UTC") -> dict[str, Any]:
     """Add a new cron schedule with natural language description."""
     printer.info(f"🔧 Adding cron schedule for target workflow '{target_workflow_id}'")
-    try:
-        if not schedule_description:
-            return {"error": "schedule_description is required"}
 
+    if not target_workflow_id:
+        return {"error": "target_workflow_id is required"}
+
+    if not schedule_description:
+        return {"error": "schedule_description is required"}
+
+    is_valid_tz, tz_error = validate_timezone(timezone)
+    if not is_valid_tz:
+        printer.error(f"Invalid timezone: {tz_error}")
+        return {"error": tz_error}
+
+    try:
         from lib.mcp.implementations.workflow_impl import _calculate_first_run, _parse_recurrence_seconds
 
-        first_run = _calculate_first_run(schedule_description, timezone)
+        try:
+            first_run = _calculate_first_run(schedule_description, timezone)
+        except ValueError as e:
+            printer.error(f"Invalid schedule description: {e}")
+            return {
+                "error": f"Invalid schedule description: {str(e)}",
+                "hint": "Try formats like 'every 5 minutes', 'daily at 9am', 'every Monday at 2pm', or 'hourly'",
+            }
+
         recurrence_seconds = _parse_recurrence_seconds(schedule_description)
+
+        printer.info("   Schedule parsed successfully:")
+        printer.info(f"   - First run: {first_run.isoformat()}")
+        printer.info(
+            f"   - Recurrence: {recurrence_seconds}s ({recurrence_seconds // 60} minutes)"
+            if recurrence_seconds
+            else "   - Recurrence: None (one-time)"
+        )
+        printer.info(f"   - Timezone: {timezone}")
 
         schedule = Schedule(
             id=0,
@@ -70,15 +97,20 @@ def add_cron_schedule(target_workflow_id: str, schedule_description: str, timezo
         )
 
         schedule_id = _run_async(SchedulerDB.create_schedule(schedule))
+
+        printer.success(f"✅ Cron schedule created successfully (ID: {schedule_id})")
+
         return {
             "success": True,
             "schedule_id": schedule_id,
             "next_run_at": first_run.isoformat(),
             "recurrence_seconds": recurrence_seconds,
+            "message": f"Schedule created successfully. Next run at {first_run.strftime('%Y-%m-%d %H:%M:%S %Z')}",
         }
+
     except Exception as e:
         printer.error(f"Error adding cron schedule: {e}")
-        return {"error": f"Failed to add schedule: {str(e)}"}
+        return {"error": f"Failed to add schedule: {str(e)}", "details": "An unexpected error occurred"}
 
 
 def remove_cron_schedule(schedule_id: int) -> dict[str, Any]:

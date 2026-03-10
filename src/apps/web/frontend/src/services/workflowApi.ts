@@ -1,15 +1,19 @@
 import type {
+  ActivityResponse,
   DashboardResponse,
+  ExecutionDetailResponse,
   ExecutionHistoryResponse,
   Schedule,
   ScheduleCreateRequest,
   ScheduleCreateResponse,
   SchedulesListResponse,
+  TopWorkflowsResponse,
   WorkflowDefinition,
   WorkflowDetailResponse,
   WorkflowExecuteRequest,
   WorkflowExecuteResponse,
   WorkflowListResponse,
+  WorkflowMetricsResponse,
 } from '../types/workflow'
 
 const API_BASE_URL = 'http://localhost:8000/api'
@@ -125,6 +129,50 @@ class AnalyticsAPI {
     const response = await fetch(
       `${API_BASE_URL}/analytics/dashboard?workflows_limit=${workflowsLimit}&executions_limit=${executionsLimit}`
     )
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getMetrics(
+    timeRange: string = 'today',
+    workflowId?: string
+  ): Promise<WorkflowMetricsResponse> {
+    let url = `${API_BASE_URL}/analytics/metrics?time_range=${timeRange}`
+    if (workflowId) {
+      url += `&workflow_id=${workflowId}`
+    }
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getTopWorkflows(
+    limit: number = 10,
+    timeRange: string = 'today'
+  ): Promise<TopWorkflowsResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/analytics/top-workflows?limit=${limit}&time_range=${timeRange}`
+    )
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getActivity(
+    limit: number = 20,
+    hoursBack: number = 24,
+    executionId?: number
+  ): Promise<ActivityResponse | ExecutionDetailResponse> {
+    let url = `${API_BASE_URL}/analytics/activity?limit=${limit}&hours_back=${hoursBack}`
+    if (executionId !== undefined) {
+      url += `&execution_id=${executionId}`
+    }
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getExecutionDetail(executionId: number): Promise<ExecutionDetailResponse> {
+    const response = await fetch(`${API_BASE_URL}/analytics/activity?execution_id=${executionId}`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }
