@@ -1,9 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
-  ReactFlowProvider,
-  ReactFlow,
-  Background,
-  MiniMap,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -11,9 +7,9 @@ import {
   type Edge,
   type Node,
   type OnConnect,
-  BackgroundVariant,
+  type NodeTypes,
+  type EdgeTypes,
 } from '@xyflow/react'
-import '@xyflow/react/dist/style.css'
 
 import type {
   Connection as WorkflowConnection,
@@ -24,22 +20,22 @@ import type {
 import NodePalette from './NodePalette/NodePalette'
 import FloatingControls from './CanvasControls/FloatingControls'
 import PropertiesPanel from './PropertiesPanel/PropertiesPanel'
-import { FunctionNode, ConditionalNode, MergeNode, AINode, StartNode, EndNode } from './nodes'
-import { CustomEdge } from './edges'
-import type { NodeTypes } from '@xyflow/react'
 import type { CanvasProps } from '$types/sections/workflow-builder'
+import { getDefaultNodeData } from '$lib/constants/nodes'
+import { BaseNode, FlowEdge, FlowCanvas } from '$lib/components/graph'
 
+// Use unified BaseNode for all node types
 const nodeTypes: NodeTypes = {
-  FunctionExecutionNode: FunctionNode,
-  ConditionalBranchNode: ConditionalNode,
-  FlowMergeNode: MergeNode,
-  AIExecutionNode: AINode,
-  StartNode: StartNode,
-  EndNode: EndNode,
+  FunctionExecutionNode: BaseNode,
+  ConditionalBranchNode: BaseNode,
+  FlowMergeNode: BaseNode,
+  AIExecutionNode: BaseNode,
+  StartNode: BaseNode,
+  EndNode: BaseNode,
 }
 
-const edgeTypes = {
-  custom: CustomEdge,
+const edgeTypes: EdgeTypes = {
+  custom: FlowEdge,
 }
 
 let nodeIdCounter = 0
@@ -55,7 +51,10 @@ function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[];
       id,
       type: nodeDefinition.type,
       position: { x: 100, y: index * 120 },
-      data: { ...nodeDefinition },
+      data: {
+        ...nodeDefinition,
+        mode: 'edit' as const,
+      },
     })
   })
 
@@ -66,6 +65,9 @@ function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[];
       target: conn.to_id,
       sourceHandle: conn.condition === 'false' ? 'false' : (conn.condition ?? undefined),
       type: 'custom',
+      data: {
+        mode: 'edit' as const,
+      },
     })
   })
 
@@ -88,8 +90,18 @@ function CanvasContent({
     }
     return {
       nodes: [
-        { id: 'start', type: 'StartNode', position: { x: 250, y: 0 }, data: { label: 'Start' } },
-        { id: 'end', type: 'EndNode', position: { x: 250, y: 400 }, data: { label: 'End' } },
+        {
+          id: 'start',
+          type: 'StartNode',
+          position: { x: 250, y: 0 },
+          data: { label: 'Start', mode: 'edit' as const },
+        },
+        {
+          id: 'end',
+          type: 'EndNode',
+          position: { x: 250, y: 400 },
+          data: { label: 'End', mode: 'edit' as const },
+        },
       ],
       edges: [],
     }
@@ -103,7 +115,16 @@ function CanvasContent({
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
-      setEdges(addEdge({ ...params, type: 'custom' }, edges))
+      setEdges(
+        addEdge(
+          {
+            ...params,
+            type: 'custom',
+            data: { mode: 'edit' as const },
+          },
+          edges
+        )
+      )
     },
     [edges, setEdges]
   )
@@ -135,7 +156,10 @@ function CanvasContent({
         id: generateNodeId(),
         type,
         position,
-        data: getDefaultNodeData(type),
+        data: {
+          ...getDefaultNodeData(type),
+          mode: 'edit' as const,
+        },
       }
 
       setNodes(nodes => [...nodes, newNode])
@@ -166,7 +190,7 @@ function CanvasContent({
         <NodePalette onDragStart={() => setIsDragging(true)} />
 
         <div className="flex-1 relative bg-background-canvas workflow-grid">
-          <ReactFlow
+          <FlowCanvas
             nodes={nodes}
             edges={edges}
             onNodesChange={readOnly ? undefined : onNodesChange}
@@ -185,21 +209,10 @@ function CanvasContent({
             nodesDraggable={!readOnly}
             nodesConnectable={!readOnly}
             elementsSelectable={!readOnly}
+            showMiniMap={true}
           >
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={20}
-              size={1}
-              color="rgba(255,255,255,0.05)"
-            />
-            <MiniMap
-              className="!bg-surface !border-borderLight"
-              nodeColor="rgba(255,255,255,0.3)"
-              maskColor="rgba(0,0,0,0.8)"
-            />
-          </ReactFlow>
-
-          <FloatingControls />
+            <FloatingControls />
+          </FlowCanvas>
 
           <PropertiesPanel
             selectedNode={selectedNode}
@@ -214,28 +227,5 @@ function CanvasContent({
 }
 
 export default function Canvas(props: CanvasProps) {
-  return (
-    <ReactFlowProvider>
-      <CanvasContent {...props} />
-    </ReactFlowProvider>
-  )
-}
-
-function getDefaultNodeData(type: NodeTypeName | 'StartNode' | 'EndNode'): Record<string, unknown> {
-  switch (type) {
-    case 'FunctionExecutionNode':
-      return { type: 'FunctionExecutionNode', function_name: 'new_function', params: {} }
-    case 'ConditionalBranchNode':
-      return { type: 'ConditionalBranchNode', condition: 'true' }
-    case 'FlowMergeNode':
-      return { type: 'FlowMergeNode', merge_strategy: 'concat' }
-    case 'AIExecutionNode':
-      return { type: 'AIExecutionNode', prompt: 'Enter prompt', model: 'gemini-1.5-flash' }
-    case 'StartNode':
-      return { label: 'Start' }
-    case 'EndNode':
-      return { label: 'End' }
-    default:
-      return {}
-  }
+  return <CanvasContent {...props} />
 }

@@ -1,4 +1,4 @@
-import type { ChatResponse, CronSchedulesResponse } from '../types/api'
+import type { ChatResponse } from '../types/api'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
@@ -86,34 +86,9 @@ class AdminAPI {
   }
 }
 
-class CronAPI {
-  static async getSchedules(): Promise<CronSchedulesResponse> {
-    const response = await fetch(`${API_BASE_URL}/cron`)
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
-    return response.json()
-  }
-
-  static async addSchedule(workflow_id: string, trigger_workflow_id: string, timezone = 'UTC') {
-    const response = await fetch(`${API_BASE_URL}/cron`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workflow_id, trigger_workflow_id, timezone }),
-    })
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
-    return response.json()
-  }
-
-  static async removeSchedule(schedule_id: number) {
-    const response = await fetch(`${API_BASE_URL}/cron/${schedule_id}`, { method: 'DELETE' })
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
-    return response.json()
-  }
-}
-
 export class ApiClient {
   static chat = ChatAPI
   static admin = AdminAPI
-  static cron = CronAPI
 }
 
 // Backward-compatible api export map
@@ -122,7 +97,4 @@ export const api = {
   getHistory: ApiClient.chat.getHistory,
   clearHistory: ApiClient.chat.clearHistory,
   getSettings: ApiClient.admin.getSettings,
-  getCronSchedules: ApiClient.cron.getSchedules,
-  addCronSchedule: ApiClient.cron.addSchedule,
-  removeCronSchedule: ApiClient.cron.removeSchedule,
 }

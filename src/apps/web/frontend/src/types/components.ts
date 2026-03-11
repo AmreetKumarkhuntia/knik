@@ -197,15 +197,6 @@ export interface BreadcrumbProps {
   className?: string
 }
 
-// Extended component types
-export interface EnhancedEmptyStateProps extends EmptyStateProps {
-  actionLabel?: string
-  onAction?: () => void
-  secondaryActionLabel?: string
-  onSecondaryAction?: () => void
-  iconSize?: number
-}
-
 export interface NavLinkProps {
   icon: string
   label: string

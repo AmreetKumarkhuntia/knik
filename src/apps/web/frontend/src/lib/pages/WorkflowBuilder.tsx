@@ -73,14 +73,9 @@ export default function WorkflowBuilder() {
     <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
       <PageHeader
         breadcrumbs={['Workflows', pageTitle]}
-        showBackButton={true}
         onBackClick={() => void navigate('/workflows')}
         rightContent={
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-xs font-medium text-slate-400">
-              <span className="size-2 rounded-full bg-accent-teal animate-pulse"></span>
-              Live Sync Enabled
-            </div>
             {isEditMode && (
               <button
                 onClick={() => void handleExecute()}

@@ -1,1 +1,1 @@
-export * from './MediaIcons'
+export * from './Icons'

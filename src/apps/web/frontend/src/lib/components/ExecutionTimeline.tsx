@@ -1,4 +1,5 @@
 import type { ExecutionTimelineProps } from '$types/components'
+import { getNodeIcon } from '$lib/constants/nodes'
 
 export default function ExecutionTimeline({ timeline, loading = false }: ExecutionTimelineProps) {
   if (loading) {
@@ -90,16 +91,4 @@ export default function ExecutionTimeline({ timeline, loading = false }: Executi
       ))}
     </div>
   )
-}
-
-function getNodeIcon(nodeType: string): string {
-  const iconMap: Record<string, string> = {
-    FunctionExecutionNode: 'function',
-    ConditionalBranchNode: 'call_split',
-    FlowMergeNode: 'call_merge',
-    AIExecutionNode: 'psychology',
-    StartNode: 'play_circle',
-    EndNode: 'stop_circle',
-  }
-  return iconMap[nodeType] || 'help'
 }

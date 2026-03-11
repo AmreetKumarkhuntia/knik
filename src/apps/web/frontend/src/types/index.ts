@@ -5,6 +5,8 @@ export * from './api'
 export * from './workflow'
 export * from './workflow-components'
 export * from './pages'
+export * from './node-registry'
+export * from './graph'
 
 // Section types
 export * from './sections/audio'

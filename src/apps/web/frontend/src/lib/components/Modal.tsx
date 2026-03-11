@@ -39,7 +39,7 @@ export default function Modal({
   }, [isOpen])
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-120 flex items-center justify-center pointer-events-none modal-container">
       <Backdrop visible={true} onClick={onClose} blur="md" />
       <motion.div
         initial={animationEnabled ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
@@ -49,6 +49,7 @@ export default function Modal({
         className={`relative bg-surfaceGlass backdrop-blur-xl rounded-2xl border border-borderLight shadow-2xl ${sizeClasses[size]} w-full mx-4 pointer-events-auto ${className}`}
         style={{
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          zIndex: 130,
         }}
       >
         {title && (
