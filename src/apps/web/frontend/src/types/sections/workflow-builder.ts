@@ -1,6 +1,11 @@
 import type { WorkflowDefinition } from '$types/workflow'
 import type { Node } from '@xyflow/react'
 
+export interface CanvasHandle {
+  getWorkflowDefinition: () => WorkflowDefinition | null
+  getValidationErrors: () => string[]
+}
+
 export interface CanvasProps {
   workflowId?: string
   definition?: WorkflowDefinition

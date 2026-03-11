@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PageHeader from '$components/PageHeader'
 import Canvas from '$sections/workflows/WorkflowBuilder/Canvas'
 import type { WorkflowDefinition } from '$types/workflow'
+import type { CanvasHandle } from '$types/sections/workflow-builder'
 import { workflowApi } from '$services/workflowApi'
 
 export default function WorkflowBuilder() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
+  const canvasRef = useRef<CanvasHandle>(null)
   const [workflowData, setWorkflowData] = useState<WorkflowDefinition | undefined>()
   const [isLoading, setIsLoading] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const isEditMode = !!id
   const pageTitle = isEditMode ? 'Edit Workflow' : 'Create Workflow'
@@ -32,17 +35,36 @@ export default function WorkflowBuilder() {
     }
   }
 
-  const handleSave = async (definition: WorkflowDefinition) => {
+  const handleSave = async () => {
+    if (!canvasRef.current) {
+      console.error('Canvas ref not available')
+      return
+    }
+
+    const validationErrors = canvasRef.current.getValidationErrors()
+    if (validationErrors.length > 0) {
+      setSaveError(validationErrors.join('\n'))
+      return
+    }
+
+    const workflowDefinition = canvasRef.current.getWorkflowDefinition()
+    if (!workflowDefinition) {
+      setSaveError('Failed to generate workflow definition')
+      return
+    }
+
     try {
+      setSaveError(null)
       if (id) {
-        await workflowApi.workflows.update(id, pageTitle, definition)
+        await workflowApi.workflows.update(id, pageTitle, workflowDefinition)
       } else {
         const workflowName = `Workflow ${new Date().toLocaleDateString()}`
-        await workflowApi.workflows.create(workflowName, definition)
+        await workflowApi.workflows.create(workflowName, workflowDefinition)
       }
       void navigate('/workflows')
     } catch (error) {
       console.error('Failed to save workflow:', error)
+      setSaveError(error instanceof Error ? error.message : 'Failed to save workflow')
     }
   }
 
@@ -86,7 +108,7 @@ export default function WorkflowBuilder() {
               </button>
             )}
             <button
-              onClick={() => void handleSave(workflowData || { nodes: {}, connections: [] })}
+              onClick={() => void handleSave()}
               className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-purple to-accent-teal px-5 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity"
             >
               <span className="material-symbols-outlined text-sm">save</span>
@@ -97,10 +119,22 @@ export default function WorkflowBuilder() {
         sticky={true}
       />
 
+      {saveError && (
+        <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 text-sm mx-4 mt-4">
+          <div className="flex items-start gap-2">
+            <span className="material-symbols-outlined text-base mt-0.5">error</span>
+            <div>
+              <strong>Save Error:</strong>
+              <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{saveError}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Canvas
+        ref={canvasRef}
         workflowId={id}
         definition={workflowData}
-        onSave={definition => void handleSave(definition)}
         onExecute={() => void handleExecute()}
         readOnly={false}
       />
