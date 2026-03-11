@@ -1,13 +1,6 @@
-interface Breadcrumb {
-  label: string
-  path?: string
-}
+import type { BreadcrumbProps } from '$types/components'
 
-interface BreadcrumbsProps {
-  items: Breadcrumb[]
-}
-
-export default function Breadcrumbs({ items }: BreadcrumbsProps) {
+export default function Breadcrumbs({ items }: BreadcrumbProps) {
   return (
     <nav className="flex items-center gap-2">
       {items.map((item, index) => (

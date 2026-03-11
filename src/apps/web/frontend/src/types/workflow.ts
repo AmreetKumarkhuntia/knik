@@ -237,3 +237,38 @@ export interface DynamicMetric {
     icon?: string
   }
 }
+
+// Paginated executions
+export interface ExecutionsPaginatedResponse {
+  success: boolean
+  data: {
+    executions: DashboardExecution[]
+    total: number
+    page: number
+    page_size: number
+    total_pages: number
+  }
+}
+
+// Workflows list for filters
+export interface WorkflowsListResponse {
+  success: boolean
+  workflows: Array<{ id: string; name: string }>
+}
+
+// Analytics response types
+export interface WorkflowMetricsResponse {
+  success: boolean
+  metrics: Record<string, unknown>
+}
+
+export interface TopWorkflowsResponse {
+  success: boolean
+  workflows: unknown[]
+  total: number
+}
+
+export interface ActivityResponse {
+  success: boolean
+  activities: unknown[]
+}

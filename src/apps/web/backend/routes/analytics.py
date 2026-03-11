@@ -152,6 +152,31 @@ async def get_top_workflows(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@router.get("/executions")
+async def get_executions_paginated(
+    page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
+    page_size: int = Query(default=50, ge=1, le=100, description="Number of executions per page"),
+    workflow_id: str = Query(default=None, description="Optional workflow ID to filter by"),
+    status: str = Query(default=None, description="Optional status to filter by (all, running, success, failed)"),
+):
+    """Get paginated executions with optional filters."""
+    try:
+        result = await SchedulerDB.get_executions_paginated(page, page_size, workflow_id, status)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/workflows/list")
+async def get_workflows_list():
+    """Get simple list of workflows for filter dropdowns."""
+    try:
+        workflows = await SchedulerDB.get_workflows_list()
+        return {"success": True, "workflows": workflows}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 @router.get("/activity")
 async def get_activity(
     limit: int = Query(default=20, ge=1, le=100, description="Number of recent activities to return"),

@@ -1,16 +1,4 @@
-import type { NodeTypeName } from '$types/workflow'
-
-interface NodeTypeItemProps {
-  icon: string
-  label: string
-  typeLabel: string
-  type: NodeTypeName | 'StartNode' | 'EndNode'
-  onDragStart: (type: NodeTypeName | 'StartNode' | 'EndNode') => void
-  iconColor?: string
-  iconBgColor?: string
-  hoverBorderColor?: string
-  isGradient?: boolean
-}
+import type { NodeTypeItemProps } from '$types/workflow-components'
 
 export default function NodeTypeItem({
   icon,

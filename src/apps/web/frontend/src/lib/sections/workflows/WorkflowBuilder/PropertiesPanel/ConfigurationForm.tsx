@@ -1,8 +1,4 @@
-interface ConfigurationFormProps {
-  nodeType: string
-  data: Record<string, unknown>
-  onDataChange: (field: string, value: unknown) => void
-}
+import type { ConfigurationFormProps } from '$types/sections/workflow-builder'
 
 export default function ConfigurationForm({
   nodeType,

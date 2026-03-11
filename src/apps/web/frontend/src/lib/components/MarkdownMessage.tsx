@@ -3,10 +3,7 @@ import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { Components } from 'react-markdown'
-import type { MarkdownMessageProps } from '$types/components'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CodeProps = any & { _node: unknown; inline: boolean; className: string; children: unknown }
+import type { MarkdownMessageProps, CodeProps } from '$types/components'
 
 export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) {
   const components: Components = {

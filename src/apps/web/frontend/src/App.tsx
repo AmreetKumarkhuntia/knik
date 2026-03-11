@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '$sections/theme'
 import MainLayout from '$sections/layout/MainLayout'
 import ErrorBoundary from '$sections/feedback/ErrorBoundary'
-import { Home, Workflows, WorkflowBuilder, ExecutionDetail } from '$pages/index'
+import { Home, Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions } from '$pages/index'
 import { useToast, useAudio, useChat } from '$hooks/index'
 import type { InputPanelRef } from '$types/sections/chat'
 
@@ -61,6 +61,7 @@ function AppContent() {
           <Route path="/workflows" element={<Workflows />} />
           <Route path="/workflows/create" element={<WorkflowBuilder />} />
           <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
+          <Route path="/workflows/executions" element={<AllExecutions />} />
           <Route path="/executions/:id" element={<ExecutionDetail />} />
         </Routes>
       </MainLayout>

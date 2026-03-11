@@ -11,10 +11,10 @@ import '@xyflow/react/dist/style.css'
 
 import type {
   NodeExecutionStep,
-  ExecutionDetail,
   WorkflowDefinition,
   Connection as WorkflowConnection,
 } from '$types/workflow'
+import type { ExecutionFlowGraphProps } from '$types/components'
 import { workflowApi } from '$services/workflowApi'
 import LoadingSpinner from './LoadingSpinner'
 
@@ -49,11 +49,6 @@ function ExecutionNode({ data }: { data: { label: string; status?: string; durat
 
 const nodeTypes = {
   execution: ExecutionNode,
-}
-
-interface ExecutionFlowGraphProps {
-  execution: ExecutionDetail
-  timeline: NodeExecutionStep[]
 }
 
 export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlowGraphProps) {

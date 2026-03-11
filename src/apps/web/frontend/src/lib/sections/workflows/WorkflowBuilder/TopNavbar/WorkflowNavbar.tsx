@@ -1,11 +1,5 @@
 import { useState } from 'react'
-
-interface WorkflowNavbarProps {
-  onSave?: () => void
-  onExecute?: () => void
-  readOnly?: boolean
-  userAvatar?: string
-}
+import type { WorkflowNavbarProps } from '$types/sections/workflow-builder'
 
 export default function WorkflowNavbar({
   onSave,

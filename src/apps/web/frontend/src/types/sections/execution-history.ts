@@ -1,4 +1,4 @@
-import type { ExecutionRecord } from '$types/workflow'
+import type { ExecutionRecord, DashboardExecution } from '$types/workflow'
 
 export interface ExecutionDetailProps {
   execution: ExecutionRecord | null
@@ -7,8 +7,9 @@ export interface ExecutionDetailProps {
 }
 
 export interface HistoryTableProps {
-  executions: ExecutionRecord[]
+  executions: DashboardExecution[]
   loading: boolean
-  onViewDetail: (execution: ExecutionRecord) => void
-  onRetry?: (execution: ExecutionRecord) => void
+  onViewDetail: (execution: DashboardExecution) => void
+  onRetry?: (execution: DashboardExecution) => void
+  maxHeight?: string
 }

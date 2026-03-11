@@ -1,10 +1,4 @@
-export interface SectionHeaderProps {
-  title: string
-  actionText?: string
-  onActionClick?: () => void
-  badge?: string
-  className?: string
-}
+import type { SectionHeaderProps } from '$types/components'
 
 export default function SectionHeader({
   title,

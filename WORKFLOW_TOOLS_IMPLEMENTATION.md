@@ -11,11 +11,13 @@ Successfully implemented four new MCP tools for workflow creation and scheduling
 **Purpose**: Create new workflows from JSON definitions with auto-generated UUID IDs
 
 **Parameters**:
+
 - `name` (string, required): Human-readable workflow name (1-100 characters)
 - `description` (string, optional): Workflow description (max 500 characters)
 - `definition` (object, required): Complete workflow DAG with detailed schema
 
 **Definition Structure (Detailed)**:
+
 ```json
 {
   "nodes": {
@@ -35,6 +37,7 @@ Successfully implemented four new MCP tools for workflow creation and scheduling
 ```
 
 **Node ID Requirements**:
+
 - Pattern: `^[a-zA-Z0-9_]+$` (alphanumeric + underscores only)
 - No spaces or special characters
 - Must be unique within workflow
@@ -63,12 +66,14 @@ Successfully implemented four new MCP tools for workflow creation and scheduling
    - Optional: `merge_strategy` ("concat" or "merge", default: "concat")
 
 **Connection Requirements**:
+
 - Required: `from_id` (source node, must exist in nodes)
 - Required: `to_id` (target node, must exist in nodes)
 - Optional: `condition` ("true" or "false", for ConditionalBranchNode only)
 - Must form a DAG (no cycles, directed acyclic graph)
 
 **Features**:
+
 - Auto-generates unique UUID workflow IDs (format: `workflow_{12_char_uuid}`)
 - **Detailed parameter validation** at schema level:
   - Enforces node ID pattern matching
@@ -296,6 +301,7 @@ schedule_workflow(
 ### AI Workflow Creation Process (with Enhanced Schema)
 
 **Before (Generic Object)**: AI struggled with complex structure
+
 ```
 AI Error: "create_workflow() missing 1 required positional argument: 'definition'"
 - AI couldn't understand nested structure requirements
@@ -304,6 +310,7 @@ AI Error: "create_workflow() missing 1 required positional argument: 'definition
 ```
 
 **After (Detailed Schema)**: AI can successfully create workflows
+
 ```
 Step 1: AI queries templates
 templates = get_workflow_templates()
@@ -350,6 +357,7 @@ The tools integrate seamlessly with existing Knik infrastructure:
 **Root Cause**: AI tool could not understand the complex structure expected for `definition` parameter due to generic object definition.
 
 **Solution Implemented - Enhanced Schema Approach**:
+
 - Replaced generic `"type": "object"` with detailed, explicit schema
 - Added comprehensive field-level validation and descriptions
 - Provided multiple complete workflow examples
@@ -359,6 +367,7 @@ The tools integrate seamlessly with existing Knik infrastructure:
 **How Enhanced Schema Solves the Problem**:
 
 1. **Explicit Structure Requirements**
+
    ```
    Before: "definition": {"type": "object", "description": "Complete workflow DAG..."}
    After:  "definition": {
@@ -372,6 +381,7 @@ The tools integrate seamlessly with existing Knik infrastructure:
    ```
 
 2. **Node Type Specifications**
+
    ```
    - FunctionExecutionNode: Requires 'function' OR 'code'
    - AIExecutionNode: Requires 'prompt', optional 'model'/use_tools'/temperature
@@ -380,10 +390,11 @@ The tools integrate seamlessly with existing Knik infrastructure:
    ```
 
 3. **AI-Friendly Examples**
+
    ```
    EXAMPLE 1: Simple HTTP Fetch
    {'name': 'Weather Fetch', 'definition': {'nodes': {'fetch_weather': {'type': 'FunctionExecutionNode', 'function': 'http_get', 'params': {'url': 'https://api.weather.com'}}}, 'connections': []}}
-   
+
    EXAMPLE 2: Sequential Pipeline
    {'name': 'Data Pipeline', 'definition': {'nodes': {'step1': {'type': 'FunctionExecutionNode', 'function': 'fetch'}, 'step2': {'type': 'FunctionExecutionNode', 'function': 'transform'}, 'step3': {'type': 'FunctionExecutionNode', 'function': 'save'}}, 'connections': [{'from_id': 'step1', 'to_id': 'step2'}, {'from_id': 'step2', 'to_id': 'step3'}]}}
    ```
@@ -430,16 +441,19 @@ The `get_workflow_templates` tool provides a comprehensive library of 7 ready-to
 ### Template Selection Guide
 
 **For Beginners:**
+
 - Start with `http_fetch` for simple API calls
 - Use `weather_fetch` specifically for weather.tomorrow.io integration
 - Progress to `ai_processing` for natural language tasks
 
 **For Intermediate Users:**
+
 - Use `sequential_pipeline` for multi-step data processing
 - Apply `ai_processing` for content generation and analysis
 - Follow `scheduled_task` template for complete workflow + scheduling patterns
 
 **For Advanced Users:**
+
 - Implement `conditional_branching` for complex business logic
 - Leverage `parallel_processing` for performance optimization
 - Combine multiple templates for complex solutions
@@ -455,6 +469,7 @@ The `get_workflow_templates` tool provides a comprehensive library of 7 ready-to
 ### Template Examples
 
 #### Weather Monitoring Workflow (Beginner)
+
 ```python
 # Step 1: Get templates
 templates = get_workflow_templates()
@@ -487,6 +502,7 @@ schedule_workflow(
 ```
 
 #### Data Processing Pipeline (Intermediate)
+
 ```python
 create_workflow(
     name="Data Processing Pipeline",
@@ -519,6 +535,7 @@ create_workflow(
 ## Conclusion
 
 Successfully implemented a complete workflow scheduling system with:
+
 - ✅ Four new MCP tools (create, schedule, list, templates)
 - ✅ Natural language schedule parsing with dateparser
 - ✅ Hybrid trigger evaluation (AI and code-based)

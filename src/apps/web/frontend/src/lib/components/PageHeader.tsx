@@ -1,10 +1,4 @@
-interface PageHeaderProps {
-  breadcrumbs: string[]
-  rightContent?: React.ReactNode
-  showBackButton?: boolean
-  onBackClick?: () => void
-  sticky?: boolean
-}
+import type { PageHeaderProps } from '$types/components'
 
 export default function PageHeader({
   breadcrumbs,

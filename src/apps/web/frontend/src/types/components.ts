@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { InputHTMLAttributes } from 'react'
-import type { ExecutionStatus } from '$types/workflow'
+import type { ExecutionStatus, NodeExecutionStep, ExecutionDetail } from '$types/workflow'
 
 // Existing types
 export type ToastType = 'success' | 'error' | 'info'
@@ -239,4 +239,47 @@ export interface UserProfileProps {
   displayOnly?: boolean
   showBadge?: boolean
   badgeType?: 'pro' | 'basic' | 'admin'
+}
+
+// Pagination component
+export interface PaginationProps {
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  disabled?: boolean
+}
+
+// Execution components
+export interface ExecutionTimelineProps {
+  timeline: NodeExecutionStep[] | undefined
+  loading?: boolean
+}
+
+export interface ExecutionFlowGraphProps {
+  execution: ExecutionDetail
+  timeline: NodeExecutionStep[]
+}
+
+export interface StructuredOutputProps {
+  inputs: Record<string, unknown> | undefined
+  outputs: Record<string, unknown> | undefined
+  loading: boolean
+}
+
+// Page header
+export interface PageHeaderProps {
+  breadcrumbs: string[]
+  rightContent?: ReactNode
+  showBackButton?: boolean
+  onBackClick?: () => void
+  sticky?: boolean
+}
+
+// Markdown code component type for react-markdown compatibility
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CodeProps = any & {
+  _node: unknown
+  inline: boolean
+  className: string
+  children: unknown
 }

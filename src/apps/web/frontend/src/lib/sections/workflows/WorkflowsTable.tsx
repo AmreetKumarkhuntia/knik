@@ -5,12 +5,7 @@ import Table from '$components/Table'
 import { formatDate } from '$lib/utils/format'
 import { AccountTree } from '@mui/icons-material'
 import type { DashboardWorkflow } from '$types/workflow'
-
-interface WorkflowsTableProps {
-  workflows: DashboardWorkflow[]
-  onEdit: (workflowId: string) => void
-  onDelete: (workflowId: string, workflowName: string) => void
-}
+import type { WorkflowsTableProps } from '$types/workflow-components'
 
 export default function WorkflowsTable({ workflows, onEdit, onDelete }: WorkflowsTableProps) {
   const columns = [

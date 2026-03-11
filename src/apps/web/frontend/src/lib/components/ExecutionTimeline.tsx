@@ -1,9 +1,4 @@
-import type { NodeExecutionStep } from '$types/workflow'
-
-interface ExecutionTimelineProps {
-  timeline: NodeExecutionStep[] | undefined
-  loading?: boolean
-}
+import type { ExecutionTimelineProps } from '$types/components'
 
 export default function ExecutionTimeline({ timeline, loading = false }: ExecutionTimelineProps) {
   if (loading) {

@@ -1,11 +1,6 @@
 import { useState } from 'react'
-import type { Node } from '@xyflow/react'
+import type { NodePropertiesProps } from '$types/sections/workflow-builder'
 import ConfigurationForm from './ConfigurationForm'
-
-interface NodePropertiesProps {
-  node: Node
-  onUpdate: (data: Record<string, unknown>) => void
-}
 
 export default function NodeProperties({ node, onUpdate }: NodePropertiesProps) {
   const [localData, setLocalData] = useState(node.data)

@@ -4,20 +4,15 @@ import ActionButton from '$components/ActionButton'
 import Table from '$components/Table'
 import { formatDuration, formatDate } from '$lib/utils/format'
 import type { DashboardExecution, ExecutionStatus } from '$types/workflow'
+import type { HistoryTableProps } from '$types/sections/execution-history'
 import { History } from '@mui/icons-material'
-
-interface HistoryTableProps {
-  executions: DashboardExecution[]
-  loading: boolean
-  onViewDetail: (execution: DashboardExecution) => void
-  onRetry?: (execution: DashboardExecution) => void
-}
 
 export default function HistoryTable({
   executions,
   loading,
   onViewDetail,
   onRetry,
+  maxHeight = '300px',
 }: HistoryTableProps) {
   const columns = [
     {
@@ -78,7 +73,7 @@ export default function HistoryTable({
           description="Run a workflow to see its history here"
         />
       }
-      maxHeight="300px"
+      maxHeight={maxHeight}
       stickyHeader={true}
       glassContainer={true}
     />

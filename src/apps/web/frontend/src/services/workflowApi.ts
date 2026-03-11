@@ -3,6 +3,7 @@ import type {
   DashboardResponse,
   ExecutionDetailResponse,
   ExecutionHistoryResponse,
+  ExecutionsPaginatedResponse,
   Schedule,
   ScheduleCreateRequest,
   ScheduleCreateResponse,
@@ -14,6 +15,7 @@ import type {
   WorkflowExecuteResponse,
   WorkflowListResponse,
   WorkflowMetricsResponse,
+  WorkflowsListResponse,
 } from '../types/workflow'
 
 const API_BASE_URL = 'http://localhost:8000/api'
@@ -173,6 +175,30 @@ class AnalyticsAPI {
 
   static async getExecutionDetail(executionId: number): Promise<ExecutionDetailResponse> {
     const response = await fetch(`${API_BASE_URL}/analytics/activity?execution_id=${executionId}`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getExecutionsPaginated(
+    page: number = 1,
+    pageSize: number = 50,
+    workflowId?: string,
+    status?: string
+  ): Promise<ExecutionsPaginatedResponse> {
+    let url = `${API_BASE_URL}/analytics/executions?page=${page}&page_size=${pageSize}`
+    if (workflowId) {
+      url += `&workflow_id=${workflowId}`
+    }
+    if (status) {
+      url += `&status=${status}`
+    }
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getWorkflowsList(): Promise<WorkflowsListResponse> {
+    const response = await fetch(`${API_BASE_URL}/analytics/workflows/list`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }

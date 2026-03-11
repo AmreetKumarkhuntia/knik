@@ -355,6 +355,89 @@ class SchedulerDB:
         ]
 
     @staticmethod
+    async def get_executions_paginated(
+        page: int = 1,
+        page_size: int = 50,
+        workflow_id: str | None = None,
+        status: str | None = None,
+    ) -> dict:
+        """Get paginated executions with optional filters."""
+        await SchedulerDB.check_initialized()
+
+        where_clauses = []
+        params = []
+
+        if workflow_id:
+            where_clauses.append("e.workflow_id = %s")
+            params.append(workflow_id)
+
+        if status and status.lower() != "all":
+            where_clauses.append("e.status = %s")
+            params.append(status.lower())
+
+        where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+
+        count_query = f"""
+            SELECT COUNT(*) as total
+            FROM executions e
+            {where_sql}
+        """
+        count_result = await PostgresDB.fetch_one(count_query, tuple(params))
+        total = count_result["total"] if count_result else 0
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+        offset = (page - 1) * page_size
+
+        data_query = f"""
+            SELECT
+                e.id,
+                e.workflow_id,
+                w.name as workflow_name,
+                e.status,
+                e.started_at,
+                e.duration_ms
+            FROM executions e
+            JOIN workflows w ON e.workflow_id = w.id
+            {where_sql}
+            ORDER BY e.started_at DESC
+            LIMIT %s OFFSET %s
+        """
+        params.extend([page_size, offset])
+        rows = await PostgresDB.fetch_all(data_query, tuple(params))
+
+        executions = [
+            {
+                "id": row["id"],
+                "workflowId": row["workflow_id"],
+                "workflowName": row["workflow_name"],
+                "status": row["status"],
+                "startedAt": row["started_at"],
+                "durationMs": row["duration_ms"],
+            }
+            for row in rows
+        ]
+
+        return {
+            "executions": executions,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+        }
+
+    @staticmethod
+    async def get_workflows_list() -> list[dict]:
+        """Get simple list of workflows for filter dropdowns."""
+        await SchedulerDB.check_initialized()
+        query = """
+            SELECT id, name
+            FROM workflows
+            ORDER BY name ASC
+        """
+        rows = await PostgresDB.fetch_all(query)
+        return [{"id": row["id"], "name": row["name"]} for row in rows]
+
+    @staticmethod
     async def get_recent_activity(limit: int = 20, hours_back: int = 24) -> list[dict]:
         """Get recent activity feed with workflow executions and updates."""
         await SchedulerDB.check_initialized()

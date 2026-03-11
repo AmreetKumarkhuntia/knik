@@ -2,12 +2,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useState } from 'react'
 import LoadingSpinner from '$components/LoadingSpinner'
-
-interface StructuredOutputProps {
-  inputs: Record<string, unknown> | undefined
-  outputs: Record<string, unknown> | undefined
-  loading: boolean
-}
+import type { StructuredOutputProps } from '$types/components'
 
 export default function StructuredOutput({ inputs, outputs, loading }: StructuredOutputProps) {
   const [activeTab, setActiveTab] = useState<'inputs' | 'outputs'>('outputs')
