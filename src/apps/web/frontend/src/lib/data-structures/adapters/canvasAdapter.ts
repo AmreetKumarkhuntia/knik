@@ -12,8 +12,8 @@ export function canvasNodesToGraph<T = unknown>(nodes: Node[], edges: Edge[]): G
   })
 
   edges.forEach(edge => {
-    const sourceId = typeof edge.source === 'string' ? edge.source : edge.source
-    const targetId = typeof edge.target === 'string' ? edge.target : edge.target
+    const sourceId = edge.source
+    const targetId = edge.target
 
     const weight = edge.data?.weight as number | undefined
     graph.addEdge(sourceId, targetId, weight)

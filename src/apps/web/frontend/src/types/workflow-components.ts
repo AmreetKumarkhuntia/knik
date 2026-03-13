@@ -3,7 +3,6 @@ import type {
   ConditionalNodeDefinition,
   MergeNodeDefinition,
   AINodeDefinition,
-  NodeTypeName,
   DashboardWorkflow,
 } from './workflow'
 
@@ -36,24 +35,8 @@ export interface EndNodeData {
 export type TabType = 'schedules' | 'history' | 'builder'
 
 // Workflow component props
-export interface NodePaletteProps {
-  onDragStart: (nodeType: NodeTypeName | 'StartNode' | 'EndNode') => void
-}
-
 export interface WorkflowsTableProps {
   workflows: DashboardWorkflow[]
   onEdit: (workflowId: string) => void
   onDelete: (workflowId: string, workflowName: string) => void
-}
-
-export interface NodeTypeItemProps {
-  icon: string
-  label: string
-  typeLabel: string
-  type: NodeTypeName | 'StartNode' | 'EndNode'
-  onDragStart: (type: NodeTypeName | 'StartNode' | 'EndNode') => void
-  iconColor?: string
-  iconBgColor?: string
-  hoverBorderColor?: string
-  isGradient?: boolean
 }

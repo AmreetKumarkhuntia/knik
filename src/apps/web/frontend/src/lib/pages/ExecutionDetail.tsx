@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 import type { ExecutionDetail as ExecutionDetailType, NodeExecutionStep } from '$types/workflow'
@@ -20,29 +20,25 @@ export default function ExecutionDetail() {
   const [timeline, setTimeline] = useState<NodeExecutionStep[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Track status in a ref so the polling interval closure doesn't go stale
+  const statusRef = useRef<string | null>(null)
 
-  // Auto-refresh for running executions
   useEffect(() => {
     if (!id) return
 
+    const executionId = parseInt(id, 10)
+    if (isNaN(executionId)) {
+      setError('Invalid execution ID')
+      setLoading(false)
+      return
+    }
+
     async function fetchExecutionDetail() {
       try {
-        if (!id) {
-          setError('No execution ID provided')
-          setLoading(false)
-          return
-        }
-
-        const executionId = parseInt(id, 10)
-        if (isNaN(executionId)) {
-          setError('Invalid execution ID')
-          setLoading(false)
-          return
-        }
-
         const response = await workflowApi.analytics.getExecutionDetail(executionId)
         setExecution(response.execution)
         setTimeline(response.timeline)
+        statusRef.current = response.execution.status
         setError(null)
       } catch (err) {
         console.error('Failed to fetch execution detail:', err)
@@ -55,17 +51,18 @@ export default function ExecutionDetail() {
     // Initial fetch
     void fetchExecutionDetail()
 
-    // Set up auto-refresh for running executions
-    let intervalId: ReturnType<typeof setInterval> | null = null
+    // Poll every 3 s while running; stop once the interval callback sees a
+    // terminal status so we don't create a new interval on every re-render.
+    const intervalId = setInterval(() => {
+      if (statusRef.current !== 'running') {
+        clearInterval(intervalId)
+        return
+      }
+      void fetchExecutionDetail()
+    }, 3000)
 
-    if (execution?.status === 'running') {
-      intervalId = setInterval(fetchExecutionDetail, 3000) // Refresh every 3 seconds
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [id, execution?.status])
+    return () => clearInterval(intervalId)
+  }, [id])
 
   if (loading) {
     return (

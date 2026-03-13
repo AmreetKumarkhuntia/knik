@@ -4,6 +4,7 @@ import type {
   ExecutionDetailResponse,
   ExecutionHistoryResponse,
   ExecutionsPaginatedResponse,
+  NodeExecutionsResponse,
   Schedule,
   ScheduleCreateRequest,
   ScheduleCreateResponse,
@@ -81,6 +82,17 @@ class WorkflowAPI {
 
   static async getHistory(workflowId: string): Promise<ExecutionHistoryResponse> {
     const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}/history`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getNodeExecutions(
+    workflowId: string,
+    executionId: number
+  ): Promise<NodeExecutionsResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/workflows/${workflowId}/executions/${executionId}/nodes`
+    )
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }

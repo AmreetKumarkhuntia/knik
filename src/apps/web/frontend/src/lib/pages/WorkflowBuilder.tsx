@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import PageHeader from '$components/PageHeader'
 import Canvas from '$sections/workflows/WorkflowBuilder/Canvas'
 import type { WorkflowDefinition } from '$types/workflow'
 import type { CanvasHandle } from '$types/sections/workflow-builder'
@@ -11,16 +10,16 @@ export default function WorkflowBuilder() {
   const navigate = useNavigate()
   const canvasRef = useRef<CanvasHandle>(null)
   const [workflowData, setWorkflowData] = useState<WorkflowDefinition | undefined>()
+  const [workflowName, setWorkflowName] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const isEditMode = !!id
-  const pageTitle = isEditMode ? 'Edit Workflow' : 'Create Workflow'
 
   useEffect(() => {
     if (id) {
       void loadWorkflow(id)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const loadWorkflow = async (workflowId: string) => {
@@ -28,6 +27,8 @@ export default function WorkflowBuilder() {
       setIsLoading(true)
       const response = await workflowApi.workflows.get(workflowId)
       setWorkflowData(response.workflow)
+      // Derive a display name from the workflow id if not available
+      setWorkflowName(id)
     } catch (error) {
       console.error('Failed to load workflow:', error)
     } finally {
@@ -36,35 +37,24 @@ export default function WorkflowBuilder() {
   }
 
   const handleSave = async () => {
-    if (!canvasRef.current) {
-      console.error('Canvas ref not available')
-      return
-    }
+    if (!canvasRef.current) return
 
     const validationErrors = canvasRef.current.getValidationErrors()
-    if (validationErrors.length > 0) {
-      setSaveError(validationErrors.join('\n'))
-      return
-    }
+    if (validationErrors.length > 0) return
 
     const workflowDefinition = canvasRef.current.getWorkflowDefinition()
-    if (!workflowDefinition) {
-      setSaveError('Failed to generate workflow definition')
-      return
-    }
+    if (!workflowDefinition) return
 
     try {
-      setSaveError(null)
       if (id) {
-        await workflowApi.workflows.update(id, pageTitle, workflowDefinition)
+        await workflowApi.workflows.update(id, workflowName ?? 'Workflow', workflowDefinition)
       } else {
-        const workflowName = `Workflow ${new Date().toLocaleDateString()}`
-        await workflowApi.workflows.create(workflowName, workflowDefinition)
+        const name = `Workflow ${new Date().toLocaleDateString()}`
+        await workflowApi.workflows.create(name, workflowDefinition)
       }
       void navigate('/workflows')
     } catch (error) {
       console.error('Failed to save workflow:', error)
-      setSaveError(error instanceof Error ? error.message : 'Failed to save workflow')
     }
   }
 
@@ -80,12 +70,26 @@ export default function WorkflowBuilder() {
     }
   }
 
+  const handleExportJson = () => {
+    if (!canvasRef.current) return
+    const definition = canvasRef.current.getWorkflowDefinition()
+    if (!definition) return
+
+    const blob = new Blob([JSON.stringify(definition, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${workflowName ?? 'workflow'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-accent-purple border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-textSecondary">Loading workflow...</p>
+          <div className="animate-spin h-10 w-10 border-2 border-white/20 border-t-slate-100 rounded-full mx-auto mb-4" />
+          <p className="text-xs text-slate-400">Loading workflow...</p>
         </div>
       </div>
     )
@@ -93,49 +97,14 @@ export default function WorkflowBuilder() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
-      <PageHeader
-        breadcrumbs={['Workflows', pageTitle]}
-        onBackClick={() => void navigate('/workflows')}
-        rightContent={
-          <div className="flex items-center gap-4">
-            {isEditMode && (
-              <button
-                onClick={() => void handleExecute()}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-purple to-accent-teal px-5 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity"
-              >
-                <span className="material-symbols-outlined text-sm">play_arrow</span>
-                <span>Execute</span>
-              </button>
-            )}
-            <button
-              onClick={() => void handleSave()}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-purple to-accent-teal px-5 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity"
-            >
-              <span className="material-symbols-outlined text-sm">save</span>
-              <span>Save Workflow</span>
-            </button>
-          </div>
-        }
-        sticky={true}
-      />
-
-      {saveError && (
-        <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 text-sm mx-4 mt-4">
-          <div className="flex items-start gap-2">
-            <span className="material-symbols-outlined text-base mt-0.5">error</span>
-            <div>
-              <strong>Save Error:</strong>
-              <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{saveError}</pre>
-            </div>
-          </div>
-        </div>
-      )}
-
       <Canvas
         ref={canvasRef}
         workflowId={id}
         definition={workflowData}
+        workflowName={isEditMode ? workflowName : undefined}
+        onSave={() => void handleSave()}
         onExecute={() => void handleExecute()}
+        onExportJson={handleExportJson}
         readOnly={false}
       />
     </div>

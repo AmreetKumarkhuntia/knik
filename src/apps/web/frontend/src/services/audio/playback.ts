@@ -31,10 +31,7 @@ export function playAudio(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-      console.log('[Audio] Starting playback, data length:', base64Audio.length)
-
       if (currentAudio && !currentAudio.paused) {
-        console.log('[Audio] Stopping previous audio')
         currentAudio.pause()
         currentAudio = null
       }
@@ -42,7 +39,6 @@ export function playAudio(
       currentResolve = resolve
 
       const binaryString = atob(base64Audio)
-      console.log('[Audio] Decoded binary length:', binaryString.length)
 
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
@@ -50,17 +46,12 @@ export function playAudio(
       }
 
       const blob = new Blob([bytes], { type: 'audio/wav' })
-      console.log('[Audio] Created blob, size:', blob.size, 'type:', blob.type)
-
       const audioUrl = URL.createObjectURL(blob)
-      console.log('[Audio] Created object URL:', audioUrl)
-
       const audio = new Audio(audioUrl)
       currentAudio = audio
       isPaused = false
 
       audio.onended = () => {
-        console.log('[Audio] Playback ended')
         URL.revokeObjectURL(audioUrl)
         currentAudio = null
         currentResolve = null
@@ -84,7 +75,6 @@ export function playAudio(
       audio
         .play()
         .then(() => {
-          console.log('[Audio] Play started successfully')
           if (mediaSessionUpdater) mediaSessionUpdater()
           notifyStateChange(false, true)
         })
@@ -100,7 +90,6 @@ export function playAudio(
 }
 
 export function stopAudio(): void {
-  console.log('[Audio] Stopping audio')
   if (currentAudio) {
     currentAudio.pause()
     currentAudio.currentTime = 0
@@ -118,7 +107,6 @@ export function stopAudio(): void {
 
 export function pauseAudio(): void {
   if (currentAudio && !currentAudio.paused) {
-    console.log('[Audio] Pausing audio')
     currentAudio.pause()
     isPaused = true
     if (mediaSessionUpdater) mediaSessionUpdater()
@@ -128,7 +116,6 @@ export function pauseAudio(): void {
 
 export function resumeAudio(): void {
   if (currentAudio && currentAudio.paused && isPaused) {
-    console.log('[Audio] Resuming audio')
     currentAudio.play().catch(err => console.error('[Audio] Resume failed:', err))
     isPaused = false
     if (mediaSessionUpdater) mediaSessionUpdater()

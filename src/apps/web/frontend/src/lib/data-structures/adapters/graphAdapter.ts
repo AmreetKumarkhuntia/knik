@@ -5,6 +5,7 @@ import {
   calculateForceLayout,
   calculateGridLayout,
   calculateCircularLayout,
+  calculateDagLayout,
 } from '../layout/GraphLayout'
 
 export function graphToCanvasNodes<T>(graph: Graph<T>, options: CanvasOptions = {}): CanvasOutput {
@@ -34,6 +35,9 @@ export function graphToCanvasNodes<T>(graph: Graph<T>, options: CanvasOptions = 
       break
     case 'circular':
       positions = calculateCircularLayout(nodeIds, { width, height })
+      break
+    case 'dag':
+      positions = calculateDagLayout(nodeIds, edgeLinks, { width, height })
       break
     case 'force':
     default:

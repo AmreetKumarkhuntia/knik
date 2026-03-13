@@ -1,4 +1,7 @@
 import type { Node, Edge } from '@xyflow/react'
+import type { ExecutionStatus } from '$types/workflow'
+
+export type { ExecutionStatus }
 
 export interface GraphOptions {
   directed?: boolean
@@ -13,7 +16,7 @@ export interface LayoutOptions {
 }
 
 export interface CanvasOptions {
-  layout?: 'force' | 'grid' | 'circular'
+  layout?: 'force' | 'grid' | 'circular' | 'dag'
   width?: number
   height?: number
   nodeType?: string
@@ -50,8 +53,6 @@ export interface DijkstraResult {
   path: string[]
 }
 
-export type ExecutionStatus = 'pending' | 'running' | 'success' | 'failed'
-
 export interface ExecutionNodeData {
   status?: ExecutionStatus
   duration?: number
@@ -63,7 +64,7 @@ export interface ExecutionNodeData {
 export interface WorkflowGraphOptions {
   mode?: 'edit' | 'execution'
   executionData?: Map<string, ExecutionNodeData>
-  layout?: 'force' | 'grid' | 'circular'
+  layout?: 'force' | 'grid' | 'circular' | 'dag'
   width?: number
   height?: number
 }

@@ -45,7 +45,7 @@ export default memo(function FlowEdge({
             refY="3.5"
             orient="auto"
           >
-            <polygon points="0 0, 10 3.5, 0 7" fill="url(#gradient-green-red)" />
+            <polygon points="0 0, 10 3.5, 0 7" fill={`url(#gradient-${id})`} />
           </marker>
         </defs>
         <BaseEdge
@@ -53,7 +53,7 @@ export default memo(function FlowEdge({
           path={edgePath}
           style={{
             ...style,
-            stroke: 'url(#gradient-green-red)',
+            stroke: `url(#gradient-${id})`,
             strokeWidth: 2,
             strokeDasharray: '5,5',
             animation: 'dash 1s linear infinite',

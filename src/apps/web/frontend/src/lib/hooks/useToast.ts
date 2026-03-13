@@ -1,8 +1,3 @@
-/**
- * useToast Hook
- * Manages toast notifications
- */
-
 import { useState, useCallback } from 'react'
 import type { ToastType } from '../../types/components'
 

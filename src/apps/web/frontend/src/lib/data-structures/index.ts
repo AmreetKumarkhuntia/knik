@@ -7,7 +7,6 @@ export {
   graphToWorkflowDefinition,
   validateWorkflowGraph,
 } from './adapters'
-export type { WorkflowValidationResult } from './adapters'
 export { calculateForceLayout, calculateGridLayout, calculateCircularLayout } from './layout'
 
 export type {

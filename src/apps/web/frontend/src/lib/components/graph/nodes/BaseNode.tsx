@@ -28,7 +28,7 @@ function NodeHandle({
       type={type}
       position={POSITION_MAP[config.position]}
       id={config.id}
-      className={`!${config.color || defaultColor} !w-3 !h-3 !border-2 !border-background-dark`}
+      className={`!${config.color || defaultColor} !w-2.5 !h-2.5 !border-2 !border-[#0d021f]`}
       style={config.style}
     />
   )
@@ -37,47 +37,50 @@ function NodeHandle({
 function getStatusOverlay(status?: string) {
   switch (status) {
     case 'success':
-      return 'ring-2 ring-green-500/30 border-green-500'
+      return 'ring-1 ring-green-500/40 border-green-500/60'
     case 'failed':
-      return 'ring-2 ring-red-500/30 border-red-500'
+      return 'ring-1 ring-red-500/40 border-red-500/60'
     case 'running':
-      return 'animate-pulse border-blue-500'
+      return 'animate-pulse border-blue-500/60'
     case 'pending':
-      return `opacity-60`
+      return 'opacity-60'
     default:
       return ''
   }
 }
 
+// ── Pill Node (Start / End) ───────────────────────────────────────────────────
 function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, colors, handles, contentRenderer } = metadata
   const isStart = contentRenderer === 'start'
-  const statusOverlay = data.mode === 'execution' ? getStatusOverlay(data.status) : ''
+  const isExecution = data.mode === 'execution'
+  const neonClass = isExecution ? (colors.neonBorder ?? '') : ''
+  const statusOverlay = isExecution ? getStatusOverlay(data.status) : ''
 
   return (
     <div className="relative">
       <div
-        className={`flex items-center gap-4 rounded-full node-glass px-6 py-4 ${colors.neonBorder || ''} ${statusOverlay}`}
+        className={`flex items-center gap-2 rounded-full border ${colors.border} bg-[#171717] ${isExecution ? 'px-3 py-2' : 'px-5 py-3'} ${neonClass} ${statusOverlay}`}
       >
         {!isStart && (
-          <div
-            className={`mr-4 h-3 w-3 rounded-full ${colors.iconBg.replace('/10', '')} border-2 border-background-dark cursor-pointer`}
-          />
+          <div className={`h-1.5 w-1.5 rounded-full ${colors.iconBg.replace('/10', '/60')}`} />
         )}
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-full ${colors.iconBg.replace('/10', '')} text-white shadow-lg shadow-${colors.primary}-500/30`}
+          className={`flex ${isExecution ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full ${colors.iconBg} ${colors.iconText}`}
         >
-          <span className="material-symbols-outlined">{icon}</span>
+          <span className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'}`}>
+            {icon}
+          </span>
         </div>
         <div className={`flex flex-col ${!isStart ? 'text-right' : ''}`}>
-          <h3 className="text-sm font-bold text-white">{data.label || metadata.label}</h3>
-          <p
-            className={`text-[10px] ${colors.iconText.replace('text-', 'text-')} uppercase tracking-tighter`}
-          >
-            {metadata.typeLabel}
-          </p>
-          {data.mode === 'execution' && data.duration !== undefined && (
-            <span className="text-[9px] text-gray-400 mt-0.5">
+          <h3 className="text-xs font-semibold text-slate-100">{data.label || metadata.label}</h3>
+          {!isExecution && (
+            <p className={`text-[10px] ${colors.iconText} uppercase tracking-wider`}>
+              {metadata.typeLabel}
+            </p>
+          )}
+          {isExecution && data.duration !== undefined && (
+            <span className="text-[9px] text-slate-400">
               {data.duration < 1000
                 ? `${data.duration}ms`
                 : `${(data.duration / 1000).toFixed(2)}s`}
@@ -85,9 +88,7 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
           )}
         </div>
         {isStart && (
-          <div
-            className={`ml-4 h-3 w-3 rounded-full ${colors.iconBg.replace('/10', '')} border-2 border-background-dark cursor-pointer`}
-          />
+          <div className={`h-1.5 w-1.5 rounded-full ${colors.iconBg.replace('/10', '/60')}`} />
         )}
       </div>
 
@@ -101,54 +102,76 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
   )
 }
 
-function GradientNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
+// ── AI Card Node (clean card with teal top accent strip) ──────────────────────
+function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
-  const statusOverlay = data.mode === 'execution' ? getStatusOverlay(data.status) : ''
+  const isExecution = data.mode === 'execution'
+  const statusOverlay = isExecution ? getStatusOverlay(data.status) : ''
 
   return (
     <div className="relative">
       <div
-        className={`p-[2px] rounded-2xl gradient-node-border shadow-2xl shadow-accent-purple/20 ${statusOverlay}`}
+        className={`rounded-xl border ${colors.border} bg-[#171717] overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
       >
-        <div className="node-glass rounded-[14px] p-6 flex flex-col items-center gap-3 min-w-[180px]">
-          <span className={`material-symbols-outlined ${colors.iconText} text-4xl`}>{icon}</span>
-          <div className="text-center">
-            <h3 className="text-sm font-bold text-white">{data.label || label}</h3>
-            <span
-              className={`text-[10px] py-0.5 px-2 rounded-full ${colors.iconBg} ${colors.iconText} border ${colors.border}`}
-            >
-              {typeLabel.toUpperCase()}
-            </span>
+        {/* Thin teal top accent strip */}
+        <div className="h-0.5 w-full bg-[#14b8a6]/60" />
+
+        {/* Header row */}
+        <div className={`flex items-center gap-2 px-3 ${isExecution ? 'py-2' : 'pt-3 pb-2'}`}>
+          <span
+            className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'} ${colors.iconText}`}
+          >
+            {icon}
+          </span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xs font-semibold text-slate-100 truncate">{data.label || label}</h3>
           </div>
-          <NodeContent renderer={contentRenderer} data={data} />
-          {data.mode === 'execution' && data.duration !== undefined && (
-            <div className="text-xs text-gray-400 mt-1">
-              {data.duration < 1000
-                ? `${data.duration}ms`
-                : `${(data.duration / 1000).toFixed(2)}s`}
-            </div>
-          )}
+          <span
+            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${colors.iconBg} ${colors.iconText} border ${colors.border}`}
+          >
+            {typeLabel}
+          </span>
         </div>
+
+        {/* Edit mode: content + port labels */}
+        {!isExecution && (
+          <div className="px-3 pb-3">
+            <NodeContent renderer={contentRenderer} data={data} />
+            <div className="flex justify-between mt-2">
+              <span className="text-[9px] uppercase tracking-widest text-slate-500">INPUTS</span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500">OUTPUTS</span>
+            </div>
+          </div>
+        )}
+
+        {/* Execution mode: duration only */}
+        {isExecution && data.duration !== undefined && (
+          <div className="px-3 pb-2 text-[10px] text-slate-400">
+            {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
+          </div>
+        )}
       </div>
 
       {handles.inputs.map((handle, i) => (
-        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-surface" />
+        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-[#171717]" />
       ))}
       {handles.outputs.map((handle, i) => (
-        <NodeHandle key={`out-${i}`} config={handle} type="source" defaultColor="bg-surface" />
+        <NodeHandle key={`out-${i}`} config={handle} type="source" defaultColor="bg-[#171717]" />
       ))}
     </div>
   )
 }
 
+// ── Default Node ──────────────────────────────────────────────────────────────
 function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
-  const statusOverlay = data.mode === 'execution' ? getStatusOverlay(data.status) : ''
+  const isExecution = data.mode === 'execution'
+  const statusOverlay = isExecution ? getStatusOverlay(data.status) : ''
 
   return (
     <div className="relative">
       <div
-        className={`rounded-xl node-glass border ${colors.border} p-4 min-w-[180px] shadow-lg ${statusOverlay}`}
+        className={`rounded-xl border ${colors.border} bg-[#171717] px-3 ${isExecution ? 'py-2' : 'px-4 py-3'} min-w-[160px] ${statusOverlay}`}
       >
         {handles.inputs.map((handle, i) => (
           <NodeHandle
@@ -159,22 +182,30 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
           />
         ))}
 
-        <div className="flex items-center gap-3 mb-3">
+        <div className={`flex items-center gap-2 ${isExecution ? '' : 'mb-2'}`}>
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}
+            className={`flex ${isExecution ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText} flex-shrink-0`}
           >
-            <span className="material-symbols-outlined text-xl">{icon}</span>
+            <span className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'}`}>
+              {icon}
+            </span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-text">{label}</span>
-            <span className="text-[10px] text-textSecondary uppercase">{typeLabel}</span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-semibold text-slate-100 truncate">
+              {data.label || label}
+            </span>
+            {!isExecution && (
+              <span className="text-[10px] text-slate-400 uppercase tracking-wide">
+                {typeLabel}
+              </span>
+            )}
           </div>
         </div>
 
-        <NodeContent renderer={contentRenderer} data={data} />
+        {!isExecution && <NodeContent renderer={contentRenderer} data={data} />}
 
-        {data.mode === 'execution' && data.duration !== undefined && (
-          <div className="text-xs text-gray-400 mt-2">
+        {isExecution && data.duration !== undefined && (
+          <div className="text-[10px] text-slate-400 mt-1">
             {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
           </div>
         )}
@@ -192,6 +223,7 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
   )
 }
 
+// ── Dispatcher ────────────────────────────────────────────────────────────────
 export default memo(function BaseNode({ data, type }: NodeProps) {
   const metadata = getNodeMetadata(type as string)
   if (!metadata) return null
@@ -202,8 +234,8 @@ export default memo(function BaseNode({ data, type }: NodeProps) {
     return <PillNode metadata={metadata} data={nodeData} />
   }
 
-  if (metadata.isGradient) {
-    return <GradientNode metadata={metadata} data={nodeData} />
+  if (metadata.contentRenderer === 'ai') {
+    return <AICardNode metadata={metadata} data={nodeData} />
   }
 
   return <DefaultNode metadata={metadata} data={nodeData} />

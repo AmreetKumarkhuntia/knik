@@ -1,86 +1,62 @@
-import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import type { WorkflowNavbarProps } from '$types/sections/workflow-builder'
 
 export default function WorkflowNavbar({
+  onExportJson,
   onSave,
-  onExecute,
   readOnly = false,
-  userAvatar,
+  workflowName,
 }: WorkflowNavbarProps) {
-  const [isSaving, setIsSaving] = useState(false)
-
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      if (onSave) {
-        void onSave()
-      }
-    } finally {
-      setTimeout(() => setIsSaving(false), 500)
-    }
-  }
+  const navigate = useNavigate()
+  const pageLabel = workflowName ?? 'Create Workflow'
 
   return (
-    <header className="flex items-center justify-between border-b border-borderLight bg-surfaceGlass backdrop-blur-md px-6 py-3 z-20">
-      <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-purple to-accent-teal p-0.5">
-          <div className="flex h-full w-full items-center justify-center rounded-[7px] bg-background-dark">
-            <span className="material-symbols-outlined text-accent-teal">hub</span>
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <h1 className="text-lg font-bold leading-tight tracking-tight text-text">
-            Workflow Builder
-          </h1>
-          <p className="text-xs text-textSecondary">Design and automate your processes</p>
+    <header className="h-16 border-b border-white/5 glass flex items-center justify-between px-8 flex-shrink-0 z-20">
+      {/* Breadcrumb — matches PageHeader style */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => void navigate(-1)}
+          className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+          title="Back"
+        >
+          <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>
+            arrow_back
+          </span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <Link
+            to="/workflows"
+            className="font-medium text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            Workflows
+          </Link>
+          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          <span className="font-semibold text-slate-100">{pageLabel}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-xs font-medium text-textSecondary">
-          <span className="size-2 rounded-full bg-accent-teal animate-pulse"></span>
-          Live Sync Enabled
-        </div>
-
-        {!readOnly && (
-          <>
-            {onExecute && (
-              <button
-                onClick={() => void onExecute()}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-purple to-accent-teal px-5 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity"
-              >
-                <span className="material-symbols-outlined text-sm">play_arrow</span>
-                <span>Execute</span>
-              </button>
-            )}
-
-            {onSave && (
-              <button
-                onClick={() => void handleSave()}
-                disabled={isSaving}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-purple to-accent-teal px-5 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="material-symbols-outlined text-sm">
-                  {isSaving ? 'sync' : 'save'}
-                </span>
-                <span>{isSaving ? 'Saving...' : 'Save Workflow'}</span>
-              </button>
-            )}
-          </>
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        {!readOnly && onExportJson && (
+          <button
+            onClick={onExportJson}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-transparent px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <span className="material-symbols-outlined text-sm">download</span>
+            Export JSON
+          </button>
         )}
 
-        {userAvatar ? (
-          <div className="h-10 w-10 rounded-full bg-surface border-2 border-accent-purple/30 p-0.5">
-            <img
-              className="h-full w-full rounded-full object-cover"
-              src={userAvatar}
-              alt="User avatar"
-            />
-          </div>
-        ) : (
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-accent-purple to-accent-teal flex items-center justify-center text-white font-bold">
-            AK
-          </div>
+        {!readOnly && onSave && (
+          <button
+            onClick={() => void onSave()}
+            className="flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: 'var(--color-primary)' }}
+          >
+            <span className="material-symbols-outlined text-sm">save</span>
+            Save Workflow
+          </button>
         )}
       </div>
     </header>

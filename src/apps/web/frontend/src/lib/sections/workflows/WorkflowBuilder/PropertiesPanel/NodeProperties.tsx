@@ -12,13 +12,7 @@ export default function NodeProperties({ node, onUpdate }: NodePropertiesProps) 
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="border-b border-white/10 pb-4">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold text-slate-100">Node Configuration</p>
-        </div>
-      </div>
-
+    <div className="p-5 space-y-5">
       <ConfigurationForm
         nodeType={node.type || ''}
         data={localData}

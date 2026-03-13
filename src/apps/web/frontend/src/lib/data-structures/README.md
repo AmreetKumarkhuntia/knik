@@ -12,6 +12,7 @@ A TypeScript-based graph data structure library with built-in algorithms and aut
 ## Installation
 
 The library is already installed with the required dependencies:
+
 - `d3-force` for layout algorithms
 - `@xyflow/react` for canvas rendering
 
@@ -58,11 +59,11 @@ const edgeTypes = { custom: FlowEdge }
 
 function MyComponent() {
   const graph = new Graph<string>({ directed: true })
-  
+
   graph.addNode('A', 'a', { label: 'Node A', type: 'FunctionExecutionNode' })
   graph.addNode('B', 'b', { label: 'Node B', type: 'AIExecutionNode' })
   graph.addEdge('a', 'b')
-  
+
   const { nodes, edges } = graph.toCanvasNodes({
     layout: 'force',
     width: 1200,
@@ -72,10 +73,10 @@ function MyComponent() {
     forceStrength: -500,
     linkDistance: 200,
   })
-  
+
   return (
-    <FlowCanvas 
-      nodes={nodes} 
+    <FlowCanvas
+      nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
@@ -91,15 +92,18 @@ function MyComponent() {
 ### `Graph<T>`
 
 #### Constructor
+
 ```typescript
 new Graph<T>(options?: GraphOptions)
 ```
 
 Options:
+
 - `directed?: boolean` - Create directed graph (default: true)
 - `weighted?: boolean` - Support weighted edges (default: false)
 
 #### Node Operations
+
 - `addNode(value: T, id?: string, config?: Record<string, unknown>): GraphNode<T>`
 - `removeNode(id: string): boolean`
 - `getNode(id: string): GraphNode<T> | undefined`
@@ -107,28 +111,34 @@ Options:
 - `getNodes(): GraphNode<T>[]`
 
 #### Edge Operations
+
 - `addEdge(fromId: string, toId: string, weight?: number): this`
 - `removeEdge(fromId: string, toId: string): boolean`
 - `hasEdge(fromId: string, toId: string): boolean`
 - `getEdges(): Array<{ from: string; to: string; weight?: number }>`
 
 #### Traversal Algorithms
+
 - `dfs(startId: string, callback?: (node) => void): GraphNode<T>[]`
 - `bfs(startId: string, callback?: (node) => void): GraphNode<T>[]`
 
 #### Path Finding
+
 - `dijkstra(startId: string): Map<string, { distance: number; path: string[] }>`
 - `shortestPath(startId: string, endId: string): { path: string[]; distance: number } | null`
 
 #### Graph Properties
+
 - `hasCycle(): boolean`
 - `topologicalSort(): GraphNode<T>[] | null`
 - `isConnected(): boolean`
 
 #### Canvas Integration
+
 - `toCanvasNodes(options?: CanvasOptions): { nodes: Node[]; edges: Edge[] }`
 
 Canvas Options:
+
 - `layout?: 'force' | 'grid' | 'circular'` - Layout algorithm (default: 'force')
 - `width?: number` - Canvas width (default: 800)
 - `height?: number` - Canvas height (default: 600)

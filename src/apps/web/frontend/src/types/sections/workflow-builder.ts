@@ -9,21 +9,16 @@ export interface CanvasHandle {
 export interface CanvasProps {
   workflowId?: string
   definition?: WorkflowDefinition
-  onSave?: (definition: WorkflowDefinition) => void
+  onSave?: () => void
   onExecute?: () => void
   readOnly?: boolean
+  workflowName?: string
+  onExportJson?: () => void
 }
 
 export interface NodePropertiesProps {
   node: Node
   onUpdate: (data: Record<string, unknown>) => void
-}
-
-export interface PropertiesPanelProps {
-  selectedNode: Node | null
-  isOpen: boolean
-  onClose: () => void
-  onNodeUpdate: (nodeId: string, data: Record<string, unknown>) => void
 }
 
 export interface ConfigurationFormProps {
@@ -35,6 +30,8 @@ export interface ConfigurationFormProps {
 export interface WorkflowNavbarProps {
   onSave?: () => void
   onExecute?: () => void
+  onExportJson?: () => void
   readOnly?: boolean
   userAvatar?: string
+  workflowName?: string
 }

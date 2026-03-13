@@ -99,6 +99,10 @@ export interface NodeExecutionRecord {
   outputs?: Record<string, unknown>
 }
 
+export interface NodeExecutionsResponse {
+  node_executions: NodeExecutionRecord[]
+}
+
 export interface WorkflowStats {
   totalExecutions: number
   activeJobs: number
@@ -271,4 +275,10 @@ export interface TopWorkflowsResponse {
 export interface ActivityResponse {
   success: boolean
   activities: unknown[]
+}
+
+export interface WorkflowValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
 }

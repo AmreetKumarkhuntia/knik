@@ -4,5 +4,4 @@ export {
   workflowDefinitionToGraph,
   graphToWorkflowDefinition,
   validateWorkflowGraph,
-  type WorkflowValidationResult,
 } from './workflowAdapter'

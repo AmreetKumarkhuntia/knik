@@ -27,10 +27,17 @@ export interface FormFieldTip {
 export interface FormFieldConfig {
   field: string
   label: string
-  type: 'text' | 'textarea' | 'number' | 'select'
+  type: 'text' | 'textarea' | 'textarea-collapsible' | 'number' | 'select' | 'slider' | 'tags'
   placeholder?: string
   options?: Array<{ value: string; label: string }>
   tip?: FormFieldTip
+  // slider-specific
+  min?: number
+  max?: number
+  step?: number
+  defaultValue?: number
+  // tags-specific
+  tagPlaceholder?: string
 }
 
 /**

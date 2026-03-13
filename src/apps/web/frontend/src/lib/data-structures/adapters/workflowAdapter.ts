@@ -1,4 +1,9 @@
-import type { WorkflowDefinition, NodeDefinition, WorkflowConnection } from '$types/workflow'
+import type {
+  WorkflowDefinition,
+  NodeDefinition,
+  WorkflowConnection,
+  WorkflowValidationResult,
+} from '$types/workflow'
 import { Graph } from '../structures/Graph'
 import type { WorkflowGraphOptions } from '../types'
 
@@ -67,12 +72,6 @@ export function graphToWorkflowDefinition<T>(graph: Graph<T>): WorkflowDefinitio
   })
 
   return { nodes, connections }
-}
-
-export interface WorkflowValidationResult {
-  valid: boolean
-  errors: string[]
-  warnings: string[]
 }
 
 export function validateWorkflowGraph(graph: Graph<unknown>): WorkflowValidationResult {

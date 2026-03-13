@@ -59,7 +59,7 @@ function FlowCanvasContent({
       />
       {showMiniMap && (
         <MiniMap
-          className="!bg-surface !border-borderLight"
+          className="!bg-[#171717] !border-white/10"
           nodeColor="rgba(255,255,255,0.3)"
           maskColor="rgba(0,0,0,0.8)"
         />

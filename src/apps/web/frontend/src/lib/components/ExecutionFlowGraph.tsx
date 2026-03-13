@@ -53,13 +53,11 @@ export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlo
         })
 
         const { nodes: canvasNodes, edges: canvasEdges } = graph.toCanvasNodes({
-          layout: 'force',
-          width: 800,
-          height: 400,
+          layout: 'dag',
+          width: 900,
+          height: 500,
           nodeType: 'default',
           edgeType: 'default',
-          forceStrength: -500,
-          linkDistance: 150,
         })
 
         setNodes(canvasNodes)
@@ -77,7 +75,7 @@ export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlo
 
   if (loading) {
     return (
-      <div className="h-[400px] flex items-center justify-center bg-surface rounded-lg">
+      <div className="h-[500px] flex items-center justify-center bg-[#171717] rounded-lg">
         <LoadingSpinner />
       </div>
     )
@@ -85,14 +83,14 @@ export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlo
 
   if (error) {
     return (
-      <div className="h-[400px] flex items-center justify-center bg-surface rounded-lg">
+      <div className="h-[500px] flex items-center justify-center bg-[#171717] rounded-lg">
         <p className="text-red-500">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="h-[400px] bg-surface rounded-lg overflow-hidden">
+    <div className="h-[500px] bg-[#0d111a] rounded-lg overflow-hidden workflow-grid">
       <FlowCanvas
         nodes={nodes}
         edges={edges}

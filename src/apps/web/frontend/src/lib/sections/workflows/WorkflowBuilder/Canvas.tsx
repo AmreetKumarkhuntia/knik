@@ -14,14 +14,12 @@ import {
 import type {
   Connection as WorkflowConnection,
   NodeDefinition,
-  NodeTypeName,
   WorkflowDefinition,
 } from '$types/workflow'
-import NodePalette from './NodePalette/NodePalette'
+import NodePropertiesPanel from './NodePropertiesPanel/NodePropertiesPanel'
 import FloatingControls from './CanvasControls/FloatingControls'
-import PropertiesPanel from './PropertiesPanel/PropertiesPanel'
+import WorkflowNavbar from './TopNavbar/WorkflowNavbar'
 import type { CanvasProps, CanvasHandle } from '$types/sections/workflow-builder'
-import { getDefaultNodeData } from '$lib/constants/nodes'
 import { BaseNode, FlowEdge, FlowCanvas } from '$lib/components/graph'
 import {
   canvasNodesToGraph,
@@ -29,7 +27,6 @@ import {
   validateWorkflowGraph,
 } from '$lib/data-structures'
 
-// Use unified BaseNode for all node types
 const nodeTypes: NodeTypes = {
   FunctionExecutionNode: BaseNode,
   ConditionalBranchNode: BaseNode,
@@ -43,9 +40,6 @@ const edgeTypes: EdgeTypes = {
   custom: FlowEdge,
 }
 
-let nodeIdCounter = 0
-const generateNodeId = () => `node_${++nodeIdCounter}_${Date.now()}`
-
 function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = []
   const edges: Edge[] = []
@@ -55,7 +49,7 @@ function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[];
     nodes.push({
       id,
       type: nodeDefinition.type,
-      position: { x: 100, y: index * 120 },
+      position: { x: 100 + index * 280, y: 200 },
       data: {
         ...nodeDefinition,
         mode: 'edit' as const,
@@ -80,12 +74,17 @@ function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[];
 }
 
 const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasContent(
-  { workflowId: _workflowId, definition, onSave, onExecute, readOnly = false },
+  {
+    workflowId: _workflowId,
+    definition,
+    onSave,
+    onExecute: _onExecute,
+    readOnly = false,
+    workflowName,
+    onExportJson,
+  },
   ref
 ) {
-  void onExecute
-  void onSave
-
   const initialFlow = useMemo(() => {
     if (definition) {
       return definitionToReactFlow(definition)
@@ -95,13 +94,13 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
         {
           id: 'start',
           type: 'StartNode',
-          position: { x: 250, y: 0 },
+          position: { x: 100, y: 200 },
           data: { label: 'Start', mode: 'edit' as const },
         },
         {
           id: 'end',
           type: 'EndNode',
-          position: { x: 250, y: 400 },
+          position: { x: 600, y: 200 },
           data: { label: 'End', mode: 'edit' as const },
         },
       ],
@@ -111,9 +110,7 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialFlow.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialFlow.edges)
-  const [isDragging, setIsDragging] = useState(false)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
-  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
 
   const onConnect: OnConnect = useCallback(
@@ -132,57 +129,28 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
     [edges, setEdges]
   )
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
-  }, [])
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault()
-      setIsDragging(false)
-
-      const type = event.dataTransfer.getData('application/reactflow') as
-        | NodeTypeName
-        | 'StartNode'
-        | 'EndNode'
-
-      const bounds = (event.target as HTMLElement).closest('.react-flow')?.getBoundingClientRect()
-      if (!bounds) return
-
-      const position = {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      }
-
-      const newNode: Node = {
-        id: generateNodeId(),
-        type,
-        position,
-        data: {
-          ...getDefaultNodeData(type),
-          mode: 'edit' as const,
-        },
-      }
-
-      setNodes(nodes => [...nodes, newNode])
-    },
-    [setNodes]
-  )
-
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNode(node)
-    setPropertiesPanelOpen(true)
   }, [])
 
   const onPaneClick = useCallback(() => {
-    setPropertiesPanelOpen(false)
     setSelectedNode(null)
   }, [])
 
   const handleNodeUpdate = useCallback(
     (nodeId: string, data: Record<string, unknown>) => {
-      setNodes(nodes => nodes.map(node => (node.id === nodeId ? { ...node, data } : node)))
+      setNodes(ns => ns.map(n => (n.id === nodeId ? { ...n, data } : n)))
+      // Keep selectedNode in sync so the left panel reflects live changes
+      setSelectedNode(prev => (prev?.id === nodeId ? { ...prev, data } : prev))
+    },
+    [setNodes]
+  )
+
+  // handleAddNode is called from FloatingControls which is inside ReactFlowProvider —
+  // it receives a fully-constructed node (with position already in flow coordinates)
+  const handleAddNode = useCallback(
+    (newNode: Node) => {
+      setNodes(ns => [...ns, newNode])
     },
     [setNodes]
   )
@@ -228,21 +196,26 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
 
   return (
     <div className="h-full w-full flex flex-col">
-      {validationError && (
-        <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 text-sm">
-          <div className="flex items-start gap-2">
-            <span className="material-symbols-outlined text-base mt-0.5">error</span>
-            <div>
-              <strong>Validation Error:</strong>
-              <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{validationError}</pre>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="flex flex-1 overflow-hidden relative">
-        <NodePalette onDragStart={() => setIsDragging(true)} />
+      <WorkflowNavbar
+        onSave={onSave}
+        onExportJson={onExportJson}
+        workflowName={workflowName}
+        readOnly={readOnly}
+      />
 
-        <div className="flex-1 relative bg-background-canvas workflow-grid">
+      <div className="flex flex-1 overflow-hidden relative">
+        <NodePropertiesPanel selectedNode={selectedNode} onNodeUpdate={handleNodeUpdate} />
+
+        <div className="flex-1 relative bg-[#0d111a] workflow-grid">
+          {validationError && (
+            <div className="absolute top-0 left-0 right-0 z-20 bg-red-500/10 border-b border-red-500 text-red-500 px-4 py-2 text-xs">
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-sm mt-0.5">error</span>
+                <pre className="whitespace-pre-wrap font-mono">{validationError}</pre>
+              </div>
+            </div>
+          )}
+
           <FlowCanvas
             nodes={nodes}
             edges={edges}
@@ -253,26 +226,14 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={() => setIsDragging(false)}
             fitView
-            className={isDragging ? 'cursor-copy' : ''}
             nodesDraggable={!readOnly}
             nodesConnectable={!readOnly}
             elementsSelectable={!readOnly}
             showMiniMap={true}
           >
-            <FloatingControls />
+            <FloatingControls onAddNode={readOnly ? undefined : handleAddNode} />
           </FlowCanvas>
-
-          <PropertiesPanel
-            selectedNode={selectedNode}
-            isOpen={propertiesPanelOpen}
-            onClose={() => setPropertiesPanelOpen(false)}
-            onNodeUpdate={handleNodeUpdate}
-          />
         </div>
       </div>
     </div>
