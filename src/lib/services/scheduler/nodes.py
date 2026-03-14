@@ -62,7 +62,7 @@ class FunctionExecutionNode(BaseNode):
 
                 # Fetch output from a standardized 'output' or 'result' variable if the script set it
                 code_output = local_env.get("output", local_env.get("result"))
-                return {"status": "success", "executed_code": True, "params": resolved_params, "output": code_output}
+                return {"status": "success", "output": code_output}
             except Exception as e:
                 logger.error(f"[{self.node_id}] Python code execution failed: {e}")
                 raise RuntimeError(f"Python code evaluation failed: {e}") from e
@@ -80,14 +80,16 @@ class FunctionExecutionNode(BaseNode):
                     # Put error into workflow execution context
                     raise RuntimeError(result["error"])
 
-                return {"status": "success", "executed_function": self.function_name, "params": resolved_params, **result}
+                return {"status": "success", **result}
             except Exception as e:
                 logger.error(f"[{self.node_id}] Function {self.function_name} execution failed: {e}")
                 raise RuntimeError(f"Function {self.function_name} execution failed: {e}") from e
 
-        # Fallback to standard mock if function not found
-        result = {"status": "success", "mock_executed": self.function_name, "params": resolved_params}
-        return result
+        # Function not found in registry — raise explicitly so the workflow fails clearly
+        raise RuntimeError(
+            f"Function '{self.function_name}' is not registered in WORKFLOW_FUNCTIONS. "
+            f"Available functions: {list(WORKFLOW_FUNCTIONS.keys())}"
+        )
 
     def _resolve_params(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Simple mock resolver for string templates like {input.file_path}"""
@@ -189,7 +191,7 @@ class AIExecutionNode(BaseNode):
                 mcp_registry=MCPServerRegistry if self.use_tools else None,
             )
             response = ai_client.chat(prompt=resolved_prompt)
-            return {"output": response, "resolved_prompt": resolved_prompt}
+            return {"status": "success", "output": response}
         except Exception as e:
             logger.error(f"[{self.node_id}] AI execution failed: {e}")
             raise RuntimeError(f"AI execution failed: {e}") from e

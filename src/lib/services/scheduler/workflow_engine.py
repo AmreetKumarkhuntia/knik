@@ -1,3 +1,4 @@
+import time
 from collections import defaultdict, deque
 from typing import Any
 
@@ -30,6 +31,8 @@ class WorkflowEngine:
         if not execution_id:
             raise RuntimeError("Failed to create execution record in the database")
 
+        workflow_start = time.perf_counter()
+
         try:
             nodes, adj_list, in_degree = self._parse_dag(workflow.definition)
 
@@ -57,7 +60,9 @@ class WorkflowEngine:
                 try:
                     logger.debug(f"Executing node {curr_id}")
 
+                    node_start = time.perf_counter()
                     output = await node.execute(node_inputs)
+                    node_duration_ms = int((time.perf_counter() - node_start) * 1000)
 
                     node_outputs[curr_id] = output
                     context[curr_id] = output
@@ -69,6 +74,7 @@ class WorkflowEngine:
                         status="success",
                         inputs=node_inputs,
                         outputs=output,
+                        duration_ms=node_duration_ms,
                     )
 
                     next_nodes = adj_list[curr_id]
@@ -84,6 +90,7 @@ class WorkflowEngine:
                             queue.append(next_id)
 
                 except Exception as e:
+                    node_duration_ms = int((time.perf_counter() - node_start) * 1000)
                     logger.error(f"Node execution failed: {curr_id} - {e}")
                     await SchedulerDB.log_node_execution(
                         execution_id=execution_id,
@@ -92,14 +99,25 @@ class WorkflowEngine:
                         status="failed",
                         inputs=node_inputs,
                         error_message=str(e),
+                        duration_ms=node_duration_ms,
                     )
                     raise e
 
-            await SchedulerDB.complete_execution(execution_id, status="success", outputs=node_outputs)
+            await SchedulerDB.complete_execution(
+                execution_id,
+                status="success",
+                outputs=node_outputs,
+                duration_ms=int((time.perf_counter() - workflow_start) * 1000),
+            )
             return node_outputs
 
         except Exception as e:
-            await SchedulerDB.complete_execution(execution_id, status="failed", error_message=str(e))
+            await SchedulerDB.complete_execution(
+                execution_id,
+                status="failed",
+                error_message=str(e),
+                duration_ms=int((time.perf_counter() - workflow_start) * 1000),
+            )
             raise
 
     def _get_edge_condition(self, definition: dict, from_id: str, to_id: str) -> str | None:

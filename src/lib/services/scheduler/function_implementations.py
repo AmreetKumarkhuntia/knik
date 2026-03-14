@@ -8,6 +8,7 @@ All functions are async and return dict results.
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime
 from typing import Any
 
@@ -66,11 +67,14 @@ async def http_get(
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
+            req_start = time.perf_counter()
             response = await client.get(url, headers=headers or {})
+            duration_ms = int((time.perf_counter() - req_start) * 1000)
             response.raise_for_status()
             result = {
                 "status_code": response.status_code,
                 "headers": dict(response.headers),
+                "duration_ms": duration_ms,
                 "content": response.text if response.text else None,
             }
             if response.headers.get("content-type", "").startswith("application/json"):
@@ -92,11 +96,14 @@ async def http_post(
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
+            req_start = time.perf_counter()
             response = await client.post(url, json=data, headers=headers or {})
+            duration_ms = int((time.perf_counter() - req_start) * 1000)
             response.raise_for_status()
             result = {
                 "status_code": response.status_code,
                 "headers": dict(response.headers),
+                "duration_ms": duration_ms,
             }
             if response.text:
                 result["content"] = response.text
@@ -122,6 +129,7 @@ async def http_request(
     method = method.upper()
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
+            req_start = time.perf_counter()
             if method == "GET":
                 response = await client.get(url, headers=headers or {})
             elif method == "POST":
@@ -133,10 +141,12 @@ async def http_request(
             else:
                 return {"error": f"Unsupported HTTP method: {method}"}
 
+            duration_ms = int((time.perf_counter() - req_start) * 1000)
             response.raise_for_status()
             result = {
                 "status_code": response.status_code,
                 "headers": dict(response.headers),
+                "duration_ms": duration_ms,
             }
             if response.text:
                 result["content"] = response.text
@@ -310,6 +320,41 @@ async def base64_decode(data: str) -> str:
 
 
 # ========================
+# SHELL FUNCTIONS
+# ========================
+
+
+async def run_shell_command(command: str, timeout: int = 30) -> dict[str, Any]:
+    """Run a shell command and return its stdout, stderr, return code, and duration."""
+    req_start = time.perf_counter()
+    try:
+        proc = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.communicate()
+            return {"error": f"Command timed out after {timeout}s: {command}"}
+
+        duration_ms = int((time.perf_counter() - req_start) * 1000)
+        stdout = stdout_bytes.decode(errors="replace").strip()
+        stderr = stderr_bytes.decode(errors="replace").strip()
+
+        return {
+            "result": stdout,
+            "stderr": stderr,
+            "return_code": proc.returncode,
+            "duration_ms": duration_ms,
+        }
+    except Exception as e:
+        return {"error": f"Shell command failed: {str(e)}"}
+
+
+# ========================
 # FUNCTION REGISTRY
 # ========================
 
@@ -341,4 +386,6 @@ WORKFLOW_FUNCTIONS = {
     "uuid_generate": uuid_generate,
     "base64_encode": base64_encode,
     "base64_decode": base64_decode,
+    # Shell Functions
+    "run_shell_command": run_shell_command,
 }
