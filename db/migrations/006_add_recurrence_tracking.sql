@@ -19,7 +19,7 @@ ALTER TABLE schedules ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE schedules ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
 
 -- Add comments for documentation
-COMMENT ON COLUMN schedules.next_run_at IS 
+COMMENT ON COLUMN schedules.next_run_at IS
     'Next scheduled execution time (UTC timezone-aware)';
-COMMENT ON COLUMN schedules.recurrence_seconds IS 
+COMMENT ON COLUMN schedules.recurrence_seconds IS
     'Recurrence interval in seconds (e.g., 21600 for 6 hours, 86400 for 1 day)';

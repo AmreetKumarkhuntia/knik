@@ -67,7 +67,7 @@ async def _run_workflow(app, workflow_id: str, inputs: dict) -> str:
     try:
         await SchedulerDB.initialize()
         # App instance will be passed from the console app which holds ai_client
-        scheduler = Scheduler(ai_client=app.ai_client)
+        scheduler = Scheduler()
         logger.info(f"Running workflow manually: {workflow_id} with inputs: {inputs}")
 
         # Execute workflow

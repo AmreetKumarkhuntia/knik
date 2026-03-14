@@ -1,5 +1,5 @@
 # Backend linting via pre-commit hooks
-npx lint-staged --config .pre-commit-config.yaml || true
+.venv/bin/pre-commit run --hook-stage pre-commit
 
 # Frontend linting - run from frontend directory
 (cd src/apps/web/frontend && npx lint-staged)

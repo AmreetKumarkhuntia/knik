@@ -47,7 +47,7 @@ async def add_schedule(req: ScheduleCreateRequest):
     try:
         schedule = Schedule(
             id=0,  # Auto-assigned by DB
-            trigger_workflow_id=req.trigger_workflow_id,
+            target_workflow_id=req.trigger_workflow_id,
             timezone=req.timezone,
             enabled=True,
         )
