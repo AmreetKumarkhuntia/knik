@@ -48,13 +48,13 @@ export default function Modal({
         transition={animationEnabled ? { type: 'spring', stiffness: 300, damping: 30 } : {}}
         className={`relative bg-surfaceGlass backdrop-blur-xl rounded-2xl border border-borderLight shadow-2xl ${sizeClasses[size]} w-full mx-4 pointer-events-auto ${className}`}
         style={{
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: '0 25px 50px -12px var(--color-shadow)',
           zIndex: 130,
         }}
       >
         {title && (
           <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <h2 className="text-xl font-bold text-text">{title}</h2>
+            <h2 className="text-xl font-bold text-foreground">{title}</h2>
           </div>
         )}
         <div className="p-6">{children}</div>

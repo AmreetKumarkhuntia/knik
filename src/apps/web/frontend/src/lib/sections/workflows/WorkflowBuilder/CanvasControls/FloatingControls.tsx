@@ -55,9 +55,9 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
       >
         {/* Popover */}
         {popoverOpen && (
-          <div className="mb-1 w-52 rounded-xl border border-white/10 bg-[#171717] shadow-xl overflow-hidden">
-            <div className="px-3 py-2 border-b border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="mb-1 w-52 rounded-xl border border-border bg-surfaceRaised shadow-xl overflow-hidden">
+            <div className="px-3 py-2 border-b border-border">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">
                 Add Node
               </p>
             </div>
@@ -66,16 +66,16 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
                 <li key={node.type}>
                   <button
                     onClick={() => handleAddNodeType(node.type)}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface transition-colors"
                   >
-                    <span className="material-symbols-outlined text-base text-slate-400">
+                    <span className="material-symbols-outlined text-base text-secondary">
                       {node.icon}
                     </span>
                     <div>
-                      <p className="text-xs font-medium text-slate-100 leading-none">
+                      <p className="text-xs font-medium text-foreground leading-none">
                         {node.label}
                       </p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">{node.typeLabel}</p>
+                      <p className="text-[10px] text-muted mt-0.5">{node.typeLabel}</p>
                     </div>
                   </button>
                 </li>
@@ -86,7 +86,7 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
 
         <button
           onClick={() => setPopoverOpen(o => !o)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-semibold shadow-lg hover:opacity-90 transition-opacity select-none"
+          className="flex items-center gap-2 px-4 py-2 rounded-full text-foreground text-xs font-semibold shadow-lg hover:opacity-90 transition-opacity select-none"
           style={{ background: 'var(--color-primary)' }}
         >
           <span className="material-symbols-outlined text-sm">add</span>
@@ -98,21 +98,21 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
         <button
           onClick={() => void zoomIn()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#171717] border border-white/10 text-slate-400 hover:text-slate-100 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-surfaceRaised border border-border text-secondary hover:text-foreground transition-colors"
           title="Zoom In"
         >
           <span className="material-symbols-outlined text-sm">add</span>
         </button>
         <button
           onClick={() => void zoomOut()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#171717] border border-white/10 text-slate-400 hover:text-slate-100 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-surfaceRaised border border-border text-secondary hover:text-foreground transition-colors"
           title="Zoom Out"
         >
           <span className="material-symbols-outlined text-sm">remove</span>
         </button>
         <button
           onClick={() => void fitView()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#171717] border border-white/10 text-slate-400 hover:text-slate-100 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-surfaceRaised border border-border text-secondary hover:text-foreground transition-colors"
           title="Fit View"
         >
           <span className="material-symbols-outlined text-sm">center_focus_strong</span>

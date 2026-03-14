@@ -78,7 +78,7 @@ export default function SuggestionCards({ onSelectPrompt }: SuggestionCardsProps
               <div style={{ color: 'var(--color-primary)' }}>{suggestion.icon}</div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-white font-semibold mb-1 truncate">{suggestion.title}</h3>
+              <h3 className="text-foreground font-semibold mb-1 truncate">{suggestion.title}</h3>
               <p className="text-textSecondary text-sm line-clamp-2">{suggestion.subtitle}</p>
             </div>
           </div>

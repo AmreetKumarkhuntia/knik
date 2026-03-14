@@ -14,13 +14,13 @@ export default function NodePropertiesPanel({
   const metadata = selectedNode ? getNodeMetadata(selectedNode.type ?? '') : null
 
   return (
-    <aside className="w-72 border-r border-white/10 bg-[#171717] flex flex-col flex-shrink-0 overflow-hidden">
+    <aside className="w-72 border-r border-border bg-surfaceRaised/60 backdrop-blur-xl flex flex-col flex-shrink-0 overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-white/10">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+      <div className="px-5 py-4 border-b border-border">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">
           Node Properties
         </p>
-        <p className="text-xs text-slate-500 mt-0.5 truncate">
+        <p className="text-xs text-muted mt-0.5 truncate">
           {metadata ? `Configure your ${metadata.label} node` : 'Select a node to configure'}
         </p>
       </div>
@@ -35,8 +35,8 @@ export default function NodePropertiesPanel({
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full px-6 py-12 text-center gap-3">
-            <span className="material-symbols-outlined text-3xl text-slate-600">touch_app</span>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <span className="material-symbols-outlined text-3xl text-muted">touch_app</span>
+            <p className="text-xs text-muted leading-relaxed">
               Click a node on the canvas to view and edit its properties
             </p>
           </div>

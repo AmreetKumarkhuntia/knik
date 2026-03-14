@@ -3,21 +3,6 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      colors: {
-        background: 'var(--color-background)',
-        surface: 'var(--color-surface)',
-        surfaceGlass: 'var(--color-surface-glass)',
-        text: 'var(--color-text)',
-        textSecondary: 'var(--color-text-secondary)',
-        primary: 'var(--color-primary)',
-        primaryHover: 'var(--color-primary-hover)',
-        accent: 'var(--color-accent)',
-        accentHover: 'var(--color-accent-hover)',
-        border: 'var(--color-border)',
-        borderLight: 'var(--color-border-light)',
-        success: 'var(--color-success)',
-        error: 'var(--color-error)',
-      },
       animation: {
         'gradient-shift': 'gradient-shift 8s ease infinite',
         'slide-in-right': 'slide-in-right 0.3s ease-out',

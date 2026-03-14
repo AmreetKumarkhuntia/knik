@@ -12,7 +12,7 @@ export default function MainLayout({
 }: MainLayoutProps) {
   return (
     <>
-      <div className="h-screen bg-background text-slate-100 relative flex flex-col">
+      <div className="h-screen bg-background text-foreground relative flex flex-col">
         <BackgroundEffects />
 
         <div className="flex flex-1 min-h-0">

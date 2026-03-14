@@ -5,8 +5,14 @@ export interface ThemeColors {
   background: string
   surface: string
   surfaceGlass: string
+  surfaceRaised: string
+  canvas: string
+  code: string
   text: string
   textSecondary: string
+  textMuted: string
+  textSubtle: string
+  textInverse: string
   primary: string
   primaryHover: string
   accent: string
@@ -15,6 +21,11 @@ export interface ThemeColors {
   borderLight: string
   success: string
   error: string
+  warning: string
+  info: string
+  shadow: string
+  shadowSubtle: string
+  nodeHandleBorder: string
 }
 
 export interface Theme {

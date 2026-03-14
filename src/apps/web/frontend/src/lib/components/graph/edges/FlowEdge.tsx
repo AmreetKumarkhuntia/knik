@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { BaseEdge, getSmoothStepPath, type EdgeProps } from '@xyflow/react'
 import type { FlowEdgeData } from '$types/graph'
+import { EDGE_STATUS_COLORS } from '$lib/constants/themes'
 
 export type { FlowEdgeData }
 
@@ -34,8 +35,8 @@ export default memo(function FlowEdge({
       <g>
         <defs>
           <linearGradient id={`gradient-${id}`} x1="0%" x2="100%" y1="0%" y2="0%">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
-            <stop offset="100%" stopColor="#ef4444" stopOpacity="1" />
+            <stop offset="0%" stopColor={EDGE_STATUS_COLORS.success} stopOpacity="1" />
+            <stop offset="100%" stopColor={EDGE_STATUS_COLORS.failed} stopOpacity="1" />
           </linearGradient>
           <marker
             id={`arrowhead-${id}`}
@@ -73,23 +74,23 @@ export default memo(function FlowEdge({
     )
   }
 
-  let edgeColor = '#6b7280'
+  let edgeColor: string = EDGE_STATUS_COLORS.default
   let strokeWidth = 2
 
   switch (status) {
     case 'failed':
-      edgeColor = '#ef4444'
+      edgeColor = EDGE_STATUS_COLORS.failed
       strokeWidth = 2.5
       break
     case 'success':
-      edgeColor = '#10b981'
+      edgeColor = EDGE_STATUS_COLORS.success
       break
     case 'running':
-      edgeColor = '#3b82f6'
+      edgeColor = EDGE_STATUS_COLORS.running
       break
     case 'pending':
     default:
-      edgeColor = '#6b7280'
+      edgeColor = EDGE_STATUS_COLORS.default
       break
   }
 

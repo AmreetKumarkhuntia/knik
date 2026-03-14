@@ -19,7 +19,7 @@ export default function HistoryTable({
       key: 'workflowName' as const,
       label: 'Workflow',
       render: (value: unknown) => (
-        <span className="text-sm font-semibold text-slate-100">{value as string}</span>
+        <span className="text-sm font-semibold text-foreground">{value as string}</span>
       ),
     },
     {
@@ -31,14 +31,14 @@ export default function HistoryTable({
       key: 'startedAt' as const,
       label: 'Started',
       render: (value: unknown) => (
-        <span className="text-sm text-slate-400">{formatDate(value as string)}</span>
+        <span className="text-sm text-secondary">{formatDate(value as string)}</span>
       ),
     },
     {
       key: 'durationMs' as const,
       label: 'Duration',
       render: (value: unknown) => (
-        <span className="text-sm text-slate-400 font-mono">{formatDuration(value as number)}</span>
+        <span className="text-sm text-secondary font-mono">{formatDuration(value as number)}</span>
       ),
     },
     {
@@ -52,7 +52,7 @@ export default function HistoryTable({
               label="Retry"
               variant="ghost"
               size="sm"
-              className="text-blue-400 hover:text-blue-300"
+              className="text-info hover:text-info/80"
               onClick={() => onRetry(row)}
             />
           )}

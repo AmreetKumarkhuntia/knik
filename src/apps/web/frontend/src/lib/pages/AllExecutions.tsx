@@ -82,7 +82,7 @@ export default function AllExecutions() {
   if (error) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-red-500 text-lg">{error}</p>
+        <p className="text-error text-lg">{error}</p>
       </div>
     )
   }
@@ -93,10 +93,10 @@ export default function AllExecutions() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-8 max-w-7xl mx-auto w-full space-y-6">
-          <div className="glass border border-white/10 rounded-xl p-4">
+          <div className="glass border border-border rounded-xl p-4">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
-                <label htmlFor="workflow-filter" className="text-sm font-medium text-slate-300">
+                <label htmlFor="workflow-filter" className="text-sm font-medium text-subtle">
                   Workflow:
                 </label>
                 <select
@@ -106,7 +106,7 @@ export default function AllExecutions() {
                     setSelectedWorkflow(e.target.value)
                     setPage(1)
                   }}
-                  className="px-3 py-1.5 text-sm bg-white/5 border border-white/10 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="px-3 py-1.5 text-sm bg-surfaceRaised border border-border rounded-lg text-subtle focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">All Workflows</option>
                   {workflows.map(workflow => (
@@ -118,7 +118,7 @@ export default function AllExecutions() {
               </div>
 
               <div className="flex items-center gap-2">
-                <label htmlFor="status-filter" className="text-sm font-medium text-slate-300">
+                <label htmlFor="status-filter" className="text-sm font-medium text-subtle">
                   Status:
                 </label>
                 <select
@@ -128,7 +128,7 @@ export default function AllExecutions() {
                     setSelectedStatus(e.target.value)
                     setPage(1)
                   }}
-                  className="px-3 py-1.5 text-sm bg-white/5 border border-white/10 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="px-3 py-1.5 text-sm bg-surfaceRaised border border-border rounded-lg text-subtle focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="all">All Status</option>
                   <option value="running">Running</option>
@@ -141,19 +141,21 @@ export default function AllExecutions() {
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="px-3 py-1.5 text-sm font-medium text-slate-300 hover:text-white border border-white/10 rounded-lg hover:bg-white/5 transition-all"
+                  className="px-3 py-1.5 text-sm font-medium text-subtle hover:text-foreground border border-border rounded-lg hover:bg-surface transition-all"
                 >
                   Clear Filters
                 </button>
               )}
 
-              <div className="ml-auto text-sm text-slate-400">
+              <div className="ml-auto text-sm text-secondary">
                 {loading ? (
                   <span>Loading...</span>
                 ) : (
                   <span>
-                    Showing <span className="font-semibold text-white">{executions.length}</span> of{' '}
-                    <span className="font-semibold text-white">{totalExecutions}</span> executions
+                    Showing{' '}
+                    <span className="font-semibold text-foreground">{executions.length}</span> of{' '}
+                    <span className="font-semibold text-foreground">{totalExecutions}</span>{' '}
+                    executions
                   </span>
                 )}
               </div>
@@ -165,7 +167,7 @@ export default function AllExecutions() {
               <LoadingSpinner />
             </div>
           ) : (
-            <div className="glass border border-white/10 rounded-xl overflow-hidden">
+            <div className="glass border border-border rounded-xl overflow-hidden">
               <HistoryTable
                 executions={executions}
                 loading={loading}

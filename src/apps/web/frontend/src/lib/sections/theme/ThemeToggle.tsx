@@ -20,7 +20,7 @@ export default function ThemeToggle() {
       <motion.div
         className="absolute top-1 w-4 h-4 rounded-full flex items-center justify-center"
         style={{
-          backgroundColor: isDark ? '#FAFAFA' : '#171717',
+          backgroundColor: 'var(--color-text)',
         }}
         initial={false}
         animate={{
@@ -29,9 +29,9 @@ export default function ThemeToggle() {
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       >
         {isDark ? (
-          <DarkMode style={{ fontSize: 12, color: '#171717' }} />
+          <DarkMode style={{ fontSize: 12, color: 'var(--color-surface)' }} />
         ) : (
-          <WbSunny style={{ fontSize: 12, color: '#FAFAFA' }} />
+          <WbSunny style={{ fontSize: 12, color: 'var(--color-surface)' }} />
         )}
       </motion.div>
     </motion.button>

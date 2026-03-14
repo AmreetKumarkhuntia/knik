@@ -1,9 +1,9 @@
 import type { CardProps } from '$types/components'
 
 const variants = {
-  default: 'bg-black/10',
-  bordered: 'bg-black/10 border border-white/20',
-  elevated: 'bg-black/10 border border-white/20 shadow-2xl',
+  default: 'bg-surface/50',
+  bordered: 'bg-surface/50 border border-border',
+  elevated: 'bg-surface/50 border border-border shadow-2xl',
 }
 
 const paddings = {

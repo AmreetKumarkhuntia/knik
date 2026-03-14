@@ -26,7 +26,7 @@ export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcuts
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-200"
+            className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-surface transition-all duration-200"
           >
             <kbd className="px-3 py-1.5 rounded-lg text-sm font-mono bg-surface border border-border text-text">
               {shortcut.key}
@@ -39,7 +39,7 @@ export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcuts
       <div className="mt-6 pt-6 border-t border-border">
         <button
           onClick={onClose}
-          className="w-full py-3 rounded-lg font-medium transition-all duration-200 hover:bg-white/10 text-text"
+          className="w-full py-3 rounded-lg font-medium transition-all duration-200 hover:bg-surface text-text"
         >
           Close
         </button>

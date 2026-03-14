@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { getNodeMetadata } from '$lib/constants/nodes'
+import { darkThemeColors } from '$lib/constants/themes'
 import type { HandleConfig, NodeMetadata } from '$types/node-registry'
 import type { BaseNodeData } from '$types/graph'
 import { NodeContent } from './NodeContent'
@@ -28,8 +29,8 @@ function NodeHandle({
       type={type}
       position={POSITION_MAP[config.position]}
       id={config.id}
-      className={`!${config.color || defaultColor} !w-2.5 !h-2.5 !border-2 !border-[#0d021f]`}
-      style={config.style}
+      className={`!${config.color || defaultColor} !w-2.5 !h-2.5 !border-2`}
+      style={{ ...config.style, borderColor: darkThemeColors.nodeHandleBorder }}
     />
   )
 }
@@ -37,11 +38,11 @@ function NodeHandle({
 function getStatusOverlay(status?: string) {
   switch (status) {
     case 'success':
-      return 'ring-1 ring-green-500/40 border-green-500/60'
+      return 'ring-1 ring-success/40 border-success/60'
     case 'failed':
-      return 'ring-1 ring-red-500/40 border-red-500/60'
+      return 'ring-1 ring-error/40 border-error/60'
     case 'running':
-      return 'animate-pulse border-blue-500/60'
+      return 'animate-pulse border-info/60'
     case 'pending':
       return 'opacity-60'
     default:
@@ -60,7 +61,7 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
   return (
     <div className="relative">
       <div
-        className={`flex items-center gap-2 rounded-full border ${colors.border} bg-[#171717] ${isExecution ? 'px-3 py-2' : 'px-5 py-3'} ${neonClass} ${statusOverlay}`}
+        className={`flex items-center gap-2 rounded-full border ${colors.border} bg-surfaceRaised ${isExecution ? 'px-3 py-2' : 'px-5 py-3'} ${neonClass} ${statusOverlay}`}
       >
         {!isStart && (
           <div className={`h-1.5 w-1.5 rounded-full ${colors.iconBg.replace('/10', '/60')}`} />
@@ -73,14 +74,14 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
           </span>
         </div>
         <div className={`flex flex-col ${!isStart ? 'text-right' : ''}`}>
-          <h3 className="text-xs font-semibold text-slate-100">{data.label || metadata.label}</h3>
+          <h3 className="text-xs font-semibold text-foreground">{data.label || metadata.label}</h3>
           {!isExecution && (
             <p className={`text-[10px] ${colors.iconText} uppercase tracking-wider`}>
               {metadata.typeLabel}
             </p>
           )}
           {isExecution && data.duration !== undefined && (
-            <span className="text-[9px] text-slate-400">
+            <span className="text-[9px] text-secondary">
               {data.duration < 1000
                 ? `${data.duration}ms`
                 : `${(data.duration / 1000).toFixed(2)}s`}
@@ -111,10 +112,10 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
   return (
     <div className="relative">
       <div
-        className={`rounded-xl border ${colors.border} bg-[#171717] overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
+        className={`rounded-xl border ${colors.border} bg-surfaceRaised overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
       >
         {/* Thin teal top accent strip */}
-        <div className="h-0.5 w-full bg-[#14b8a6]/60" />
+        <div className="h-0.5 w-full bg-primary/60" />
 
         {/* Header row */}
         <div className={`flex items-center gap-2 px-3 ${isExecution ? 'py-2' : 'pt-3 pb-2'}`}>
@@ -124,7 +125,9 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
             {icon}
           </span>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xs font-semibold text-slate-100 truncate">{data.label || label}</h3>
+            <h3 className="text-xs font-semibold text-foreground truncate">
+              {data.label || label}
+            </h3>
           </div>
           <span
             className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${colors.iconBg} ${colors.iconText} border ${colors.border}`}
@@ -138,25 +141,30 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
           <div className="px-3 pb-3">
             <NodeContent renderer={contentRenderer} data={data} />
             <div className="flex justify-between mt-2">
-              <span className="text-[9px] uppercase tracking-widest text-slate-500">INPUTS</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-500">OUTPUTS</span>
+              <span className="text-[9px] uppercase tracking-widest text-muted">INPUTS</span>
+              <span className="text-[9px] uppercase tracking-widest text-muted">OUTPUTS</span>
             </div>
           </div>
         )}
 
         {/* Execution mode: duration only */}
         {isExecution && data.duration !== undefined && (
-          <div className="px-3 pb-2 text-[10px] text-slate-400">
+          <div className="px-3 pb-2 text-[10px] text-secondary">
             {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
           </div>
         )}
       </div>
 
       {handles.inputs.map((handle, i) => (
-        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-[#171717]" />
+        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-surfaceRaised" />
       ))}
       {handles.outputs.map((handle, i) => (
-        <NodeHandle key={`out-${i}`} config={handle} type="source" defaultColor="bg-[#171717]" />
+        <NodeHandle
+          key={`out-${i}`}
+          config={handle}
+          type="source"
+          defaultColor="bg-surfaceRaised"
+        />
       ))}
     </div>
   )
@@ -171,7 +179,7 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
   return (
     <div className="relative">
       <div
-        className={`rounded-xl border ${colors.border} bg-[#171717] px-3 ${isExecution ? 'py-2' : 'px-4 py-3'} min-w-[160px] ${statusOverlay}`}
+        className={`rounded-xl border ${colors.border} bg-surfaceRaised px-3 ${isExecution ? 'py-2' : 'px-4 py-3'} min-w-[160px] ${statusOverlay}`}
       >
         {handles.inputs.map((handle, i) => (
           <NodeHandle
@@ -191,11 +199,11 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
             </span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-semibold text-slate-100 truncate">
+            <span className="text-xs font-semibold text-foreground truncate">
               {data.label || label}
             </span>
             {!isExecution && (
-              <span className="text-[10px] text-slate-400 uppercase tracking-wide">
+              <span className="text-[10px] text-secondary uppercase tracking-wide">
                 {typeLabel}
               </span>
             )}
@@ -205,7 +213,7 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
         {!isExecution && <NodeContent renderer={contentRenderer} data={data} />}
 
         {isExecution && data.duration !== undefined && (
-          <div className="text-[10px] text-slate-400 mt-1">
+          <div className="text-[10px] text-secondary mt-1">
             {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
           </div>
         )}

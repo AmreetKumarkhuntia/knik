@@ -1,6 +1,7 @@
 import { ReactFlowProvider, ReactFlow, Background, MiniMap, BackgroundVariant } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { FlowCanvasProps } from '$types/graph'
+import { CANVAS_OVERLAY_COLORS } from '$lib/constants/themes'
 
 export type { FlowCanvasProps }
 
@@ -55,13 +56,13 @@ function FlowCanvasContent({
         variant={BackgroundVariant.Dots}
         gap={20}
         size={1}
-        color="rgba(255,255,255,0.05)"
+        color={CANVAS_OVERLAY_COLORS.dotGrid}
       />
       {showMiniMap && (
         <MiniMap
-          className="!bg-[#171717] !border-white/10"
-          nodeColor="rgba(255,255,255,0.3)"
-          maskColor="rgba(0,0,0,0.8)"
+          className="!bg-surfaceRaised !border-border"
+          nodeColor={CANVAS_OVERLAY_COLORS.minimapNode}
+          maskColor={CANVAS_OVERLAY_COLORS.minimapMask}
         />
       )}
       {children}

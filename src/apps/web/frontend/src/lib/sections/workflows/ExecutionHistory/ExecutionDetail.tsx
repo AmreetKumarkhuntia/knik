@@ -68,8 +68,8 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <Backdrop visible={true} onClick={onClose} blur="md" />
-      <div className="relative bg-[#171717] border border-white/20 rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="relative bg-surfaceRaised border border-border rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-semibold">Execution #{execution.id}</h2>
             <StatusBadge status={execution.status} size="sm" />
@@ -84,21 +84,21 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Card padding="md" variant="bordered">
-                  <p className="text-slate-400 text-sm mb-1">Workflow ID</p>
+                  <p className="text-secondary text-sm mb-1">Workflow ID</p>
                   <p className="font-mono">{execution.workflow_id}</p>
                 </Card>
                 <Card padding="md" variant="bordered">
-                  <p className="text-slate-400 text-sm mb-1">Duration</p>
+                  <p className="text-secondary text-sm mb-1">Duration</p>
                   <p className="font-mono">
                     {execution.duration_ms ? `${execution.duration_ms}ms` : '-'}
                   </p>
                 </Card>
                 <Card padding="md" variant="bordered">
-                  <p className="text-slate-400 text-sm mb-1">Started At</p>
+                  <p className="text-secondary text-sm mb-1">Started At</p>
                   <p>{new Date(execution.started_at).toLocaleString()}</p>
                 </Card>
                 <Card padding="md" variant="bordered">
-                  <p className="text-slate-400 text-sm mb-1">Completed At</p>
+                  <p className="text-secondary text-sm mb-1">Completed At</p>
                   <p>
                     {execution.completed_at
                       ? new Date(execution.completed_at).toLocaleString()
@@ -109,7 +109,7 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
               {execution.error_message && (
                 <Card padding="md" variant="bordered" className="border-error/30 bg-error/10">
                   <p className="error font-medium mb-1">Error</p>
-                  <p className="text-red-300 font-mono">{execution.error_message}</p>
+                  <p className="text-error font-mono">{execution.error_message}</p>
                 </Card>
               )}
             </div>
@@ -120,7 +120,7 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
               {loading ? (
                 <LoadingSpinner size="md" className="py-10" />
               ) : nodeExecutions.length === 0 ? (
-                <div className="text-center py-10 text-slate-400">
+                <div className="text-center py-10 text-secondary">
                   <p>No node execution data available</p>
                 </div>
               ) : (
@@ -130,11 +130,11 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
                           <span className="font-mono">{node.node_id}</span>
-                          <span className="text-slate-400 text-sm">({node.node_type})</span>
+                          <span className="text-secondary text-sm">({node.node_type})</span>
                         </div>
                         <StatusBadge status={node.status} size="sm" />
                       </div>
-                      <div className="flex gap-4 text-xs text-slate-400">
+                      <div className="flex gap-4 text-xs text-secondary">
                         <span>Duration: {node.duration_ms ? `${node.duration_ms}ms` : '-'}</span>
                         {node.error_message && (
                           <span className="text-error">Error: {node.error_message}</span>
@@ -148,13 +148,13 @@ export default function ExecutionDetail({ execution, isOpen, onClose }: Executio
           )}
 
           {activeTab === 'inputs' && (
-            <pre className="bg-[#171717] rounded-lg p-4 text-slate-400 text-sm font-mono overflow-auto max-h-96">
+            <pre className="bg-surfaceRaised rounded-lg p-4 text-secondary text-sm font-mono overflow-auto max-h-96">
               {formatJson(execution.inputs)}
             </pre>
           )}
 
           {activeTab === 'outputs' && (
-            <pre className="bg-[#171717] rounded-lg p-4 text-slate-400 text-sm font-mono overflow-auto max-h-96">
+            <pre className="bg-surfaceRaised rounded-lg p-4 text-secondary text-sm font-mono overflow-auto max-h-96">
               {formatJson(execution.outputs)}
             </pre>
           )}

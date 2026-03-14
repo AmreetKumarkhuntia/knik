@@ -23,14 +23,22 @@ export const CSS_VARS = {
   backgroundColor: '--color-background',
   surfaceColor: '--color-surface',
   surfaceGlassColor: '--color-surface-glass',
+  surfaceRaisedColor: '--color-surface-raised',
+  canvasColor: '--color-canvas',
+  codeColor: '--color-code',
   textColor: '--color-text',
   textSecondaryColor: '--color-text-secondary',
+  textMutedColor: '--color-text-muted',
+  textSubtleColor: '--color-text-subtle',
+  textInverseColor: '--color-text-inverse',
   primaryColor: '--color-primary',
   primaryHoverColor: '--color-primary-hover',
   borderColor: '--color-border',
   borderLightColor: '--color-border-light',
   successColor: '--color-success',
   errorColor: '--color-error',
+  warningColor: '--color-warning',
+  infoColor: '--color-info',
 }
 
 // CSS class names
@@ -80,31 +88,31 @@ export const STYLE_CONFIG = {
   // Trend colors
   trendColors: {
     positive: {
-      text: 'text-teal-400',
-      background: 'bg-teal-500/10',
+      text: 'text-success',
+      background: 'bg-success/10',
     },
     steady: {
-      text: 'text-slate-400',
+      text: 'text-secondary',
       background: 'bg-white/5',
     },
     negative: {
-      text: 'text-rose-400',
-      background: 'bg-rose-500/10',
+      text: 'text-error',
+      background: 'bg-error/10',
     },
   },
 
   // Status colors
   statusColors: {
     active: {
-      background: 'bg-teal-500/10',
-      text: 'text-teal-400',
+      background: 'bg-success/10',
+      text: 'text-success',
     },
   },
 
-  // Canvas colors
+  // Canvas colors — import CANVAS_OVERLAY_COLORS from themes.ts for JS-only usage
   canvas: {
-    background: 'rgba(255,255,255,0.1)',
-    nodeColor: 'rgba(255,255,255,0.3)',
-    maskColor: 'rgba(0,0,0,0.8)',
+    background: 'rgba(255, 255, 255, 0.1)',
+    nodeColor: 'rgba(255, 255, 255, 0.3)',
+    maskColor: 'rgba(0, 0, 0, 0.8)',
   },
 }

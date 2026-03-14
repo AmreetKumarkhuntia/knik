@@ -37,7 +37,7 @@ export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
                 <Card
                   variant="default"
                   padding="md"
-                  className={`max-w-[70%] shadow-2xl transition-all duration-300 border border-white/20 ${
+                  className={`max-w-[70%] shadow-2xl transition-all duration-300 border border-border ${
                     msg.role === 'user' ? 'animate-slide-in-right' : 'animate-slide-in-left'
                   }`}
                 >

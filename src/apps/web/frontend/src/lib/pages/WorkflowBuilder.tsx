@@ -88,8 +88,8 @@ export default function WorkflowBuilder() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin h-10 w-10 border-2 border-white/20 border-t-slate-100 rounded-full mx-auto mb-4" />
-          <p className="text-xs text-slate-400">Loading workflow...</p>
+          <div className="animate-spin h-10 w-10 border-2 border-border border-t-foreground rounded-full mx-auto mb-4" />
+          <p className="text-xs text-secondary">Loading workflow...</p>
         </div>
       </div>
     )

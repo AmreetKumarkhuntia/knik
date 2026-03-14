@@ -1,10 +1,10 @@
 import type { IconButtonProps } from '$types/components'
 
 const variants = {
-  ghost: 'text-white/60 hover:text-white hover:bg-white/10',
-  secondary: 'text-white/70 hover:text-white bg-gray-500/20 hover:bg-gray-500/30',
-  primary: 'text-white bg-white/10 hover:bg-white/20',
-  danger: 'text-red-400 hover:text-red-300 hover:bg-red-500/10',
+  ghost: 'text-foreground/60 hover:text-foreground hover:bg-surface',
+  secondary: 'text-foreground/70 hover:text-foreground bg-foreground/10 hover:bg-foreground/15',
+  primary: 'text-foreground bg-surfaceRaised hover:bg-border',
+  danger: 'text-error hover:text-error/80 hover:bg-error/10',
 }
 
 const sizes = {

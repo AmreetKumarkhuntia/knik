@@ -28,7 +28,7 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
       <div
         className="bg-surfaceGlass backdrop-blur-lg rounded-xl p-3 shadow-2xl border border-borderLight"
         style={{
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+          boxShadow: '0 4px 20px var(--color-shadow-subtle)',
         }}
       >
         <div className="flex items-center gap-3">
@@ -78,7 +78,7 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
             }}
             aria-label="Send message"
           >
-            <SendIcon style={{ color: 'white', fontSize: 20 }} />
+            <SendIcon style={{ color: 'var(--color-text-inverse)', fontSize: 20 }} />
           </motion.button>
         </div>
       </div>

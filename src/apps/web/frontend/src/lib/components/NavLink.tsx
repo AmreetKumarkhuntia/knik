@@ -17,8 +17,8 @@ export function NavLink({ icon, label, active = false, href, onClick }: NavLinkP
         href={href}
         className={`flex items-center gap-2 px-4 py-3 text-sm font-bold tracking-wide transition-all duration-200 rounded-lg ${
           active
-            ? 'text-white bg-primary shadow-xl'
-            : 'text-textSecondary hover:text-text hover:bg-white/5'
+            ? 'text-inverse bg-primary shadow-xl'
+            : 'text-secondary hover:text-foreground hover:bg-surface'
         }`}
       >
         <IconComponent />
@@ -32,8 +32,8 @@ export function NavLink({ icon, label, active = false, href, onClick }: NavLinkP
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-bold tracking-wide transition-all duration-200 rounded-lg ${
         active
-          ? 'text-white bg-primary shadow-xl'
-          : 'text-textSecondary hover:text-text hover:bg-white/5'
+          ? 'text-inverse bg-primary shadow-xl'
+          : 'text-secondary hover:text-foreground hover:bg-surface'
       }`}
     >
       <IconComponent />

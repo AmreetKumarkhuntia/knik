@@ -38,19 +38,40 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement
     const colors = theme.colors
 
+    // Backgrounds
     root.style.setProperty('--color-background', colors.background)
     root.style.setProperty('--color-surface', colors.surface)
     root.style.setProperty('--color-surface-glass', colors.surfaceGlass)
+    root.style.setProperty('--color-surface-raised', colors.surfaceRaised)
+    root.style.setProperty('--color-canvas', colors.canvas)
+    root.style.setProperty('--color-code', colors.code)
+
+    // Text
     root.style.setProperty('--color-text', colors.text)
     root.style.setProperty('--color-text-secondary', colors.textSecondary)
+    root.style.setProperty('--color-text-muted', colors.textMuted)
+    root.style.setProperty('--color-text-subtle', colors.textSubtle)
+    root.style.setProperty('--color-text-inverse', colors.textInverse)
+
+    // Brand
     root.style.setProperty('--color-primary', colors.primary)
     root.style.setProperty('--color-primary-hover', colors.primaryHover)
     root.style.setProperty('--color-accent', colors.accent)
     root.style.setProperty('--color-accent-hover', colors.accentHover)
+
+    // Borders
     root.style.setProperty('--color-border', colors.border)
     root.style.setProperty('--color-border-light', colors.borderLight)
+
+    // Semantic
     root.style.setProperty('--color-success', colors.success)
     root.style.setProperty('--color-error', colors.error)
+    root.style.setProperty('--color-warning', colors.warning)
+    root.style.setProperty('--color-info', colors.info)
+
+    // Shadows
+    root.style.setProperty('--color-shadow', colors.shadow)
+    root.style.setProperty('--color-shadow-subtle', colors.shadowSubtle)
 
     root.setAttribute('data-theme', mode)
   }, [theme, mode])

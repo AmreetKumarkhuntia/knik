@@ -2,12 +2,13 @@ import { motion } from 'framer-motion'
 import { CheckCircle, DarkMode, LightMode, Star } from '@mui/icons-material'
 import Modal from '$components/Modal'
 import { useTheme } from '$hooks/useTheme'
+import { themePresets } from '$lib/constants/themes'
 import type { ThemeSelectorProps } from '$types/theme'
 
 const accentColors = [
-  { name: 'purple' as const, label: 'Purple', color: '#8B5CF6' },
-  { name: 'blue' as const, label: 'Blue', color: '#3B82F6' },
-  { name: 'teal' as const, label: 'Teal', color: '#14B8A6' },
+  { name: 'purple' as const, label: 'Purple', color: themePresets.purple.primary },
+  { name: 'blue' as const, label: 'Blue', color: themePresets.blue.primary },
+  { name: 'teal' as const, label: 'Teal', color: themePresets.teal.primary },
 ]
 
 export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
@@ -23,7 +24,7 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
     >
       <div className="space-y-6">
         <div>
-          <h3 className="text-sm font-semibold text-text mb-3">Color Mode</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-3">Color Mode</h3>
           <div className="flex gap-3">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -39,7 +40,7 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
                 <div className="w-12 h-12 rounded-lg bg-surface border border-border flex items-center justify-center">
                   <DarkMode />
                 </div>
-                <span className="text-sm font-medium text-text">Dark</span>
+                <span className="text-sm font-medium text-foreground">Dark</span>
               </div>
             </motion.button>
 
@@ -57,14 +58,14 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
                 <div className="w-12 h-12 rounded-lg bg-surface border border-border flex items-center justify-center">
                   <LightMode />
                 </div>
-                <span className="text-sm font-medium text-text">Light</span>
+                <span className="text-sm font-medium text-foreground">Light</span>
               </div>
             </motion.button>
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold text-text mb-3">Accent Color</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-3">Accent Color</h3>
           <div className="grid grid-cols-3 gap-3">
             {accentColors.map(accent => (
               <motion.button
@@ -84,10 +85,10 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
                     style={{ backgroundColor: accent.color }}
                   >
                     {accentName === accent.name && (
-                      <CheckCircle style={{ color: 'white', fontSize: 24 }} />
+                      <CheckCircle style={{ color: 'var(--color-text-inverse)', fontSize: 24 }} />
                     )}
                   </div>
-                  <span className="text-sm font-medium text-text">{accent.label}</span>
+                  <span className="text-sm font-medium text-foreground">{accent.label}</span>
                 </div>
               </motion.button>
             ))}
@@ -95,7 +96,7 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold text-text mb-3">Preview</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-3">Preview</h3>
           <div
             className="p-4 rounded-xl border-2 border-border"
             style={{
@@ -108,7 +109,7 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
                 className="w-10 h-10 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: 'var(--color-primary)' }}
               >
-                <Star style={{ color: 'white', fontSize: 20 }} />
+                <Star style={{ color: 'var(--color-text-inverse)', fontSize: 20 }} />
               </div>
               <div className="flex-1">
                 <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>
@@ -128,7 +129,7 @@ export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onClose}
-          className="w-full py-3 rounded-lg font-medium transition-all duration-200 text-white"
+          className="w-full py-3 rounded-lg font-medium transition-all duration-200 text-inverse"
           style={{
             backgroundColor: 'var(--color-primary)',
             boxShadow: '0 4px 15px -3px var(--color-primary)',

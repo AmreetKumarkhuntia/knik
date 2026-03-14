@@ -11,7 +11,7 @@ export default function Tabs<T extends string>({
 }: TabsProps<T>) {
   if (variant === 'underline') {
     return (
-      <div className={`flex border-b border-white/10 ${className}`}>
+      <div className={`flex border-b border-border ${className}`}>
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -20,8 +20,8 @@ export default function Tabs<T extends string>({
               flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
               ${
                 active === tab.id
-                  ? 'text-white border-b-2 border-white bg-white/5'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                  ? 'text-foreground border-b-2 border-foreground bg-surface'
+                  : 'text-foreground/60 hover:text-foreground hover:bg-surface'
               }
             `}
           >
@@ -41,11 +41,11 @@ export default function Tabs<T extends string>({
           onClick={() => onChange(tab.id)}
           className={`
             flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-            ${
-              active === tab.id
-                ? 'text-white bg-white/10 border border-white/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }
+              ${
+                active === tab.id
+                  ? 'text-foreground bg-surfaceRaised border border-border'
+                  : 'text-foreground/60 hover:text-foreground hover:bg-surface'
+              }
           `}
         >
           {tab.icon && <span>{tab.icon}</span>}

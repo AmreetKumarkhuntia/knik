@@ -82,7 +82,7 @@ export default function WorkflowHub() {
         rightContent={
           <button
             onClick={() => void navigate('/workflows/create')}
-            className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/30 transition-all"
+            className="bg-primary hover:bg-primary/90 text-inverse px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/30 transition-all"
           >
             <span className="material-symbols-outlined">add</span>
             {UI_TEXT.workflow.create}

@@ -11,8 +11,8 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="text-slate-900 dark:text-white text-xl font-bold">Structured Output</h2>
-        <div className="flex items-center justify-center py-12 glass border border-white/10 rounded-xl">
+        <h2 className="text-foreground text-xl font-bold">Structured Output</h2>
+        <div className="flex items-center justify-center py-12 glass border border-border rounded-xl">
           <LoadingSpinner size="lg" />
         </div>
       </div>
@@ -31,10 +31,10 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-slate-900 dark:text-white text-xl font-bold">Structured Output</h2>
+        <h2 className="text-foreground text-xl font-bold">Structured Output</h2>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-colors text-slate-300"
+          className="flex items-center gap-2 px-3 py-1.5 bg-surface hover:bg-surfaceRaised rounded-lg text-sm transition-colors text-secondary"
         >
           <span className="material-symbols-outlined text-sm">
             {copied ? 'check' : 'content_copy'}
@@ -44,13 +44,13 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10">
+      <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setActiveTab('outputs')}
           className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === 'outputs'
               ? 'text-primary border-b-2 border-primary'
-              : 'text-slate-400 hover:text-slate-200'
+              : 'text-secondary hover:text-subtle'
           }`}
         >
           Outputs
@@ -60,7 +60,7 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
           className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === 'inputs'
               ? 'text-primary border-b-2 border-primary'
-              : 'text-slate-400 hover:text-slate-200'
+              : 'text-secondary hover:text-subtle'
           }`}
         >
           Inputs
@@ -68,7 +68,7 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
       </div>
 
       {/* JSON Viewer */}
-      <div className="glass border border-white/10 rounded-xl overflow-hidden max-h-[600px] overflow-y-auto">
+      <div className="glass border border-border rounded-xl overflow-hidden max-h-[600px] overflow-y-auto">
         <SyntaxHighlighter
           language="json"
           style={vscDarkPlus}

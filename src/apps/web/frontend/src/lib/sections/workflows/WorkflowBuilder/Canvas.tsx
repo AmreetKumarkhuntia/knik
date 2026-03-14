@@ -206,9 +206,22 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
       <div className="flex flex-1 overflow-hidden relative">
         <NodePropertiesPanel selectedNode={selectedNode} onNodeUpdate={handleNodeUpdate} />
 
-        <div className="flex-1 relative bg-[#0d111a] workflow-grid">
+        <div className="flex-1 relative workflow-grid overflow-hidden">
+          {/* Canvas gradient blobs — show through transparent background */}
+          <div
+            className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20 animate-blob pointer-events-none z-0"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          />
+          <div
+            className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full blur-[120px] opacity-20 animate-blob animation-delay-2000 pointer-events-none z-0"
+            style={{ backgroundColor: 'var(--color-primary-hover)' }}
+          />
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-[100px] opacity-15 animate-blob animation-delay-4000 pointer-events-none z-0"
+            style={{ backgroundColor: 'var(--color-accent)' }}
+          />
           {validationError && (
-            <div className="absolute top-0 left-0 right-0 z-20 bg-red-500/10 border-b border-red-500 text-red-500 px-4 py-2 text-xs">
+            <div className="absolute top-0 left-0 right-0 z-20 bg-error/10 border-b border-error text-error px-4 py-2 text-xs">
               <div className="flex items-start gap-2">
                 <span className="material-symbols-outlined text-sm mt-0.5">error</span>
                 <pre className="whitespace-pre-wrap font-mono">{validationError}</pre>

@@ -75,7 +75,7 @@ export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlo
 
   if (loading) {
     return (
-      <div className="h-[500px] flex items-center justify-center bg-[#171717] rounded-lg">
+      <div className="h-[500px] flex items-center justify-center bg-surfaceRaised rounded-lg">
         <LoadingSpinner />
       </div>
     )
@@ -83,14 +83,14 @@ export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlo
 
   if (error) {
     return (
-      <div className="h-[500px] flex items-center justify-center bg-[#171717] rounded-lg">
-        <p className="text-red-500">{error}</p>
+      <div className="h-[500px] flex items-center justify-center bg-surfaceRaised rounded-lg">
+        <p className="text-error">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="h-[500px] bg-[#0d111a] rounded-lg overflow-hidden workflow-grid">
+    <div className="h-[500px] bg-canvas rounded-lg overflow-hidden workflow-grid">
       <FlowCanvas
         nodes={nodes}
         edges={edges}

@@ -1,8 +1,8 @@
 export const buttonVariants = {
-  primary: 'bg-white/10 hover:bg-white/20 text-white border-white/30',
-  secondary: 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-500/30',
-  danger: 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-500/30',
-  ghost: 'bg-transparent hover:bg-white/10 text-white/70 border-transparent',
+  primary: 'bg-white/10 hover:bg-white/20 text-foreground border-white/30',
+  secondary: 'bg-surface hover:bg-surfaceRaised text-secondary border-border',
+  danger: 'bg-error/20 hover:bg-error/30 text-error border-error/30',
+  ghost: 'bg-transparent hover:bg-white/10 text-foreground/70 border-transparent',
 }
 
 export const sizeVariants = {
@@ -25,7 +25,7 @@ export const spinnerSizes = {
 }
 
 export const confirmDialogVariants = {
-  danger: { icon: '⚠', confirmBtn: 'bg-red-500 hover:bg-red-600' },
-  warning: { icon: '⚡', confirmBtn: 'bg-yellow-500 hover:bg-yellow-600' },
-  info: { icon: 'ℹ', confirmBtn: 'bg-blue-500 hover:bg-blue-600' },
+  danger: { icon: '⚠', confirmBtn: 'bg-error hover:bg-error/80' },
+  warning: { icon: '⚡', confirmBtn: 'bg-warning hover:bg-warning/80' },
+  info: { icon: 'ℹ', confirmBtn: 'bg-info hover:bg-info/80' },
 }

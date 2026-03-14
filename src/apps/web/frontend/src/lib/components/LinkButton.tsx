@@ -9,8 +9,8 @@ export default function LinkButton({
 }: LinkButtonProps) {
   const baseClasses = 'w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-all'
 
-  const activeClasses = 'text-white bg-white/10'
-  const inactiveClasses = 'text-white/70 hover:text-white hover:bg-white/5'
+  const activeClasses = 'text-foreground bg-surfaceRaised'
+  const inactiveClasses = 'text-foreground/70 hover:text-foreground hover:bg-surface'
 
   return (
     <button

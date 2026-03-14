@@ -63,7 +63,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="h-full bg-surfaceGlass backdrop-blur-3xl border-r border-borderLight z-50 shadow-2xl flex-shrink-0"
         style={{
-          boxShadow: '4px 0 24px rgba(0, 0, 0, 0.15)',
+          boxShadow: 'var(--color-shadow-subtle)',
         }}
       >
         <div className="flex flex-col h-full py-4">
@@ -75,7 +75,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
                 <SmartToy style={{ color: 'var(--color-primary)', fontSize: '24px' }} />
               </div>
-              {isExpanded && <h2 className="text-xl font-bold text-text">Knik AI</h2>}
+              {isExpanded && <h2 className="text-xl font-bold text-foreground">Knik AI</h2>}
             </div>
           </div>
 
@@ -89,8 +89,8 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                 font-medium transition-all
                 ${
                   isExpanded
-                    ? 'w-full text-textSecondary hover:text-text hover:bg-white/10 px-4 py-3 rounded-lg'
-                    : 'w-12 h-12 flex items-center justify-center text-textSecondary hover:text-text hover:bg-white/10 rounded-lg'
+                    ? 'w-full text-secondary hover:text-foreground hover:bg-surface px-4 py-3 rounded-lg'
+                    : 'w-12 h-12 flex items-center justify-center text-secondary hover:text-foreground hover:bg-surface rounded-lg'
                 }
               `}
               title={isExpanded ? undefined : UI_TEXT.nav.newChat}
@@ -103,7 +103,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
           {/* Navigation */}
           <div className="mb-6 border-b border-border pb-4">
             <h3
-              className={`text-sm font-semibold text-textSecondary mb-3 ${isExpanded ? 'px-6' : 'hidden'}`}
+              className={`text-sm font-semibold text-secondary mb-3 ${isExpanded ? 'px-6' : 'hidden'}`}
             >
               {UI_TEXT.nav.navigation}
             </h3>
@@ -119,7 +119,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                     ${
                       location.pathname === item.path
                         ? 'bg-primary/20 text-primary'
-                        : 'text-textSecondary hover:bg-white/5 hover:text-text'
+                        : 'text-secondary hover:bg-surface hover:text-foreground'
                     }
                     ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
                   `}
@@ -138,7 +138,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
           {/* Recent Conversations - Only visible when expanded */}
           {isExpanded && (
             <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide px-6">
-              <h3 className="text-sm font-semibold text-textSecondary mb-3">
+              <h3 className="text-sm font-semibold text-secondary mb-3">
                 {UI_TEXT.nav.recentConversations}
               </h3>
               <div className="space-y-1">
@@ -154,9 +154,9 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
                   history.slice(0, 5).map((msg, idx) => (
                     <div
                       key={idx}
-                      className="px-3 py-3 rounded-lg text-sm text-textSecondary hover:bg-white/5 transition-all cursor-pointer"
+                      className="px-3 py-3 rounded-lg text-sm text-secondary hover:bg-surface transition-all cursor-pointer"
                     >
-                      <div className="font-medium text-textSecondary text-xs mb-1">
+                      <div className="font-medium text-secondary text-xs mb-1">
                         {msg.role === 'user' ? 'You' : 'Knik'}
                       </div>
                       <div className="line-clamp-2">{msg.content}</div>
@@ -172,7 +172,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
             <button
               onClick={() => setThemeSelectorOpen(true)}
               className={`
-                text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
+                text-secondary hover:text-foreground hover:bg-surface rounded-lg transition-all flex items-center
                 ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
               `}
               title={isExpanded ? undefined : UI_TEXT.nav.themeSettings}
@@ -184,7 +184,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
             <button
               onClick={() => void handleClearHistory()}
               className={`
-                text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
+                text-secondary hover:text-foreground hover:bg-surface rounded-lg transition-all flex items-center
                 ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
               `}
               title={isExpanded ? undefined : UI_TEXT.nav.clearHistory}
@@ -195,7 +195,7 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
 
             <button
               className={`
-                text-textSecondary hover:text-text hover:bg-white/10 rounded-lg transition-all flex items-center
+                text-secondary hover:text-foreground hover:bg-surface rounded-lg transition-all flex items-center
                 ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
               `}
               title={isExpanded ? undefined : UI_TEXT.nav.settings}

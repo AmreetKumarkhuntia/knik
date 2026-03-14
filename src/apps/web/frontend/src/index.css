@@ -12,23 +12,39 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --color-background: #0d021f;
+  /* Dark mode defaults (applied before JS runs) */
+  --color-background: #0a0a0a;
   --color-surface: #171717;
   --color-surface-glass: rgba(23, 23, 23, 0.7);
+  --color-surface-raised: #1f1f1f;
+  --color-canvas: #0d111a;
+  --color-code: #1e1e1e;
+
   --color-text: #fafafa;
   --color-text-secondary: #a3a3a3;
-  --color-primary: #7f0df2;
-  --color-primary-hover: #9d31f5;
+  --color-text-muted: #737373;
+  --color-text-subtle: #d4d4d4;
+  --color-text-inverse: #0a0a0a;
+
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #a78bfa;
   --color-accent: #00d9f4;
   --color-accent-hover: #00e5ff;
   --color-accent-teal: #14b8a6;
   --color-accent-teal-hover: #0d9488;
+
   --color-border: rgba(255, 255, 255, 0.1);
   --color-border-light: rgba(255, 255, 255, 0.2);
+
   --color-success: #10b981;
   --color-error: #ef4444;
-  --color-primary-rgb: 127, 13, 242;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
 
+  --color-shadow: rgba(0, 0, 0, 0.25);
+  --color-shadow-subtle: rgba(0, 0, 0, 0.15);
+
+  --color-primary-rgb: 139, 92, 246;
   --color-accent-purple: #8b5cf6;
   --color-accent-purple-hover: #a78bfa;
   --color-accent-purple-rgb: 139, 92, 246;
@@ -36,6 +52,37 @@
   --color-background-dark: #0a0c14;
   --color-neon-green: #22c55e;
   --color-neon-red: #ef4444;
+}
+
+[data-theme='light'] {
+  --color-background: #ffffff;
+  --color-surface: #f5f5f5;
+  --color-surface-glass: rgba(255, 255, 255, 0.7);
+  --color-surface-raised: #e5e5e5;
+  --color-canvas: #efefef;
+  --color-code: #f0f0f0;
+
+  --color-text: #171717;
+  --color-text-secondary: #737373;
+  --color-text-muted: #a3a3a3;
+  --color-text-subtle: #404040;
+  --color-text-inverse: #fafafa;
+
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #a78bfa;
+  --color-accent: #00d9f4;
+  --color-accent-hover: #00e5ff;
+
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-light: rgba(0, 0, 0, 0.2);
+
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  --color-shadow: rgba(0, 0, 0, 0.12);
+  --color-shadow-subtle: rgba(0, 0, 0, 0.08);
 }
 
 html,
@@ -105,10 +152,17 @@ body,
 
 /* Workflow Builder Styles */
 .workflow-grid {
+  background-color: transparent;
   background-size: 40px 40px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+}
+
+[data-theme='light'] .workflow-grid {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
 }
 
 .neon-border-green {
@@ -178,4 +232,314 @@ body,
 
 .message-transition {
   transition: all 0.3s ease;
+}
+
+/* Semantic theme utility classes — defined outside @layer to bypass Tailwind purge.
+   Opacity variants use color-mix() since CSS variable colors can't use Tailwind's
+   opacity modifier system. */
+
+/* -- text color -- */
+.text-foreground {
+  color: var(--color-text);
+}
+.text-foreground\/90 {
+  color: color-mix(in srgb, var(--color-text) 90%, transparent);
+}
+.text-foreground\/80 {
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+.text-foreground\/70 {
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.text-foreground\/60 {
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+.text-foreground\/50 {
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+/* aliases */
+.text-text {
+  color: var(--color-text);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+.text-muted {
+  color: var(--color-text-muted);
+}
+.text-subtle {
+  color: var(--color-text-subtle);
+}
+.text-inverse {
+  color: var(--color-text-inverse);
+}
+.text-inverse\/80 {
+  color: color-mix(in srgb, var(--color-text-inverse) 80%, transparent);
+}
+.text-textSecondary {
+  color: var(--color-text-secondary);
+}
+.text-textMuted {
+  color: var(--color-text-muted);
+}
+.text-textSubtle {
+  color: var(--color-text-subtle);
+}
+.text-textInverse {
+  color: var(--color-text-inverse);
+}
+
+/* brand / semantic */
+.text-primary {
+  color: var(--color-primary);
+}
+.text-accent {
+  color: var(--color-accent);
+}
+.text-success {
+  color: var(--color-success);
+}
+.text-error {
+  color: var(--color-error);
+}
+.text-warning {
+  color: var(--color-warning);
+}
+.text-info {
+  color: var(--color-info);
+}
+
+/* -- hover text -- */
+.hover\:text-foreground:hover {
+  color: var(--color-text);
+}
+.hover\:text-text:hover {
+  color: var(--color-text);
+}
+.hover\:text-primary:hover {
+  color: var(--color-primary);
+}
+.hover\:text-subtle:hover {
+  color: var(--color-text-subtle);
+}
+.hover\:text-inverse:hover {
+  color: var(--color-text-inverse);
+}
+.hover\:text-error\/80:hover {
+  color: color-mix(in srgb, var(--color-error) 80%, transparent);
+}
+.hover\:text-info\/80:hover {
+  color: color-mix(in srgb, var(--color-info) 80%, transparent);
+}
+
+/* -- background -- */
+.bg-background {
+  background-color: var(--color-background);
+}
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.bg-surface\/50 {
+  background-color: color-mix(in srgb, var(--color-surface) 50%, transparent);
+}
+.bg-surfaceGlass {
+  background-color: var(--color-surface-glass);
+}
+.bg-surfaceRaised {
+  background-color: var(--color-surface-raised);
+}
+.bg-surfaceRaised\/90 {
+  background-color: color-mix(in srgb, var(--color-surface-raised) 90%, transparent);
+}
+.bg-surfaceRaised\/60 {
+  background-color: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
+}
+.bg-canvas {
+  background-color: var(--color-canvas);
+}
+.bg-canvas\/60 {
+  background-color: color-mix(in srgb, var(--color-canvas) 60%, transparent);
+}
+.bg-code {
+  background-color: var(--color-code);
+}
+.bg-border {
+  background-color: var(--color-border);
+}
+
+/* brand */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.bg-primary\/10 {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+.bg-primary\/20 {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+.bg-primary\/60 {
+  background-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+/* semantic */
+.bg-success {
+  background-color: var(--color-success);
+}
+.bg-success\/20 {
+  background-color: color-mix(in srgb, var(--color-success) 20%, transparent);
+}
+.bg-error {
+  background-color: var(--color-error);
+}
+.bg-error\/10 {
+  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+.bg-error\/20 {
+  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+.bg-warning {
+  background-color: var(--color-warning);
+}
+.bg-info {
+  background-color: var(--color-info);
+}
+.bg-info\/20 {
+  background-color: color-mix(in srgb, var(--color-info) 20%, transparent);
+}
+
+/* foreground opacity fills */
+.bg-foreground\/10 {
+  background-color: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+.bg-foreground\/15 {
+  background-color: color-mix(in srgb, var(--color-text) 15%, transparent);
+}
+.bg-foreground\/80 {
+  background-color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+.bg-text {
+  background-color: var(--color-text);
+}
+
+/* -- hover background -- */
+.hover\:bg-surface:hover {
+  background-color: var(--color-surface);
+}
+.hover\:bg-surfaceRaised:hover {
+  background-color: var(--color-surface-raised);
+}
+.hover\:bg-border:hover {
+  background-color: var(--color-border);
+}
+.hover\:bg-primary\/80:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 80%, transparent);
+}
+.hover\:bg-primary\/90:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 90%, transparent);
+}
+.hover\:bg-success\/80:hover {
+  background-color: color-mix(in srgb, var(--color-success) 80%, transparent);
+}
+.hover\:bg-warning\/80:hover {
+  background-color: color-mix(in srgb, var(--color-warning) 80%, transparent);
+}
+.hover\:bg-error\/10:hover {
+  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+.hover\:bg-error\/80:hover {
+  background-color: color-mix(in srgb, var(--color-error) 80%, transparent);
+}
+.hover\:bg-foreground\/15:hover {
+  background-color: color-mix(in srgb, var(--color-text) 15%, transparent);
+}
+
+/* -- border -- */
+.border-border {
+  border-color: var(--color-border);
+}
+.border-borderLight {
+  border-color: var(--color-border-light);
+}
+.border-foreground {
+  border-color: var(--color-text);
+}
+.border-foreground\/30 {
+  border-color: color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+.border-text {
+  border-color: var(--color-text);
+}
+.border-primary {
+  border-color: var(--color-primary);
+}
+.border-success\/60 {
+  border-color: color-mix(in srgb, var(--color-success) 60%, transparent);
+}
+.border-error {
+  border-color: var(--color-error);
+}
+.border-error\/20 {
+  border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+.border-error\/30 {
+  border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
+}
+.border-error\/50 {
+  border-color: color-mix(in srgb, var(--color-error) 50%, transparent);
+}
+.border-error\/60 {
+  border-color: color-mix(in srgb, var(--color-error) 60%, transparent);
+}
+.border-info\/60 {
+  border-color: color-mix(in srgb, var(--color-info) 60%, transparent);
+}
+
+/* directional borders */
+.border-t-foreground {
+  border-top-color: var(--color-text);
+}
+.border-b-foreground {
+  border-bottom-color: var(--color-text);
+}
+.border-l-foreground {
+  border-left-color: var(--color-text);
+}
+.border-r-foreground {
+  border-right-color: var(--color-text);
+}
+
+/* -- hover border -- */
+.hover\:border-primary:hover {
+  border-color: var(--color-primary);
+}
+.hover\:border-borderLight:hover {
+  border-color: var(--color-border-light);
+}
+
+/* -- divide -- */
+.divide-border > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--color-border);
+}
+
+/* -- placeholder -- */
+.placeholder\:text-muted::placeholder {
+  color: var(--color-text-muted);
+}
+.placeholder\:text-foreground\/40::placeholder {
+  color: color-mix(in srgb, var(--color-text) 40%, transparent);
+}
+
+/* -- focus -- */
+.focus\:ring-primary:focus {
+  --tw-ring-color: var(--color-primary);
+}
+.focus\:ring-primary\/30:focus {
+  --tw-ring-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+.focus\:border-primary\/60:focus {
+  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
 }

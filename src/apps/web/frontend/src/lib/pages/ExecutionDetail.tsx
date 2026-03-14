@@ -75,10 +75,10 @@ export default function ExecutionDetail() {
   if (error || !execution) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-red-500 text-lg">{error || 'Execution not found'}</p>
+        <p className="text-error text-lg">{error || 'Execution not found'}</p>
         <button
           onClick={() => void navigate(-1)}
-          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80"
+          className="px-4 py-2 bg-primary text-foreground rounded hover:bg-primary/80"
         >
           Go Back
         </button>
@@ -115,13 +115,13 @@ export default function ExecutionDetail() {
 
           {/* Execution Flow Graph */}
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-white">Execution Flow</h2>
+            <h2 className="text-lg font-semibold text-foreground">Execution Flow</h2>
             <ExecutionFlowGraph execution={execution} timeline={timeline} />
           </div>
 
           {/* Structured Output (Inputs/Outputs) */}
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-white">Inputs & Outputs</h2>
+            <h2 className="text-lg font-semibold text-foreground">Inputs & Outputs</h2>
             <StructuredOutput
               inputs={execution.inputs}
               outputs={execution.outputs}
@@ -131,7 +131,7 @@ export default function ExecutionDetail() {
 
           {/* Execution Timeline */}
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-white">Execution Timeline</h2>
+            <h2 className="text-lg font-semibold text-foreground">Execution Timeline</h2>
             <ExecutionTimeline timeline={timeline} loading={false} />
           </div>
         </div>

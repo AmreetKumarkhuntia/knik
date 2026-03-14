@@ -14,10 +14,10 @@ export default function WorkflowsTable({ workflows, onEdit, onDelete }: Workflow
       label: 'Name',
       render: (_: unknown, row: DashboardWorkflow) => (
         <div className="flex items-center gap-3">
-          <div className="size-8 rounded bg-white/10 flex items-center justify-center text-slate-400">
+          <div className="size-8 rounded bg-surfaceRaised flex items-center justify-center text-secondary">
             <span className="material-symbols-outlined text-lg">account_tree</span>
           </div>
-          <span className="text-sm font-semibold text-slate-100">{row.name}</span>
+          <span className="text-sm font-semibold text-foreground">{row.name}</span>
         </div>
       ),
     },
@@ -25,7 +25,7 @@ export default function WorkflowsTable({ workflows, onEdit, onDelete }: Workflow
       key: 'lastExecutedAt' as const,
       label: 'Last Executed',
       render: (value: unknown) => (
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-secondary">
           {value ? formatDate(value as string) : 'Never'}
         </span>
       ),
@@ -41,7 +41,7 @@ export default function WorkflowsTable({ workflows, onEdit, onDelete }: Workflow
       key: 'totalExecutions' as const,
       label: 'Executions',
       render: (value: unknown) => (
-        <span className="text-sm text-slate-400 text-right block">
+        <span className="text-sm text-secondary text-right block">
           {(value as number).toLocaleString()}
         </span>
       ),

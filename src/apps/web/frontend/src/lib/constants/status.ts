@@ -1,4 +1,7 @@
 import type { ExecutionStatus } from '$types/workflow'
+import { EDGE_STATUS_COLORS } from '$lib/constants/themes'
+
+export { EDGE_STATUS_COLORS }
 
 export const executionStatusConfig: Record<
   ExecutionStatus,
@@ -6,10 +9,31 @@ export const executionStatusConfig: Record<
     bg: string
     text: string
     label: string
+    hex: string
   }
 > = {
-  pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Pending' },
-  running: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Running' },
-  success: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Success' },
-  failed: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Failed' },
+  pending: {
+    bg: 'bg-warning/20',
+    text: 'text-warning',
+    label: 'Pending',
+    hex: EDGE_STATUS_COLORS.default,
+  },
+  running: {
+    bg: 'bg-info/20',
+    text: 'text-info',
+    label: 'Running',
+    hex: EDGE_STATUS_COLORS.running,
+  },
+  success: {
+    bg: 'bg-success/20',
+    text: 'text-success',
+    label: 'Success',
+    hex: EDGE_STATUS_COLORS.success,
+  },
+  failed: {
+    bg: 'bg-error/20',
+    text: 'text-error',
+    label: 'Failed',
+    hex: EDGE_STATUS_COLORS.failed,
+  },
 }

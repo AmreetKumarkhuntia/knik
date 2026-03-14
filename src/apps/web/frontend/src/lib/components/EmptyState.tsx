@@ -11,14 +11,14 @@ export default function EmptyState({
   const isReactNode = typeof icon !== 'string'
 
   return (
-    <div className={`text-center py-20 text-white/50 ${className}`}>
+    <div className={`text-center py-20 text-foreground/50 ${className}`}>
       {isReactNode ? (
-        <div className="flex justify-center mb-4 text-4xl text-white/50">{icon}</div>
+        <div className="flex justify-center mb-4 text-4xl text-foreground/50">{icon}</div>
       ) : (
         <p className="text-4xl mb-4">{icon}</p>
       )}
-      <p className="text-white/80 font-medium">{title}</p>
-      {description && <p className="text-sm mt-2 text-white/60">{description}</p>}
+      <p className="text-foreground/80 font-medium">{title}</p>
+      {description && <p className="text-sm mt-2 text-foreground/60">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )

@@ -15,8 +15,8 @@ export default function AudioControls({
       <button
         onClick={onTogglePause}
         className={`${
-          isPaused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'
-        } text-white px-6 py-3 rounded-lg font-semibold
+          isPaused ? 'bg-success hover:bg-success/80' : 'bg-warning hover:bg-warning/80'
+        } text-foreground px-6 py-3 rounded-lg font-semibold
                    transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
                    flex items-center gap-2`}
       >
@@ -36,7 +36,7 @@ export default function AudioControls({
       {/* Stop button */}
       <button
         onClick={onStop}
-        className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold
+        className="bg-error hover:bg-error/80 text-foreground px-6 py-3 rounded-lg font-semibold
                  transition-all duration-200 shadow-xl hover:shadow-2xl active:scale-95
                  flex items-center gap-2"
       >

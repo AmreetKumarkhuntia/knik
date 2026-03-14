@@ -24,7 +24,7 @@ export default function WelcomePrompt() {
           <AutoAwesome
             style={{
               fontSize: SIZES.icon.xl,
-              color: 'white',
+              color: 'var(--color-text-inverse)',
             }}
           />
         </div>
@@ -38,7 +38,7 @@ export default function WelcomePrompt() {
           ease: 'easeOut',
           delay: 0.3,
         }}
-        className="text-4xl font-bold text-white mb-4"
+        className="text-4xl font-bold text-foreground mb-4"
       >
         {UI_TEXT.welcome.title}
       </motion.h1>

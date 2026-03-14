@@ -38,7 +38,7 @@ export default function UserProfile({
   return (
     <div className="flex items-center gap-4">
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center text-text font-semibold ${!displayOnly ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-foreground font-semibold ${!displayOnly ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
         style={{ backgroundColor: avatarColor }}
         aria-label={ACCOUNT.profileLabel(name)}
       >
@@ -47,13 +47,13 @@ export default function UserProfile({
 
       {account && (
         <div className="flex flex-col">
-          <span className="text-text font-medium text-sm">{name}</span>
-          <span className="text-textSecondary text-xs">{account}</span>
+          <span className="text-foreground font-medium text-sm">{name}</span>
+          <span className="text-secondary text-xs">{account}</span>
         </div>
       )}
 
       {showBadge && (
-        <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${getBadgeColor()}`}>
+        <span className={`px-2 py-0.5 rounded text-xs font-bold text-inverse ${getBadgeColor()}`}>
           {getBadgeText()}
         </span>
       )}

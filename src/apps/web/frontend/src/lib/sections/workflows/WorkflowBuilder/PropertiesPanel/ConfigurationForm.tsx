@@ -10,7 +10,7 @@ function TipBox({ tip }: { tip: FormFieldTip }) {
         <span className="material-symbols-outlined text-sm">{tip.icon}</span>
         <span className="font-medium">{tip.title}</span>
       </div>
-      <p className="text-slate-400 text-[10px] mt-1">{tip.description}</p>
+      <p className="text-secondary text-[10px] mt-1">{tip.description}</p>
     </div>
   )
 }
@@ -33,10 +33,10 @@ function SliderField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+        <label className="text-xs font-medium text-secondary uppercase tracking-wide">
           {field.label}
         </label>
-        <span className="text-xs font-mono text-slate-100 tabular-nums">
+        <span className="text-xs font-mono text-foreground tabular-nums">
           {step < 1 ? numValue.toFixed(1) : numValue}
         </span>
       </div>
@@ -47,9 +47,9 @@ function SliderField({
         step={step}
         value={numValue}
         onChange={e => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 rounded-full appearance-none bg-white/10 cursor-pointer accent-[#14b8a6]"
+        className="w-full h-1 rounded-full appearance-none bg-surfaceRaised cursor-pointer accent-primary"
       />
-      <div className="flex justify-between text-[10px] text-slate-500">
+      <div className="flex justify-between text-[10px] text-muted">
         <span>{min}</span>
         <span>{max}</span>
       </div>
@@ -90,19 +90,19 @@ function TagsField({
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+      <label className="text-xs font-medium text-secondary uppercase tracking-wide">
         {field.label}
       </label>
       <div className="flex flex-wrap gap-1.5 min-h-[28px]">
         {tags.map(tag => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 border border-white/10 text-xs text-slate-100"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surfaceRaised border border-border text-xs text-foreground"
           >
             {tag}
             <button
               onClick={() => removeTag(tag)}
-              className="text-slate-400 hover:text-slate-100 transition-colors leading-none"
+              className="text-secondary hover:text-foreground transition-colors leading-none"
             >
               <span className="material-symbols-outlined text-[12px]">close</span>
             </button>
@@ -121,11 +121,11 @@ function TagsField({
             }
           }}
           placeholder={field.tagPlaceholder ?? 'Add...'}
-          className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#14b8a6]/60 text-xs"
+          className="flex-1 px-3 py-1.5 rounded-lg bg-surfaceRaised border border-border text-foreground placeholder:text-muted focus:outline-none focus:border-primary/60 text-xs"
         />
         <button
           onClick={addTag}
-          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-slate-100 hover:bg-white/10 transition-colors text-xs"
+          className="px-3 py-1.5 rounded-lg bg-surfaceRaised border border-border text-secondary hover:text-foreground hover:bg-surface transition-colors text-xs"
         >
           + Add
         </button>
@@ -149,12 +149,12 @@ function CollapsibleTextareaField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+        <label className="text-xs font-medium text-secondary uppercase tracking-wide">
           {field.label}
         </label>
         <button
           onClick={() => setExpanded(e => !e)}
-          className="text-slate-400 hover:text-slate-100 transition-colors"
+          className="text-secondary hover:text-foreground transition-colors"
           title={expanded ? 'Collapse' : 'Expand'}
         >
           <span className="material-symbols-outlined text-[16px]">
@@ -167,7 +167,7 @@ function CollapsibleTextareaField({
         onChange={e => onChange(e.target.value)}
         placeholder={field.placeholder}
         rows={expanded ? 6 : 2}
-        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#14b8a6]/60 resize-none text-xs transition-all duration-200"
+        className="w-full px-3 py-2 rounded-lg bg-surfaceRaised border border-border text-foreground placeholder:text-muted focus:outline-none focus:border-primary/60 resize-none text-xs transition-all duration-200"
       />
     </div>
   )
@@ -185,7 +185,7 @@ function StandardField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+      <label className="text-xs font-medium text-secondary uppercase tracking-wide">
         {field.label}
       </label>
       {field.type === 'textarea' ? (
@@ -193,14 +193,14 @@ function StandardField({
           value={String(value || '')}
           onChange={e => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#14b8a6]/60 resize-none text-xs"
+          className="w-full px-3 py-2 rounded-lg bg-surfaceRaised border border-border text-foreground placeholder:text-muted focus:outline-none focus:border-primary/60 resize-none text-xs"
           rows={3}
         />
       ) : field.type === 'select' ? (
         <select
           value={String(value || '')}
           onChange={e => onChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[#171717] border border-white/10 text-slate-100 focus:outline-none focus:border-[#14b8a6]/60 text-xs"
+          className="w-full px-3 py-2 rounded-lg bg-surfaceRaised border border-border text-foreground focus:outline-none focus:border-primary/60 text-xs"
         >
           {field.options?.map(option => (
             <option key={option.value} value={option.value}>
@@ -214,7 +214,7 @@ function StandardField({
           value={String(value || '')}
           onChange={e => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#14b8a6]/60 text-xs"
+          className="w-full px-3 py-2 rounded-lg bg-surfaceRaised border border-border text-foreground placeholder:text-muted focus:outline-none focus:border-primary/60 text-xs"
         />
       )}
       {field.tip && <TipBox tip={field.tip} />}
