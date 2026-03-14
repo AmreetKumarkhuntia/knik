@@ -1,21 +1,5 @@
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceCenter,
-  type SimulationNodeDatum,
-  type SimulationLinkDatum,
-} from 'd3-force'
-import type { LayoutOptions } from '../types'
-
-interface SimNode extends SimulationNodeDatum {
-  id: string
-}
-
-interface SimLink extends SimulationLinkDatum<SimNode> {
-  source: string
-  target: string
-}
+import { forceSimulation, forceLink, forceManyBody, forceCenter } from 'd3-force'
+import type { LayoutOptions, SimNode, SimLink } from '$types/data-structures'
 
 export function calculateForceLayout(
   nodes: Array<{ id: string }>,

@@ -20,4 +20,4 @@ export type {
   ExecutionStatus,
   ExecutionNodeData,
   WorkflowGraphOptions,
-} from './types'
+} from '$types/data-structures'

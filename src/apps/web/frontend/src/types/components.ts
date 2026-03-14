@@ -274,3 +274,9 @@ export type CodeProps = any & {
   className: string
   children: unknown
 }
+
+export interface ToastState {
+  id: number
+  message: string
+  type: ToastType
+}

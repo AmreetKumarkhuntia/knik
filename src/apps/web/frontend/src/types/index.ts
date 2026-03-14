@@ -7,6 +7,7 @@ export * from './workflow-components'
 export * from './pages'
 export * from './node-registry'
 export * from './graph'
+export * from './data-structures'
 
 // Section types
 export * from './sections/audio'

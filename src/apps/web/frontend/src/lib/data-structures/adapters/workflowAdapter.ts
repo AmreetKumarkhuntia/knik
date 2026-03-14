@@ -5,7 +5,7 @@ import type {
   WorkflowValidationResult,
 } from '$types/workflow'
 import { Graph } from '../structures/Graph'
-import type { WorkflowGraphOptions } from '../types'
+import type { WorkflowGraphOptions } from '$types/data-structures'
 
 export function workflowDefinitionToGraph(
   definition: WorkflowDefinition,

@@ -335,7 +335,7 @@ async def run_shell_command(command: str, timeout: int = 30) -> dict[str, Any]:
         )
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             await proc.communicate()
             return {"error": f"Command timed out after {timeout}s: {command}"}

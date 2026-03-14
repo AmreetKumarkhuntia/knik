@@ -1,6 +1,6 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { Graph } from '../structures/Graph'
-import type { CanvasOptions, CanvasOutput } from '../types'
+import type { CanvasOptions, CanvasOutput } from '$types/data-structures'
 import {
   calculateForceLayout,
   calculateGridLayout,

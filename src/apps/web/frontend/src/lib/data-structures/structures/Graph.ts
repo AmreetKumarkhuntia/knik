@@ -1,5 +1,10 @@
 import { GraphNode } from '../core/GraphNode'
-import type { GraphOptions, CanvasOptions, CanvasOutput, ShortestPathResult } from '../types'
+import type {
+  GraphOptions,
+  CanvasOptions,
+  CanvasOutput,
+  ShortestPathResult,
+} from '$types/data-structures'
 import { graphToCanvasNodes } from '../adapters/graphAdapter'
 
 export class Graph<T = unknown> {
