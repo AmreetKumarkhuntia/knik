@@ -4,6 +4,7 @@ import asyncio
 import json
 
 from imports import printer as logger
+from lib.cron import workflow_service
 from lib.services.scheduler.db_client import SchedulerDB
 
 
@@ -45,7 +46,7 @@ def workflow_command(app, args: str) -> str:
 async def _list_workflows() -> str:
     try:
         await SchedulerDB.initialize()
-        workflows = await SchedulerDB.list_workflows()
+        workflows = await workflow_service.list_workflows()
         if not workflows:
             return "No workflows found in database."
 
@@ -62,7 +63,7 @@ async def _list_workflows() -> str:
 
 async def _run_workflow(app, workflow_id: str, inputs: dict) -> str:
     # Requires an AIClient instance in the workflow scheduler if any AI modes are involved
-    from lib.services.scheduler.scheduler import Scheduler
+    from lib.cron.scheduler import Scheduler
 
     try:
         await SchedulerDB.initialize()

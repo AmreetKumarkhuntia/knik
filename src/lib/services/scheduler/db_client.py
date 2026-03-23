@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
 
+from lib.cron.models import ExecutionRecord, NodeExecutionRecord, Schedule, Workflow
 from lib.services.postgres.db import PostgresDB
-from lib.services.scheduler.models import ExecutionRecord, NodeExecutionRecord, Schedule, Workflow
 from lib.utils import printer
 
 

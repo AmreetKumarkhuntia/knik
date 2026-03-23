@@ -23,6 +23,9 @@ from lib import (
     printer,
 )
 
+# Cron/workflow service layer
+from lib.cron import schedule_service, workflow_service
+
 # MCP tools exports
 from lib.mcp import (
     get_all_tools,
@@ -51,4 +54,6 @@ __all__ = [
     "register_all_tools",
     "get_all_tools",
     "get_tool_info",
+    "workflow_service",
+    "schedule_service",
 ]

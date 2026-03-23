@@ -5,8 +5,9 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from lib.cron import workflow_service
+from lib.cron.scheduler import Scheduler
 from lib.services.scheduler.db_client import SchedulerDB
-from lib.services.scheduler.scheduler import Scheduler
 
 
 router = APIRouter()
@@ -25,7 +26,7 @@ class WorkflowExecuteRequest(BaseModel):
 async def list_workflows():
     """List all registered workflows."""
     try:
-        workflows = await SchedulerDB.list_workflows()
+        workflows = await workflow_service.list_workflows()
         results = [
             {
                 "id": w.id,
@@ -43,7 +44,7 @@ async def list_workflows():
 async def get_workflow(workflow_id: str):
     """Get workflow details by ID."""
     try:
-        workflow = await SchedulerDB.get_workflow(workflow_id)
+        workflow = await workflow_service.get_workflow(workflow_id)
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
         return {"success": True, "workflow": workflow.definition}
@@ -55,10 +56,14 @@ async def get_workflow(workflow_id: str):
 
 @router.delete("/{workflow_id}")
 async def delete_workflow(workflow_id: str):
-    """Delete a workflow."""
+    """Delete a workflow and its associated schedules."""
     try:
-        await SchedulerDB.delete_workflow(workflow_id)
-        return {"success": True, "message": f"Workflow {workflow_id} removed"}
+        result = await workflow_service.delete_workflow(workflow_id, cascade=True)
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

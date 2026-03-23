@@ -3,15 +3,16 @@ from collections import defaultdict, deque
 from typing import Any
 
 from imports import printer as logger
-from lib.services.scheduler.db_client import SchedulerDB
-from lib.services.scheduler.models import Workflow
-from lib.services.scheduler.nodes import (
+from lib.cron.models import Workflow
+from lib.cron.nodes import (
     AIExecutionNode,
     BaseNode,
     ConditionalBranchNode,
     FlowMergeNode,
     FunctionExecutionNode,
 )
+from lib.cron.validation import VALID_NODE_TYPES, validate_workflow_definition
+from lib.services.scheduler.db_client import SchedulerDB
 
 
 class WorkflowEngine:
@@ -34,10 +35,11 @@ class WorkflowEngine:
         workflow_start = time.perf_counter()
 
         try:
-            nodes, adj_list, in_degree = self._parse_dag(workflow.definition)
+            validation_result = validate_workflow_definition(workflow.definition)
+            if not validation_result["valid"]:
+                raise ValueError(f"Invalid workflow definition: {validation_result['message']}")
 
-            if not self._is_acyclic(nodes, in_degree.copy(), adj_list):
-                raise ValueError("Workflow DAG contains cycles or is invalid.")
+            nodes, adj_list, in_degree = self._parse_dag(workflow.definition)
 
             node_outputs: dict[str, dict[str, Any]] = {}
             context = {"input": inputs}
@@ -146,24 +148,12 @@ class WorkflowEngine:
 
         return nodes, adj_list, in_degree
 
-    def _is_acyclic(self, nodes: dict, in_degree: dict[str, int], adj_list: dict[str, list[str]]) -> bool:
-        """Check for cycles via Kahn's algorithm."""
-        queue = deque([n for n in nodes if in_degree[n] == 0])
-        count = 0
-
-        while queue:
-            curr = queue.popleft()
-            count += 1
-            for child in adj_list[curr]:
-                in_degree[child] -= 1
-                if in_degree[child] == 0:
-                    queue.append(child)
-
-        return count == len(nodes)
-
     def _instantiate_node(self, node_id: str, data: dict[str, Any]) -> BaseNode:
         """Map generic node string dictionary schema back to live classes."""
         node_type = data.get("type")
+
+        if node_type not in VALID_NODE_TYPES:
+            raise ValueError(f"Unknown node type '{node_type}' for node {node_id}")
 
         if node_type == "FunctionExecutionNode":
             return FunctionExecutionNode(
@@ -182,5 +172,6 @@ class WorkflowEngine:
                 use_tools=data.get("use_tools", True),
             )
             return ai_node
-        else:
-            raise ValueError(f"Unknown node type map {node_type} for node {node_id}")
+
+        # Unreachable due to VALID_NODE_TYPES guard above, but satisfies type checker
+        raise ValueError(f"Unknown node type '{node_type}' for node {node_id}")

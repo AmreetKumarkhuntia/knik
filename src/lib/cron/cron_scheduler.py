@@ -3,8 +3,8 @@ from datetime import UTC, datetime, timedelta
 
 from imports import printer as logger
 from lib.core.config import Config
+from lib.cron.engine import WorkflowEngine
 from lib.services.scheduler.db_client import SchedulerDB
-from lib.services.scheduler.workflow_engine import WorkflowEngine
 
 
 class CronScheduler:

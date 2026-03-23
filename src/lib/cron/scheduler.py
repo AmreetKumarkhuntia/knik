@@ -1,10 +1,11 @@
 from typing import Any
 
 from imports import printer as logger
-from lib.services.scheduler.cron_scheduler import CronScheduler
+from lib.cron import workflow_service
+from lib.cron.cron_scheduler import CronScheduler
+from lib.cron.engine import WorkflowEngine
+from lib.cron.models import Schedule
 from lib.services.scheduler.db_client import SchedulerDB
-from lib.services.scheduler.models import Schedule, Workflow
-from lib.services.scheduler.workflow_engine import WorkflowEngine
 
 
 class Scheduler:
@@ -15,8 +16,12 @@ class Scheduler:
         self.cron_scheduler = CronScheduler()
         self._running = False
 
-    async def register_workflow(self, workflow: Workflow) -> bool:
-        """Register a workflow for execution."""
+    async def register_workflow(self, workflow: "Any") -> bool:
+        """Register a workflow for execution.
+
+        Delegates to workflow_service.create_workflow for new workflows,
+        or directly to SchedulerDB for pre-built Workflow objects.
+        """
         try:
             await SchedulerDB.create_workflow(workflow)
             logger.info(f"Registered workflow: {workflow.id}")
@@ -25,14 +30,17 @@ class Scheduler:
             logger.error(f"Failed to register workflow {workflow.id}: {e}")
             return False
 
-    async def get_workflow(self, workflow_id: str) -> Workflow | None:
+    async def get_workflow(self, workflow_id: str):
         """Retrieve a specific workflow."""
-        return await SchedulerDB.get_workflow(workflow_id)
+        return await workflow_service.get_workflow(workflow_id)
 
     async def unregister_workflow(self, workflow_id: str) -> bool:
-        """Unregister a workflow and delete its schedules/history."""
+        """Unregister a workflow and delete its schedules."""
         try:
-            await SchedulerDB.delete_workflow(workflow_id)
+            result = await workflow_service.delete_workflow(workflow_id, cascade=True)
+            if "error" in result:
+                logger.error(f"Failed to unregister workflow {workflow_id}: {result['error']}")
+                return False
             logger.info(f"Unregistered workflow: {workflow_id}")
             return True
         except Exception as e:

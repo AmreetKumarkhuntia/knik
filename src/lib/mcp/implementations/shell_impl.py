@@ -1,14 +1,29 @@
-import os
-import subprocess
+"""
+MCP shell command tool implementation.
 
-from ...utils.printer import printer
+Wraps the common async shell function with a sync interface for MCP tools.
+"""
 
-
-BLOCKED_COMMANDS = ["rm -rf", "mkfs", "dd if=", ":(){", "fork", ">(", "sudo rm"]
-MAX_TIMEOUT = 30
+from lib.services.shell import BLOCKED_COMMANDS, MAX_TIMEOUT
+from lib.services.shell import run_shell_command as _async_run_shell_command
+from lib.utils.async_utils import run_async
+from lib.utils.printer import printer
 
 
 def run_shell_command(command: str, timeout: int = 10) -> str:
+    """Run a shell command synchronously via MCP tool interface.
+
+    Wraps the common async run_shell_command with sync execution and
+    MCP-friendly string return format.
+
+    Args:
+        command: The shell command to execute.
+        timeout: Maximum execution time in seconds. Defaults to 10.
+            Capped at MAX_TIMEOUT (30s).
+
+    Returns:
+        String result: stdout on success, formatted error on failure.
+    """
     # LangChain may pass None for optional tool parameters even when a default exists
     if timeout is None:
         timeout = 10
@@ -17,33 +32,27 @@ def run_shell_command(command: str, timeout: int = 10) -> str:
 
     printer.info(f'Executing shell command: "{command}" with timeout {timeout}s')
 
-    for blocked in BLOCKED_COMMANDS:
-        if blocked in command.lower():
-            return f"Error: Command blocked for safety reasons. Cannot execute commands containing '{blocked}'"
+    # Use the common async implementation
+    result = run_async(_async_run_shell_command(command, timeout=timeout, blocked_commands=BLOCKED_COMMANDS))
 
-    try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout, cwd=os.getcwd())
+    # Convert dict result to MCP-friendly string format
+    if "error" in result:
+        return f"Error: {result['error']}"
 
-        output = result.stdout if result.stdout else ""
-        error = result.stderr if result.stderr else ""
+    if result.get("return_code", 0) != 0:
+        response = f"Exit code: {result['return_code']}\n"
+        if result.get("stderr"):
+            response += f"Error: {result['stderr']}\n"
+        if result.get("result"):
+            response += f"Output: {result['result']}"
+        printer.warning(
+            f"Command failed with exit code {result['return_code']} with error: {result.get('stderr', '').strip()}"
+        )
+        return response.strip()
 
-        if result.returncode != 0:
-            response = f"Exit code: {result.returncode}\n"
-            if error:
-                response += f"Error: {error}\n"
-            if output:
-                response += f"Output: {output}"
-            printer.warning(f"Command failed with exit code {result.returncode} with error: {error.strip()}")
-            return response.strip()
-
-        result_text = output if output else "Command executed successfully (no output)"
-        printer.info(f"Command completed: {result_text[:100]}{'...' if len(result_text) > 100 else ''}")
-        return result_text
-
-    except subprocess.TimeoutExpired:
-        return f"Error: Command timed out after {timeout} seconds"
-    except Exception as e:
-        return f"Error executing command: {str(e)}"
+    result_text = result.get("result", "") or "Command executed successfully (no output)"
+    printer.info(f"Command completed: {result_text[:100]}{'...' if len(result_text) > 100 else ''}")
+    return result_text
 
 
 SHELL_IMPLEMENTATIONS = {

@@ -3,13 +3,17 @@ Workflow function implementations for FunctionExecutionNode.
 
 These functions are called by workflow engine and are NOT exposed as MCP tools.
 All functions are async and return dict results.
+
+Functions that overlap with MCP tools (shell, text, time, encoding) are
+imported from the service layer (lib.services.shell, lib.services.text, etc.)
+to avoid duplication. HTTP and data processing functions remain here as they
+are scheduler-specific.
 """
 
 import asyncio
 import json
 import logging
 import time
-from datetime import datetime
 from typing import Any
 
 
@@ -36,6 +40,22 @@ except ImportError:
             httpx = None
             aiohttp = None
             requests = None
+
+# Import shared functions from service layer
+from lib.services.encoding import base64_decode, base64_encode
+from lib.services.shell import run_shell_command
+from lib.services.text import (
+    string_concat,
+    string_format,
+    string_join,
+    string_length,
+    string_replace,
+    string_split,
+    string_strip,
+    string_to_lower,
+    string_to_upper,
+)
+from lib.services.time import current_timestamp
 
 
 logger = logging.getLogger(__name__)
@@ -228,59 +248,6 @@ async def dict_set_path(data: dict[str, Any], path: str, value: Any) -> dict[str
 
 
 # ========================
-# STRING/TEXT FUNCTIONS
-# ========================
-
-
-async def string_format(template: str, **kwargs: str | int | float) -> str:
-    """Format string using Python format syntax."""
-    try:
-        return template.format(**kwargs)
-    except Exception as e:
-        return {"error": f"String format failed: {str(e)}"}
-
-
-async def string_replace(text: str, old: str, new: str) -> str:
-    """Replace all occurrences of substring."""
-    return text.replace(old, new)
-
-
-async def string_concat(*strings: str) -> str:
-    """Concatenate multiple strings."""
-    return "".join(strings)
-
-
-async def string_join(separator: str, *strings: str) -> str:
-    """Join multiple strings with separator."""
-    return separator.join(strings)
-
-
-async def string_split(text: str, separator: str) -> list[str]:
-    """Split string into list by separator."""
-    return text.split(separator)
-
-
-async def string_to_lower(text: str) -> str:
-    """Convert string to lowercase."""
-    return text.lower()
-
-
-async def string_to_upper(text: str) -> str:
-    """Convert string to uppercase."""
-    return text.upper()
-
-
-async def string_strip(text: str) -> str:
-    """Strip whitespace from both ends."""
-    return text.strip()
-
-
-async def string_length(text: str) -> str:
-    """Get length of string."""
-    return str(len(text))
-
-
-# ========================
 # UTILITY FUNCTIONS
 # ========================
 
@@ -291,67 +258,11 @@ async def sleep(seconds: float) -> dict[str, Any]:
     return {"slept": seconds}
 
 
-async def current_timestamp() -> str:
-    """Get current ISO 8601 timestamp."""
-    return datetime.now().isoformat()
-
-
 async def uuid_generate() -> str:
     """Generate UUID v4 string."""
     import uuid
 
     return str(uuid.uuid4())
-
-
-async def base64_encode(data: str | bytes) -> str:
-    """Encode data to Base64 string."""
-    import base64
-
-    if isinstance(data, str):
-        data = data.encode()
-    return base64.b64encode(data).decode()
-
-
-async def base64_decode(data: str) -> str:
-    """Decode Base64 string to original data."""
-    import base64
-
-    return base64.b64decode(data).decode()
-
-
-# ========================
-# SHELL FUNCTIONS
-# ========================
-
-
-async def run_shell_command(command: str, timeout: int = 30) -> dict[str, Any]:
-    """Run a shell command and return its stdout, stderr, return code, and duration."""
-    req_start = time.perf_counter()
-    try:
-        proc = await asyncio.create_subprocess_shell(
-            command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        try:
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        except TimeoutError:
-            proc.kill()
-            await proc.communicate()
-            return {"error": f"Command timed out after {timeout}s: {command}"}
-
-        duration_ms = int((time.perf_counter() - req_start) * 1000)
-        stdout = stdout_bytes.decode(errors="replace").strip()
-        stderr = stderr_bytes.decode(errors="replace").strip()
-
-        return {
-            "result": stdout,
-            "stderr": stderr,
-            "return_code": proc.returncode,
-            "duration_ms": duration_ms,
-        }
-    except Exception as e:
-        return {"error": f"Shell command failed: {str(e)}"}
 
 
 # ========================
@@ -370,7 +281,7 @@ WORKFLOW_FUNCTIONS = {
     "dict_merge": dict_merge,
     "dict_filter": dict_filter,
     "dict_set_path": dict_set_path,
-    # String/Text Functions
+    # String/Text Functions (from services)
     "string_format": string_format,
     "string_replace": string_replace,
     "string_concat": string_concat,
@@ -386,6 +297,6 @@ WORKFLOW_FUNCTIONS = {
     "uuid_generate": uuid_generate,
     "base64_encode": base64_encode,
     "base64_decode": base64_decode,
-    # Shell Functions
+    # Shell Functions (from services — now with blocked commands safety)
     "run_shell_command": run_shell_command,
 }
