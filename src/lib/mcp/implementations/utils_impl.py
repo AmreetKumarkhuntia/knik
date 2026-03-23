@@ -1,8 +1,17 @@
-import math
-from datetime import datetime
+"""
+MCP utility tool implementations.
 
+Wraps common async functions with sync interfaces for MCP tools.
+Functions unique to MCP (calculate) remain inline.
+"""
+
+import math
+
+from lib.services.text import string_reverse as _async_string_reverse
+from lib.services.time import get_current_date as _async_get_current_date
+from lib.services.time import get_current_time as _async_get_current_time
+from lib.utils.async_utils import run_async
 from lib.utils.printer import printer
-from lib.utils.timezone_utils import get_current_time_in_timezone
 
 
 # Shared safe functions for both simple and advanced calculations
@@ -37,9 +46,9 @@ _SAFE_MATH_FUNCTIONS = {
 def calculate(expression: str, precision: int = -1) -> str:
     """Calculate mathematical expression. Use precision=-1 for no rounding, or specify decimal places."""
     if precision > 0:
-        printer.info(f"🔧 Calculating: {expression} (precision={precision})")
+        printer.info(f"Calculating: {expression} (precision={precision})")
     else:
-        printer.info(f"🔧 Calculating: {expression}")
+        printer.info(f"Calculating: {expression}")
 
     try:
         safe_dict = {"__builtins__": {}, **_SAFE_MATH_FUNCTIONS}
@@ -55,25 +64,20 @@ def calculate(expression: str, precision: int = -1) -> str:
 
 def get_current_time(timezone: str = "UTC") -> str:
     """Get the current date and time in the specified timezone."""
-    printer.info(f"🔧 Getting current time (timezone: {timezone})")
-
-    try:
-        now = get_current_time_in_timezone(timezone)
-        return now.strftime("%Y-%m-%d %H:%M:%S")
-    except ValueError as e:
-        printer.error(f"Invalid timezone '{timezone}': {e}")
-        return f"Error: {str(e)}"
+    printer.info(f"Getting current time (timezone: {timezone})")
+    return run_async(_async_get_current_time(timezone))
 
 
 def get_current_date() -> str:
-    printer.info("🔧 Getting current date")
-    now = datetime.now()
-    return now.strftime("%Y-%m-%d")
+    """Get current date in YYYY-MM-DD format."""
+    printer.info("Getting current date")
+    return run_async(_async_get_current_date())
 
 
 def reverse_string(text: str) -> str:
-    printer.info(f"🔧 Reversing string ({len(text)} characters)")
-    return text[::-1]
+    """Reverse a string."""
+    printer.info(f"Reversing string ({len(text)} characters)")
+    return run_async(_async_string_reverse(text))
 
 
 UTILS_IMPLEMENTATIONS = {

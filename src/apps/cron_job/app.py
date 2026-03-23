@@ -4,8 +4,8 @@ import signal
 
 from imports import printer as logger
 from lib.core.config import Config
+from lib.cron.scheduler import Scheduler
 from lib.services.postgres.db import PostgresDB
-from lib.services.scheduler.scheduler import Scheduler
 
 
 class CronJobApp:

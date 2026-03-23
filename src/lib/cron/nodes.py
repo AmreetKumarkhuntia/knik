@@ -68,7 +68,7 @@ class FunctionExecutionNode(BaseNode):
                 raise RuntimeError(f"Python code evaluation failed: {e}") from e
 
         # Look up and execute function from registry
-        from .function_implementations import WORKFLOW_FUNCTIONS
+        from .functions import WORKFLOW_FUNCTIONS
 
         func = WORKFLOW_FUNCTIONS.get(self.function_name)
         if func:
