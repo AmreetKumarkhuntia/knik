@@ -3,10 +3,17 @@ import ToggleSwitch from '$components/ToggleSwitch'
 import type { ScheduleCardProps } from '$types/sections/schedule-manager'
 import { PlayArrow, Edit, Delete } from '@mui/icons-material'
 
+function formatRecurrence(seconds?: number): string {
+  if (!seconds) return 'One-time'
+  if (seconds < 3600) return `Every ${Math.round(seconds / 60)} min`
+  if (seconds < 86400) return `Every ${Math.round(seconds / 3600)} hr`
+  if (seconds < 604800) return `Every ${Math.round(seconds / 86400)} day`
+  return `Every ${Math.round(seconds / 604800)} week`
+}
+
 export default function ScheduleCard({
   schedule,
   workflowName,
-  triggerWorkflowName,
   onToggle,
   onEdit,
   onDelete,
@@ -16,10 +23,10 @@ export default function ScheduleCard({
     <div className="bg-surfaceGlass backdrop-blur-3xl border border-borderLight rounded-xl p-4 hover:border-primary transition-all">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-medium">{workflowName || schedule.workflow_id}</h3>
-          <p className="text-textSecondary text-sm">
-            Trigger: {triggerWorkflowName || schedule.trigger_workflow_id}
-          </p>
+          <h3 className="font-medium">{workflowName || schedule.target_workflow_id}</h3>
+          {schedule.schedule_description && (
+            <p className="text-textSecondary text-sm">{schedule.schedule_description}</p>
+          )}
         </div>
         <ToggleSwitch
           checked={schedule.enabled}
@@ -28,7 +35,11 @@ export default function ScheduleCard({
       </div>
 
       <div className="flex items-center gap-4 text-xs text-textSecondary mb-4">
+        <span>{formatRecurrence(schedule.recurrence_seconds)}</span>
         <span>TZ: {schedule.timezone}</span>
+        {schedule.next_run_at && (
+          <span>Next: {new Date(schedule.next_run_at).toLocaleString()}</span>
+        )}
         {schedule.last_executed_at && (
           <span>Last: {new Date(schedule.last_executed_at).toLocaleString()}</span>
         )}
@@ -40,7 +51,7 @@ export default function ScheduleCard({
           label="Run"
           size="sm"
           variant="primary"
-          onClick={() => onRun(schedule.workflow_id)}
+          onClick={() => onRun(schedule.target_workflow_id)}
         />
         <ActionButton
           icon={<Edit />}

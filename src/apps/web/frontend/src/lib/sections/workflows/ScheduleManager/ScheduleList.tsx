@@ -33,8 +33,7 @@ export default function ScheduleList({
         <ScheduleCard
           key={schedule.id}
           schedule={schedule}
-          workflowName={workflowNames[schedule.workflow_id]}
-          triggerWorkflowName={workflowNames[schedule.trigger_workflow_id]}
+          workflowName={workflowNames[schedule.target_workflow_id]}
           onToggle={onToggle}
           onEdit={onEdit}
           onDelete={onDelete}
