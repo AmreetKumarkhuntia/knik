@@ -64,10 +64,12 @@ export interface Workflow {
 
 export interface Schedule {
   id: number
-  workflow_id: string
-  trigger_workflow_id: string
+  target_workflow_id: string
   enabled: boolean
   timezone: string
+  schedule_description?: string
+  next_run_at?: string
+  recurrence_seconds?: number
   created_at?: string
   updated_at?: string
   last_executed_at?: string
@@ -149,15 +151,16 @@ export interface WorkflowExecuteResponse {
 }
 
 export interface ScheduleCreateRequest {
-  workflow_id: string
-  trigger_workflow_id: string
+  target_workflow_id: string
+  schedule_description: string
   timezone?: string
 }
 
 export interface ScheduleCreateResponse {
   success: boolean
   schedule_id: number
-  workflow_id: string
+  next_run_at?: string
+  recurrence_seconds?: number
 }
 
 export interface WorkflowMetrics {

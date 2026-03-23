@@ -13,7 +13,6 @@ export interface ScheduleListProps {
 export interface ScheduleCardProps {
   schedule: Schedule
   workflowName?: string
-  triggerWorkflowName?: string
   onToggle: (id: number, enabled: boolean) => void
   onEdit: (schedule: Schedule) => void
   onDelete: (id: number) => void

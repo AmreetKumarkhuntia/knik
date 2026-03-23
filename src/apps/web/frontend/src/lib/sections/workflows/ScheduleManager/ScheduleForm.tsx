@@ -14,8 +14,8 @@ export default function ScheduleForm({
   loading = false,
 }: ScheduleFormProps) {
   const [formData, setFormData] = useState<ScheduleCreateRequest>({
-    workflow_id: initialData?.workflow_id || '',
-    trigger_workflow_id: initialData?.trigger_workflow_id || '',
+    target_workflow_id: initialData?.target_workflow_id || '',
+    schedule_description: initialData?.schedule_description || '',
     timezone: initialData?.timezone || 'UTC',
   })
 
@@ -33,23 +33,25 @@ export default function ScheduleForm({
     >
       <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
         <FormField
-          label="Workflow"
+          label="Target Workflow"
           type="select"
-          name="workflow_id"
-          value={formData.workflow_id}
-          onChange={(value: string) => setFormData(prev => ({ ...prev, workflow_id: value }))}
+          name="target_workflow_id"
+          value={formData.target_workflow_id}
+          onChange={(value: string) =>
+            setFormData(prev => ({ ...prev, target_workflow_id: value }))
+          }
           options={workflows.map(w => ({ value: w.id, label: w.name }))}
           required
         />
         <FormField
-          label="Trigger Workflow"
-          type="select"
-          name="trigger_workflow_id"
-          value={formData.trigger_workflow_id}
+          label="Schedule"
+          type="text"
+          name="schedule_description"
+          value={formData.schedule_description}
           onChange={(value: string) =>
-            setFormData(prev => ({ ...prev, trigger_workflow_id: value }))
+            setFormData(prev => ({ ...prev, schedule_description: value }))
           }
-          options={workflows.map(w => ({ value: w.id, label: w.name }))}
+          placeholder="e.g. every 5 minutes, daily at 9am, every Monday at 2pm"
           required
         />
         <FormField
