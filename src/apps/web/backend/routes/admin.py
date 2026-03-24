@@ -35,6 +35,8 @@ class SettingsUpdate(BaseModel):
     provider: str | None = None
     model: str | None = None
     voice: str | None = None
+    api_base: str | None = None  # Custom provider: OpenAI-compatible API base URL
+    api_key: str | None = None  # Custom provider: API key (optional for local servers)
 
 
 @router.get("/settings")
@@ -56,18 +58,29 @@ async def update_settings(settings: SettingsUpdate):
     """Update AI client settings (recreates client with new config)"""
     try:
         if settings.provider or settings.model:
+            # Build provider-specific kwargs
+            provider_kwargs = {
+                "model": settings.model or config.ai_model,
+                "mcp_registry": MCPServerRegistry,
+                "project_id": config.ai_project_id,
+                "location": config.ai_location,
+                "system_instruction": config.system_instruction,
+            }
+
+            # Forward custom provider fields if applicable
+            target_provider = settings.provider or config.ai_provider
+            if target_provider == "custom":
+                if settings.api_base:
+                    provider_kwargs["api_base"] = settings.api_base
+                if settings.api_key:
+                    provider_kwargs["api_key"] = settings.api_key
+
             # Recreate AI client with updated settings (with MCP tools)
             chat_module.ai_client = AIClient(
-                provider=settings.provider or config.ai_provider,
-                model=settings.model or config.ai_model,
-                mcp_registry=MCPServerRegistry,
-                project_id=config.ai_project_id,
-                location=config.ai_location,
-                system_instruction=config.system_instruction,
+                provider=target_provider,
+                **provider_kwargs,
             )
-            printer.info(
-                f"AI client updated: {settings.provider or config.ai_provider}/{settings.model or config.ai_model}"
-            )
+            printer.info(f"AI client updated: {target_provider}/{settings.model or config.ai_model}")
 
         if settings.voice:
             # Recreate TTS processor with new voice
@@ -84,9 +97,18 @@ async def update_settings(settings: SettingsUpdate):
 @router.get("/providers")
 async def list_providers():
     """List available AI providers"""
-    return {
-        "providers": [{"id": "vertex", "name": "Google Vertex AI"}, {"id": "mock", "name": "Mock Provider (Testing)"}]
+    from lib.services.ai_client.registry import ProviderRegistry as Registry
+
+    provider_names = {
+        "vertex": "Google Vertex AI",
+        "gemini": "Google Gemini AI Studio",
+        "zhipuai": "ZhipuAI (GLM)",
+        "zai": "Z.AI Platform",
+        "custom": "Custom (OpenAI-Compatible)",
+        "mock": "Mock Provider (Testing)",
     }
+    registered = Registry.list_providers()
+    return {"providers": [{"id": pid, "name": provider_names.get(pid, pid.title())} for pid in registered]}
 
 
 @router.get("/models")

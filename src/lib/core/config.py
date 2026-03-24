@@ -120,6 +120,10 @@ Be reliable, efficient, and action focused like Jarvis."""
         default_factory=lambda: Config.from_env("KNIK_TEMPERATURE", Config.DEFAULT_AI_TEMPERATURE, float)
     )
 
+    # Custom OpenAI-compatible endpoint configuration
+    custom_api_base: str | None = field(default_factory=lambda: Config.from_env("KNIK_CUSTOM_API_BASE", None))
+    custom_api_key: str | None = field(default_factory=lambda: Config.from_env("KNIK_CUSTOM_API_KEY", None))
+
     # TTS configuration
     voice_language: str = field(default_factory=lambda: Config.get_language())
     voice_name: str = field(default_factory=lambda: Config.get_voice())
