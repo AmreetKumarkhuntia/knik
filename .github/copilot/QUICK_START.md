@@ -1,208 +1,149 @@
-# Quick Start Guide - Working with Knik
+# Quick Start Guide -- Working with Knik
 
-## 🚀 Starting Fresh
-
-When starting a new session with Copilot, reference these key points:
-
-### What Knik Is
+## What Knik Is
 
 - AI assistant with voice (TTS) and chat capabilities
-- Two modes: GUI (CustomTkinter) and Console (terminal)
-- 20+ built-in MCP tools (file ops, calculations, text processing, shell commands)
+- Four interfaces: Console (terminal), GUI (CustomTkinter), Web (React + FastAPI), Electron (desktop)
+- 6 AI providers: `vertex`, `gemini`, `glm`, `zai`, `custom` (any OpenAI-compatible API), `mock`
+- 31 built-in MCP tools across 7 categories
+- 9 TTS voices (5 female, 4 male) via Kokoro
+- Workflow engine with scheduled execution (cron)
 - Conversation history for context-aware responses
-- Dynamic light/dark theme switching
-
-### Current State (December 5, 2025)
-
-✅ Theme system fully implemented
-✅ Conversation history working
-✅ Code quality optimized (all lint checks passing)
-✅ Tool callback bug fixed
-⏳ Animations planned but not implemented yet
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
-├── main.py                 # App launcher
-├── imports.py             # Central import hub
-├── lib/                   # Reusable library
-│   ├── core/             # TTS async processor
-│   ├── services/         # AI client, voice, audio
-│   └── mcp/              # 20 MCP tools
+├── main.py                  # App launcher (--mode console|gui|web)
+├── imports.py               # Central import hub
+├── lib/                     # Reusable library
+│   ├── core/                # Config, TTS async processor
+│   ├── services/            # AI client (6 providers), voice, audio
+│   │   └── ai_client/
+│   │       ├── client.py    # AIClient (chat, chat_stream)
+│   │       ├── providers/   # vertex, gemini, zhipuai, zai, custom, mock
+│   │       └── registry/    # Provider + MCP registry
+│   ├── mcp/                 # 31 MCP tools (7 categories)
+│   │   ├── definitions/     # Tool schemas
+│   │   └── implementations/ # Tool logic
+│   └── cron/                # Scheduler engine, models, nodes
 └── apps/
-    ├── console/          # Terminal chat app
+    ├── console/             # Terminal chat app (14 commands)
     │   ├── app.py
-    │   ├── history.py    # Conversation history
-    │   └── tools/        # /commands
-    └── gui/              # Desktop GUI app
-        ├── app.py
-        ├── theme.py      # Theme system ⭐
-        └── components/   # UI widgets
+    │   ├── history.py
+    │   └── tools/           # /commands
+    ├── gui/                 # Desktop GUI (CustomTkinter)
+    │   ├── app.py
+    │   ├── theme.py
+    │   └── components/
+    └── web/
+        ├── backend/         # FastAPI (7 route files, 22 endpoints)
+        │   ├── main.py
+        │   ├── config.py
+        │   └── routes/      # admin, analytics, chat, chat_stream,
+        │                    # cron, history, workflow
+        └── frontend/        # React + Vite + Tailwind
+            └── src/
+                ├── lib/
+                │   ├── components/  # 29 reusable UI components
+                │   ├── sections/    # App-specific sections
+                │   ├── pages/       # 5 pages (Home, Workflows, etc.)
+                │   ├── hooks/       # useChat, useAudio, useTheme, etc.
+                │   ├── constants/
+                │   ├── utils/
+                │   └── data-structures/  # Graph visualization
+                ├── services/    # API clients, streaming, audio
+                └── types/       # TypeScript type definitions
 ```
 
 ---
 
-## 🎨 Theme System (New!)
-
-### Files
-
-- `src/apps/gui/theme.py` - **All theme logic here**
-- Defines: DarkTheme, LightTheme, ColorTheme, Fonts, Spacing
-
-### Usage
-
-```python
-from .theme import ColorTheme, Fonts, Spacing
-
-# Switching themes
-ColorTheme.set_mode("light")  # or "dark" or "system"
-
-# Using colors
-button = ctk.CTkButton(
-    fg_color=ColorTheme.BTN_PRIMARY,
-    text_color=ColorTheme.TEXT_PRIMARY,  # ⚠️ Always set this!
-    ...
-)
-```
-
-### Refreshing UI After Theme Change
-
-```python
-def _refresh_theme(self):
-    # Update all widgets
-    self.root.configure(fg_color=ColorTheme.BG_PRIMARY)
-    self.chat_panel.refresh_theme()  # Rebuilds messages
-    # ... update buttons, panels, etc.
-```
-
----
-
-## 🏃 Running & Testing
+## Running
 
 ```bash
-# Run GUI (most common)
+# Console mode
+npm run start:console
+
+# GUI mode
 npm run start:gui
 
-# Run Console
-npm run start:console
+# Web app (two terminals)
+npm run start:web:backend     # FastAPI on :8000
+npm run start:web:frontend    # Vite on :12414
+
+# Electron (all-in-one)
+npm run electron:dev
 
 # Code quality
 npm run lint          # Check
 npm run lint:fix      # Auto-fix
 npm run format        # Format all code
-
-# Git workflow
-git status
-git add -A
-git commit -m "feat: description"
-git push
 ```
 
 ---
 
-## 🐛 Common Issues & Solutions
+## AI Providers
 
-### Issue: Button text not visible
+| Provider | Env Variable | Notes |
+| --- | --- | --- |
+| `vertex` | `GOOGLE_CLOUD_PROJECT` | Default provider |
+| `gemini` | `GOOGLE_API_KEY` | Google AI Studio |
+| `glm` | `ZHIPUAI_API_KEY` | ZhipuAI (GLM models) |
+| `zai` | `ZAI_API_KEY` | ZAI |
+| `custom` | `KNIK_CUSTOM_API_BASE` | Any OpenAI-compatible API (Ollama, LM Studio, Groq, etc.) |
+| `mock` | (none) | Auto-fallback when provider fails |
 
-**Solution:** Always add `text_color` parameter to buttons
-
-```python
-ctk.CTkButton(..., text_color=ColorTheme.TEXT_PRIMARY)
-```
-
-### Issue: Theme not updating
-
-**Solution:** Call both `ColorTheme.set_mode()` AND `_refresh_theme()`
-
-### Issue: Import errors
-
-**Solution:** Use `from imports import ...` instead of direct imports
-
-### Issue: Emoji not showing in GUI
-
-**Solution:** Use text instead - CustomTkinter has limited emoji support
+Set provider: `export KNIK_AI_PROVIDER="vertex"`
 
 ---
 
-## 📝 Code Style Rules
+## MCP Tools (31 total)
 
-1. **Self-documenting code** - avoid useless comments
-2. **Small modules** - break down complex logic
-3. **Helper functions** - for shared logic
-4. **Type hints** - use them consistently
-5. **Store widget references** - as self.\* for later updates
-6. **Text colors on buttons** - always explicit for theme support
-
----
-
-## 🎯 Next Tasks (Animation Plan)
-
-### Recommended Order:
-
-1. **Status Pulse** (#10) - Pulse dot when processing ⭐ Start here
-2. **Typing Indicator** (#3) - 3-dot animation while AI thinks
-3. **Message Pop-in** (#8) - Scale effect on new messages
-
-### All 10 Tasks:
-
-- [ ] Smooth sliding animations
-- [ ] Typing indicator ⭐
-- [ ] Background gradient
-- [ ] Settings slide-in
-- [ ] Smooth scroll
-- [ ] Button hover effects
-- [ ] Message pop-in ⭐
-- [ ] Input gradient overlay
-- [ ] Status pulse ⭐
+| Category | Count | Tools |
+| --- | --- | --- |
+| Utils | 4 | calculator, timer, random_number, uuid_generator |
+| Text | 5 | word_count, text_transform, regex_search, summarize, translate |
+| Shell | 1 | execute_command |
+| File | 8 | read_file, write_file, list_directory, create_directory, delete_file, move_file, file_info, search_files |
+| Browser | 6 | open_url, search_web, scrape_page, screenshot, click_element, type_text |
+| Cron | 3 | schedule_task, list_schedules, delete_schedule |
+| Workflow | 4 | create_workflow, execute_workflow, list_workflows, get_workflow |
 
 ---
 
-## 📚 Key Documentation
+## Console Commands (14)
 
-- `.github/copilot-instructions.md` - **Main reference** (updated!)
-- `docs/guides/gui.md` - GUI architecture
-- `docs/reference/conversation-history.md` - History system
-- `docs/guides/mcp.md` - MCP tools reference
-- `SESSION_SUMMARY.md` - This session's work
-
----
-
-## 💡 Quick Commands Reference
-
-```bash
-# From project root
-npm run start:gui                    # Launch GUI
-npm run lint:fix && npm run format  # Clean code
-git add -A && git commit -m "msg"   # Commit
-
-# From Python
-from imports import AIClient, TTSAsyncProcessor, printer, ColorTheme
-ColorTheme.set_mode("light")  # Switch theme
-```
+| Command | Description |
+| --- | --- |
+| `/help` | Show help |
+| `/exit`, `/quit` | Exit app |
+| `/clear` | Clear screen |
+| `/history` | Show conversation history |
+| `/voice` | Change TTS voice |
+| `/info` | Show system info |
+| `/toggle-voice` | Toggle TTS on/off |
+| `/tools` | List MCP tools |
+| `/agent` | Agent mode |
+| `/provider` | Change AI provider |
+| `/model` | Change AI model |
+| `/debug` | Toggle debug mode |
+| `/workflow` | Workflow operations |
 
 ---
 
-## 🎨 Color Palette Quick Reference
+## Key Documentation
 
-### Dark Theme
-
-- Background: `#0F1419` (almost black)
-- User bubbles: `#5B4FFF` (purple)
-- AI bubbles: `#2D3142` (dark gray)
-- Text: `#FFFFFF` (white)
-
-### Light Theme
-
-- Background: `#FFFFFF` (white)
-- User bubbles: `#5B4FFF` (purple - same!)
-- AI bubbles: `#E5E5EA` (light gray)
-- Text: `#000000` (black)
-
----
-
-**Last Updated:** December 5, 2025
-**Status:** Ready for Animation Implementation
-**Next Session:** Pick animation from plan and implement
+- `.github/copilot-instructions.md` -- Main AI assistant reference
+- `docs/reference/environment-variables.md` -- All env vars
+- `docs/reference/api.md` -- AIClient + Web API reference
+- `docs/guides/mcp.md` -- MCP tools reference
+- `docs/guides/scheduler.md` -- Workflow scheduler guide
+- `docs/guides/web-app.md` -- Web app guide
+- `docs/guides/console.md` -- Console app guide
+- `docs/guides/gui.md` -- GUI app guide
+- `docs/components/web-architecture.md` -- Frontend/backend file structure
+- `docs/components/react-common-components.md` -- 29 React components reference
+- `docs/development/setup.md` -- Development setup
+- `docs/development/streaming.md` -- Streaming architecture

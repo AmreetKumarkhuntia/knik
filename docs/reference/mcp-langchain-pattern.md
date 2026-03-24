@@ -10,15 +10,15 @@ This document explains how Knik implements MCP tool binding following LangChain'
 
 ```python
 # Tools were passed at query time
-ai_client.query("prompt", use_tools=True, mcp_registry=MCPServerRegistry)
+ai_client.chat("prompt", use_tools=True, mcp_registry=MCPServerRegistry)
 ```
 
-### After (Construction-Time Binding) ✅
+### After (Construction-Time Binding)
 
 ```python
 # Tools are bound at AIClient initialization
 ai_client = AIClient(provider="vertex", mcp_registry=MCPServerRegistry)
-ai_client.query("prompt", use_tools=True)  # Tools already bound
+ai_client.chat("prompt")  # Tools already bound
 ```
 
 ## Why This Change?
@@ -48,7 +48,7 @@ llm_with_tools = llm.bind_tools(tools)  # Bind once at initialization
 
 ```python
 @abstractmethod
-def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
+def chat(self, prompt: str, **kwargs) -> str:
     pass
 ```
 
@@ -70,9 +70,9 @@ def __init__(self, llm, agent, provider_name: str, mcp_registry: Optional['MCPSe
 **Query methods** use stored registry and bound LLM:
 
 ```python
-def query(self, prompt: str, use_tools: bool = False, **kwargs) -> str:
-    # Use tool-bound LLM if tools requested, otherwise raw LLM
-    llm = self.llm if (use_tools and self.mcp_registry) else self._llm_raw
+def chat(self, prompt: str, **kwargs) -> str:
+    # Use tool-bound LLM if tools available, otherwise raw LLM
+    llm = self.llm if self.mcp_registry else self._llm_raw
     response = llm.invoke(messages, **kwargs)
     return self._extract_text_from_content(response.content)
 ```

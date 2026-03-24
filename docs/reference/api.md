@@ -1,5 +1,151 @@
 # API Reference
 
+## AIClient
+
+Unified AI client with multiple provider support and MCP tools.
+
+### Constructor
+
+```python
+from lib.services.ai_client import AIClient
+
+client = AIClient(
+    provider="vertex",               # Provider name (default: "vertex")
+    auto_fallback_to_mock=True,      # Fall back to mock if unconfigured
+    mcp_registry=None,               # MCPServerRegistry for tool support
+    system_instruction=None,         # System prompt for the AI
+    tool_callback=None,              # Callback for tool execution events
+    **provider_kwargs                # Forwarded to provider constructor
+)
+```
+
+Provider-specific kwargs are passed through to the underlying provider. For example:
+
+```python
+# Vertex AI
+client = AIClient(
+    provider="vertex",
+    project_id="your-project-id",
+    location="us-central1",
+    model_name="gemini-2.5-flash"
+)
+
+# Custom OpenAI-compatible endpoint
+client = AIClient(
+    provider="custom",
+    model_name="llama3.1",
+    api_base="http://localhost:11434/v1"
+)
+```
+
+### Methods
+
+#### `chat(prompt, max_tokens, temperature, history, **kwargs) -> str`
+
+Get complete AI response.
+
+```python
+response = client.chat(
+    prompt="What is AI?",
+    max_tokens=1024,
+    temperature=0.7,
+    history=[]       # Optional conversation history
+)
+```
+
+#### `chat_stream(prompt, max_tokens, temperature, history, **kwargs) -> Generator[str]`
+
+Stream AI response chunks.
+
+```python
+for chunk in client.chat_stream(prompt="Hello"):
+    print(chunk, end="", flush=True)
+```
+
+#### `is_configured() -> bool`
+
+Check if the provider is properly configured.
+
+#### `get_info() -> dict`
+
+Get provider info (name, model, configuration details).
+
+#### `get_provider_name() -> str`
+
+Get the active provider name.
+
+#### `list_available_providers() -> list[str]` (static)
+
+List all registered provider names.
+
+```python
+providers = AIClient.list_available_providers()
+# ["vertex", "gemini", "zhipuai", "zai", "custom", "mock"]
+```
+
+#### `register_tool(tool_dict, implementation)`
+
+Register an MCP tool.
+
+```python
+tool_def = {
+    "name": "my_tool",
+    "description": "Does something useful",
+    "parameters": {...}
+}
+
+def my_tool_impl(param):
+    return f"Result: {param}"
+
+client.register_tool(tool_def, my_tool_impl)
+```
+
+#### `get_registered_tools() -> list[dict]`
+
+List all registered tools.
+
+#### `execute_tool(tool_name, **kwargs) -> Any`
+
+Manually execute a registered tool.
+
+```python
+result = client.execute_tool("calculate", expression="2 + 2")
+```
+
+### Provider Support
+
+| Provider | Registry Key | Backend | Description |
+| --- | --- | --- | --- |
+| Vertex AI | `vertex` | ChatVertexAI (LangChain) | Google Cloud Vertex AI |
+| Gemini | `gemini` | ChatGoogleGenerativeAI (LangChain) | Google AI Studio API |
+| ZhipuAI | `zhipuai` | ChatZhipuAI (LangChain) | ZhipuAI GLM models |
+| Z.AI | `zai` | ChatOpenAI (LangChain) | Z.AI Platform (OpenAI-compatible) |
+| Custom | `custom` | ChatOpenAI (LangChain) | Any OpenAI-compatible endpoint |
+| Mock | `mock` | Built-in | Testing/development (canned responses) |
+
+All LangChain-based providers inherit from `LangChainProvider`, which extends `BaseAIProvider`. The mock provider extends `BaseAIProvider` directly.
+
+### Provider Inheritance
+
+```
+BaseAIProvider (ABC)
+ +-- LangChainProvider (chat/chat_stream via LangChain invoke/stream)
+ |    +-- VertexAIProvider    ("vertex")
+ |    +-- GeminiAIProvider    ("gemini")
+ |    +-- ZhipuAIProvider     ("zhipuai")
+ |    +-- ZAIProvider         ("zai")
+ |    +-- CustomProvider      ("custom")
+ +-- MockAIProvider           ("mock")
+```
+
+### Auto-Fallback Behavior
+
+When `auto_fallback_to_mock=True` (default):
+
+1. If the provider reports `is_configured() == False`, silently switches to `MockAIProvider`
+2. If the provider constructor throws an exception, catches it and falls back to `MockAIProvider`
+3. Set `auto_fallback_to_mock=False` to raise errors instead
+
 ## TTSAsyncProcessor
 
 Handles async voice processing with background threads.
@@ -32,11 +178,6 @@ processor.play_async("Hello world")
 
 Check if all processing is done (queues empty + not playing).
 
-```python
-if processor.is_processing_complete():
-    print("All done!")
-```
-
 #### `set_voice(voice: str)`
 
 Change voice model.
@@ -48,10 +189,6 @@ processor.set_voice("am_adam")
 #### `set_save_dir(save_dir: str)`
 
 Save audio segments to directory.
-
-```python
-processor.set_save_dir("./output")
-```
 
 ### State Checks
 
@@ -80,31 +217,32 @@ app.run()
 
 ### Architecture
 
-The console app uses a modular design with:
-
 - **app.py** - Main ConsoleApp class
 - **history.py** - ConversationHistory for context management
 - **tools/** - Command handlers with registry pattern
   - **index.py** - Command registry (`get_command_registry()`, `register_commands()`)
   - Individual command files (`*_cmd.py`)
 
-### Methods
+### Console Commands (14)
 
-#### `wait_until(condition_fn, timeout, check_interval)`
-
-Wait for a condition to be met.
-
-```python
-app.wait_until(
-    condition_fn=lambda: app.tts_processor.is_processing_complete(),
-    timeout=30.0,
-    check_interval=0.1
-)
-```
+| Command | Description |
+| --- | --- |
+| `/help` | Show available commands |
+| `/exit` | Exit the application |
+| `/quit` | Alias for exit |
+| `/clear` | Clear the screen |
+| `/history` | Show conversation history |
+| `/voice` | Change voice settings |
+| `/info` | Show system information |
+| `/toggle-voice` | Enable/disable TTS output |
+| `/tools` | List registered MCP tools |
+| `/agent` | Agent mode settings |
+| `/provider` | Switch AI provider |
+| `/model` | Switch AI model |
+| `/debug` | Toggle debug mode |
+| `/workflow` | Workflow management |
 
 ### ConversationHistory
-
-Manages conversation context (located in `apps/console/history.py`):
 
 ```python
 from apps.console.history import ConversationHistory
@@ -118,140 +256,72 @@ history.clear()                           # Clear history
 
 ## Available Voices
 
-**Female:**
+**Female:** `af_heart`, `af_bella`, `af_sarah`, `af_nicole`, `af_sky`
 
-- `af_sarah`, `af_nicole`, `af_sky`, `af_bella`, `af_heart`
+**Male:** `am_adam`, `am_michael`, `am_leo`, `am_ryan`
 
-**Male:**
+## Web API Endpoints (22)
 
-- `am_adam`, `am_michael`, `bm_george`, `bm_lewis`
+### Chat (`/api/chat`)
 
-## AIClient
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/api/chat/` | Send a chat message and get a response |
 
-Unified AI client with multiple provider support and MCP tools.
+### Chat Stream (`/api/chat/stream`)
 
-### Initialization
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/api/chat/stream/` | Stream a chat response via SSE |
 
-```python
-from lib.services.ai_client import AIClient
+### Admin (`/api/admin`)
 
-client = AIClient(
-    provider="vertex",
-    project_id="your-project-id",
-    location="us-central1",
-    model_name="gemini-2.5-flash"
-)
-```
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/admin/settings` | Get current settings |
+| POST | `/api/admin/settings` | Update settings |
+| GET | `/api/admin/providers` | List available AI providers |
+| GET | `/api/admin/models` | List available AI models |
+| GET | `/api/admin/voices` | List available voices |
 
-### Methods
+### History (`/api/history`)
 
-#### `query(prompt, use_tools, max_tokens, temperature, system_instruction, context)`
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/history/` | Get conversation history |
+| POST | `/api/history/add` | Add a message to history |
+| POST | `/api/history/clear` | Clear conversation history |
 
-Get complete AI response.
+### Workflows (`/api/workflows`)
 
-```python
-response = client.query(
-    prompt="What is AI?",
-    use_tools=True,
-    max_tokens=1024,
-    temperature=0.7
-)
-```
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/workflows/` | List all workflows |
+| GET | `/api/workflows/{id}` | Get a specific workflow |
+| DELETE | `/api/workflows/{id}` | Delete a workflow |
+| POST | `/api/workflows/{id}/execute` | Execute a workflow |
+| GET | `/api/workflows/{id}/history` | Get workflow execution history |
+| GET | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details |
 
-#### `query_stream(prompt, use_tools, ...)`
+### Cron (`/api/cron`)
 
-Stream AI response chunks.
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/cron/` | List all schedules |
+| POST | `/api/cron/` | Add a new schedule |
+| DELETE | `/api/cron/{id}` | Remove a schedule |
+| PATCH | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
 
-```python
-for chunk in client.query_stream(prompt="Hello", use_tools=True):
-    print(chunk, end="", flush=True)
-```
+### Analytics (`/api/analytics`)
 
-#### `register_tool(tool_dict, implementation)`
-
-Register MCP tool.
-
-```python
-tool_def = {
-    "name": "my_tool",
-    "description": "Does something useful",
-    "parameters": {...}
-}
-
-def my_tool_impl(param):
-    return f"Result: {param}"
-
-client.register_tool(tool_def, my_tool_impl)
-```
-
-#### `get_registered_tools()`
-
-List all registered tools.
-
-```python
-tools = client.get_registered_tools()
-for tool in tools:
-    print(tool['name'])
-```
-
-#### `execute_tool(tool_name, **kwargs)`
-
-Manually execute a tool.
-
-```python
-result = client.execute_tool("calculate", expression="2 + 2")
-```
-
-### Provider Support
-
-- **vertex** - Google Vertex AI with LangChain (recommended)
-- **gemini** - Google Gemini AI Studio API
-- **glm** - ZhipuAI GLM models
-- **zai** - Z.AI Platform (OpenAI-compatible)
-- **mock** - Testing/development
-
-List providers:
-
-```python
-AIClient.list_available_providers()
-```
-
-#### Z.AI Provider Configuration
-
-```python
-from lib.services.ai_client import AIClient
-
-client = AIClient(
-    provider="zai",
-    model_name="glm-5",  # or glm-4, glm-4-flash
-    temperature=0.7,
-    max_tokens=1024
-)
-```
-
-**Environment Variables:**
-
-- `ZAI_API_KEY` - Your Z.AI API key (required)
-- `ZAI_API_BASE` - Custom API base URL (default: https://api.z.ai/api/paas/v4/)
-- `KNIK_AI_PROVIDER=zai` - Set Z.AI as default provider
-
-**Get API Key:** https://z.ai/model-api
-
-**Documentation:** https://docs.z.ai/guides/develop/langchain/introduction
-
-## Example
-
-```python
-from lib import TTSAsyncProcessor
-import time
-
-processor = TTSAsyncProcessor(sample_rate=24000, voice_model="af_sarah")
-processor.start_async_processing()
-processor.play_async("Hello world")
-
-while not processor.is_processing_complete():
-    time.sleep(0.1)
-```
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/analytics/dashboard` | Get dashboard summary |
+| GET | `/api/analytics/metrics` | Get system metrics |
+| GET | `/api/analytics/top-workflows` | Get top workflows by execution count |
+| GET | `/api/analytics/executions` | Get paginated execution records |
+| GET | `/api/analytics/workflows/list` | Get workflows list for analytics |
+| GET | `/api/analytics/activity` | Get activity timeline |
 
 ## File System Tools
 

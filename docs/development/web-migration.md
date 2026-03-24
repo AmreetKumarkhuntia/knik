@@ -1,5 +1,7 @@
 # Electron Migration Plan - Knik Web UI
 
+> **Note:** This is a historical planning document from December 6, 2025. The migration has been completed. The actual implementation differs from this plan in several ways -- see [web-architecture.md](../components/web-architecture.md) for the current architecture. Key differences: routes are `chat`, `chat_stream`, `admin`, `history`, `workflow`, `cron`, `analytics` (not `tts`, `tools`, `settings`); API methods are `chat()` / `chat_stream()` (not `query()` / `query_stream()`); frontend dev server runs on port 12414 (not 5173).
+
 **Date:** December 6, 2025
 **Goal:** Migrate from CustomTkinter to Electron + React + Tailwind CSS for smooth animations and modern UI
 

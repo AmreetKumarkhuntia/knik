@@ -8,7 +8,7 @@ This guide covers deploying Knik applications for production use.
 - [Web App Deployment](#web-app-deployment)
 - [Electron Desktop App](#electron-desktop-app)
 - [Console/GUI Apps](#consolegui-apps)
-- [Configuration](#configuration)
+- [Production Checklist](#production-checklist)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -18,25 +18,32 @@ This guide covers deploying Knik applications for production use.
 ### Required Environment Variables
 
 ```bash
-# AI Provider Configuration
-export KNIK_AI_PROVIDER="vertex"  # or "mock"
+# AI Provider Configuration (6 providers available)
+export KNIK_AI_PROVIDER="vertex"  # vertex, gemini, glm, zai, custom, mock
 export KNIK_AI_MODEL="gemini-2.0-flash-exp"
-export GOOGLE_CLOUD_PROJECT="your-project-id"
 
-# Voice Configuration
-export KNIK_VOICE_NAME="af_sarah"  # Female voice
-# or: export KNIK_VOICE_NAME="am_adam"  # Male voice
+# Provider-specific credentials
+export GOOGLE_CLOUD_PROJECT="your-project-id"  # vertex provider
+# or: export GOOGLE_API_KEY="your-key"         # gemini provider
+# or: export ZHIPUAI_API_KEY="your-key"        # glm provider
+# or: export ZAI_API_KEY="your-key"            # zai provider
+# or: export KNIK_CUSTOM_API_BASE="http://..."  # custom provider (any OpenAI-compatible API)
+
+# Voice Configuration (9 voices available)
+export KNIK_VOICE_NAME="af_sarah"
+# Female: af_heart, af_bella, af_sarah, af_nicole, af_sky
+# Male: am_adam, am_michael, am_leo, am_ryan
 
 # Web App Configuration
-export KNIK_WEB_HOST="0.0.0.0"  # Listen on all interfaces
+export KNIK_WEB_HOST="0.0.0.0"
 export KNIK_WEB_PORT="8000"
 export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com"
 
-# Optional: History Configuration
-export KNIK_HISTORY_CONTEXT_SIZE="5"  # Number of messages to send as context
+# Optional
+export KNIK_HISTORY_CONTEXT_SIZE="5"
 ```
 
-See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for complete reference.
+See [environment-variables.md](../reference/environment-variables.md) for the complete reference.
 
 ### System Dependencies
 
@@ -63,19 +70,14 @@ pip install -r requirements.txt
 
 ## Web App Deployment
 
-### Option 1: Docker (Recommended)
-
-**Coming Soon** - Docker configuration is planned for future releases.
-
-### Option 2: Manual Deployment
+### Option 1: Manual Deployment
 
 #### Backend (FastAPI)
 
 **1. Install dependencies:**
 
 ```bash
-cd src/apps/web
-pip install -r requirements.txt  # If separate, or use main requirements.txt
+pip install -r requirements.txt
 ```
 
 **2. Configure production settings:**
@@ -90,11 +92,10 @@ export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 
 ```bash
 # Using Uvicorn (included)
-cd src/apps/web/backend
-uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn apps.web.backend.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 # Or using Gunicorn + Uvicorn workers
-gunicorn main:app \
+gunicorn apps.web.backend.main:app \
   --workers 4 \
   --worker-class uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8000 \
@@ -113,11 +114,11 @@ After=network.target
 [Service]
 Type=simple
 User=your-user
-WorkingDirectory=/path/to/knik/src/apps/web/backend
+WorkingDirectory=/path/to/knik
 Environment="KNIK_AI_PROVIDER=vertex"
 Environment="GOOGLE_CLOUD_PROJECT=your-project"
 Environment="KNIK_VOICE_NAME=af_sarah"
-ExecStart=/path/to/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+ExecStart=/path/to/.venv/bin/uvicorn apps.web.backend.main:app --host 0.0.0.0 --port 8000
 Restart=always
 
 [Install]
@@ -137,12 +138,10 @@ sudo systemctl status knik-backend
 **1. Build for production:**
 
 ```bash
-cd src/apps/web/frontend
-npm install
-npm run build
+npm run build:web:frontend
 ```
 
-This creates optimized static files in `dist/`.
+This creates optimized static files in `src/apps/web/frontend/dist/`.
 
 **2. Serve with Nginx:**
 
@@ -152,8 +151,6 @@ Create `/etc/nginx/sites-available/knik`:
 server {
     listen 80;
     server_name yourdomain.com;
-
-    # Redirect to HTTPS (if using SSL)
     return 301 https://$server_name$request_uri;
 }
 
@@ -161,7 +158,6 @@ server {
     listen 443 ssl http2;
     server_name yourdomain.com;
 
-    # SSL configuration (if using SSL)
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
 
@@ -191,22 +187,21 @@ Enable site:
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/knik /etc/nginx/sites-enabled/
-sudo nginx -t  # Test configuration
+sudo nginx -t
 sudo systemctl reload nginx
 ```
 
 **3. Or serve with simple static server:**
 
 ```bash
-# Using Python http.server
-cd src/apps/web/frontend/dist
-python -m http.server 3000
+# Using Python
+python -m http.server 3000 --directory src/apps/web/frontend/dist
 
-# Using Node serve package
-npx serve -s dist -l 3000
+# Using Node
+npx serve -s src/apps/web/frontend/dist -l 3000
 ```
 
-### Option 3: Platform as a Service (PaaS)
+### Option 2: Platform as a Service
 
 #### Vercel (Frontend Only)
 
@@ -215,13 +210,11 @@ cd src/apps/web/frontend
 vercel --prod
 ```
 
-Configure environment variables in Vercel dashboard:
+Configure `VITE_API_URL` in Vercel dashboard to point to your backend URL.
 
-- `VITE_API_BASE_URL`: Your backend URL
+#### Other Platforms (Railway / Render / Fly.io)
 
-#### Railway / Render / Fly.io (Full Stack)
-
-**Coming Soon** - Platform-specific deployment configs planned.
+Platform-specific deployment configs are planned for future releases.
 
 ---
 
@@ -229,25 +222,22 @@ Configure environment variables in Vercel dashboard:
 
 ### Build for Distribution
 
-**1. Install Electron dependencies:**
+**1. Install dependencies:**
 
 ```bash
 npm install
 ```
 
-**2. Add app icons:**
+**2. Build configuration:**
 
-Place icons in `assets/` directory:
+Knik uses `electron-builder.yml` at the project root:
 
-- `icon.icns` - macOS (512x512 PNG → ICNS)
-- `icon.ico` - Windows (256x256 PNG → ICO)
-- `icon.png` - Linux (512x512 PNG)
-
-Use tools like [electron-icon-builder](https://www.npmjs.com/package/electron-icon-builder):
-
-```bash
-npx electron-icon-builder --input=./assets/icon-source.png --output=./assets/
-```
+- **App ID:** `com.knik.app`
+- **Product Name:** `Knik`
+- **Output:** `dist-electron/`
+- **macOS:** dmg + zip for arm64 and x64, hardened runtime enabled
+- **Windows:** NSIS installer + portable for x64
+- **Linux:** AppImage + deb for x64
 
 **3. Build for your platform:**
 
@@ -258,39 +248,29 @@ npm run electron:build:mac
 # Windows (creates .exe installer)
 npm run electron:build:win
 
-# Linux (creates .AppImage, .deb, .rpm)
+# Linux (creates .AppImage, .deb)
 npm run electron:build:linux
 
-# Build for all platforms
-npm run electron:build:all
+# Generic (auto-detects platform)
+npm run electron:build
 ```
 
 **4. Find built apps:**
 
-- macOS: `dist/Knik-1.0.0-arm64.dmg`, `dist/Knik-1.0.0-x64.dmg`
-- Windows: `dist/Knik Setup 1.0.0.exe`
-- Linux: `dist/Knik-1.0.0.AppImage`, `dist/knik_1.0.0_amd64.deb`
+- macOS: `dist-electron/Knik-*.dmg`, `dist-electron/Knik-*.zip`
+- Windows: `dist-electron/Knik Setup *.exe`
+- Linux: `dist-electron/Knik-*.AppImage`, `dist-electron/knik_*_amd64.deb`
 
 ### Code Signing (Optional but Recommended)
 
 #### macOS
 
-1. Get Apple Developer ID certificate
-2. Add to `electron-builder.yml`:
-
-```yaml
-mac:
-  identity: "Developer ID Application: Your Name (TEAM_ID)"
-  hardenedRuntime: true
-  gatekeeperAssess: false
-  entitlements: "./assets/entitlements.mac.plist"
-  entitlementsInherit: "./assets/entitlements.mac.plist"
-```
-
+1. Get an Apple Developer ID certificate
+2. The `electron-builder.yml` already configures hardened runtime and entitlements
 3. Notarize after build:
 
 ```bash
-npx notarize-cli --file dist/Knik-1.0.0.dmg \
+npx notarize-cli --file dist-electron/Knik-*.dmg \
   --bundle-id com.knik.app \
   --username your@apple.id \
   --password @keychain:AC_PASSWORD
@@ -298,43 +278,37 @@ npx notarize-cli --file dist/Knik-1.0.0.dmg \
 
 #### Windows
 
-1. Get code signing certificate (.pfx file)
-2. Add to `electron-builder.yml`:
-
-```yaml
-win:
-  certificateFile: "./path/to/cert.pfx"
-  certificatePassword: "${CERT_PASSWORD}"
-```
-
-3. Set environment variable:
+1. Get a code signing certificate (.pfx file)
+2. Set environment variable and build:
 
 ```bash
-export CERT_PASSWORD="your-cert-password"
+export CSC_LINK="./path/to/cert.pfx"
+export CSC_KEY_PASSWORD="your-cert-password"
 npm run electron:build:win
 ```
 
-### Distribution
+### Development Mode
 
-**macOS:**
+```bash
+# Starts backend + frontend + Electron concurrently
+npm run electron:dev
+```
 
-- Upload `.dmg` to website
-- Or submit to Mac App Store (requires Apple Developer Program)
-
-**Windows:**
-
-- Upload `.exe` installer to website
-- Or publish to Microsoft Store
-
-**Linux:**
-
-- Upload `.AppImage` (universal) to website
-- Publish `.deb` to Ubuntu/Debian repositories
-- Publish `.rpm` to Fedora/RHEL repositories
+This uses `concurrently` to run all three processes, with `wait-on` to delay Electron until the frontend dev server is ready.
 
 ---
 
 ## Console/GUI Apps
+
+### Running Directly
+
+```bash
+# Console mode
+npm run start:console
+
+# GUI mode (CustomTkinter)
+npm run start:gui
+```
 
 ### Standalone Python Distribution
 
@@ -344,64 +318,44 @@ npm run electron:build:win
 pip install pyinstaller
 
 # Console app
-pyinstaller --onefile src/main.py --name knik-console -- --mode console
+pyinstaller --onefile src/main.py --name knik-console
 
 # GUI app
-pyinstaller --onefile --windowed src/main.py --name knik-gui -- --mode gui
+pyinstaller --onefile --windowed src/main.py --name knik-gui
 ```
 
 **Option 2: Briefcase (Recommended for GUI)**
 
 ```bash
 pip install briefcase
-
-# Create Briefcase project
 briefcase new
-
-# Build
 briefcase build
 briefcase package
 ```
 
-### System Package Distribution
-
-**Debian/Ubuntu (.deb):**
-
-Create `debian/` directory structure and use `dpkg-deb`.
-
-**RHEL/Fedora (.rpm):**
-
-Create `.spec` file and use `rpmbuild`.
-
-**macOS (.pkg):**
-
-Use `pkgbuild` and `productbuild`.
-
 ---
 
-## Configuration
+## Production Checklist
 
-### Production Checklist
-
-- [ ] Set `KNIK_AI_PROVIDER` to `vertex` (not `mock`)
-- [ ] Configure `GOOGLE_CLOUD_PROJECT` with valid project ID
+- [ ] Set `KNIK_AI_PROVIDER` to a real provider (not `mock`)
+- [ ] Configure provider credentials (API keys, project IDs)
 - [ ] Set `KNIK_WEB_CORS_ORIGINS` to your domain(s)
-- [ ] Use HTTPS for web deployments (SSL/TLS certificates)
-- [ ] Set up monitoring and logging (see [WEB_APP.md](WEB_APP.md))
-- [ ] Configure firewall rules (open ports 80/443 for web, 8000 for API)
-- [ ] Set up backup strategy for conversation history (if persistent storage added)
-- [ ] Test all MCP tools in production environment
-- [ ] Verify voice models work on production server
+- [ ] Use HTTPS for web deployments
+- [ ] Set up monitoring and logging
+- [ ] Configure firewall rules (ports 80/443 for web, 8000 for API)
+- [ ] Test all 31 MCP tools in production environment
+- [ ] Verify TTS voice models work on production server
+- [ ] Install `espeak-ng` on the server
 
 ### Security Best Practices
 
-1. **Environment Variables**: Never commit `.env` files or credentials
-2. **API Keys**: Use secret managers (AWS Secrets Manager, Google Secret Manager)
-3. **CORS**: Restrict origins to your domain only
-4. **Rate Limiting**: Implement rate limiting on API endpoints
-5. **HTTPS**: Always use HTTPS in production
-6. **Permissions**: Run backend with non-root user
-7. **Updates**: Keep dependencies updated regularly
+1. **Environment Variables** -- never commit `.env` files or credentials
+2. **API Keys** -- use secret managers (AWS Secrets Manager, Google Secret Manager)
+3. **CORS** -- restrict origins to your domain only
+4. **Rate Limiting** -- implement rate limiting on API endpoints
+5. **HTTPS** -- always use HTTPS in production
+6. **Permissions** -- run backend with non-root user
+7. **Updates** -- keep dependencies updated regularly
 
 ---
 
@@ -409,18 +363,13 @@ Use `pkgbuild` and `productbuild`.
 
 ### Backend Won't Start
 
-**Error:** `ModuleNotFoundError: No module named 'fastapi'`
-
-**Solution:** Install dependencies:
+**`ModuleNotFoundError: No module named 'fastapi'`**
 
 ```bash
-cd src/apps/web/backend
 pip install -r requirements.txt
 ```
 
-**Error:** `google.api_core.exceptions.PermissionDenied: 403 Permission denied`
-
-**Solution:** Check Google Cloud authentication:
+**`google.api_core.exceptions.PermissionDenied: 403`**
 
 ```bash
 gcloud auth application-default login
@@ -429,45 +378,30 @@ gcloud config set project your-project-id
 
 ### Frontend Build Fails
 
-**Error:** `Module not found: Can't resolve 'react'`
-
-**Solution:** Install dependencies:
+**`Module not found: Can't resolve 'react'`**
 
 ```bash
-cd src/apps/web/frontend
-npm install
-```
-
-**Error:** `TypeScript errors during build`
-
-**Solution:** Fix type errors or skip type checking (not recommended):
-
-```bash
-npm run build -- --mode production --no-type-check
+cd src/apps/web/frontend && npm install
 ```
 
 ### Electron App Won't Build
 
-**Error:** `Cannot find module 'electron'`
-
-**Solution:** Install Electron:
+**`Cannot find module 'electron'`**
 
 ```bash
 npm install --save-dev electron electron-builder
 ```
 
-**Error:** `Code signing failed (macOS)`
+**Code signing failed (macOS):**
 
-**Solution:** Either:
-
-- Skip code signing: `CSC_IDENTITY_AUTO_DISCOVERY=false npm run electron:build:mac`
-- Or set up proper certificates (see Code Signing section)
+Skip code signing for local testing:
+```bash
+CSC_IDENTITY_AUTO_DISCOVERY=false npm run electron:build:mac
+```
 
 ### Voice Output Not Working
 
-**Error:** `espeak-ng: command not found`
-
-**Solution:** Install espeak-ng:
+**`espeak-ng: command not found`**
 
 ```bash
 # macOS
@@ -477,27 +411,20 @@ brew install espeak-ng
 sudo apt-get install espeak-ng
 ```
 
-**Error:** Audio plays but no sound
-
-**Solution:** Check system audio settings and permissions.
-
 ### CORS Errors
 
-**Error:** `Access-Control-Allow-Origin` header missing
-
-**Solution:** Update `KNIK_WEB_CORS_ORIGINS`:
+Update `KNIK_WEB_CORS_ORIGINS`:
 
 ```bash
-export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com,http://localhost:5173"
+export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com,http://localhost:12414"
 ```
 
 ---
 
-## Additional Resources
+## Related Documentation
 
-- [WEB_APP.md](WEB_APP.md) - Web app architecture and API reference
-- [ELECTRON.md](ELECTRON.md) - Electron desktop app guide
-- [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) - Configuration reference
-- [SETUP.md](SETUP.md) - Initial setup guide
-
-For questions or issues, please open an issue on GitHub or consult the documentation.
+- [Web App Architecture](../components/web-architecture.md)
+- [Electron Guide](../guides/electron.md)
+- [Environment Variables](../reference/environment-variables.md)
+- [Setup Guide](setup.md)
+- [Streaming Architecture](streaming.md)

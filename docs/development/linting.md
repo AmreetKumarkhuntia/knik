@@ -66,6 +66,7 @@ ruff format --check .
 
 Some rules are relaxed for this project:
 
+- `E402` - Module-level import not at top
 - `E501` - Line too long (handled by formatter)
 - `B008` - Function calls in defaults
 - `C901` - Function complexity

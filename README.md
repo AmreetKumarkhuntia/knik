@@ -1,42 +1,37 @@
-# Knik - Text-to-Speech System
+# Knik - Multi-Interface AI Assistant with TTS
 
-High-quality text-to-speech powered by Kokoro-82M with a clean, modular Python API.
+High-quality text-to-speech powered by Kokoro-82M, with AI assistant interfaces (GUI, Console, Web), 6 AI providers, 31 MCP tools, workflow scheduling, and conversation history.
 
 ## Quick Start
 
 ```bash
-npm run start           # GUI application (default)
-python src/main.py      # Or run directly
+brew install espeak-ng                 # Install TTS dependency (macOS)
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env                   # Configure your settings
 
-npm run start:console   # Terminal console
-python src/main.py --mode console
-
-npm run start:web       # Web app (React + FastAPI)
-npm run start:electron  # Electron desktop app
-
-python demo/tts/demo.py
-python demo/console/console_app_demo.py
-python demo/ai/simple_ai_tts.py
+npm run start:gui                      # GUI application
+npm run start:console                  # Terminal console
+npm run start:web:backend              # Web backend (port 8000)
+npm run start:web:frontend             # Web frontend (port 12414)
+npm run start:electron                 # Electron desktop app
+npm run start:cron                     # Workflow scheduler
 ```
 
 ## Documentation
 
 All documentation is in the `docs/` folder:
 
-- [docs/README.md](docs/README.md) - Documentation index & getting started
-
-## Installation
-
-```bash
-brew install espeak-ng  # Install espeak-ng (required, macOS)
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+- [docs/README.md](docs/README.md) - Documentation index
 
 ## Features
 
-High-quality TTS with Kokoro-82M (82M parameters), AI assistant apps (GUI, Console, Web), MCP tools, conversation history, and multiple AI provider support.
+- **TTS**: Kokoro-82M (82M parameters) with 9 voices (5 female, 4 male) and 10 languages
+- **AI Providers**: Vertex AI, Gemini, ZhipuAI, Z.AI, Custom (OpenAI-compatible), Mock
+- **MCP Tools**: 31 tools across 7 categories (utils, text, shell, file, browser, cron, workflow)
+- **Interfaces**: GUI (CustomTkinter), Console, Web (React + FastAPI), Electron
+- **Workflows**: DAG-based workflow engine with natural language scheduling
+- **History**: Conversation context management with configurable depth
 
 ## Available Voices
 
@@ -50,5 +45,3 @@ Apache 2.0 (via Kokoro-82M)
 ## Credits
 
 Built with [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) by hexgrad
-
-See [docs/README.md](docs/README.md) for complete documentation.

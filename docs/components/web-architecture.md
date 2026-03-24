@@ -1,62 +1,173 @@
-# Knik Web App
+# Knik Web App Architecture
 
-**Electron + React + Tailwind CSS + Python Backend**
+**React + Vite + Tailwind CSS + FastAPI Python Backend**
 
-## 📁 Folder Structure
+## Folder Structure
 
-```mermaid
-mindmap
-  root((src/apps/web))
-    backend
-      main.py
-      config.py
-      routes
-        chat.py
-        tts.py
-        tools.py
-        history.py
-        settings.py
-      websocket
-        stream.py
-      models
-        chat.py
-        tts.py
-        settings.py
-    frontend
-      package.json
-      vite.config.ts
-      tailwind.config.js
-      postcss.config.js
-      index.html
-      src
-        main.tsx
-        App.tsx
-        index.css
-        lib
-          components
-            AudioControls.tsx
-            BackgroundEffects.tsx
-            ChatPanel.tsx
-            HamburgerButton.tsx
-            InputPanel.tsx
-            Sidebar.tsx
-          hooks
-            useAudio.ts
-            useChat.ts
-            useKeyboardShortcuts.ts
-            useToast.ts
-          services
-            api.ts
-            streaming.ts
-            theme.ts
-            audio/
+### Backend
+
+```
+src/apps/web/backend/
+├── __init__.py
+├── main.py              # FastAPI app setup, CORS, route mounting
+├── config.py            # WebBackendConfig (extends core Config)
+├── requirements.txt     # Backend-specific Python deps
+├── models/
+│   └── __init__.py      # (placeholder)
+├── routes/
+│   ├── __init__.py
+│   ├── admin.py         # GET /api/admin/settings
+│   ├── analytics.py     # GET /api/analytics/* (dashboard, metrics, activity)
+│   ├── chat.py          # POST /api/chat (non-streaming)
+│   ├── chat_stream.py   # POST /api/chat/stream (SSE streaming)
+│   ├── cron.py          # CRUD /api/cron/* (scheduled tasks)
+│   ├── history.py       # GET/POST /api/history (conversation history)
+│   └── workflow.py      # CRUD /api/workflows/* (workflow management)
+└── websocket/
+    └── __init__.py      # (placeholder)
 ```
 
-## 🔗 Integration with Existing Code
+### Frontend
 
-### **Backend Uses Existing Python Logic:**
+```
+src/apps/web/frontend/
+├── package.json
+├── vite.config.ts
+├── tailwind.config.js
+├── postcss.config.js
+├── tsconfig.json
+├── tsconfig.app.json    # Path aliases ($types, $components, etc.)
+├── index.html
+└── src/
+    ├── main.tsx         # React entry point
+    ├── App.tsx          # Router setup (6 routes)
+    ├── index.css        # Tailwind imports + global styles
+    ├── vite-env.d.ts
+    ├── assets/
+    │   └── react.svg
+    ├── lib/
+    │   ├── components/  # 29 reusable UI components
+    │   │   ├── index.ts # Barrel exports
+    │   │   ├── ActionButton.tsx
+    │   │   ├── Backdrop.tsx
+    │   │   ├── Breadcrumb.tsx
+    │   │   ├── Card.tsx
+    │   │   ├── ConfirmDialog.tsx
+    │   │   ├── EmptyState.tsx
+    │   │   ├── ExecutionFlowGraph.tsx
+    │   │   ├── ExecutionTimeline.tsx
+    │   │   ├── FormField.tsx
+    │   │   ├── HamburgerButton.tsx
+    │   │   ├── IconButton.tsx
+    │   │   ├── Input.tsx
+    │   │   ├── LinkButton.tsx
+    │   │   ├── LoadingSpinner.tsx
+    │   │   ├── MarkdownMessage.tsx
+    │   │   ├── MetricCard.tsx
+    │   │   ├── Modal.tsx
+    │   │   ├── NavLink.tsx
+    │   │   ├── NotificationButton.tsx
+    │   │   ├── PageHeader.tsx
+    │   │   ├── Pagination.tsx
+    │   │   ├── SearchBar.tsx
+    │   │   ├── SectionHeader.tsx
+    │   │   ├── StatusBadge.tsx
+    │   │   ├── StructuredOutput.tsx
+    │   │   ├── Table.tsx
+    │   │   ├── Tabs.tsx
+    │   │   ├── ToggleSwitch.tsx
+    │   │   ├── UserProfile.tsx
+    │   │   ├── graph/           # ReactFlow graph components
+    │   │   │   ├── FlowCanvas.tsx
+    │   │   │   ├── edges/FlowEdge.tsx
+    │   │   │   └── nodes/BaseNode.tsx, NodeContent.tsx
+    │   │   └── icons/
+    │   │       └── Icons.tsx    # MenuIcon, PlayIcon, PauseIcon, etc.
+    │   ├── constants/           # UI constants, themes, node types
+    │   │   ├── config.ts
+    │   │   ├── defaults.ts
+    │   │   ├── dimensions.ts
+    │   │   ├── navigation.ts
+    │   │   ├── nodes.ts
+    │   │   ├── status.ts
+    │   │   ├── themes.ts
+    │   │   ├── ui.ts
+    │   │   └── variants.ts
+    │   ├── data-structures/     # Graph data structures (d3-force layout)
+    │   │   ├── core/GraphNode.ts
+    │   │   ├── structures/Graph.ts
+    │   │   ├── layout/GraphLayout.ts
+    │   │   └── adapters/        # canvasAdapter, graphAdapter, workflowAdapter
+    │   ├── hooks/
+    │   │   ├── useAudio.ts
+    │   │   ├── useChat.ts
+    │   │   ├── useKeyboardShortcuts.ts
+    │   │   ├── useTheme.ts
+    │   │   └── useToast.ts
+    │   ├── pages/               # Top-level route pages
+    │   │   ├── Home.tsx
+    │   │   ├── Workflows.tsx
+    │   │   ├── WorkflowBuilder.tsx
+    │   │   ├── ExecutionDetail.tsx
+    │   │   └── AllExecutions.tsx
+    │   ├── sections/            # App-specific section components
+    │   │   ├── audio/AudioControls.tsx
+    │   │   ├── chat/ChatPanel.tsx, InputPanel.tsx
+    │   │   ├── effects/BackgroundEffects.tsx
+    │   │   ├── feedback/ErrorBoundary.tsx, Toast.tsx
+    │   │   ├── home/WelcomeContainer.tsx, SuggestionCards.tsx, ...
+    │   │   ├── layout/MainLayout.tsx, Sidebar.tsx, TopBar.tsx
+    │   │   ├── theme/ThemeProvider.tsx, ThemeSelector.tsx, ThemeToggle.tsx
+    │   │   └── workflows/
+    │   │       ├── WorkflowHub.tsx, WorkflowsTable.tsx
+    │   │       ├── ExecutionHistory/
+    │   │       ├── ScheduleManager/
+    │   │       └── WorkflowBuilder/Canvas.tsx, FloatingControls, ...
+    │   └── utils/
+    │       ├── format.ts
+    │       ├── metricsCalculator.ts
+    │       └── uuid.ts
+    ├── services/
+    │   ├── api.ts               # ChatAPI, AdminAPI
+    │   ├── streaming.ts         # streamChat() SSE client
+    │   ├── workflowApi.ts       # WorkflowAPI, ScheduleAPI, AnalyticsAPI
+    │   ├── theme.ts
+    │   └── audio/
+    │       ├── queue.ts         # queueAudio(), clearAudioQueue()
+    │       ├── playback.ts      # playAudio(), pauseAudio(), etc.
+    │       └── mediaSession.ts  # Browser Media Session API
+    └── types/
+        ├── api.ts, common.ts, components.ts, workflow.ts, ...
+        └── sections/            # Per-section type definitions
+```
 
-All existing Knik functionality is accessed via imports:
+## Architecture
+
+```
+┌────────────────────────┐     REST / SSE     ┌──────────────────────┐
+│  React Frontend        │ ←────────────────→ │  FastAPI Backend     │
+│  (Vite dev: port 12414)│                    │  (Uvicorn: port 8000)│
+│                        │                    │                      │
+│  - 5 pages (Router)    │                    │  - 7 route files     │
+│  - 29 components       │                    │  - AIClient          │
+│  - SSE streaming       │                    │  - TTSAsyncProcessor │
+│  - Audio playback      │                    │  - MCP tools         │
+│  - Theme system        │                    │  - ConversationHist  │
+└────────────────────────┘                    └──────────────────────┘
+                                                       │
+                                               Direct Python imports
+                                                       │
+                                              ┌────────┴────────┐
+                                              │  src/lib/        │
+                                              │  Core Knik Code  │
+                                              │  (shared w/ all  │
+                                              │   app modes)     │
+                                              └─────────────────┘
+```
+
+## Backend Integration
+
+The backend imports existing Knik functionality directly -- no duplication:
 
 ```python
 # backend/routes/chat.py
@@ -64,60 +175,79 @@ from imports import AIClient, ConversationHistory
 from lib.services.ai_client.registry import MCPServerRegistry
 ```
 
-**No changes to:**
+**No changes needed to:**
 
-- `src/lib/` - Core logic, services, MCP tools
-- `src/apps/console/` - Console app
-- `imports.py` - Central import hub
+- `src/lib/` -- core logic, services, MCP tools
+- `src/apps/console/` -- console app
+- `imports.py` -- central import hub
 
-### **Architecture:**
+## Frontend Routes
 
-```mermaid
-flowchart TD
-    A[React Frontend Electron Window] -->|REST API / WebSocket| B[FastAPI Backend Python API Layer]
-    B -->|Direct imports| C[Existing Knik Code AIClient TTSAsyncProcessor MCP Tools ConversationHistory]
+| Path | Page | Description |
+| --- | --- | --- |
+| `/` | `Home` | Chat interface with audio streaming |
+| `/workflows` | `Workflows` | Workflow listing and management |
+| `/workflows/create` | `WorkflowBuilder` | Create a new workflow |
+| `/workflows/:id/edit` | `WorkflowBuilder` | Edit existing workflow |
+| `/workflows/executions` | `AllExecutions` | All execution history |
+| `/executions/:id` | `ExecutionDetail` | Single execution detail |
 
-    style A fill:#e1f5ff
-    style B fill:#fff3e0
-    style C fill:#e8f5e9
-```
+## Frontend-to-Backend API Mapping
 
-## 🚀 Development
+| Frontend Service | Backend Route | Purpose |
+| --- | --- | --- |
+| `ChatAPI.stream()` | `chat_stream.py` `/api/chat/stream` | SSE streaming chat + audio |
+| `ChatAPI.getHistory()` | `history.py` `/api/history` | Get conversation history |
+| `ChatAPI.clearHistory()` | `history.py` `/api/history/clear` | Clear history |
+| `AdminAPI.getSettings()` | `admin.py` `/api/admin/settings` | Get server settings |
+| `WorkflowAPI.*` | `workflow.py` `/api/workflows` | Workflow CRUD + execution |
+| `ScheduleAPI.*` | `cron.py` `/api/cron` | Cron schedule management |
+| `AnalyticsAPI.*` | `analytics.py` `/api/analytics` | Dashboard, metrics, activity |
 
-### **Backend Development:**
+> The non-streaming `chat.py` endpoint (`POST /api/chat`) exists in the backend but is not consumed by the frontend.
 
-```bash
-cd src/apps/web/backend
-pip install fastapi uvicorn websockets
-uvicorn main:app --reload --port 8000
-```
+## Development
 
-### **Frontend Development:**
-
-```bash
-cd src/apps/web/frontend
-npm install
-npm run dev
-```
-
-### **Full Stack:**
+### Backend Only
 
 ```bash
-# From project root
-npm run dev
+npm run start:web:backend
+# Starts FastAPI on http://localhost:8000
 ```
 
-## 📝 Next Steps
+### Frontend Only
 
-1. ✅ **Folder structure created**
-2. ⏳ Setup frontend (React + Vite + Tailwind)
-3. ⏳ Create FastAPI backend with existing logic
-4. ⏳ Build React UI components
-5. ⏳ Implement smooth CSS animations
-6. ⏳ Connect frontend to backend
-7. ⏳ Setup Electron wrapper
-8. ⏳ Package and test
+```bash
+npm run start:web:frontend
+# Starts Vite dev server on http://localhost:12414
+```
 
----
+### Full Stack (Separate Terminals)
 
-**Status:** Phase 1 - Todo 1 Complete ✅
+```bash
+# Terminal 1
+npm run start:web:backend
+
+# Terminal 2
+npm run start:web:frontend
+```
+
+### With Electron
+
+```bash
+npm run electron:dev
+# Starts backend + frontend + Electron concurrently
+```
+
+## Configuration
+
+Backend defaults are in `src/apps/web/backend/config.py`:
+
+| Setting | Env Variable | Default |
+| --- | --- | --- |
+| Host | `KNIK_WEB_HOST` | `0.0.0.0` |
+| Port | `KNIK_WEB_PORT` | `8000` |
+| Hot Reload | `KNIK_WEB_RELOAD` | `True` |
+| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5` |
+
+See [environment-variables.md](../reference/environment-variables.md) for the full reference.

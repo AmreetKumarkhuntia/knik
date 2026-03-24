@@ -1,14 +1,14 @@
 # Streaming Architecture
 
-This document describes the real-time streaming system for text and audio responses.
+This document describes the real-time streaming system for text and audio responses in the Knik web app.
 
 ## Overview
 
 The streaming system delivers AI responses progressively:
 
-1. **Text streams immediately** - Users see text as it's generated (token by token)
-2. **Audio streams progressively** - Audio chunks generated and delivered as sentences complete
-3. **Non-blocking architecture** - Leverages async processing for smooth UX
+1. **Text streams immediately** -- users see text as it's generated (token by token)
+2. **Audio streams at sentence boundaries** -- audio chunks are generated and sent as complete sentences accumulate
+3. **SSE transport** -- Server-Sent Events over HTTP for one-way streaming
 
 ## Architecture
 
@@ -16,65 +16,53 @@ The streaming system delivers AI responses progressively:
 
 ```
 User Message
-    ↓
-FastAPI Endpoint (/api/chat/stream)
-    ↓
-AI Client (chat_stream) → Text Chunks
-    ↓                          ↓
-    |                    SSE: event=text
-    |                          ↓
-    └─→ TTSAsyncProcessor  Frontend
-            ↓
-        Audio Queue (callback)
-            ↓
-       SSE: event=audio
-            ↓
-        Frontend Playback
+    |
+    v
+POST /api/chat/stream
+    |
+    v
+AIClient.chat_stream(prompt, history) --> text chunks (generator)
+    |                                          |
+    |                                    SSE: event=text
+    |                                          |
+    v                                     Frontend
+Sentence buffer accumulates text              |
+    |                                         v
+    v                               appendToChat(chunk)
+Sentence complete (. ! ? \n)
+    |
+    v
+KokoroVoiceModel.generate(sentence) --> audio bytes
+    |
+    v
+Base64 encode WAV
+    |
+    v
+SSE: event=audio
+    |
+    v
+Frontend audio queue --> sequential playback
 ```
 
-### Components
+### Key Design Decision: Synchronous TTS
 
-#### 1. TTSAsyncProcessor (Enhanced)
+The streaming endpoint generates audio **synchronously** using `KokoroVoiceModel.generate()` directly within the SSE generator. This means:
 
-**Location:** `src/lib/core/tts_async_processor.py`
+- Audio generation blocks text streaming temporarily (per-sentence)
+- Simpler implementation than the async `TTSAsyncProcessor` pattern
+- Each sentence is fully generated before the next text chunk is sent
 
-**Key Changes:**
+> **Note:** The `TTSAsyncProcessor` class (at `src/lib/services/tts/processor.py`) supports an `audio_ready_callback` parameter for non-blocking audio generation, but the web streaming endpoint does not currently use it.
 
-- Added `audio_ready_callback` parameter to constructor
-- Callback invoked in `__audio_processor__` when audio chunk ready
-- `play_voice=False` for web backend (frontend handles playback)
+## Components
 
-**Usage:**
+### 1. Streaming Endpoint
 
-```python
-def audio_ready_callback(audio_data: bytes, sample_rate: int):
-    # Stream to frontend via SSE
-    audio_queue.put((audio_data, sample_rate))
+**File:** `src/apps/web/backend/routes/chat_stream.py`
 
-tts = TTSAsyncProcessor(
-    voice_model="af_sarah",
-    sample_rate=24000,
-    play_voice=False,  # No local playback
-    audio_ready_callback=audio_ready_callback
-)
-tts.start_async_processing()
-tts.play_async("Hello world")  # Audio ready → callback called
-```
+**Endpoint:** `POST /api/chat/stream/`
 
-#### 2. Streaming Endpoint
-
-**Location:** `src/apps/web/backend/routes/chat_stream.py`
-
-**Endpoint:** `POST /api/chat/stream`
-
-**Technology:** Server-Sent Events (SSE)
-
-**Event Types:**
-
-- `text` - Text chunk from AI
-- `audio` - Base64 encoded WAV audio chunk
-- `done` - Streaming complete (includes audio chunk count)
-- `error` - Error message
+**Technology:** Server-Sent Events (SSE) via `StreamingResponse`
 
 **Request:**
 
@@ -84,54 +72,65 @@ tts.play_async("Hello world")  # Audio ready → callback called
 }
 ```
 
-**Response Stream:**
+**SSE Event Types:**
+
+| Event | Data Format | Description |
+| --- | --- | --- |
+| `text` | `{"text": "chunk"}` | AI text chunk |
+| `audio` | `{"audio": "base64...", "sample_rate": 24000}` | Base64-encoded WAV audio chunk |
+| `done` | `{"audio_count": N}` | Stream complete |
+| `error` | `{"error": "message"}` | Error message |
+
+**Response Headers:**
+
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+X-Accel-Buffering: no
+```
+
+**Example SSE Stream:**
 
 ```
 event: text
-data: Why
+data: {"text": "Why"}
 
 event: text
-data:  did
+data: {"text": " did the"}
 
 event: text
-data:  the
+data: {"text": " chicken"}
 
 event: audio
-data: UklGRiQAAABXQVZFZm10IBAA...
+data: {"audio": "UklGRiQAAABXQVZFZm10IBAA...", "sample_rate": 24000}
 
 event: text
-data:  chicken
+data: {"text": " cross the road?"}
+
+event: audio
+data: {"audio": "UklGRiQAAABXQVZFZm10IBAA...", "sample_rate": 24000}
 
 event: done
-data: 5
+data: {"audio_count": 2}
 ```
 
-**Key Features:**
+### 2. Frontend Streaming Client
 
-- Sentence-based audio chunking (splits on `.`, `!`, `?`, `\n`)
-- Audio queue with callback system
-- Timeout protection (30s max)
-- Automatic cleanup after streaming
-
-#### 3. Frontend Client
-
-**Location:** `src/apps/web/frontend/src/services/streaming.ts`
+**File:** `src/apps/web/frontend/src/services/streaming.ts`
 
 **Main Function:** `streamChat(message, callbacks)`
 
-**Usage:**
+Returns an `AbortController` for cancellation.
 
 ```typescript
-import { streamChat } from "./services/streaming";
-import { queueAudio } from "./services/audio";
+import { streamChat } from "$services/streaming";
 
 const controller = await streamChat("Hello!", {
   onText: (chunk) => {
-    // Append to UI immediately
     appendToChat(chunk);
   },
   onAudio: (audioBase64) => {
-    // Queue chunk — the audio service plays them sequentially
     queueAudio(audioBase64, 24000);
   },
   onComplete: (count) => {
@@ -146,50 +145,65 @@ const controller = await streamChat("Hello!", {
 controller.abort();
 ```
 
-#### 4. Audio Service Layer
+Uses `VITE_API_URL` env var or falls back to `http://localhost:8000`.
 
-**Location:** `src/apps/web/frontend/src/services/audio/`
+### 3. Audio Service Layer
 
-| File              | Responsibility                                                             |
-| ----------------- | -------------------------------------------------------------------------- |
-| `queue.ts`        | Receives chunks via `queueAudio()`, plays them sequentially                |
-| `playback.ts`     | Decodes base64 WAV, drives `HTMLAudioElement`, emits play/pause/stop state |
-| `queueState.ts`   | Shared flag tracking whether queue is active (avoids circular imports)     |
-| `mediaSession.ts` | Keeps the browser Media Session API in sync                                |
+**Directory:** `src/apps/web/frontend/src/services/audio/`
 
-**Playback control API:**
+| File | Responsibility |
+| --- | --- |
+| `queue.ts` | Receives chunks via `queueAudio()`, plays them sequentially |
+| `playback.ts` | Decodes base64 WAV, drives `HTMLAudioElement`, emits state |
+| `mediaSession.ts` | Keeps browser Media Session API in sync |
+| `index.ts` | Barrel exports |
+
+**Playback Control API:**
 
 ```typescript
 import {
   pauseAudio,
   resumeAudio,
   stopAudio,
+  clearAudioQueue,
   setAudioStateCallback,
-} from "./services/audio";
+} from "$services/audio";
 
-// Listen to state changes (used to show/hide Pause & Stop buttons)
+// Listen to state changes
 setAudioStateCallback((isPaused, isPlaying) => {
   setAudioPaused(isPaused);
   setAudioPlaying(isPlaying);
 });
 
-pauseAudio(); // Pause current chunk
-resumeAudio(); // Resume
-stopAudio(); // Stop + clear queue
+pauseAudio();       // Pause current chunk
+resumeAudio();      // Resume
+stopAudio();        // Stop current + clear queue
+clearAudioQueue();  // Clear pending chunks only
 ```
+
+### 4. React Integration
+
+**Hooks:**
+
+- `useChat` (`src/apps/web/frontend/src/lib/hooks/useChat.ts`) -- consumes `streamChat`, `queueAudio`, `clearAudioQueue`
+- `useAudio` (`src/apps/web/frontend/src/lib/hooks/useAudio.ts`) -- consumes `setAudioStateCallback`, `stopAudio`, `pauseAudio`, `resumeAudio`
+
+**UI Component:**
+
+- `AudioControls` (`src/apps/web/frontend/src/lib/sections/audio/AudioControls.tsx`) -- pause/resume/stop buttons
 
 ## Implementation Details
 
 ### Sentence-Based Chunking
 
-Audio generation happens at sentence boundaries for natural pacing:
+Audio is generated at sentence boundaries for natural pacing:
 
 ```python
 text_buffer = ""
 sentence_endings = [".", "!", "?", "\n"]
 
-for text_chunk in ai_client.chat_stream(prompt):
-    yield f"event: text\ndata: {text_chunk}\n\n"
+for text_chunk in ai_client.chat_stream(prompt, history):
+    yield sse_event("text", {"text": text_chunk})
 
     text_buffer += text_chunk
 
@@ -199,43 +213,24 @@ for text_chunk in ai_client.chat_stream(prompt):
             sentence = parts[0] + ending
             text_buffer = parts[1] if len(parts) > 1 else ""
 
-            tts_processor.play_async(sentence.strip())
+            audio = voice_model.generate(sentence.strip())
+            wav_base64 = encode_wav_base64(audio, sample_rate)
+            yield sse_event("audio", {"audio": wav_base64, "sample_rate": sample_rate})
             break
-```
-
-### Audio Callback Pattern
-
-The callback bridges TTS generation and SSE streaming:
-
-```python
-audio_queue = Queue()
-
-def audio_ready_callback(audio_data, sample_rate):
-    audio_queue.put((audio_data, sample_rate))
-
-# Set callback
-tts_processor.set_audio_ready_callback(audio_ready_callback)
-
-# Stream audio as ready
-while not tts_processor.is_processing_complete():
-    if not audio_queue.empty():
-        audio, sr = audio_queue.get()
-        audio_base64 = encode_to_base64(audio, sr)
-        yield f"event: audio\ndata: {audio_base64}\n\n"
 ```
 
 ### Client-Side Audio Playback
 
-Chunks are queued and played sequentially via the audio service layer:
+Chunks are queued and played sequentially:
 
 ```typescript
-// queue.ts — adds a chunk to the playback queue
+// queue.ts
 export function queueAudio(base64Audio: string, sampleRate: number): void {
   audioQueue.push({ audio: base64Audio, sampleRate });
   if (!isPlayingQueue) playQueue(); // start draining if idle
 }
 
-// playback.ts — decodes and plays one chunk via HTMLAudioElement
+// playback.ts
 export function playAudio(base64Audio: string): Promise<void> {
   return new Promise((resolve) => {
     const bytes = Uint8Array.from(atob(base64Audio), (c) => c.charCodeAt(0));
@@ -251,161 +246,101 @@ export function playAudio(base64Audio: string): Promise<void> {
 }
 ```
 
-**Key design decisions:**
+**Design decisions:**
 
-- Audio chunks play **sequentially** (no overlap between chunks)
-- The `loading` state (stream still receiving) keeps Pause/Stop visible in the inter-chunk gap
-- `stopAudio()` + `clearAudioQueue()` abort both the current playback and any pending chunks
+- Audio chunks play **sequentially** (no overlap)
+- The `loading` state keeps Pause/Stop visible between chunks
+- `stopAudio()` + `clearAudioQueue()` abort both current playback and pending chunks
+
+### Conversation History
+
+The streaming endpoint maintains a global `ConversationHistory(max_size=50)` instance. After each complete response, the turn is saved. The number of recent turns sent as context is configurable via `KNIK_HISTORY_CONTEXT_SIZE` (default: 5).
 
 ## Configuration
 
-**Backend Config** (`src/apps/web/backend/config.py`):
+**Backend defaults** (from `src/apps/web/backend/config.py`):
 
-```python
-class WebBackendConfig:
-    voice_name: str = "af_sarah"
-    sample_rate: int = 24000
-    ai_provider: str = "vertex"
-    ai_model: str = "gemini-1.5-pro"
-```
-
-**Environment Variables:**
-
-- `KNIK_VOICE_NAME` - TTS voice (default: af_sarah)
-- `KNIK_SAMPLE_RATE` - Audio sample rate (default: 24000)
-- `KNIK_AI_PROVIDER` - AI provider (default: vertex)
-- `KNIK_AI_MODEL` - Model name (default: gemini-1.5-pro)
+| Setting | Env Variable | Default |
+| --- | --- | --- |
+| Voice | `KNIK_VOICE_NAME` | `af_sarah` |
+| Sample Rate | `KNIK_SAMPLE_RATE` | `24000` |
+| AI Provider | `KNIK_AI_PROVIDER` | `vertex` |
+| AI Model | `KNIK_AI_MODEL` | `gemini-2.0-flash-exp` |
+| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5` |
 
 ## Testing
 
-### Backend Test
+### Backend
 
 ```bash
 # Start backend
 npm run start:web:backend
 
 # Test with curl (SSE stream)
-curl -N -X POST http://localhost:8000/api/chat/stream \
+curl -N -X POST http://localhost:8000/api/chat/stream/ \
   -H "Content-Type: application/json" \
   -d '{"message": "Tell me a short joke"}'
 ```
 
-### Frontend Test
+### Frontend
 
 ```bash
 # Start frontend
 npm run start:web:frontend
 
-# Open browser console and test
-const source = streamChat("Hello!", {
-  onText: (chunk) => console.log("Text:", chunk),
-  onAudio: (audio) => console.log("Audio:", audio.length, "bytes"),
-  onComplete: (count) => console.log("Done:", count, "chunks")
-});
+# Open http://localhost:12414 and use the chat interface
 ```
 
-## Comparison: Stream vs Non-Stream
+## Stream vs Non-Stream Comparison
 
-### Non-Stream Endpoint (`/api/chat`)
+| Aspect | `/api/chat` (non-stream) | `/api/chat/stream` (SSE) |
+| --- | --- | --- |
+| Response type | Single JSON | SSE event stream |
+| Text delivery | After full generation | Token by token |
+| Audio delivery | Full audio in response | Per-sentence chunks |
+| Perceived latency | Higher (wait for all) | Lower (instant text) |
+| Memory | Higher (full audio in RAM) | Lower (streaming chunks) |
+| Complexity | Simpler | More complex |
+| Frontend usage | Not used currently | Primary chat interface |
 
-**Pros:**
+## TTSAsyncProcessor Reference
 
-- Simpler implementation
-- Single response (text + audio)
-- Easier error handling
+While the streaming endpoint uses synchronous TTS, the `TTSAsyncProcessor` class supports async audio generation with callbacks:
 
-**Cons:**
+```python
+from lib.services.tts.processor import TTSAsyncProcessor
 
-- Slower perceived response (wait for full generation)
-- No progressive feedback
-- Higher memory usage (full audio in memory)
+tts = TTSAsyncProcessor(
+    sample_rate=24000,
+    voice_model="af_sarah",
+    play_voice=False,
+    audio_ready_callback=lambda audio, sr: handle_audio(audio, sr),
+)
+tts.start_async_processing()
+tts.play_async("Hello world")  # Non-blocking, callback fires when ready
+```
 
-### Stream Endpoint (`/api/chat/stream`)
+Constructor parameters:
 
-**Pros:**
-
-- Instant feedback (text appears immediately)
-- Progressive audio (plays while generating)
-- Lower memory footprint (streaming chunks)
-- Better UX (feels faster and more responsive)
-
-**Cons:**
-
-- More complex implementation
-- SSE connection management
-- Requires careful cleanup
-
-## Performance Considerations
-
-### Backend
-
-- **Memory:** Streaming reduces peak memory (chunks vs full audio)
-- **Latency:** Text appears ~100-300ms faster than non-stream
-- **Throughput:** Can handle more concurrent users (no blocking)
-
-### Frontend
-
-- **Network:** SSE maintains long-lived connection (efficient for streams)
-- **UI Responsiveness:** Non-blocking UI (streaming keeps page interactive)
-- **Audio Buffering:** Browser handles audio queue automatically
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `sample_rate` | `int` | - | Audio sample rate |
+| `voice_model` | `str` | `Config.DEFAULT_TTS` | TTS voice name |
+| `save_dir` | `str \| None` | `None` | Directory to save audio files |
+| `play_voice` | `bool` | `True` | Play audio locally |
+| `sleep_duration` | `float` | `0.3` | Sleep between processing cycles |
+| `audio_ready_callback` | `Callable[[bytes, int], None] \| None` | `None` | Callback when audio is ready |
 
 ## Best Practices
 
-1. **Always set `play_voice=False`** for web backend
-2. **Clean up callback** after streaming completes
-3. **Handle timeout** (max 30s for audio generation)
-4. **Close EventSource** on component unmount (React)
-5. **Provide loading state** during streaming
-6. **Handle errors gracefully** (network issues, timeouts)
-
-## Future Enhancements
-
-### Priority 1
-
-- [ ] Adaptive chunking (based on network speed)
-- [ ] Audio compression (reduce bandwidth)
-- [ ] Retry logic for failed chunks
-
-### Priority 2
-
-- [ ] Multi-voice support (dynamic voice switching)
-- [ ] Real-time speed adjustment
-- [ ] WebSocket alternative (bidirectional streaming)
-
-### Priority 3
-
-- [ ] Audio caching (avoid regenerating same text)
-- [ ] Client-side audio stitching (smoother playback)
-- [ ] Metrics and monitoring (latency, chunk sizes)
-
-## Troubleshooting
-
-### Stream doesn't start
-
-- Check CORS settings (allow `text/event-stream`)
-- Verify EventSource browser support
-- Check network tab for SSE connection
-
-### Audio doesn't play
-
-- Verify audio format (WAV)
-- Check base64 encoding/decoding
-- Ensure autoplay policy compliance
-
-### Stream hangs
-
-- Check timeout settings (30s default)
-- Verify `is_processing_complete()` logic
-- Look for exceptions in audio callback
-
-### Missing audio chunks
-
-- Check audio queue size (may be full)
-- Verify callback is set before `play_async()`
-- Ensure TTS processor is started
+1. Set `play_voice=False` for web backend (frontend handles playback)
+2. Handle stream cancellation (AbortController) on component unmount
+3. Provide loading state during streaming
+4. Handle errors gracefully (network issues, timeouts)
+5. Clean up audio resources when navigating away
 
 ## Related Documentation
 
-- [Web App Architecture](WEB_APP.md)
-- [TTS Async Processor](../src/lib/core/tts_async_processor.py)
-- [FastAPI SSE Guide](https://fastapi.tiangolo.com/advanced/custom-response/#streamingresponse)
+- [Web App Architecture](../components/web-architecture.md)
+- [Environment Variables](../reference/environment-variables.md)
+- [API Reference](../reference/api.md)

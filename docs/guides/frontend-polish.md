@@ -1,5 +1,7 @@
 # Web App Frontend Polish Summary
 
+> **Note:** This is a historical record of commit `026aaa1` from December 6, 2025. The frontend has evolved significantly since then -- see [web-architecture.md](../components/web-architecture.md) and [react-common-components.md](../components/react-common-components.md) for the current state.
+
 **Date:** December 6, 2025
 **Commit:** `026aaa1` - feat(web): Add comprehensive frontend polish and UX improvements
 
@@ -197,7 +199,11 @@ animations: {
 ### Run the Web App:
 
 ```bash
-npm run start:web
+# Terminal 1
+npm run start:web:backend
+
+# Terminal 2
+npm run start:web:frontend
 ```
 
 ### Keyboard Shortcuts:

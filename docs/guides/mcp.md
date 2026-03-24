@@ -12,26 +12,30 @@ mindmap
       text_defs.py
       shell_defs.py
       file_defs.py
+      browser_defs.py
+      cron_defs.py
+      workflow_defs.py
     implementations
       utils_impl.py
       text_impl.py
       shell_impl.py
       file_impl.py
+      browser_impl.py
+      cron_impl.py
+      workflow_impl.py
     index.py
 ```
 
-Clean separation: definitions (interface) vs implementations (code).
+Clean separation: definitions (JSON schemas) vs implementations (Python functions).
 
-## Built-in Tools (20)
+## Built-in Tools (31)
 
-### Utility (6)
+### Utility (4)
 
 - `calculate` - Basic math expressions
-- `advanced_calculate` - Extended math with precision
 - `get_current_time` - Current timestamp
 - `get_current_date` - Today's date
 - `reverse_string` - Reverse text
-- `count_words` - Count words
 
 ### Text Processing (5)
 
@@ -47,14 +51,36 @@ Clean separation: definitions (interface) vs implementations (code).
 
 ### File System (8)
 
-- `read_file` - Read the complete contents of a file or a specific line range.
-- `list_directory` - List all files and directories in a given path.
-- `search_in_files` - Search for a pattern (text or regex) across multiple files in a directory.
-- `file_info` - Get detailed information about a file or directory.
-- `write_file` - Write content to a file.
-- `append_to_file` - Append content to an existing file.
-- `find_in_file` - Search for a pattern within a specific file.
-- `count_in_file` - Count how many times a pattern appears in a file.
+- `read_file` - Read the complete contents of a file or a specific line range
+- `list_directory` - List all files and directories in a given path
+- `search_in_files` - Search for a pattern (text or regex) across multiple files in a directory
+- `file_info` - Get detailed information about a file or directory
+- `write_file` - Write content to a file
+- `append_to_file` - Append content to an existing file
+- `find_in_file` - Search for a pattern within a specific file
+- `count_in_file` - Count how many times a pattern appears in a file
+
+### Browser (6)
+
+- `browser_navigate` - Navigate to a URL
+- `browser_get_text` - Extract text content from the current page
+- `browser_get_links` - Get all links from the current page
+- `browser_click` - Click an element on the page
+- `browser_type` - Type text into an input field
+- `browser_screenshot` - Take a screenshot of the current page
+
+### Cron (3)
+
+- `list_cron_schedules` - List all cron schedules
+- `add_cron_schedule` - Add a new cron schedule
+- `remove_cron_schedule` - Remove a cron schedule
+
+### Workflow (4)
+
+- `create_workflow` - Create a new workflow
+- `remove_workflow` - Remove a workflow
+- `list_workflows` - List all workflows
+- `get_workflow_templates` - Get available workflow templates
 
 ## Usage
 
@@ -121,7 +147,11 @@ Update `definitions/__init__.py`:
 ```python
 from .my_tools_defs import MY_TOOLS_DEFINITIONS
 
-ALL_DEFINITIONS = UTILS_DEFINITIONS + TEXT_DEFINITIONS + MY_TOOLS_DEFINITIONS
+ALL_DEFINITIONS = (
+    UTILS_DEFINITIONS + TEXT_DEFINITIONS + SHELL_DEFINITIONS
+    + FILE_DEFINITIONS + CRON_DEFINITIONS + BROWSER_DEFINITIONS
+    + WORKFLOW_DEFINITIONS + MY_TOOLS_DEFINITIONS
+)
 ```
 
 Update `implementations/__init__.py`:
@@ -132,11 +162,16 @@ from .my_tools_impl import MY_TOOLS_IMPLEMENTATIONS
 ALL_IMPLEMENTATIONS = {
     **UTILS_IMPLEMENTATIONS,
     **TEXT_IMPLEMENTATIONS,
-    **MY_TOOLS_IMPLEMENTATIONS
+    **SHELL_IMPLEMENTATIONS,
+    **FILE_IMPLEMENTATIONS,
+    **CRON_IMPLEMENTATIONS,
+    **BROWSER_IMPLEMENTATIONS,
+    **WORKFLOW_IMPLEMENTATIONS,
+    **MY_TOOLS_IMPLEMENTATIONS,
 }
 ```
 
-Tools auto-register on startup!
+Tools auto-register on startup.
 
 ## Tool Schema Reference
 
@@ -170,81 +205,6 @@ Tools auto-register on startup!
 3. **Error handling** - Return error messages as strings
 4. **Keep focused** - One tool = one purpose
 5. **Test edge cases** - Handle invalid inputs gracefully
-6. **No comments** - Write self-documenting code
-
-## Examples
-
-### Weather Tool
-
-**Definition:**
-
-```python
-{
-    "name": "get_weather",
-    "description": "Get current weather for a city",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "city": {
-                "type": "string",
-                "description": "City name"
-            },
-            "units": {
-                "type": "string",
-                "description": "Temperature units: celsius or fahrenheit",
-                "default": "celsius"
-            }
-        },
-        "required": ["city"]
-    }
-}
-```
-
-**Implementation:**
-
-```python
-def get_weather(city: str, units: str = "celsius") -> str:
-    # In real implementation, call weather API
-    return f"Weather in {city}: 22°C, Sunny"
-```
-
-### File Reader Tool
-
-**Definition:**
-
-```python
-{
-    "name": "read_file",
-    "description": "Read contents of a text file",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "filepath": {
-                "type": "string",
-                "description": "Path to file"
-            },
-            "max_lines": {
-                "type": "integer",
-                "description": "Maximum lines to read",
-                "default": 100
-            }
-        },
-        "required": ["filepath"]
-    }
-}
-```
-
-**Implementation:**
-
-```python
-def read_file(filepath: str, max_lines: int = 100) -> str:
-    try:
-        with open(filepath, 'r') as f:
-            lines = f.readlines()[:max_lines]
-        return ''.join(lines)
-    except Exception as e:
-        return f"Error reading file: {str(e)}"
-```
 
 ## Debugging
 
@@ -257,13 +217,13 @@ You: /tools
 **Enable logs:**
 
 ```bash
-export KNIK_SHOW_LOGS=True
+export KNIK_SHOW_LOGS=true
 ```
 
 **Test manually:**
 
 ```python
-from apps.console.mcp.implementations.utils_impl import calculate
+from lib.mcp.implementations.utils_impl import calculate
 
 result = calculate("2 + 2")
 print(result)  # "4"
@@ -274,7 +234,6 @@ print(result)  # "4"
 - Tools run with application permissions
 - Sanitize file paths
 - Validate inputs
-- Avoid shell commands
 - Don't expose sensitive data
 - Consider rate limiting for expensive operations
 
@@ -288,6 +247,6 @@ print(result)  # "4"
 
 ## See Also
 
-- [CONSOLE.md](CONSOLE.md) - Using MCP tools in console
-- [API.md](API.md) - AIClient and tool registration API
-- [apps/console/MCP_IMPLEMENTATION.md](apps/console/MCP_IMPLEMENTATION.md) - Quick implementation guide
+- [Console Guide](console.md) - Using MCP tools in console
+- [API Reference](../reference/api.md) - AIClient and tool registration API
+- [Scheduler Guide](scheduler.md) - Using MCP tools in workflow nodes

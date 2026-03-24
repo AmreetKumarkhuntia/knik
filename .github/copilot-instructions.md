@@ -2,41 +2,42 @@
 
 ## Project Overview
 
-Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console app. Built with Python, it features async audio processing, pluggable AI providers, and Model Context Protocol (MCP) tools for extending AI capabilities.
+Knik is a multi-interface AI assistant with Text-to-Speech (TTS) capabilities. Built with Python, it features async audio processing, 6 pluggable AI providers (including any OpenAI-compatible endpoint), 31 MCP tools across 7 categories, and a React + FastAPI web app with workflow scheduling.
 
-**Core Technologies:** Python 3.12+, Kokoro-82M TTS (82M parameters), Google Vertex AI/Gemini, Sounddevice/Soundfile, Threading
+**Core Technologies:** Python 3.12+, Kokoro-82M TTS (82M parameters), LangChain, Google Vertex AI/Gemini, ZhipuAI, Z.AI, React 18 + TypeScript + Vite, FastAPI, PostgreSQL, Sounddevice/Soundfile, Threading/Asyncio
 
 ## Architecture
 
 ### Three-Layer Structure
 
-1. **`src/lib/`** - Reusable library components (core, services, utils)
-2. **`src/apps/`** - Applications built on the library (console app with MCP tools)
+1. **`src/lib/`** - Reusable library components (core, services, utils, mcp, cron)
+2. **`src/apps/`** - Applications built on the library (console, gui, web)
 3. **`src/imports.py`** - Central import hub to avoid complex import paths
 
 ### Key Components
 
 **TTSAsyncProcessor** (`src/lib/core/tts_async_processor.py`)
 
-- Dual-thread architecture: text → audio conversion queue + audio playback queue
+- Dual-thread architecture: text -> audio conversion queue + audio playback queue
 - Non-blocking voice output with `play_async(text)` method
 - Critical: Use `is_processing_complete()` to check if playback finished before exiting
 - Backed by `KokoroVoiceModel` (Kokoro-82M) and `AudioProcessor` (sounddevice)
 
 **AIClient** (`src/lib/services/ai_client/client.py`)
 
-- Unified interface supporting multiple providers via `ProviderRegistry`
-- Auto-fallback to mock provider if real provider unconfigured
-- Two query modes: `query()` (blocking) and `query_stream()` (generator)
+- Unified interface supporting 6 providers via `ProviderRegistry`
+- Auto-fallback to mock provider if real provider unconfigured (controlled by `auto_fallback_to_mock`)
+- Two query modes: `chat()` (blocking, returns str) and `chat_stream()` (generator, yields str chunks)
 - MCP tool integration via `MCPServerRegistry` and `register_tool()`
+- Constructor: `AIClient(provider, auto_fallback_to_mock, mcp_registry, system_instruction, tool_callback, **provider_kwargs)`
 
 **ConsoleApp** (`src/apps/console/`)
 
 - Interactive AI chat with voice responses and conversation history
 - Modular architecture: `app.py` (main), `history.py` (context), `tools/` (commands)
-- Built-in command system with registry pattern: `/voice`, `/history`, `/tools`, `/provider`, `/model`, `/debug`, etc.
-- Integrates AIClient + TTSAsyncProcessor with smart wait system (blocks user input during playback)
-- Debug mode support: Toggle with `/debug` to see verbose processing details (uses `print()` for user console output)
+- Built-in command system with registry pattern
+- 14 commands: help, exit, quit, clear, history, voice, info, toggle-voice, tools, agent, provider, model, debug, workflow
+- Integrates AIClient + TTSAsyncProcessor with smart wait system
 
 **GUIApp** (`src/apps/gui/`)
 
@@ -44,77 +45,73 @@ Knik is a modular Text-to-Speech (TTS) system with an AI-powered voice console a
 - Modular architecture: `app.py` (main), `config.py`, `theme.py` (theming), `components/` (UI widgets)
 - Three main components: ChatPanel (messages), InputPanel (text entry + buttons), SettingsPanel (configuration)
 - Dynamic theme switching: Light/Dark/System modes with full UI refresh
-- Conversation history integration: Passes last N messages to AI for context
-- Voice toggle: Enable/disable TTS output via settings
-- MCP tool integration: AI can execute 20+ tools with visual feedback in chat
+- AI Provider selection in settings includes all 6 providers
 
 **WebApp** (`src/apps/web/`)
 
-- Modern web interface with React + FastAPI for 60fps smooth animations
-- **Backend** (`backend/`): FastAPI REST API with 3 main routers
-  - `routes/chat.py`: Unified chat endpoint (text in → text + audio out)
+- Modern web interface with React + FastAPI
+- **Backend** (`backend/`): FastAPI REST API with 7 route files, 22 endpoints
+  - `routes/chat.py`: Chat endpoint (text in -> text + audio out)
+  - `routes/chat_stream.py`: SSE streaming chat endpoint
   - `routes/admin.py`: Settings management (provider, model, voice lists)
-  - `routes/history.py`: Conversation history CRUD operations
+  - `routes/history.py`: Conversation history CRUD
+  - `routes/workflow.py`: Workflow CRUD and execution
+  - `routes/cron.py`: Schedule management (natural language)
+  - `routes/analytics.py`: Dashboard, metrics, execution analytics
   - `config.py`: WebBackendConfig reads from environment variables
   - `main.py`: App entry point with CORS, lifespan handlers
 - **Frontend** (`frontend/src/`): React 18 + TypeScript + Vite + Tailwind
-  - `lib/components/`: TopBar, ChatPanel, InputPanel (messenger-style UI)
-  - `services/`: api.ts (backend client), audio.ts (playback), theme.ts (design tokens)
-  - Smooth animations: gradient-shift (8s), slide-in-right/left (300ms bounce)
-  - GPU-accelerated for 60fps performance
+  - `lib/pages/`: Home, Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions
+  - `lib/sections/`: Domain-specific UI organized by subdirectory (audio, chat, effects, feedback, home, layout, theme, workflows)
+  - `lib/components/`: 30+ reusable UI components (ActionButton, Card, Modal, Table, Pagination, etc.)
+  - `lib/services/`: API client, audio playback, theme tokens
 - **Scripts**: `scripts/start_web_backend.sh`, `scripts/start_web_frontend.sh`
-- **Config Pattern**: All settings from .env (KNIK_AI_PROVIDER, KNIK_AI_MODEL, KNIK_VOICE_NAME, etc.)
-- **Usage**: `npm run start:web` (starts both backend + frontend)
-- **See**: `docs/guides/web-app.md` for complete architecture and API reference
+- **Usage**: `npm run start:web:backend` + `npm run start:web:frontend` (separate processes)
+- Frontend dev server runs on port 12414, backend on port 8000
+
+**Workflow Scheduler** (`src/lib/cron/`)
+
+- Poll-based scheduler with natural language schedule descriptions (NOT cron expressions)
+- `models.py`: Workflow, Schedule (with `target_workflow_id`, `schedule_description`, `recurrence_seconds`), ExecutionRecord, NodeExecutionRecord
+- `nodes.py`: 4 node types - AIExecutionNode, FunctionExecutionNode, ConditionalBranchNode, FlowMergeNode
+- `engine.py`: WorkflowEngine with DAG validation and topological BFS execution
+- `scheduler.py`: CronScheduler with asyncio poll loop
+- `schedule_parser.py`: Natural language to datetime/seconds conversion
+
+**AI Providers** (`src/lib/services/ai_client/providers/`)
+
+```
+BaseAIProvider (ABC)
+ +-- LangChainProvider (chat/chat_stream via LangChain invoke/stream)
+ |    +-- VertexAIProvider    ("vertex")   - ChatVertexAI
+ |    +-- GeminiAIProvider    ("gemini")   - ChatGoogleGenerativeAI
+ |    +-- ZhipuAIProvider     ("zhipuai")  - ChatZhipuAI
+ |    +-- ZAIProvider         ("zai")      - ChatOpenAI -> z.ai endpoint
+ |    +-- CustomProvider      ("custom")   - ChatOpenAI -> any OpenAI-compatible endpoint
+ +-- MockAIProvider           ("mock")     - Canned responses for testing
+```
+
+Each provider self-registers at module load time via `ProviderRegistry.register()`.
+
+**MCP Tools System** (`src/lib/mcp/`)
+
+- Clean separation: `definitions/` (JSON schemas) -> `implementations/` (Python functions) -> `index.py` (registry)
+- 31 built-in tools across 7 categories:
+  - **Utils** (4): calculate, get_current_time, get_current_date, reverse_string
+  - **Text** (5): word_count, find_and_replace, extract_emails, extract_urls, text_case_convert
+  - **Shell** (1): run_shell_command
+  - **File** (8): read_file, list_directory, search_in_files, file_info, write_file, append_to_file, find_in_file, count_in_file
+  - **Browser** (6): browser_navigate, browser_get_text, browser_get_links, browser_click, browser_type, browser_screenshot
+  - **Cron** (3): list_cron_schedules, add_cron_schedule, remove_cron_schedule
+  - **Workflow** (4): create_workflow, remove_workflow, list_workflows, get_workflow_templates
+- Tools registered at app startup via `register_all_tools(ai_client)`
+- Separate from console commands (MCP = AI-callable tools, console commands = user-callable commands)
 
 **Console Commands** (`src/apps/console/tools/`)
 
 - Modular command handlers: Each command in separate `*_cmd.py` file
 - Registry pattern in `index.py`: `get_command_registry()`, `register_commands()`
-- Easy to extend: Create new `*_cmd.py`, add to registry, done
-- 12 built-in commands: help, exit, clear, history, voice, info, toggle-voice, tools, agent, provider, model, debug
-
-**GUI Components** (`src/apps/gui/components/`)
-
-- **ChatPanel** (`chat_panel.py`): Scrollable message display with messenger-style bubbles
-  - User messages: Right-aligned purple bubbles
-  - AI messages: Left-aligned gray bubbles with "🤖 Knik" badge
-  - System messages: Centered subtle style for tool execution feedback
-  - `refresh_theme()` method rebuilds all messages with new theme colors
-- **InputPanel** (`input_panel.py`): Text entry with Send and Voice buttons
-  - Modern rounded corners (25px radius)
-  - Theme-aware colors for input field and buttons
-  - Enter key support for quick sending
-- **SettingsPanel** (`settings_panel.py`): Configuration modal dialog
-  - AI Provider selection (vertex, mock)
-  - Model selection (gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash)
-  - Temperature slider (0.0-2.0)
-  - Voice settings (enable/disable, voice selection)
-  - Theme selection (dark, light, system)
-  - Triggers full UI refresh on save
-
-**Theme System** (`src/apps/gui/theme.py`)
-
-- **DarkTheme**: Dark color palette (black backgrounds, white text, vibrant accents)
-- **LightTheme**: Light color palette (white backgrounds, black text, subtle accents)
-- **ColorTheme**: Dynamic theme class that switches between light/dark modes
-  - `set_mode(mode)` method updates all 26 color attributes at runtime
-  - `get_mode()` returns current theme ("light" or "dark")
-  - Color categories: Backgrounds, Message Bubbles, Text, Buttons, Status, Borders
-- **Fonts**: Font size constants with helper methods (title, message, input, button, badge)
-- **Spacing**: Padding, margin, and size constants for consistent layout
-
-**MCP Tools System** (`src/lib/mcp/`)
-
-- Clean separation: `definitions/` (JSON schemas) → `implementations/` (Python functions) → `index.py` (registry)
-- 20 built-in tools across 4 categories:
-  - **Utils** (5): calculate, get_current_time, extract_emails, extract_urls, generate_uuid
-  - **Text** (5): count_words, reverse_text, to_uppercase, to_lowercase, extract_numbers
-  - **Shell** (2): run_shell_command, get_environment_variable
-  - **File Operations** (8): read_file (with line ranges), list_directory (recursive), search_in_files (multi-file), file_info (metadata), write_file, append_to_file, find_in_file (with context), count_in_file (pattern counting)
-- Tools registered at app startup via `register_all_tools(ai_client)`
-- Separate from console commands (MCP = AI tools, console commands = user commands)
-- Test suite available: `demo/mcp/test_file_operations.py` (8 tests), `demo/mcp/TEST_PROMPTS.md` (14 scenarios)
+- 14 commands: help, exit, quit, clear, history, voice, info, toggle-voice, tools, agent, provider, model, debug, workflow
 
 ## Critical Patterns
 
@@ -130,7 +127,7 @@ Not `from lib.services.ai_client.client import AIClient`
 
 ### Registry Pattern (Provider & MCP)
 
-- **ProviderRegistry**: Maps provider names to implementation classes (`vertex`, `mock`, etc.)
+- **ProviderRegistry**: Maps provider names to implementation classes (6 providers)
 - **MCPServerRegistry**: Stores tool schemas + implementations as class attributes
 - Both use class methods for global state management (no instances needed)
 
@@ -165,98 +162,71 @@ while not processor.is_processing_complete():  # Wait for completion
 3. Export in `definitions/__init__.py` (`ALL_DEFINITIONS`) and `implementations/__init__.py` (`ALL_IMPLEMENTATIONS`)
 4. No changes to `index.py` needed - auto-registered via dictionary lookup
 
-### File Operations Implementation Pattern
-
-The file operations tools (`file_impl.py`) demonstrate best practices:
-
-- **Unified validation**: `_validate_path()` base function with thin wrappers for file/directory validation
-- **Shared logic**: `_write_to_file()` handles both write and append with mode parameter
-- **Combined processing**: `_process_file_lines()` supports both find and count operations
-- **15 helper functions**: Each with single responsibility (validation, formatting, searching, counting)
-- **Error handling**: Try/except with descriptive error messages in returned dicts
-- **Resource efficiency**: Line range reading for large files, max_results limits for searches
-- **Flexible search**: Regex support, case sensitivity options, context line extraction
-
-### GUI Theme Refresh Pattern
-
-```python
-# When theme changes, update ColorTheme and refresh all UI
-ColorTheme.set_mode("light")  # or "dark" or "system"
-self._refresh_theme()  # Updates all widgets with new colors
-
-# _refresh_theme() updates:
-# - Main window background
-# - Top bar and title
-# - All buttons (Settings, Clear, Send, Voice)
-# - Input panel (background, text entry, buttons)
-# - Chat panel (background + all messages)
-# - Status label
-```
-
 ### Coding Patterns
 
-- Code should be self explanatory
-- Avoid useless comments here and there. Keep comments when necessary
-- Documentations should be simple and straight forward instead of complex
-- Code should be structured with small modules as small as possible
-- Use helper functions to break down complex logic
-- Share common logic via unified base functions
+- Code should be self-explanatory
+- Avoid useless comments. Keep comments when necessary
+- Documentation should be simple and straightforward
+- Small modules, helper functions, shared logic via unified base functions
 - Return structured dicts with `success` flag and descriptive `error` messages
 - Always add `text_color` to CustomTkinter buttons for visibility across themes
-- Store widget references as instance variables (self.\*) when need to update them later
+- Store widget references as instance variables (self.*) when needing to update them later
+- Use `printer` for internal logging (`printer.info()`, `printer.success()`, `printer.error()`), regular `print()` for direct user output
 
 ## Development Workflows
 
 ### Running the App
 
 ```bash
-# GUI mode (recommended for visual interface)
+# GUI mode
 npm run start:gui
 
-# Console mode (terminal-based chat)
+# Console mode
 npm run start:console
 
 # Split pane with logs
 npm run start:console:split
 
-# Direct Python (must be in src/ directory)
+# Web app (two separate terminals)
+npm run start:web:backend
+npm run start:web:frontend
+
+# Cron scheduler
+npm run start:cron
+
+# Electron desktop app
+npm run start:electron
+
+# Direct Python
 python src/main.py --mode gui
 python src/main.py --mode console
+python src/main.py --mode cron
 ```
 
 ### Code Quality
 
 ```bash
-# Lint code
-npm run lint
+npm run lint          # Lint backend
+npm run lint:fix      # Auto-fix backend lint
+npm run lint:frontend # Lint frontend
+npm run lint:all      # Lint everything
 
-# Auto-fix linting issues
-npm run lint:fix
+npm run format        # Format backend
+npm run format:check  # Check formatting
+npm run format:frontend
+npm run format:all
 
-# Format code
-npm run format
-
-# Check formatting
-npm run format:check
+npm run typecheck          # Backend type checking
+npm run typecheck:frontend # Frontend type checking (tsc --noEmit)
 ```
 
 ### Environment Setup
 
 - **Required:** `espeak-ng` (install via `brew install espeak-ng` on macOS)
 - **Optional:** Set `GOOGLE_CLOUD_PROJECT` for Vertex AI (falls back to mock provider)
-- See `docs/reference/environment-variables.md` for voice/AI model configuration
-
-### Testing
-
-Demo files in `demo/` illustrate component usage:
-
-- `demo/console/console_app_demo.py` - Full console app
-- `demo/tts/async_demo.py` - Async TTS patterns
-- `demo/ai/simple_ai_tts.py` - AI + voice integration
+- See `docs/reference/environment-variables.md` for all configuration options
 
 ### Cache Management
-
-Clean Python cache before debugging import issues:
 
 ```bash
 find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
@@ -266,109 +236,107 @@ find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 **Key directories to know:**
 
-- `src/lib/services/ai_client/providers/` - AI provider implementations (vertex, langchain, mock)
-- `src/lib/services/ai_client/registry/` - Registry pattern implementations
-- `src/lib/mcp/` - MCP tool definitions and implementations (AI-callable tools)
-- `src/apps/console/tools/` - Console command handlers (user-callable commands)
-- `docs/` - Comprehensive documentation (organized by category)
-- `demo/mcp/` - Test files for MCP tools (test_file_operations.py, TEST_PROMPTS.md)
+- `src/lib/services/ai_client/providers/` - AI provider implementations (vertex, gemini, zhipuai, zai, custom, mock)
+- `src/lib/services/ai_client/registry/` - ProviderRegistry and MCPServerRegistry
+- `src/lib/mcp/definitions/` - MCP tool definitions (7 category files)
+- `src/lib/mcp/implementations/` - MCP tool implementations (7 category files)
+- `src/lib/cron/` - Scheduler system (models, nodes, engine, scheduler, parser)
+- `src/apps/console/tools/` - Console command handlers (14 commands)
+- `src/apps/web/backend/routes/` - Web API routes (7 route files)
+- `src/apps/web/frontend/src/lib/` - React frontend (pages, sections, components, services)
+- `docs/` - Documentation (organized by guides, reference, development, components)
 
 **Entry points:**
 
-- `src/main.py` - Application launcher (supports --mode gui/console)
+- `src/main.py` - Application launcher (supports --mode gui/console/cron)
 - `src/imports.py` - Central import hub
 - `src/apps/console/app.py` - Console app main logic
 - `src/apps/gui/app.py` - GUI app main logic
-- `src/apps/console/history.py` - ConversationHistory class (shared by both apps)
-- `src/apps/console/tools/index.py` - Command registry
-- `src/apps/gui/theme.py` - Theme system (ColorTheme, DarkTheme, LightTheme)
+- `src/apps/web/backend/main.py` - FastAPI web backend
+- `src/apps/web/frontend/src/main.tsx` - React frontend entry
 - `src/lib/mcp/index.py` - MCP tool registry
+- `src/lib/cron/scheduler.py` - CronScheduler entry
 
 ## Project-Specific Conventions
 
-1. **Printer vs print:** Use `printer` for internal logging (`printer.info()`, `printer.success()`, `printer.error()`). Use regular `print()` for direct user output (e.g., debug mode)
-2. **Voice names:** Female `af_*` (sarah, heart, bella) vs Male `am_*` (adam, michael, leo)
-3. **Provider naming:** Always lowercase in registry (`vertex`, `mock`, not `Vertex`)
+1. **Printer vs print:** Use `printer` for internal logging. Use regular `print()` for direct user output (e.g., debug mode)
+2. **Voice names:** Female `af_*` (heart, bella, sarah, nicole, sky) vs Male `am_*` (adam, michael, leo, ryan)
+3. **Provider naming:** Always lowercase in registry (`vertex`, `gemini`, `zhipuai`, `zai`, `custom`, `mock`)
 4. **Run from src/:** Most import paths assume `src/` as working directory
-5. **Config classes:** Each app has a `Config` class reading from env vars with defaults (e.g., `ConsoleConfig`)
+5. **Config classes:** Each app has a Config class reading from env vars with defaults
 6. **Dynamic switching:** `/provider` and `/model` commands recreate AIClient to apply changes while preserving MCP tools and system instructions
+7. **AI methods:** Use `chat()` and `chat_stream()` (not `query()` / `query_stream()`)
 
 ## Common Pitfalls
 
 - **Don't forget** `start_async_processing()` before `play_async()` - threads won't start
-- **Mock provider confusion:** AIClient auto-switches to mock if Vertex AI unconfigured (check logs)
+- **Mock provider confusion:** AIClient auto-switches to mock if real provider unconfigured (check logs)
 - **Import errors:** Run from `src/` directory, not project root
 - **Blocking on TTS:** Always check `is_processing_complete()` or you'll exit before audio plays
 - **MCP tool registration:** Must call `register_all_tools(ai_client)` before AI can use tools
+- **Web app startup:** Use `start:web:backend` + `start:web:frontend` separately (no combined `start:web` script)
+- **Frontend port:** Dev server runs on port 12414, not 5173
+- **Scheduler uses natural language:** Not cron expressions. Schedule model has `schedule_description` + `recurrence_seconds`, not `cron_expression`
+- **Schedule foreign key:** Field is `target_workflow_id`, not `workflow_id`
 
 ## Documentation Map
 
 ### User Documentation
 
 - `docs/README.md` - Documentation index and quick links
-- `docs/development/roadmap.md` - **Development roadmap: what's built, what's planned, and how to extend Knik into a JARVIS-like assistant**
-- `docs/guides/mcp.md` - MCP tools architecture (100+ lines with examples)
+- `docs/guides/mcp.md` - MCP tools architecture (31 tools, 7 categories)
 - `docs/guides/console.md` - Console app commands and usage
 - `docs/guides/gui.md` - GUI app architecture and components
-- `docs/reference/conversation-history.md` - Conversation memory system implementation
-- `docs/reference/environment-variables.md` - All config options
+- `docs/guides/web-app.md` - Web app architecture and API
+- `docs/guides/scheduler.md` - Workflow scheduler system
+- `docs/guides/electron.md` - Electron desktop packaging
+- `docs/reference/api.md` - Core API reference (AIClient, TTS, Web endpoints)
+- `docs/reference/environment-variables.md` - All configuration options
+- `docs/reference/conversation-history.md` - Conversation memory system
+- `docs/development/roadmap.md` - Development roadmap
+- `docs/development/setup.md` - Development setup guide
 
 ### AI/Copilot Context
 
-- `.github/copilot/SESSION_SUMMARY.md` - **Last session details, what was accomplished, next steps**
-- `.github/copilot/QUICK_START.md` - **Quick reference for starting new sessions**
-- `.github/copilot-instructions.md` - **This file - comprehensive project guide for AI assistants**
+- `.github/copilot/QUICK_START.md` - Quick reference for starting new sessions
+- `.github/copilot-instructions.md` - This file - comprehensive project guide for AI assistants
 
-## Recent Major Updates (February 2026)
+## Commit Message Format
 
-### Electron Integration (December 2025)
+```
+<type>(<scope>): <short description>
 
-- Complete desktop packaging system for macOS/Windows/Linux distribution
-- electron-main.js - Main process with window management (93 lines)
-- electron-preload.js - Secure IPC bridge between main and renderer
-- electron-builder.yml - Build configuration for multi-platform packaging
-- scripts/start_electron.sh - Startup script for development
-- docs/guides/electron.md - Comprehensive documentation (307 lines)
-- Runs with: `npm run start:electron`
+- <detail 1>
+- <detail 2>
+```
 
-### Ultra-Glassmorphism UI (December 2025)
+### Rules
 
-- Web app UI overhaul with modern glassmorphism design
-- Bounded scroll container with fixed input panel at bottom
-- Backdrop-blur-3xl effects throughout interface
-- Stop audio button during playback with proper promise resolution
-- Sidebar history integration with backend API and loading states
-- Transparent button styles matching glassmorphic theme
-- Comprehensive backend logging with emoji-based structured logging throughout request lifecycle
-- System instructions parameter added to AIClient initialization in chat endpoint
-- Smooth 60fps animations with gradient blobs
+- **type** (required): one of `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`, `revert`
+- **scope** (recommended): kebab-case name of the feature/area, e.g. `ai-client`, `scheduler`, `web-frontend`
+- **short description** (required): lowercase, imperative mood, max 100 chars, no period at end
+- **body** (optional): pointwise with `-`, max 500 chars total
+- Semantic-release uses this format to determine version bumps:
+  - `feat` -> minor version bump (1.0.0 -> 1.1.0)
+  - `fix` -> patch version bump (1.0.0 -> 1.0.1)
+  - `BREAKING CHANGE` in body or `!` after type -> major version bump (1.0.0 -> 2.0.0)
 
-### Dynamic Theme System (December 2025)
+### Examples
 
-- Implemented full light/dark theme switching in GUI app
-- Created centralized theme system with ColorTheme, DarkTheme, LightTheme classes
-- Theme changes update all UI components in real-time (top bar, buttons, input panel, chat messages)
-- 26 color attributes dynamically switch between light and dark palettes
-- All buttons have proper text_color for visibility in both themes
+```
+feat(scheduler): add natural language schedule parsing
 
-### Conversation History (December 2025)
+- support "every N minutes/hours/days" patterns
+- fallback to dateparser for complex expressions
+```
 
-- Both console and GUI apps now maintain conversation context
-- Last N messages (configurable via KNIK_HISTORY_CONTEXT_SIZE, default: 5) sent to AI
-- Uses LangChain message format (HumanMessage, AIMessage)
-- Improves AI responses by providing conversation context
-- Implemented in shared ConversationHistory class
+```
+fix(ai-client): handle provider initialization errors gracefully
 
-### Code Quality Improvements (December 2025)
+- catch exceptions and fall back to mock provider
+- log warning when auto-fallback occurs
+```
 
-- Fixed 110+ linting issues (trailing whitespace, formatting)
-- All code formatted with ruff
-- Consistent code style across entire codebase
-- All lint checks passing
-
-### Bug Fixes (December 2025)
-
-- Fixed tool_callback parameter warning in ChatVertexAI
-- Fixed button text visibility issues in light theme
-- Fixed emoji rendering issues in GUI buttons
-- Proper widget reference storage for theme updates
+```
+docs(reference): rewrite environment variables documentation
+```
