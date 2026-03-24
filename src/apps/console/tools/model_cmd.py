@@ -1,7 +1,6 @@
 """Model command for switching AI models."""
 
 from imports import AIClient, printer
-from lib.services.ai_client.registry import MCPServerRegistry
 
 
 def model_command(app, args: str) -> str:
@@ -40,7 +39,7 @@ def model_command(app, args: str) -> str:
         # Recreate AI client with new model
         app.ai_client = AIClient(
             provider=app.ai_client.provider if app.ai_client else app.config.ai_provider,
-            mcp_registry=MCPServerRegistry,
+            mcp_registry=app.mcp_registry,
             system_instruction=app.config.system_instruction,
             project_id=app.config.ai_project_id,
             location=app.config.ai_location,

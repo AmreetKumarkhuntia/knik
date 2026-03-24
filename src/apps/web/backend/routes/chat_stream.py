@@ -35,6 +35,7 @@ config = WebBackendConfig()
 # Global clients
 ai_client: AIClient | None = None
 tts_processor: KokoroVoiceModel | None = None
+mcp_registry: MCPServerRegistry | None = None
 
 # Global conversation history — persists for the lifetime of the server process
 conversation_history = ConversationHistory(max_size=50)
@@ -57,11 +58,12 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
     - error: Error occurred
     """
     try:
-        global ai_client, tts_processor
+        global ai_client, tts_processor, mcp_registry
 
         # Initialize AI client if needed
         if ai_client is None:
-            tools_count = register_all_tools(MCPServerRegistry)
+            mcp_registry = MCPServerRegistry()
+            tools_count = register_all_tools(mcp_registry)
             printer.debug(
                 f"Registered {tools_count} MCP tools, preparing AI client... with {config.ai_provider}/{config.ai_model}"
             )
@@ -69,7 +71,7 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
             ai_client = AIClient(
                 provider=config.ai_provider,
                 model=config.ai_model,
-                mcp_registry=MCPServerRegistry,
+                mcp_registry=mcp_registry,
                 project_id=config.ai_project_id,
                 location=config.ai_location,
                 system_instruction=str(config.system_instruction) if config.system_instruction else None,

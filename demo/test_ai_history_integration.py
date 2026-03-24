@@ -25,12 +25,13 @@ def test_ai_with_history():
     print("=" * 70 + "\n")
 
     # Initialize
-    tools_registered = register_all_tools(MCPServerRegistry)
+    registry = MCPServerRegistry()
+    tools_registered = register_all_tools(registry)
     print(f"✓ Registered {tools_registered} MCP tools\n")
 
     ai_client = AIClient(
         provider="vertex",  # Will fallback to mock if not configured
-        mcp_registry=MCPServerRegistry,
+        mcp_registry=registry,
         system_instruction="You are a helpful AI assistant with memory.",
     )
 

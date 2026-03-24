@@ -33,41 +33,41 @@ def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
 
 
 class MCPServerRegistry:
-    """Registry for tool schemas and implementations"""
+    """Registry for tool schemas and implementations.
 
-    _tools: list[dict[str, Any]] = []
-    _implementations: dict[str, Callable] = {}
+    Each instance owns its own tool state. Create a new instance for an
+    isolated set of tools; reuse an existing instance when you want to
+    share tools across components (e.g. an app-level registry).
+    """
 
-    @classmethod
-    def register_tool(cls, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None:
-        cls._tools.append(tool_dict)
+    def __init__(self):
+        self._tools: list[dict[str, Any]] = []
+        self._implementations: dict[str, Callable] = {}
+
+    def register_tool(self, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None:
+        self._tools.append(tool_dict)
         if implementation:
             tool_name = tool_dict.get("name")
             if tool_name:
-                cls._implementations[tool_name] = implementation
+                self._implementations[tool_name] = implementation
 
-    @classmethod
-    def get_tools(cls) -> list[dict[str, Any]]:
-        return cls._tools
+    def get_tools(self) -> list[dict[str, Any]]:
+        return self._tools
 
-    @classmethod
-    def get_implementation(cls, tool_name: str) -> Callable | None:
-        return cls._implementations.get(tool_name)
+    def get_implementation(self, tool_name: str) -> Callable | None:
+        return self._implementations.get(tool_name)
 
-    @classmethod
-    def execute_tool(cls, tool_name: str, **kwargs) -> Any:
-        impl = cls.get_implementation(tool_name)
+    def execute_tool(self, tool_name: str, **kwargs) -> Any:
+        impl = self.get_implementation(tool_name)
         if impl is None:
             raise ValueError(f"No implementation found for tool: {tool_name}")
         return impl(**kwargs)
 
-    @classmethod
-    def clear_tools(cls) -> None:
-        cls._tools = []
-        cls._implementations = {}
+    def clear_tools(self) -> None:
+        self._tools = []
+        self._implementations = {}
 
-    @classmethod
-    def create_langchain_tools(cls) -> list:
+    def create_langchain_tools(self) -> list:
         """
         Create LangChain StructuredTool instances from registered MCP tools.
         Returns empty list if LangChain not available.
@@ -85,7 +85,7 @@ class MCPServerRegistry:
             "array": list[Any],
         }
 
-        for schema in cls._tools:
+        for schema in self._tools:
             func_def = schema.get("function", schema)
             tool_name = func_def.get("name")
             description = func_def.get("description", "")
@@ -94,7 +94,7 @@ class MCPServerRegistry:
             if not tool_name:
                 continue
 
-            impl = cls._implementations.get(tool_name)
+            impl = self._implementations.get(tool_name)
             if not impl:
                 continue
 

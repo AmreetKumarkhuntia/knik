@@ -135,9 +135,11 @@ def demo_agent_with_tools():
     printer.separator(width=70)
 
     try:
+        from src.lib.mcp.index import register_all_tools
         from src.lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
         mcp_registry = MCPServerRegistry()
+        register_all_tools(mcp_registry)
 
         if not mcp_registry.get_tools():
             printer.warning("Skipping: No MCP tools registered")

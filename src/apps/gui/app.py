@@ -138,13 +138,14 @@ Just type your question below and press Enter to get started."""
         try:
             printer.info("Initializing backend services...")
 
-            tools_registered = register_all_tools(MCPServerRegistry)
+            self.mcp_registry = MCPServerRegistry()
+            tools_registered = register_all_tools(self.mcp_registry)
             if tools_registered > 0:
                 printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
             self.ai_client = AIClient(
                 provider=self.config.ai_provider,
-                mcp_registry=MCPServerRegistry,
+                mcp_registry=self.mcp_registry,
                 system_instruction=self.config.system_instruction,
                 tool_callback=self._on_tool_executed,
                 project_id=self.config.ai_project_id,
@@ -277,7 +278,7 @@ Just type your question below and press Enter to get started."""
 
         self.ai_client = AIClient(
             provider=self.config.ai_provider,
-            mcp_registry=MCPServerRegistry,
+            mcp_registry=self.mcp_registry,
             system_instruction=self.config.system_instruction,
             project_id=self.config.ai_project_id,
             location=self.config.ai_location,

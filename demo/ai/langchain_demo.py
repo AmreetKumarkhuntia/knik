@@ -50,8 +50,8 @@ def calculate(operation: str, a: float, b: float) -> float:
 
 
 def register_tools_in_mcp():
-    """Register tools in MCP registry"""
-    MCPServerRegistry.clear_tools()
+    """Register tools in MCP registry and return the instance."""
+    registry = MCPServerRegistry()
 
     # Weather tool schema
     weather_schema = {
@@ -90,8 +90,9 @@ def register_tools_in_mcp():
         },
     }
 
-    MCPServerRegistry.register_tool(weather_schema, get_weather)
-    MCPServerRegistry.register_tool(calc_schema, calculate)
+    registry.register_tool(weather_schema, get_weather)
+    registry.register_tool(calc_schema, calculate)
+    return registry
 
 
 def main():
@@ -99,7 +100,7 @@ def main():
     print("=" * 70)
 
     # Register tools in MCP registry
-    register_tools_in_mcp()
+    registry = register_tools_in_mcp()
 
     # Initialize AIClient with Vertex AI provider
     client = AIClient(
@@ -112,7 +113,7 @@ def main():
 
     print(f"\n✅ Provider: {client.provider_name}")
     print(f"✅ Configured: {client.is_configured()}")
-    print(f"✅ Tools registered: {len(MCPServerRegistry.get_tools())}")
+    print(f"✅ Tools registered: {len(registry.get_tools())}")
 
     # Test queries
     test_queries = [

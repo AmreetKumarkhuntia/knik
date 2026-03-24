@@ -46,13 +46,14 @@ class ConsoleApp:
             return False
 
     def _initialize_ai_client(self):
-        tools_registered = register_all_tools(MCPServerRegistry)
+        self.mcp_registry = MCPServerRegistry()
+        tools_registered = register_all_tools(self.mcp_registry)
         if tools_registered > 0:
             printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
         self.ai_client = AIClient(
             provider=self.config.ai_provider,
-            mcp_registry=MCPServerRegistry,
+            mcp_registry=self.mcp_registry,
             system_instruction=self.config.system_instruction,
             project_id=self.config.ai_project_id,
             location=self.config.ai_location,

@@ -1,7 +1,7 @@
 """Provider command for switching AI providers."""
 
 from imports import AIClient, printer
-from lib.services.ai_client.registry import MCPServerRegistry, ProviderRegistry
+from lib.services.ai_client.registry import ProviderRegistry
 
 
 def provider_command(app, args: str) -> str:
@@ -39,7 +39,7 @@ def provider_command(app, args: str) -> str:
         # Create new AI client with the selected provider
         app.ai_client = AIClient(
             provider=args,
-            mcp_registry=MCPServerRegistry,
+            mcp_registry=app.mcp_registry,
             system_instruction=app.config.system_instruction,
             project_id=app.config.ai_project_id,
             location=app.config.ai_location,

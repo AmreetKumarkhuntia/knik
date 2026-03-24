@@ -184,15 +184,17 @@ class AIExecutionNode(BaseNode):
         resolved_prompt = self._resolve_prompt(inputs, self.prompt)
 
         try:
-            mcp_registry = MCPServerRegistry()
             if self.use_tools:
+                mcp_registry = MCPServerRegistry()
                 register_all_tools(mcp_registry)
+            else:
+                mcp_registry = None
 
             ai_client = AIClient(
                 provider=self.provider,
                 model=self.model,
                 temperature=self.temperature,
-                mcp_registry=MCPServerRegistry if self.use_tools else None,
+                mcp_registry=mcp_registry,
             )
             response = ai_client.chat(prompt=resolved_prompt)
             return {"status": "success", "output": response}

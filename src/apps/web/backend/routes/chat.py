@@ -31,6 +31,7 @@ config = WebBackendConfig()
 # Global clients
 ai_client: AIClient | None = None
 tts_processor: TTSAsyncProcessor | None = None
+mcp_registry: MCPServerRegistry | None = None
 
 
 class SimpleChatRequest(BaseModel):
@@ -48,17 +49,18 @@ async def chat(request: SimpleChatRequest):
     Response: {"text": "Hi there!", "audio": "base64...", "sample_rate": 24000}
     """
     try:
-        global ai_client, tts_processor
+        global ai_client, tts_processor, mcp_registry
 
         # Initialize clients if needed
         if ai_client is None:
-            tools_count = register_all_tools(MCPServerRegistry)
+            mcp_registry = MCPServerRegistry()
+            tools_count = register_all_tools(mcp_registry)
             printer.debug(f"Registered {tools_count} MCP tools to registry")
 
             ai_client = AIClient(
                 provider=config.ai_provider,
                 model=config.ai_model,
-                mcp_registry=MCPServerRegistry,
+                mcp_registry=mcp_registry,
                 project_id=config.ai_project_id,
                 location=config.ai_location,
                 system_instruction=config.system_instruction,

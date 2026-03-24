@@ -1,26 +1,11 @@
-"""Unified AI Client for interacting with             if auto_fallback_to_mock:
-        printer.warning(f"{provider} not configured. Using mock provider.")
-        mock_class = ProviderRegistry.get("mock")
-        # Pass mcp_registry and system_instruction to mock provider too
-        self._provider = mock_class(mcp_registry=mcp_registry, system_instruction=system_instruction)
-        self.provider_name = "mock"
-
-except Exception as e:
-    if auto_fallback_to_mock:
-        printer.warning(f"Error initializing {provider}: {e}")
-        printer.info("Using mock provider.")
-        mock_class = ProviderRegistry.get("mock")
-        self._provider = mock_class(mcp_registry=mcp_registry, system_instruction=system_instruction)
-        self.provider_name = "mock"
-    else:
-        raiseders."""
+"""Unified AI Client for interacting with multiple AI providers."""
 
 from collections.abc import Generator
 from typing import Any
 
 from ...utils import printer
 from .providers import BaseAIProvider
-from .registry import MCPServerRegistry, ProviderRegistry
+from .registry import ProviderRegistry
 
 
 class AIClient:
@@ -38,6 +23,7 @@ class AIClient:
         self.provider_name = provider.lower()
         self.auto_fallback_to_mock = auto_fallback_to_mock
         self._provider: BaseAIProvider | None = None
+        self._mcp_registry = mcp_registry
         self.tool_callback = tool_callback
 
         # Pass internal parameters to provider (not to LangChain model)
@@ -172,14 +158,19 @@ class AIClient:
             tool_dict: Tool schema (name, description, parameters)
             implementation: Python function that implements the tool
         """
-        MCPServerRegistry.register_tool(tool_dict, implementation)
+        if self._mcp_registry:
+            self._mcp_registry.register_tool(tool_dict, implementation)
 
     def get_registered_tools(self) -> list[dict[str, Any]]:
-        return MCPServerRegistry.get_tools()
+        if self._mcp_registry:
+            return self._mcp_registry.get_tools()
+        return []
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
         """Execute a registered tool by name."""
-        return MCPServerRegistry.execute_tool(tool_name, **kwargs)
+        if self._mcp_registry:
+            return self._mcp_registry.execute_tool(tool_name, **kwargs)
+        raise ValueError("No MCP registry configured")
 
 
 class MockAIClient(AIClient):

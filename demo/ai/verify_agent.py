@@ -14,11 +14,12 @@ from src.lib.services.ai_client.registry import MCPServerRegistry
 from src.lib.utils import printer
 
 
-register_all_tools(MCPServerRegistry)
+registry = MCPServerRegistry()
+register_all_tools(registry)
 
 client = AIClient(
     provider="vertex",
-    mcp_registry=MCPServerRegistry,
+    mcp_registry=registry,
     project_id=os.getenv("GOOGLE_CLOUD_PROJECT"),
     location="asia-south1",
     model_name="gemini-2.5-flash",

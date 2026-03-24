@@ -16,7 +16,6 @@ sys.path.insert(0, str(src_path))
 
 from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, TTSAsyncProcessor, printer
-from lib.services.ai_client.registry import MCPServerRegistry
 
 
 router = APIRouter()
@@ -61,7 +60,7 @@ async def update_settings(settings: SettingsUpdate):
             # Build provider-specific kwargs
             provider_kwargs = {
                 "model": settings.model or config.ai_model,
-                "mcp_registry": MCPServerRegistry,
+                "mcp_registry": chat_module.mcp_registry,
                 "project_id": config.ai_project_id,
                 "location": config.ai_location,
                 "system_instruction": config.system_instruction,

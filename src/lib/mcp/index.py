@@ -8,20 +8,18 @@ def get_all_tools() -> list[dict[str, Any]]:
     return ALL_DEFINITIONS
 
 
-def register_all_tools(registry=None) -> int:
+def register_all_tools(registry) -> int:
     """
     Register all MCP tools to the registry.
 
     Args:
-        registry: MCPServerRegistry class (not instance). If None, imports and uses MCPServerRegistry.
+        registry: MCPServerRegistry instance to register tools on.
 
     Returns:
         Number of tools registered
     """
     if registry is None:
-        from lib.services.ai_client.registry import MCPServerRegistry
-
-        registry = MCPServerRegistry
+        raise ValueError("An MCPServerRegistry instance is required")
 
     count = 0
     for tool_def in ALL_DEFINITIONS:

@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from src.lib.services.ai_client import AIClient
+from src.lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
 
 def print_separator(char="=", width=80):
@@ -74,9 +75,11 @@ def main():
 
     # Initialize
     print("🚀 Initializing Vertex AI...")
+    registry = MCPServerRegistry()
     client = AIClient(
         provider="vertex",
         auto_fallback_to_mock=False,
+        mcp_registry=registry,
         project_id="breeze-uat-453414",
         location="asia-south1",
         model_name="gemini-2.5-flash",

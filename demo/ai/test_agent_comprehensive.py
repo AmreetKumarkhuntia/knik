@@ -21,11 +21,12 @@ def test_agent_streaming():
     print("Test 1: Agent Streaming")
     print("=" * 70 + "\n")
 
-    register_all_tools(MCPServerRegistry)
+    registry = MCPServerRegistry()
+    register_all_tools(registry)
 
     client = AIClient(
         provider="vertex",
-        mcp_registry=MCPServerRegistry,
+        mcp_registry=registry,
         project_id=os.getenv("GOOGLE_CLOUD_PROJECT"),
         location="asia-south1",
         model_name="gemini-2.5-flash",
@@ -63,11 +64,12 @@ def test_complex_agent_tasks():
     print("Test 2: Complex Multi-Step Agent Tasks")
     print("=" * 70 + "\n")
 
-    register_all_tools(MCPServerRegistry)
+    registry = MCPServerRegistry()
+    register_all_tools(registry)
 
     client = AIClient(
         provider="vertex",
-        mcp_registry=MCPServerRegistry,
+        mcp_registry=registry,
         project_id=os.getenv("GOOGLE_CLOUD_PROJECT"),
         location="asia-south1",
         model_name="gemini-2.5-flash",

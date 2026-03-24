@@ -66,12 +66,12 @@ def main():
     print()
 
     # Clear and register tools
-    MCPServerRegistry.clear_tools()
+    registry = MCPServerRegistry()
 
     print("📝 Registering tools...")
 
     # Register tool 1: Weather
-    MCPServerRegistry.register_tool(
+    registry.register_tool(
         {
             "name": "get_weather",
             "description": "Get current weather of a given city",
@@ -88,7 +88,7 @@ def main():
     )
 
     # Register tool 2: Calculate
-    MCPServerRegistry.register_tool(
+    registry.register_tool(
         {
             "name": "calculate",
             "description": "Perform mathematical calculations",
@@ -105,7 +105,7 @@ def main():
         calculate,  # ← Implementation!
     )
 
-    print(f"✓ Registered {len(MCPServerRegistry.get_tools())} tools")
+    print(f"✓ Registered {len(registry.get_tools())} tools")
     print()
 
     # Test queries
