@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from imports import printer as logger
+from lib.mcp.index import register_all_tools
+from lib.services.ai_client.client import AIClient
+from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
 
 class BaseNode(ABC):
@@ -181,8 +184,9 @@ class AIExecutionNode(BaseNode):
         resolved_prompt = self._resolve_prompt(inputs, self.prompt)
 
         try:
-            from lib.services.ai_client.client import AIClient
-            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
+            mcp_registry = MCPServerRegistry()
+            if self.use_tools:
+                register_all_tools(mcp_registry)
 
             ai_client = AIClient(
                 provider=self.provider,
