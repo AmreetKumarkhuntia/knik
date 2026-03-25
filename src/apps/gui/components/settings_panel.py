@@ -39,7 +39,10 @@ class SettingsPanel(ctk.CTkToplevel):
 
         self.provider_var = ctk.StringVar(value=self.config.ai_provider)
         self.provider_dropdown = ctk.CTkOptionMenu(
-            self, values=["vertex", "gemini", "zai", "custom", "mock"], variable=self.provider_var, width=200
+            self,
+            values=["vertex", "gemini", "zai", "zai_coding", "custom", "mock"],
+            variable=self.provider_var,
+            width=200,
         )
         self.provider_dropdown.grid(row=row, column=0, padx=20, pady=(0, 10), sticky="w")
         row += 1

@@ -1,8 +1,12 @@
 """
 Admin API endpoints
-Manage AI client settings and configuration
+Manage AI client settings and configuration.
+
+Heavy constructors (AIClient, TTSAsyncProcessor) are offloaded to
+background threads via asyncio.to_thread so the event loop stays responsive.
 """
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -74,16 +78,19 @@ async def update_settings(settings: SettingsUpdate):
                 if settings.api_key:
                     provider_kwargs["api_key"] = settings.api_key
 
-            # Recreate AI client with updated settings (with MCP tools)
-            chat_module.ai_client = AIClient(
+            # Recreate AI client with updated settings (offloaded — may connect to API)
+            chat_module.ai_client = await asyncio.to_thread(
+                AIClient,
                 provider=target_provider,
                 **provider_kwargs,
             )
             printer.info(f"AI client updated: {target_provider}/{settings.model or config.ai_model}")
 
         if settings.voice:
-            # Recreate TTS processor with new voice
-            chat_module.tts_processor = TTSAsyncProcessor(voice_model=settings.voice, sample_rate=config.sample_rate)
+            # Recreate TTS processor with new voice (offloaded — may load PyTorch model)
+            chat_module.tts_processor = await asyncio.to_thread(
+                TTSAsyncProcessor, voice_model=settings.voice, sample_rate=config.sample_rate
+            )
             printer.info(f"TTS voice updated: {settings.voice}")
 
         return {"status": "success", "message": "Settings updated"}
@@ -103,6 +110,7 @@ async def list_providers():
         "gemini": "Google Gemini AI Studio",
         "zhipuai": "ZhipuAI (GLM)",
         "zai": "Z.AI Platform",
+        "zai_coding": "Z.AI Coding Plan",
         "custom": "Custom (OpenAI-Compatible)",
         "mock": "Mock Provider (Testing)",
     }

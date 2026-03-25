@@ -100,8 +100,12 @@ Be reliable, efficient, and action focused like Jarvis."""
         "gemini-1.5-pro": "More capable, slower model",
         "gemini-1.0-pro": "Legacy stable model",
         "glm-5": "Z.AI GLM-5 model (recommended)",
+        "glm-5-turbo": "Z.AI GLM-5 Turbo model",
         "glm-4": "Z.AI GLM-4 model",
         "glm-4-flash": "Faster GLM-4 variant",
+        "glm-4.7": "Z.AI GLM-4.7 Coding model",
+        "glm-4.6": "Z.AI GLM-4.6 Coding model",
+        "glm-4.5": "Z.AI GLM-4.5 Coding model",
     }
 
     # ============================================================================
@@ -144,6 +148,15 @@ Be reliable, efficient, and action focused like Jarvis."""
     scheduler_workers: int = field(default_factory=lambda: Config.from_env("KNIK_SCHEDULER_WORKERS", 4, int))
     scheduler_max_concurrent: int = field(
         default_factory=lambda: Config.from_env("KNIK_SCHEDULER_MAX_CONCURRENT", 10, int)
+    )
+
+    # Browser configuration
+    browser_headless: bool = field(default_factory=lambda: Config.from_env("KNIK_BROWSER_HEADLESS", False, bool))
+    browser_profile_dir: str = field(
+        default_factory=lambda: Config.from_env(
+            "KNIK_BROWSER_PROFILE_DIR",
+            str(Path.home() / ".knik" / "browser-profile"),
+        )
     )
 
     # ============================================================================
