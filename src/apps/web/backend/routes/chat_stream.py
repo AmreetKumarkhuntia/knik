@@ -1,8 +1,12 @@
 """
 Streaming Chat API endpoint with Server-Sent Events (SSE)
-Streams both text and audio progressively as they're generated
+Streams both text and audio progressively as they're generated.
+
+All blocking operations (AI inference, TTS, browser tools) are offloaded
+to background threads so the FastAPI/uvicorn event loop stays responsive.
 """
 
+import asyncio
 import base64
 import io
 import json
@@ -47,9 +51,36 @@ class StreamChatRequest(BaseModel):
     message: str
 
 
+async def _init_clients():
+    """Lazily initialise the AI client and TTS processor (off the event loop)."""
+    global ai_client, tts_processor, mcp_registry
+
+    if ai_client is None:
+
+        def _build_ai():
+            registry = MCPServerRegistry()
+            register_all_tools(registry)
+            client = AIClient(
+                provider=config.ai_provider,
+                model=config.ai_model,
+                mcp_registry=registry,
+                project_id=config.ai_project_id,
+                location=config.ai_location,
+                system_instruction=str(config.system_instruction) if config.system_instruction else None,
+            )
+            return registry, client
+
+        mcp_registry, ai_client = await asyncio.to_thread(_build_ai)
+        printer.success(f"AIClient ready: {config.ai_provider}/{config.ai_model}")
+
+    if tts_processor is None:
+        tts_processor = await asyncio.to_thread(KokoroVoiceModel)
+        printer.success(f"TTS ready: {config.voice_name}")
+
+
 async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
     """
-    Stream chat response with text and audio chunks via SSE
+    Stream chat response with text and audio chunks via SSE.
 
     Event types:
     - text: AI response text chunk
@@ -58,49 +89,44 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
     - error: Error occurred
     """
     try:
-        global ai_client, tts_processor, mcp_registry
-
-        # Initialize AI client if needed
-        if ai_client is None:
-            mcp_registry = MCPServerRegistry()
-            tools_count = register_all_tools(mcp_registry)
-            printer.debug(
-                f"Registered {tools_count} MCP tools, preparing AI client... with {config.ai_provider}/{config.ai_model}"
-            )
-
-            ai_client = AIClient(
-                provider=config.ai_provider,
-                model=config.ai_model,
-                mcp_registry=mcp_registry,
-                project_id=config.ai_project_id,
-                location=config.ai_location,
-                system_instruction=str(config.system_instruction) if config.system_instruction else None,
-            )
-            printer.success(f"AIClient ready: {config.ai_provider}/{config.ai_model}")
-
-        # Initialize TTS processor (direct voice model usage)
-        if tts_processor is None:
-            tts_processor = KokoroVoiceModel()
-            printer.success(f"TTS ready: {config.voice_name}")
+        await _init_clients()
 
         # Fetch recent history to give the AI conversation context
         history_context_size = getattr(config, "history_context_size", 5)
         history = conversation_history.get_messages(last_n=history_context_size)
 
-        # Stream text and audio synchronously
+        # -----------------------------------------------------------
+        # Consume the synchronous AI generator on a background thread
+        # and bridge chunks to the async world via an asyncio.Queue.
+        # -----------------------------------------------------------
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
+        loop = asyncio.get_running_loop()
+
+        def _produce():
+            """Iterate the sync generator and push chunks into the queue."""
+            try:
+                for chunk in ai_client.chat_stream(prompt=prompt, history=history):
+                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+
+        # Fire the producer on the default thread-pool
+        producer = loop.run_in_executor(None, _produce)
+
         text_buffer = ""
         full_response = ""
         sentence_endings = [".", "!", "?", "\n"]
         audio_count = 0
 
-        for text_chunk in ai_client.chat_stream(prompt=prompt, history=history):
+        while True:
+            text_chunk = await queue.get()
+            if text_chunk is None:
+                break
+
             # Send text chunk immediately
             yield f"event: text\ndata: {json.dumps({'text': text_chunk})}\n\n"
 
-            # Accumulate full response for history storage
             full_response += text_chunk
-
-            # Buffer text for sentence detection
             text_buffer += text_chunk
 
             # Check for complete sentences
@@ -110,28 +136,27 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
                     sentence = (parts[0] + ending).strip()
 
                     if sentence:
-                        # Generate audio synchronously (no threading/race conditions)
                         printer.info(f"Generating audio for: '{sentence[:50]}...'")
-                        audio_data, sr = tts_processor.generate(sentence)
+                        audio_data, sr = await asyncio.to_thread(tts_processor.generate, sentence)
 
-                        # Convert to WAV and encode
                         buf = io.BytesIO()
                         sf.write(buf, audio_data, sr, format="WAV")
                         audio_b64 = base64.b64encode(buf.getvalue()).decode()
 
-                        # Send audio immediately
                         yield f"event: audio\ndata: {json.dumps({'audio': audio_b64, 'sample_rate': sr})}\n\n"
                         audio_count += 1
                         printer.success(f"Sent audio chunk {audio_count}")
 
-                    # Keep remaining text in buffer
                     text_buffer = parts[1] if len(parts) > 1 else ""
                     break
+
+        # Wait for the producer thread to finish cleanly
+        await producer
 
         # Process any remaining text
         if text_buffer.strip():
             printer.info(f"Generating audio for remaining: '{text_buffer[:50]}...'")
-            audio_data, sr = tts_processor.generate(text_buffer.strip())
+            audio_data, sr = await asyncio.to_thread(tts_processor.generate, text_buffer.strip())
 
             buf = io.BytesIO()
             sf.write(buf, audio_data, sr, format="WAV")

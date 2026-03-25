@@ -4,9 +4,10 @@ BROWSER_DEFINITIONS = [
     {
         "name": "browser_navigate",
         "description": (
-            "Open a URL in a headless browser tab. "
+            "Open a URL in the browser. "
             "Use this to visit websites like LinkedIn, Indeed, Google, or any other site. "
             "Returns the page title and a short status message. "
+            "The browser window is visible by default so the user can interact with it (e.g. sign in). "
             "Always call this first before using other browser tools."
         ),
         "parameters": {

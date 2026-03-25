@@ -1,8 +1,12 @@
 """
 Unified Chat API endpoint
-Handles AI chat + TTS in a single request
+Handles AI chat + TTS in a single request.
+
+All blocking operations (AI inference, TTS) are offloaded to background
+threads via asyncio.to_thread so the event loop stays responsive.
 """
 
+import asyncio
 import base64
 import io
 import sys
@@ -40,6 +44,35 @@ class SimpleChatRequest(BaseModel):
     message: str
 
 
+async def _init_clients():
+    """Lazily initialise the AI client and TTS processor (off the event loop)."""
+    global ai_client, tts_processor, mcp_registry
+
+    if ai_client is None:
+
+        def _build_ai():
+            registry = MCPServerRegistry()
+            register_all_tools(registry)
+            client = AIClient(
+                provider=config.ai_provider,
+                model=config.ai_model,
+                mcp_registry=registry,
+                project_id=config.ai_project_id,
+                location=config.ai_location,
+                system_instruction=config.system_instruction,
+            )
+            return registry, client
+
+        mcp_registry, ai_client = await asyncio.to_thread(_build_ai)
+        printer.success(f"AIClient ready: {config.ai_provider}/{config.ai_model}")
+
+    if tts_processor is None:
+        tts_processor = await asyncio.to_thread(
+            TTSAsyncProcessor, voice_model=config.voice_name, sample_rate=config.sample_rate
+        )
+        printer.success(f"TTS ready: {config.voice_name}")
+
+
 @router.post("/")
 async def chat(request: SimpleChatRequest):
     """
@@ -49,35 +82,15 @@ async def chat(request: SimpleChatRequest):
     Response: {"text": "Hi there!", "audio": "base64...", "sample_rate": 24000}
     """
     try:
-        global ai_client, tts_processor, mcp_registry
+        await _init_clients()
 
-        # Initialize clients if needed
-        if ai_client is None:
-            mcp_registry = MCPServerRegistry()
-            tools_count = register_all_tools(mcp_registry)
-            printer.debug(f"Registered {tools_count} MCP tools to registry")
+        # Get AI response (offloaded to thread — blocks on LLM HTTP calls)
+        response_text = await asyncio.to_thread(lambda: "".join(ai_client.chat_stream(prompt=request.message)))
 
-            ai_client = AIClient(
-                provider=config.ai_provider,
-                model=config.ai_model,
-                mcp_registry=mcp_registry,
-                project_id=config.ai_project_id,
-                location=config.ai_location,
-                system_instruction=config.system_instruction,
-            )
-            printer.success(f"AIClient ready: {config.ai_provider}/{config.ai_model}")
+        # Generate audio (offloaded to thread — CPU-heavy PyTorch inference)
+        audio_data, sample_rate = await asyncio.to_thread(tts_processor.tts_processor.generate, response_text)
 
-        if tts_processor is None:
-            tts_processor = TTSAsyncProcessor(voice_model=config.voice_name, sample_rate=config.sample_rate)
-            printer.success(f"TTS ready: {config.voice_name}")
-
-        # Get AI response with streaming
-        response_text = "".join(ai_client.chat_stream(prompt=request.message))
-
-        # Generate audio
-        audio_data, sample_rate = tts_processor.tts_processor.generate(response_text)
-
-        # Convert to base64
+        # Convert to base64 (fast, stays on event loop)
         buffer = io.BytesIO()
         sf.write(buffer, audio_data, sample_rate, format="WAV")
         audio_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
