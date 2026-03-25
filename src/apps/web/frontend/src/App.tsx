@@ -20,12 +20,15 @@ function AppContent() {
     handleTogglePause,
   } = useAudio()
 
-  const { handleNewChat, handleClearHistory } = useChat({
+  // Single useChat instance shared between layout (sidebar) and Home page
+  const chat = useChat({
     setAudioPlaying,
     streamControllerRef,
     success,
     error,
   })
+
+  const { handleNewChat, handleClearHistory, loadConversation } = chat
 
   const onNewChat = useCallback(() => {
     handleNewChat()
@@ -34,6 +37,13 @@ function AppContent() {
     }
   }, [handleNewChat])
 
+  const onSelectConversation = useCallback(
+    (conversationId: string) => {
+      void loadConversation(conversationId)
+    },
+    [loadConversation]
+  )
+
   return (
     <BrowserRouter>
       <MainLayout
@@ -41,6 +51,7 @@ function AppContent() {
         hideToast={hideToast}
         onNewChat={onNewChat}
         onClearHistory={handleClearHistory}
+        onSelectConversation={onSelectConversation}
       >
         <Routes>
           <Route
@@ -55,6 +66,7 @@ function AppContent() {
                 handleTogglePause={handleTogglePause}
                 success={success}
                 error={error}
+                chat={chat}
               />
             }
           />

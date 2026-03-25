@@ -7,6 +7,7 @@ export const API = {
   endpoints: {
     workflows: '/api/workflows',
     history: '/api/history',
+    conversations: '/api/conversations',
     executionNodes: (workflowId: string, executionId: string) =>
       `/api/workflows/${workflowId}/executions/${executionId}/nodes`,
   },

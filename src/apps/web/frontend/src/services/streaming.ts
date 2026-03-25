@@ -8,6 +8,11 @@ interface StreamCallbacks {
   onAudio?: (audioBase64: string) => void
   onComplete?: (audioChunkCount: number) => void
   onError?: (error: string) => void
+  onConversationId?: (conversationId: string) => void
+}
+
+interface StreamOptions {
+  conversationId?: string
 }
 
 /**
@@ -16,6 +21,7 @@ interface StreamCallbacks {
  *
  * @param message - User message to send
  * @param callbacks - Event handlers for text, audio, completion, and errors
+ * @param options - Optional stream config (e.g. conversationId for persistence)
  * @returns AbortController (can be aborted to cancel stream)
  *
  * @example
@@ -24,7 +30,8 @@ interface StreamCallbacks {
  *   onText: (chunk) => console.log("Text:", chunk),
  *   onAudio: (audio) => playAudio(audio),
  *   onComplete: (count) => console.log(`Done! ${count} audio chunks`),
- *   onError: (err) => console.error(err)
+ *   onError: (err) => console.error(err),
+ *   onConversationId: (id) => console.log("Conversation:", id)
  * });
  *
  * // To abort: controller.abort();
@@ -32,7 +39,8 @@ interface StreamCallbacks {
  */
 export async function streamChat(
   message: string,
-  callbacks: StreamCallbacks
+  callbacks: StreamCallbacks,
+  options?: StreamOptions
 ): Promise<AbortController> {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
   const url = `${apiUrl}/api/chat/stream`
@@ -40,12 +48,17 @@ export async function streamChat(
   const abortController = new AbortController()
 
   try {
+    const body: Record<string, unknown> = { message }
+    if (options?.conversationId) {
+      body.conversation_id = options.conversationId
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify(body),
       signal: abortController.signal,
     })
 
@@ -84,7 +97,13 @@ export async function streamChat(
           try {
             const parsed = JSON.parse(data)
 
-            if (currentEvent === 'text' && callbacks.onText && parsed.text) {
+            if (
+              currentEvent === 'conversation_id' &&
+              callbacks.onConversationId &&
+              parsed.conversation_id
+            ) {
+              callbacks.onConversationId(parsed.conversation_id)
+            } else if (currentEvent === 'text' && callbacks.onText && parsed.text) {
               callbacks.onText(parsed.text)
             } else if (currentEvent === 'audio' && callbacks.onAudio && parsed.audio) {
               callbacks.onAudio(parsed.audio)

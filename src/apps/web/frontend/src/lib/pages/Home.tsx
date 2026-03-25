@@ -5,30 +5,22 @@ import AudioControls from '$sections/audio/AudioControls'
 import { WelcomePrompt, SuggestionCards, WelcomeContainer, KeyboardShortcuts } from '$sections/home'
 import type { HomeProps } from '$types/pages'
 import type { InputPanelRef } from '$types/sections/chat'
-import { useKeyboardShortcuts, useChat } from '$hooks/index'
+import { useKeyboardShortcuts } from '$hooks/index'
 import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS, LAYOUT } from '$lib/constants'
 
 export default function Home({
-  setAudioPlaying,
   audioPlaying,
   audioPaused,
-  streamControllerRef,
   handleStopAudio,
   handleTogglePause,
-  success,
-  error,
+  chat,
 }: HomeProps) {
   const inputRef = useRef<InputPanelRef>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
 
-  const { messages, inputText, setInputText, loading, handleSend } = useChat({
-    setAudioPlaying,
-    streamControllerRef,
-    success,
-    error,
-  })
+  const { messages, inputText, setInputText, loading, handleSend } = chat
 
   useEffect(() => {
     const chatContainer = chatScrollRef.current
