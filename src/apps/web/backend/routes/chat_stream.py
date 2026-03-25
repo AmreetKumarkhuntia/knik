@@ -29,6 +29,7 @@ from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, KokoroVoiceModel, printer
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
+from lib.services.conversation import ConversationDB
 
 
 router = APIRouter()
@@ -41,14 +42,34 @@ ai_client: AIClient | None = None
 tts_processor: KokoroVoiceModel | None = None
 mcp_registry: MCPServerRegistry | None = None
 
-# Global conversation history — persists for the lifetime of the server process
+# In-memory conversation history — used as a fast cache for LLM context
+# when no conversation_id is provided (backwards-compatible)
 conversation_history = ConversationHistory(max_size=50)
+
+# Track whether DB is available
+_db_available = False
 
 
 class StreamChatRequest(BaseModel):
     """Streaming chat request"""
 
     message: str
+    conversation_id: str | None = None
+
+
+async def _check_db() -> bool:
+    """Check if the database is available for conversation persistence."""
+    global _db_available
+    try:
+        from lib.services.postgres.db import PostgresDB
+
+        if PostgresDB._pool is not None:
+            _db_available = True
+            return True
+    except Exception:
+        pass
+    _db_available = False
+    return False
 
 
 async def _init_clients():
@@ -78,11 +99,43 @@ async def _init_clients():
         printer.success(f"TTS ready: {config.voice_name}")
 
 
-async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
+async def _get_history_for_conversation(conversation_id: str | None) -> list:
+    """Retrieve conversation history for LLM context.
+
+    If a conversation_id is provided and the DB is available, loads from DB.
+    Otherwise falls back to the in-memory ConversationHistory cache.
+    """
+    history_context_size = getattr(config, "history_context_size", 5)
+
+    if conversation_id and _db_available:
+        try:
+            messages = await ConversationDB.get_recent_messages(
+                conversation_id,
+                last_n=history_context_size * 2,  # *2 because each turn = 2 messages
+            )
+            # Convert to LangChain-compatible format
+            from langchain_core.messages import AIMessage, HumanMessage
+
+            langchain_msgs = []
+            for msg in messages:
+                if msg.role == "user":
+                    langchain_msgs.append(HumanMessage(content=msg.content))
+                elif msg.role == "assistant":
+                    langchain_msgs.append(AIMessage(content=msg.content))
+            return langchain_msgs
+        except Exception as e:
+            printer.warning(f"Failed to load DB history, falling back to in-memory: {e}")
+
+    # Fallback: in-memory history
+    return conversation_history.get_messages(last_n=history_context_size)
+
+
+async def stream_chat_response(prompt: str, conversation_id: str | None = None) -> AsyncGenerator[str, None]:
     """
     Stream chat response with text and audio chunks via SSE.
 
     Event types:
+    - conversation_id: Emitted once at the start with the conversation ID
     - text: AI response text chunk
     - audio: Base64 encoded audio chunk
     - done: Streaming complete
@@ -90,10 +143,42 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
     """
     try:
         await _init_clients()
+        await _check_db()
 
-        # Fetch recent history to give the AI conversation context
-        history_context_size = getattr(config, "history_context_size", 5)
-        history = conversation_history.get_messages(last_n=history_context_size)
+        # Create or reuse a conversation in the DB
+        if _db_available:
+            try:
+                if not conversation_id:
+                    conversation_id = await ConversationDB.create_conversation()
+                    printer.info(f"Created new conversation: {conversation_id}")
+                else:
+                    # Verify conversation exists
+                    existing = await ConversationDB.get_conversation(conversation_id)
+                    if not existing:
+                        conversation_id = await ConversationDB.create_conversation()
+                        printer.info(f"Conversation not found, created new: {conversation_id}")
+            except Exception as e:
+                printer.warning(f"DB conversation creation failed: {e}")
+                conversation_id = None
+
+        # Emit the conversation_id so the frontend can track it
+        if conversation_id:
+            yield f"event: conversation_id\ndata: {json.dumps({'conversation_id': conversation_id})}\n\n"
+
+        # Save user message to DB
+        if conversation_id and _db_available:
+            try:
+                await ConversationDB.append_message(
+                    conversation_id=conversation_id,
+                    role="user",
+                    content=prompt,
+                    metadata={"provider": config.ai_provider, "model": config.ai_model},
+                )
+            except Exception as e:
+                printer.warning(f"Failed to save user message to DB: {e}")
+
+        # Fetch recent history for LLM context
+        history = await _get_history_for_conversation(conversation_id)
 
         # -----------------------------------------------------------
         # Consume the synchronous AI generator on a background thread
@@ -166,10 +251,39 @@ async def stream_chat_response(prompt: str) -> AsyncGenerator[str, None]:
             audio_count += 1
             printer.success(f"Sent final audio chunk {audio_count}")
 
-        # Save this turn to history so future messages have context
+        # Persist the assistant response
         if full_response.strip():
+            # Always update in-memory history (backwards-compatible)
             conversation_history.add_entry(user_input=prompt, ai_response=full_response.strip())
-            printer.info(f"Saved turn to history (total turns: {len(conversation_history.entries)})")
+            printer.info(f"Saved turn to in-memory history (total turns: {len(conversation_history.entries)})")
+
+            # Persist to DB
+            if conversation_id and _db_available:
+                try:
+                    await ConversationDB.append_message(
+                        conversation_id=conversation_id,
+                        role="assistant",
+                        content=full_response.strip(),
+                        metadata={
+                            "provider": config.ai_provider,
+                            "model": config.ai_model,
+                            "audio_chunks": audio_count,
+                        },
+                    )
+                    printer.info(f"Saved assistant message to DB for conversation: {conversation_id}")
+
+                    # Generate title after first exchange (async fire-and-forget)
+                    msg_count = await ConversationDB.get_message_count(conversation_id)
+                    if msg_count == 2:  # First user + first assistant = 2 messages
+                        asyncio.create_task(
+                            ConversationDB.generate_and_set_title(
+                                conversation_id=conversation_id,
+                                first_message=prompt,
+                                ai_client=ai_client,
+                            )
+                        )
+                except Exception as e:
+                    printer.warning(f"Failed to save assistant message to DB: {e}")
 
         printer.info(f"Stream complete: sent {audio_count} audio chunks")
         yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
@@ -186,13 +300,14 @@ async def stream_chat(request: StreamChatRequest):
 
     Returns:
         StreamingResponse with events:
+        - conversation_id: Conversation ID for this session
         - text: Text chunks from AI
         - audio: Base64 encoded audio chunks
         - done: Streaming complete
         - error: Error message
     """
     return StreamingResponse(
-        stream_chat_response(request.message),
+        stream_chat_response(request.message, conversation_id=request.conversation_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

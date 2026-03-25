@@ -1,16 +1,17 @@
-import type { ChatResponse } from '../types/api'
+import type { ChatResponse, Conversation, ConversationListResponse } from '../types/api'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
 class ChatAPI {
   static async stream(
     message: string,
-    onAudioChunk?: (audio: string, sampleRate: number) => void
-  ): Promise<ChatResponse> {
+    onAudioChunk?: (audio: string, sampleRate: number) => void,
+    conversationId?: string
+  ): Promise<ChatResponse & { conversation_id?: string }> {
     const response = await fetch(`${API_BASE_URL}/chat/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, conversation_id: conversationId }),
     })
 
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
@@ -22,6 +23,7 @@ class ChatAPI {
     let fullText = ''
     const audioChunks: string[] = []
     let buffer = ''
+    let receivedConversationId: string | undefined
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (reader) {
@@ -47,6 +49,8 @@ class ChatAPI {
               if (onAudioChunk) {
                 onAudioChunk(parsed.audio, parsed.sample_rate || 24000)
               }
+            } else if (currentEvent === 'conversation_id' && parsed.conversation_id) {
+              receivedConversationId = parsed.conversation_id
             }
           } catch (e) {
             console.error('Parse error:', e, jsonData)
@@ -62,6 +66,7 @@ class ChatAPI {
       audioChunks,
       audio: audioChunks.length > 0 ? audioChunks[0] : '',
       sample_rate: 24000,
+      conversation_id: receivedConversationId,
     }
   }
 
@@ -78,6 +83,53 @@ class ChatAPI {
   }
 }
 
+class ConversationAPI {
+  static async list(limit = 20, offset = 0): Promise<ConversationListResponse> {
+    const response = await fetch(`${API_BASE_URL}/conversations?limit=${limit}&offset=${offset}`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async get(conversationId: string): Promise<Conversation> {
+    const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async create(
+    title?: string
+  ): Promise<{ id: string; title: string | null; status: string }> {
+    const response = await fetch(`${API_BASE_URL}/conversations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(title ? { title } : {}),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async delete(conversationId: string): Promise<{ status: string; id: string }> {
+    const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}`, {
+      method: 'DELETE',
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async updateTitle(
+    conversationId: string,
+    title: string
+  ): Promise<{ status: string; id: string; title: string }> {
+    const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+}
+
 class AdminAPI {
   static async getSettings() {
     const response = await fetch(`${API_BASE_URL}/admin/settings`)
@@ -86,8 +138,11 @@ class AdminAPI {
   }
 }
 
+export { ConversationAPI }
+
 export class ApiClient {
   static chat = ChatAPI
+  static conversations = ConversationAPI
   static admin = AdminAPI
 }
 

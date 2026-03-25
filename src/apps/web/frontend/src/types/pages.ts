@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import type { UseChatReturn } from './hooks'
 
 export interface HomeProps {
   setAudioPlaying: (playing: boolean) => void
@@ -9,4 +10,5 @@ export interface HomeProps {
   handleTogglePause: () => void
   success: (message: string) => void
   error: (message: string) => void
+  chat: UseChatReturn
 }

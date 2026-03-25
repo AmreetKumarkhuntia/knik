@@ -18,14 +18,14 @@ import LoadingSpinner from '$components/LoadingSpinner'
 import EmptyState from '$components/EmptyState'
 import { ThemeSelector } from '$sections/theme'
 import type { SidebarProps } from '$types/sections/layout'
-import type { Message } from '$types/hooks'
-import { api } from '$services/api'
+import type { Conversation } from '$types/api'
+import { ConversationAPI } from '$services/api'
 import { UI_TEXT, NAV_ITEMS, EMPTY_STATE_DEFAULTS } from '$lib/constants'
 
-export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
+export default function Sidebar({ onClearHistory, onNewChat, onSelectConversation }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [history, setHistory] = useState<Message[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(false)
   const [themeSelectorOpen, setThemeSelectorOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -34,17 +34,18 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
 
   useEffect(() => {
     if (isExpanded) {
-      void fetchHistory()
+      void fetchConversations()
     }
   }, [isExpanded])
 
-  const fetchHistory = async () => {
+  const fetchConversations = async () => {
     try {
       setLoading(true)
-      const data = await api.getHistory()
-      setHistory(data.messages || [])
+      const data = await ConversationAPI.list(10)
+      setConversations(data.conversations)
     } catch (error) {
-      console.error('Failed to fetch history:', error)
+      console.error('Failed to fetch conversations:', error)
+      setConversations([])
     } finally {
       setLoading(false)
     }
@@ -52,7 +53,45 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
 
   const handleClearHistory = () => {
     onClearHistory()
-    setHistory([])
+    setConversations([])
+  }
+
+  const handleSelectConversation = (id: string) => {
+    onSelectConversation(id)
+    // Navigate to home page if not already there
+    if (location.pathname !== '/') {
+      void navigate('/')
+    }
+  }
+
+  /**
+   * Derive a display label for a conversation.
+   * Prefer the AI-generated title; fall back to the first user message preview.
+   */
+  const getConversationLabel = (conv: Conversation): string => {
+    if (conv.title) return conv.title
+    const firstUserMsg = conv.messages.find(m => m.role === 'user')
+    if (firstUserMsg) {
+      return firstUserMsg.content.length > 40
+        ? firstUserMsg.content.slice(0, 40) + '...'
+        : firstUserMsg.content
+    }
+    return 'New Chat'
+  }
+
+  /**
+   * Format a timestamp for the sidebar (e.g. "Today", "Yesterday", or "Mar 25").
+   */
+  const formatTimestamp = (isoString: string | null): string => {
+    if (!isoString) return ''
+    const date = new Date(isoString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   return (
@@ -144,23 +183,33 @@ export default function Sidebar({ onClearHistory, onNewChat }: SidebarProps) {
               <div className="space-y-1">
                 {loading ? (
                   <LoadingSpinner size="sm" className="py-8" />
-                ) : history.length === 0 ? (
+                ) : conversations.length === 0 ? (
                   <EmptyState
                     icon={EMPTY_STATE_DEFAULTS.icon}
                     title={UI_TEXT.empty.noHistoryTitle}
                     description={UI_TEXT.empty.noHistoryDescription}
                   />
                 ) : (
-                  history.slice(0, 5).map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className="px-3 py-3 rounded-lg text-sm text-secondary hover:bg-surface transition-all cursor-pointer"
+                  conversations.map(conv => (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv.id)}
+                      className="w-full text-left px-3 py-3 rounded-lg text-sm text-secondary hover:bg-surface transition-all cursor-pointer"
                     >
-                      <div className="font-medium text-secondary text-xs mb-1">
-                        {msg.role === 'user' ? 'You' : 'Knik'}
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-secondary text-xs truncate">
+                          {getConversationLabel(conv)}
+                        </span>
+                        <span className="text-xs text-muted ml-2 flex-shrink-0">
+                          {formatTimestamp(conv.updated_at)}
+                        </span>
                       </div>
-                      <div className="line-clamp-2">{msg.content}</div>
-                    </div>
+                      {conv.messages.length > 0 && (
+                        <div className="line-clamp-1 text-xs text-muted">
+                          {conv.messages[conv.messages.length - 1].content.slice(0, 60)}
+                        </div>
+                      )}
+                    </button>
                   ))
                 )}
               </div>

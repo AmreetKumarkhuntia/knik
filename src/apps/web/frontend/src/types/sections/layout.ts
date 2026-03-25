@@ -7,11 +7,13 @@ export interface MainLayoutProps {
   hideToast: (id: number) => void
   onNewChat: () => void
   onClearHistory: () => void
+  onSelectConversation: (conversationId: string) => void
 }
 
 export interface SidebarProps {
   onClearHistory: () => void
   onNewChat: () => void
+  onSelectConversation: (conversationId: string) => void
 }
 
 export interface TopBarProps {

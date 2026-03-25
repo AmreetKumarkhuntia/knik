@@ -9,6 +9,7 @@ export default function MainLayout({
   hideToast,
   onNewChat,
   onClearHistory,
+  onSelectConversation,
 }: MainLayoutProps) {
   return (
     <>
@@ -16,7 +17,11 @@ export default function MainLayout({
         <BackgroundEffects />
 
         <div className="flex flex-1 min-h-0">
-          <Sidebar onNewChat={onNewChat} onClearHistory={onClearHistory} />
+          <Sidebar
+            onNewChat={onNewChat}
+            onClearHistory={onClearHistory}
+            onSelectConversation={onSelectConversation}
+          />
 
           <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
         </div>
