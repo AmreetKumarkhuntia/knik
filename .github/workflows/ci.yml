@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  backend:
+    name: Backend - Lint, Format & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Create venv and install dependencies
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+          uv pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: |
+          source .venv/bin/activate
+          ruff check .
+
+      - name: Ruff format check
+        run: |
+          source .venv/bin/activate
+          ruff format --check .
+
+      - name: Pyright
+        run: |
+          source .venv/bin/activate
+          pyright
+
+  frontend:
+    name: Frontend - Lint, Format, Typecheck & Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    defaults:
+      run:
+        working-directory: src/apps/web/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: ESLint
+        run: npx eslint .
+
+      - name: Prettier format check
+        run: npx prettier --check "src/**/*.{ts,tsx,css,json}"
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npx vite build
