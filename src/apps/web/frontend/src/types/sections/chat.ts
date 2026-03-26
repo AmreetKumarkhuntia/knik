@@ -1,4 +1,10 @@
-import type { Message } from '$types/hooks'
+export interface Message {
+  role: 'user' | 'assistant'
+  content: string
+  id?: string
+  timestamp?: string
+  metadata?: Record<string, unknown>
+}
 
 export interface ChatPanelProps {
   messages: Message[]

@@ -1,34 +1,23 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '$sections/theme'
 import MainLayout from '$sections/layout/MainLayout'
 import ErrorBoundary from '$sections/feedback/ErrorBoundary'
 import { Home, Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions } from '$pages/index'
-import { useToast, useAudio, useChat } from '$hooks/index'
+import { useStore } from '$store/index'
 import type { InputPanelRef } from '$types/sections/chat'
 
 function AppContent() {
   const inputRef = useRef<InputPanelRef>(null)
-  const { toasts, hideToast, success, error } = useToast()
+  const initAudioCallbacks = useStore(s => s.initAudioCallbacks)
+  const handleNewChat = useStore(s => s.handleNewChat)
+  const loadConversation = useStore(s => s.loadConversation)
 
-  const {
-    audioPlaying,
-    setAudioPlaying,
-    audioPaused,
-    streamControllerRef,
-    handleStopAudio,
-    handleTogglePause,
-  } = useAudio()
-
-  // Single useChat instance shared between layout (sidebar) and Home page
-  const chat = useChat({
-    setAudioPlaying,
-    streamControllerRef,
-    success,
-    error,
-  })
-
-  const { handleNewChat, handleClearHistory, loadConversation } = chat
+  // Initialize audio service callbacks on mount
+  useEffect(() => {
+    const cleanup = initAudioCallbacks()
+    return cleanup
+  }, [initAudioCallbacks])
 
   const onNewChat = useCallback(() => {
     handleNewChat()
@@ -46,30 +35,9 @@ function AppContent() {
 
   return (
     <BrowserRouter>
-      <MainLayout
-        toasts={toasts}
-        hideToast={hideToast}
-        onNewChat={onNewChat}
-        onClearHistory={handleClearHistory}
-        onSelectConversation={onSelectConversation}
-      >
+      <MainLayout onNewChat={onNewChat} onSelectConversation={onSelectConversation}>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <Home
-                setAudioPlaying={setAudioPlaying}
-                audioPlaying={audioPlaying}
-                audioPaused={audioPaused}
-                streamControllerRef={streamControllerRef}
-                handleStopAudio={handleStopAudio}
-                handleTogglePause={handleTogglePause}
-                success={success}
-                error={error}
-                chat={chat}
-              />
-            }
-          />
+          <Route path="/" element={<Home inputRef={inputRef} />} />
           <Route path="/workflows" element={<Workflows />} />
           <Route path="/workflows/create" element={<WorkflowBuilder />} />
           <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />

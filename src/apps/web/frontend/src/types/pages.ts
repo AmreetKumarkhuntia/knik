@@ -1,14 +1,6 @@
 import type { RefObject } from 'react'
-import type { UseChatReturn } from './hooks'
+import type { InputPanelRef } from '$types/sections/chat'
 
 export interface HomeProps {
-  setAudioPlaying: (playing: boolean) => void
-  audioPlaying: boolean
-  audioPaused: boolean
-  streamControllerRef: RefObject<AbortController | null>
-  handleStopAudio: () => void
-  handleTogglePause: () => void
-  success: (message: string) => void
-  error: (message: string) => void
-  chat: UseChatReturn
+  inputRef: RefObject<InputPanelRef | null>
 }

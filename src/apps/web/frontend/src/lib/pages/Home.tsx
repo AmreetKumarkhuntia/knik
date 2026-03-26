@@ -4,23 +4,25 @@ import InputPanel from '$sections/chat/InputPanel'
 import AudioControls from '$sections/audio/AudioControls'
 import { WelcomePrompt, SuggestionCards, WelcomeContainer, KeyboardShortcuts } from '$sections/home'
 import type { HomeProps } from '$types/pages'
-import type { InputPanelRef } from '$types/sections/chat'
 import { useKeyboardShortcuts } from '$hooks/index'
+import { useStore } from '$store/index'
 import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS, LAYOUT } from '$lib/constants'
 
-export default function Home({
-  audioPlaying,
-  audioPaused,
-  handleStopAudio,
-  handleTogglePause,
-  chat,
-}: HomeProps) {
-  const inputRef = useRef<InputPanelRef>(null)
+export default function Home({ inputRef }: HomeProps) {
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
 
-  const { messages, inputText, setInputText, loading, handleSend } = chat
+  // Read from store
+  const messages = useStore(s => s.messages)
+  const inputText = useStore(s => s.inputText)
+  const setInputText = useStore(s => s.setInputText)
+  const loading = useStore(s => s.loading)
+  const handleSend = useStore(s => s.handleSend)
+  const audioPlaying = useStore(s => s.audioPlaying)
+  const audioPaused = useStore(s => s.audioPaused)
+  const handleStopAudio = useStore(s => s.handleStopAudio)
+  const handleTogglePause = useStore(s => s.handleTogglePause)
 
   useEffect(() => {
     const chatContainer = chatScrollRef.current
@@ -28,14 +30,11 @@ export default function Home({
 
     let scrollTimeout: number
     const handleScroll = () => {
-      // Clear any existing timeout to debounce
       if (scrollTimeout) clearTimeout(scrollTimeout)
 
-      // Set new timeout with 100ms delay
       scrollTimeout = window.setTimeout(() => {
         const { scrollTop, scrollHeight, clientHeight } = chatContainer
         const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-        // Increased threshold and more aggressive detection
         setIsUserScrolling(distanceFromBottom > 300)
       }, 100)
     }
@@ -67,7 +66,6 @@ export default function Home({
       }
     }
 
-    // Small delay to allow DOM updates to complete
     const timer = setTimeout(scrollToBottom, 50)
     return () => clearTimeout(timer)
   }, [messages, loading, isUserScrolling])
