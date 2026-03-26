@@ -63,7 +63,7 @@ Clean separation: definitions (JSON schemas) vs implementations (Python function
 ### Browser (6)
 
 - `browser_navigate` - Navigate to a URL
-- `browser_get_text` - Extract text content from the current page
+- `browser_get_text` - Extract text content from the current page (supports chunked reading for long pages)
 - `browser_get_links` - Get all links from the current page
 - `browser_click` - Click an element on the page
 - `browser_type` - Type text into an input field

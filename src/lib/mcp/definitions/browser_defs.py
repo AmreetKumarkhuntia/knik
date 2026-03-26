@@ -31,7 +31,8 @@ BROWSER_DEFINITIONS = [
         "description": (
             "Extract all visible text from the current browser page. "
             "Use after browser_navigate. Returns cleaned, readable text — great for reading job descriptions, "
-            "article content, or any page information."
+            "article content, or any page information. "
+            "If text exceeds max_chars, use the chunk parameter to retrieve subsequent portions."
         ),
         "parameters": {
             "type": "object",
@@ -47,8 +48,16 @@ BROWSER_DEFINITIONS = [
                 },
                 "max_chars": {
                     "type": "integer",
-                    "description": "Maximum number of characters to return. Default 8000.",
+                    "description": "Maximum number of characters to return per chunk. Default 8000.",
                     "default": 8000,
+                },
+                "chunk": {
+                    "type": "integer",
+                    "description": (
+                        "Which chunk of text to return (1-indexed). Each chunk contains up to max_chars characters. "
+                        "Default is 1 (first chunk). Use higher values to read subsequent portions of long pages."
+                    ),
+                    "default": 1,
                 },
             },
             "required": [],
