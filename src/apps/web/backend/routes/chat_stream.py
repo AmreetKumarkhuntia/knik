@@ -46,30 +46,12 @@ mcp_registry: MCPServerRegistry | None = None
 # when no conversation_id is provided (backwards-compatible)
 conversation_history = ConversationHistory(max_size=50)
 
-# Track whether DB is available
-_db_available = False
-
 
 class StreamChatRequest(BaseModel):
     """Streaming chat request"""
 
     message: str
     conversation_id: str | None = None
-
-
-async def _check_db() -> bool:
-    """Check if the database is available for conversation persistence."""
-    global _db_available
-    try:
-        from lib.services.postgres.db import PostgresDB
-
-        if PostgresDB._pool is not None:
-            _db_available = True
-            return True
-    except Exception:
-        pass
-    _db_available = False
-    return False
 
 
 async def _init_clients():
@@ -107,7 +89,7 @@ async def _get_history_for_conversation(conversation_id: str | None) -> list:
     """
     history_context_size = getattr(config, "history_context_size", 5)
 
-    if conversation_id and _db_available:
+    if conversation_id and await ConversationDB.is_available():
         try:
             messages = await ConversationDB.get_recent_messages(
                 conversation_id,
@@ -143,10 +125,10 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
     """
     try:
         await _init_clients()
-        await _check_db()
+        db_available = await ConversationDB.is_available()
 
         # Create or reuse a conversation in the DB
-        if _db_available:
+        if db_available:
             try:
                 if not conversation_id:
                     conversation_id = await ConversationDB.create_conversation()
@@ -166,7 +148,7 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
             yield f"event: conversation_id\ndata: {json.dumps({'conversation_id': conversation_id})}\n\n"
 
         # Save user message to DB
-        if conversation_id and _db_available:
+        if conversation_id and db_available:
             try:
                 await ConversationDB.append_message(
                     conversation_id=conversation_id,
@@ -258,7 +240,7 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
             printer.info(f"Saved turn to in-memory history (total turns: {len(conversation_history.entries)})")
 
             # Persist to DB
-            if conversation_id and _db_available:
+            if conversation_id and db_available:
                 try:
                     await ConversationDB.append_message(
                         conversation_id=conversation_id,

@@ -75,18 +75,6 @@ async def _init_clients():
         printer.success(f"TTS ready: {config.voice_name}")
 
 
-async def _check_db() -> bool:
-    """Check if the database is available for conversation persistence."""
-    try:
-        from lib.services.postgres.db import PostgresDB
-
-        if PostgresDB._pool is not None:
-            return True
-    except Exception:
-        pass
-    return False
-
-
 @router.post("/")
 async def chat(request: SimpleChatRequest):
     """
@@ -97,7 +85,7 @@ async def chat(request: SimpleChatRequest):
     """
     try:
         await _init_clients()
-        db_available = await _check_db()
+        db_available = await ConversationDB.is_available()
 
         conversation_id = request.conversation_id
 
