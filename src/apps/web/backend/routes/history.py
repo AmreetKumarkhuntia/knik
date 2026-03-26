@@ -88,6 +88,7 @@ async def add_message(msg: MessageAdd):
 
 @router.post("/clear")
 async def clear_history():
-    """Clear all history"""
+    """Clear all history (in-memory and database)."""
     conversation_history.clear()
+    await ConversationDB.delete_all_conversations()
     return {"status": "success", "message": "History cleared"}

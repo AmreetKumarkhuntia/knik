@@ -87,6 +87,19 @@ class ConversationDB:
         printer.info(f"Deleted conversation: {conversation_id}")
 
     @staticmethod
+    async def delete_all_conversations() -> None:
+        """Delete all conversations.
+
+        Silently no-ops if the database is not available.
+        """
+        if not await ConversationDB.is_available():
+            return
+        await ConversationDB._ensure_initialized()
+        query = "DELETE FROM conversations"
+        await PostgresDB.execute(query)
+        printer.info("Deleted all conversations")
+
+    @staticmethod
     async def update_title(conversation_id: str, title: str) -> None:
         """Update a conversation's title."""
         await ConversationDB._ensure_initialized()
