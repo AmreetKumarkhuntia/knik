@@ -1,5 +1,11 @@
 import type { StateCreator } from 'zustand'
-import { streamChat, queueAudio, clearAudioQueue, ConversationAPI, ApiClient } from '$services/index'
+import {
+  streamChat,
+  queueAudio,
+  clearAudioQueue,
+  ConversationAPI,
+  ApiClient,
+} from '$services/index'
 import type { Message } from '$types/sections/chat'
 import type { AudioSlice } from './audioSlice'
 import type { ToastSlice } from './toastSlice'

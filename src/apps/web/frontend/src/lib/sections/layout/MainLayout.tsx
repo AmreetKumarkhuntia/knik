@@ -17,7 +17,7 @@ export default function MainLayout({ children, onNewChat, onSelectConversation }
         <div className="flex flex-1 min-h-0">
           <Sidebar
             onNewChat={onNewChat}
-            onClearHistory={handleClearHistory}
+            onClearHistory={() => void handleClearHistory()}
             onSelectConversation={onSelectConversation}
           />
 
