@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import { streamChat, queueAudio, clearAudioQueue, ConversationAPI } from '$services/index'
+import { streamChat, queueAudio, clearAudioQueue, ConversationAPI, ApiClient } from '$services/index'
 import type { Message } from '$types/sections/chat'
 import type { AudioSlice } from './audioSlice'
 import type { ToastSlice } from './toastSlice'
@@ -17,7 +17,7 @@ export interface ChatSlice {
   setLoading: (loading: boolean) => void
   setConversationId: (id: string | null) => void
   handleNewChat: () => void
-  handleClearHistory: () => void
+  handleClearHistory: () => Promise<void>
   loadConversation: (id: string) => Promise<void>
   handleSend: () => Promise<void>
 }
@@ -51,9 +51,15 @@ export const createChatSlice: StateCreator<
     set({ messages: [], inputText: '', conversationId: null })
   },
 
-  handleClearHistory: () => {
-    set({ messages: [], conversationId: null })
-    get().success('History cleared!')
+  handleClearHistory: async () => {
+    set({ messages: [], inputText: '', conversationId: null })
+    try {
+      await ApiClient.chat.clearHistory()
+      get().success('History cleared!')
+    } catch (err) {
+      console.error('Failed to clear history on backend:', err)
+      get().error('Failed to clear history')
+    }
   },
 
   loadConversation: async (id: string) => {
