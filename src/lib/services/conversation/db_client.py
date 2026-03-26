@@ -32,6 +32,16 @@ class ConversationDB:
         if not _initialized:
             await ConversationDB.initialize()
 
+    @staticmethod
+    async def is_available() -> bool:
+        """Check if the database is available for conversation persistence."""
+        try:
+            from lib.services.postgres.db import PostgresDB
+
+            return PostgresDB._pool is not None
+        except Exception:
+            return False
+
     # ─── Conversation CRUD ──────────────────────────────────────────
 
     @staticmethod
