@@ -1,16 +1,14 @@
 import Sidebar from './Sidebar'
 import BackgroundEffects from '$sections/effects/BackgroundEffects'
 import Toast from '$sections/feedback/Toast'
+import { useStore } from '$store/index'
 import type { MainLayoutProps } from '$types/sections/layout'
 
-export default function MainLayout({
-  children,
-  toasts,
-  hideToast,
-  onNewChat,
-  onClearHistory,
-  onSelectConversation,
-}: MainLayoutProps) {
+export default function MainLayout({ children, onNewChat, onSelectConversation }: MainLayoutProps) {
+  const toasts = useStore(s => s.toasts)
+  const hideToast = useStore(s => s.hideToast)
+  const handleClearHistory = useStore(s => s.handleClearHistory)
+
   return (
     <>
       <div className="h-screen bg-background text-foreground relative flex flex-col">
@@ -19,7 +17,7 @@ export default function MainLayout({
         <div className="flex flex-1 min-h-0">
           <Sidebar
             onNewChat={onNewChat}
-            onClearHistory={onClearHistory}
+            onClearHistory={handleClearHistory}
             onSelectConversation={onSelectConversation}
           />
 

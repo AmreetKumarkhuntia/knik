@@ -28,6 +28,7 @@
       "$utils/*": ["./src/lib/utils/*"],
       "$constants/*": ["./src/lib/constants/*"],
       "$hooks/*": ["./src/lib/hooks/*"],
+      "$store/*": ["./src/store/*"],
       "$assets/*": ["./src/assets/*"]
     },
 
