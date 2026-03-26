@@ -159,6 +159,9 @@ Be reliable, efficient, and action focused like Jarvis."""
         )
     )
 
+    # Telegram configuration
+    telegram_bot_token: str | None = field(default_factory=lambda: Config.from_env("KNIK_TELEGRAM_BOT_TOKEN", None))
+
     # ============================================================================
     # Initialization
     # ============================================================================

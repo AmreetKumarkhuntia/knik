@@ -35,3 +35,6 @@ dateparser>=1.2.0  # Natural language date/time parsing for schedules
 
 # Browser automation (for Browser MCP tools)
 playwright>=1.40.0       # Headless Chromium/Firefox/Webkit automation
+
+# Messaging (Telegram bot integration)
+python-telegram-bot>=22.0
