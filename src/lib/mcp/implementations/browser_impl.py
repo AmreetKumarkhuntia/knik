@@ -11,6 +11,7 @@ errors when called from async frameworks like FastAPI/uvicorn.
 
 import atexit
 import base64
+import math
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -129,14 +130,33 @@ def _ensure_browser():
         ) from err
 
 
-def _clean_text(raw: str, max_chars: int) -> str:
-    """Strip excessive whitespace and truncate."""
+def _clean_text(raw: str, max_chars: int, chunk: int = 1) -> str:
+    """Strip excessive whitespace and return the requested chunk."""
     text = re.sub(r"\n{3,}", "\n\n", raw)
     text = re.sub(r" {2,}", " ", text)
     text = text.strip()
-    if len(text) > max_chars:
-        text = text[:max_chars] + f"\n\n[... truncated — {len(text) - max_chars} more characters]"
-    return text
+
+    total_chars = len(text)
+    if total_chars == 0:
+        return ""
+
+    total_chunks = math.ceil(total_chars / max_chars)
+    chunk = max(1, chunk)
+
+    if chunk > total_chunks:
+        return f"[No content at chunk {chunk}. Total chunks available: {total_chunks} (total {total_chars} chars)]"
+
+    start = (chunk - 1) * max_chars
+    end = min(chunk * max_chars, total_chars)
+    chunk_text = text[start:end]
+
+    header = f"[Chunk {chunk}/{total_chunks} | chars {start + 1}-{end} of {total_chars}]"
+    result = f"{header}\n\n{chunk_text}"
+
+    if chunk < total_chunks:
+        result += f"\n\n[Use chunk={chunk + 1} to continue reading]"
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -168,10 +188,12 @@ def browser_navigate(url: str, wait_until: str = "domcontentloaded") -> str:
         return f"Error navigating to {url}: {str(e)}"
 
 
-def browser_get_text(selector: str = None, max_chars: int = 8000) -> str:
+def browser_get_text(selector: str = None, max_chars: int = 8000, chunk: int = 1) -> str:
     """Extract visible text from the page (or a specific element)."""
     if max_chars is None:
         max_chars = 8000
+    if chunk is None:
+        chunk = 1
 
     def _inner():
         page = _ensure_browser()
@@ -189,13 +211,13 @@ def browser_get_text(selector: str = None, max_chars: int = 8000) -> str:
                 }"""
             )
 
-    printer.info(f"🌐 Extracting text (selector={selector!r}, max_chars={max_chars})")
+    printer.info(f"🌐 Extracting text (selector={selector!r}, max_chars={max_chars}, chunk={chunk})")
     try:
         raw = _run_on_browser_thread(_inner)
         if raw is None:
             return f"Error: No element found matching selector '{selector}'"
-        text = _clean_text(raw or "", max_chars)
-        printer.success(f"🌐 Extracted {len(text)} chars of text")
+        text = _clean_text(raw or "", max_chars, chunk)
+        printer.success(f"🌐 Extracted {len(text)} chars of text (chunk {chunk})")
         return text if text else "(No visible text found on page)"
     except Exception as e:
         return f"Error extracting text: {str(e)}"

@@ -101,7 +101,7 @@ Each provider self-registers at module load time via `ProviderRegistry.register(
   - **Text** (5): word_count, find_and_replace, extract_emails, extract_urls, text_case_convert
   - **Shell** (1): run_shell_command
   - **File** (8): read_file, list_directory, search_in_files, file_info, write_file, append_to_file, find_in_file, count_in_file
-  - **Browser** (6): browser_navigate, browser_get_text, browser_get_links, browser_click, browser_type, browser_screenshot
+  - **Browser** (6): browser_navigate, browser_get_text (supports chunked reading), browser_get_links, browser_click, browser_type, browser_screenshot
   - **Cron** (3): list_cron_schedules, add_cron_schedule, remove_cron_schedule
   - **Workflow** (4): create_workflow, remove_workflow, list_workflows, get_workflow_templates
 - Tools registered at app startup via `register_all_tools(ai_client)`
