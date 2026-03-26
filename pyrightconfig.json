@@ -19,5 +19,5 @@
   "reportGeneralTypeIssues": false,
   "reportOptionalSubscript": false,
   "pythonVersion": "3.12",
-  "pythonPlatform": "Darwin"
+  "pythonPlatform": "All"
 }
