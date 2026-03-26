@@ -1,3 +1,4 @@
+import asyncio
 import json
 from abc import ABC, abstractmethod
 from typing import Any
@@ -60,8 +61,12 @@ class FunctionExecutionNode(BaseNode):
             # will be discarded (use a wrapper to capture output)
             local_env = {**resolved_params, "inputs": inputs}
             try:
-                # Compile and execute the python snippet
-                exec(self.code, {}, local_env)
+                # Offload synchronous exec() to a worker thread to avoid
+                # blocking the asyncio event loop with arbitrary user code.
+                def _run_code():
+                    exec(self.code, {}, local_env)
+
+                await asyncio.to_thread(_run_code)
 
                 # Fetch output from a standardized 'output' or 'result' variable if the script set it
                 code_output = local_env.get("output", local_env.get("result"))
@@ -184,19 +189,25 @@ class AIExecutionNode(BaseNode):
         resolved_prompt = self._resolve_prompt(inputs, self.prompt)
 
         try:
-            if self.use_tools:
-                mcp_registry = MCPServerRegistry()
-                register_all_tools(mcp_registry)
-            else:
-                mcp_registry = None
+            # Offload the entire client construction + synchronous LangChain
+            # .invoke() call to a worker thread so nothing blocks the asyncio
+            # event loop (matches the web backend _build_ai + to_thread pattern).
+            def _build_and_chat() -> str:
+                if self.use_tools:
+                    mcp_registry = MCPServerRegistry()
+                    register_all_tools(mcp_registry)
+                else:
+                    mcp_registry = None
 
-            ai_client = AIClient(
-                provider=self.provider,
-                model=self.model,
-                temperature=self.temperature,
-                mcp_registry=mcp_registry,
-            )
-            response = ai_client.chat(prompt=resolved_prompt)
+                ai_client = AIClient(
+                    provider=self.provider,
+                    model=self.model,
+                    temperature=self.temperature,
+                    mcp_registry=mcp_registry,
+                )
+                return ai_client.chat(prompt=resolved_prompt)
+
+            response = await asyncio.to_thread(_build_and_chat)
             return {"status": "success", "output": response}
         except Exception as e:
             logger.error(f"[{self.node_id}] AI execution failed: {e}")
