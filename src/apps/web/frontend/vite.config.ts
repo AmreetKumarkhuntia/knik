@@ -15,6 +15,9 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    chunkSizeWarningLimit: 2000,
+  },
   resolve: {
     alias: {
       $types: path.resolve(__dirname, './src/types'),
