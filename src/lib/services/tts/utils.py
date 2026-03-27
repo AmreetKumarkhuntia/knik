@@ -27,3 +27,18 @@ def filter_tts_text(text: str) -> str:
     # Remove multiple spaces
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+
+def is_speakable(text: str) -> bool:
+    """
+    Check whether *text* contains anything a TTS engine can actually
+    vocalise after filtering.  Returns ``False`` for empty strings,
+    pure punctuation / whitespace, or text that reduces to nothing
+    after :func:`filter_tts_text`.
+    """
+    filtered = filter_tts_text(text)
+    if not filtered:
+        return False
+    # Strip residual punctuation / whitespace — if nothing remains, skip TTS
+    stripped = re.sub(r"[^\w]", "", filtered)
+    return len(stripped) > 0

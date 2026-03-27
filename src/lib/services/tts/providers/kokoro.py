@@ -9,7 +9,7 @@ from kokoro import KPipeline
 
 from ....core.config import Config
 from ....utils import printer
-from ..utils import filter_tts_text
+from ..utils import filter_tts_text, is_speakable
 from .base import VoiceModel
 
 
@@ -58,6 +58,13 @@ class KokoroVoiceModel(VoiceModel):
 
         filtered_text = filter_tts_text(text)
         voice_to_use = voice or self.voice
+
+        # Guard: if the text has nothing speakable after filtering (e.g. pure
+        # markdown like "**"), return a tiny silent buffer instead of crashing.
+        if not is_speakable(text):
+            printer.warning(f"Skipping TTS for non-speakable text: '{text[:60]}'")
+            silence = np.zeros(2400, dtype=np.float32)  # 0.1s silence at 24 kHz
+            return silence, 24000
 
         try:
             printer.info(f"Generating speech with voice '{voice_to_use}'...")
