@@ -19,7 +19,6 @@ export const useStore = create<AppStore>()((...args) => ({
   ...createChatSlice(...args),
 }))
 
-// Re-export slice types for convenience
 export type { ToastSlice } from './toastSlice'
 export type { AudioSlice } from './audioSlice'
 export type { ChatSlice } from './chatSlice'

@@ -27,7 +27,6 @@ export default function WorkflowBuilder() {
       setIsLoading(true)
       const response = await workflowApi.workflows.get(workflowId)
       setWorkflowData(response.workflow)
-      // Derive a display name from the workflow id if not available
       setWorkflowName(id)
     } catch (error) {
       console.error('Failed to load workflow:', error)

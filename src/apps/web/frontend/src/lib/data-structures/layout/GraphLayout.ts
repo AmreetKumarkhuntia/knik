@@ -76,7 +76,6 @@ export function calculateDagLayout(
   const nodeSpacingX = options.nodeSpacingX ?? 220
   const nodeSpacingY = options.nodeSpacingY ?? 120
 
-  // Build adjacency and in-degree maps
   const successors = new Map<string, string[]>()
   const inDegree = new Map<string, number>()
 
@@ -90,7 +89,6 @@ export function calculateDagLayout(
     inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1)
   }
 
-  // BFS to assign longest-path layer to each node
   const layer = new Map<string, number>()
   const queue: string[] = []
 
@@ -114,13 +112,11 @@ export function calculateDagLayout(
         if (!layer.has(next) || (layer.get(next) ?? 0) < nextLayer) {
           layer.set(next, nextLayer)
         }
-        // Only enqueue once all predecessors processed — re-enqueue if layer updated
         queue.push(next)
       }
     }
   }
 
-  // Group nodes by layer
   const layerGroups = new Map<number, string[]>()
   for (const n of nodes) {
     const l = layer.get(n.id) ?? 0

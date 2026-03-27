@@ -17,7 +17,6 @@ class InputPanel(ctk.CTkFrame):
         self.is_processing = False
         self.grid_columnconfigure(0, weight=1)
 
-        # Modern text entry with rounded corners
         self.text_entry = ctk.CTkEntry(
             self,
             placeholder_text="Type your message here...",
@@ -34,7 +33,6 @@ class InputPanel(ctk.CTkFrame):
         )
         self.text_entry.bind("<Return>", self._on_enter_pressed)
 
-        # Modern send button
         self.send_button = ctk.CTkButton(
             self,
             text="Send",
@@ -45,11 +43,10 @@ class InputPanel(ctk.CTkFrame):
             corner_radius=ColorTheme.RADIUS_LARGE,
             fg_color=ColorTheme.BTN_PRIMARY,
             hover_color=ColorTheme.BTN_PRIMARY_HOVER,
-            text_color="white",  # White text on purple button
+            text_color="white",
         )
         self.send_button.grid(row=0, column=1, padx=(5, Spacing.PAD_SMALL), pady=Spacing.MARGIN_LARGE)
 
-        # Modern voice button
         self.voice_button = ctk.CTkButton(
             self,
             text="Voice",

@@ -28,8 +28,6 @@ class ConversationDB:
     callers (e.g. ``AIClient.achat``) never need to gate on availability.
     """
 
-    # ─── Initialisation & Availability ──────────────────────────────
-
     @staticmethod
     async def initialize() -> None:
         """Initialize the database pool."""
@@ -60,8 +58,6 @@ class ConversationDB:
             return PostgresDB._pool is not None
         except Exception:
             return False
-
-    # ─── Conversation CRUD ──────────────────────────────────────────
 
     @staticmethod
     async def create_conversation(title: str | None = None) -> str | None:
@@ -160,8 +156,6 @@ class ConversationDB:
             printer.debug(f"DB unavailable for get_message_count: {e}")
             return 0
 
-    # ─── Message Operations ─────────────────────────────────────────
-
     @staticmethod
     async def append_message(
         conversation_id: str,
@@ -230,8 +224,6 @@ class ConversationDB:
         except Exception as e:
             printer.debug(f"DB unavailable for get_recent_messages: {e}")
             return []
-
-    # ─── Token Usage ──────────────────────────────────────────────
 
     @staticmethod
     async def get_conversation_token_usage(conversation_id: str) -> dict[str, int]:
@@ -360,8 +352,6 @@ class ConversationDB:
             printer.info(f"Updated summary for conversation {conversation_id} (through index {through_index})")
         except Exception as e:
             printer.debug(f"DB unavailable for update_summary: {e}")
-
-    # ─── Title Generation ───────────────────────────────────────────
 
     @staticmethod
     async def generate_and_set_title(

@@ -62,19 +62,15 @@ async def _list_workflows() -> str:
 
 
 async def _run_workflow(app, workflow_id: str, inputs: dict) -> str:
-    # Requires an AIClient instance in the workflow scheduler if any AI modes are involved
     from lib.cron.scheduler import Scheduler
 
     try:
         await SchedulerDB.initialize()
-        # App instance will be passed from the console app which holds ai_client
         scheduler = Scheduler()
         logger.info(f"Running workflow manually: {workflow_id} with inputs: {inputs}")
 
-        # Execute workflow
         result = await scheduler.execute_workflow(workflow_id, inputs)
 
-        # Format the result nicely
         return f"Workflow {workflow_id} completed successfully.\nResult: {json.dumps(result, indent=2)}"
     except ValueError as e:
         return f"Workflow error: {e}"

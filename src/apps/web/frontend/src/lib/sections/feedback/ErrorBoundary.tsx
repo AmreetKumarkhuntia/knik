@@ -1,8 +1,3 @@
-/**
- * ErrorBoundary Component
- * Catches React errors and displays fallback UI
- */
-
 import { Component } from 'react'
 import { Warning } from '@mui/icons-material'
 import type { ErrorBoundaryProps, ErrorBoundaryState } from '$types/sections/feedback'

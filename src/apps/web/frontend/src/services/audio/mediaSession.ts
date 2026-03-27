@@ -1,7 +1,3 @@
-/**
- * Media Session API integration for OS-level media controls
- */
-
 import { pauseAudio, resumeAudio, stopAudio, isAudioPaused } from './playback'
 
 export function updateMediaSession(): void {

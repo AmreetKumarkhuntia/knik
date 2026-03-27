@@ -43,7 +43,6 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setActiveTab('outputs')}
@@ -67,7 +66,6 @@ export default function StructuredOutput({ inputs, outputs, loading }: Structure
         </button>
       </div>
 
-      {/* JSON Viewer */}
       <div className="glass border border-border rounded-xl overflow-hidden max-h-[600px] overflow-y-auto">
         <SyntaxHighlighter
           language="json"

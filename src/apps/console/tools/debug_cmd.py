@@ -20,7 +20,6 @@ def debug_command(app, args: str) -> str:
     """
     args = args.strip().lower()
 
-    # Show current status
     if not args:
         status = "enabled" if app.debug_mode else "disabled"
         emoji = "🐛" if app.debug_mode else "🔇"
@@ -34,7 +33,6 @@ def debug_command(app, args: str) -> str:
         result += "\nUsage: /debug <on|off|toggle>"
         return result
 
-    # Handle commands
     if args in ["on", "enable", "true", "1"]:
         app.debug_mode = True
         return "✓ Debug mode enabled 🐛"

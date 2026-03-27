@@ -19,7 +19,6 @@ class Workflow:
     last_executed_at: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the workflow to a dictionary."""
         data = asdict(self)
         if self.created_at:
             data["created_at"] = self.created_at.isoformat()
@@ -29,7 +28,6 @@ class Workflow:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Workflow":
-        """Instantiate a Workflow from a database row."""
         definition = row.get("definition")
         if isinstance(definition, str):
             definition = json.loads(definition)
@@ -62,7 +60,6 @@ class Schedule:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Schedule":
-        """Instantiate a Schedule from a database row."""
         return cls(
             id=row["id"],
             target_workflow_id=row["target_workflow_id"],
@@ -93,7 +90,6 @@ class ExecutionRecord:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "ExecutionRecord":
-        """Instantiate an ExecutionRecord from a database row."""
         return cls(
             id=row["id"],
             workflow_id=row["workflow_id"],
@@ -125,7 +121,6 @@ class NodeExecutionRecord:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "NodeExecutionRecord":
-        """Instantiate a NodeExecutionRecord from a database row."""
         return cls(
             id=row["id"],
             execution_id=row["execution_id"],

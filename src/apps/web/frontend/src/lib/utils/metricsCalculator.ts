@@ -7,7 +7,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
 
   const metrics: DynamicMetric[] = []
 
-  // 1. Execution Status
   metrics.push({
     id: 'status',
     label: 'Execution Status',
@@ -22,7 +21,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
       execution.status === 'success' ? 'teal' : execution.status === 'failed' ? 'rose' : 'blue',
   })
 
-  // 2. Total Duration
   if (execution.duration_ms !== undefined) {
     metrics.push({
       id: 'duration',
@@ -32,7 +30,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
       color: 'primary',
     })
   } else if (execution.status === 'running') {
-    // Calculate elapsed time for running executions
     const startTime = new Date(execution.started_at).getTime()
     const now = Date.now()
     const elapsed = now - startTime
@@ -45,7 +42,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
     })
   }
 
-  // 3. Node Count
   metrics.push({
     id: 'nodes',
     label: 'Nodes Executed',
@@ -54,7 +50,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
     color: 'blue',
   })
 
-  // 4. Success Rate (for this execution's nodes)
   const successfulNodes = timeline.filter(n => n.status === 'success').length
   const successRate =
     timeline.length > 0 ? ((successfulNodes / timeline.length) * 100).toFixed(1) : '0'
@@ -66,7 +61,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
     color: Number(successRate) >= 95 ? 'teal' : Number(successRate) >= 50 ? 'blue' : 'rose',
   })
 
-  // 5. Output Size (if available)
   const outputSize = JSON.stringify(execution.outputs).length
   metrics.push({
     id: 'output_size',

@@ -1,7 +1,3 @@
-/**
- * Core audio playback functionality
- */
-
 import type { updateMediaSession as UpdateMediaSessionFn } from './mediaSession'
 
 let currentAudio: HTMLAudioElement | null = null

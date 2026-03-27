@@ -15,7 +15,6 @@ function TipBox({ tip }: { tip: FormFieldTip }) {
   )
 }
 
-// ── Slider field ──────────────────────────────────────────────────────────────
 function SliderField({
   field,
   value,
@@ -57,7 +56,6 @@ function SliderField({
   )
 }
 
-// ── Tags field ────────────────────────────────────────────────────────────────
 function TagsField({
   field,
   value,
@@ -134,7 +132,6 @@ function TagsField({
   )
 }
 
-// ── Collapsible Textarea field ────────────────────────────────────────────────
 function CollapsibleTextareaField({
   field,
   value,
@@ -173,7 +170,6 @@ function CollapsibleTextareaField({
   )
 }
 
-// ── Standard field (text / textarea / select / number) ───────────────────────
 function StandardField({
   field,
   value,
@@ -222,7 +218,6 @@ function StandardField({
   )
 }
 
-// ── Main dispatcher ───────────────────────────────────────────────────────────
 function FormField({
   field,
   value,
@@ -253,7 +248,6 @@ function FormField({
   return <StandardField field={field} value={value} onChange={v => onDataChange(field.field, v)} />
 }
 
-// ── Export ────────────────────────────────────────────────────────────────────
 export default function ConfigurationForm({
   nodeType,
   data,

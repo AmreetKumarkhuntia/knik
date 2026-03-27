@@ -7,7 +7,6 @@ from lib.core.config import Config
 class ConsoleConfig(Config):
     """Configuration for Console application - extends Config with console-specific settings."""
 
-    # Console-specific settings
     command_prefix: str = "/"
     max_history_size: int = 50
     show_timestamps: bool = False

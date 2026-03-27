@@ -54,13 +54,11 @@ class GUIApp:
 
     def _create_widgets(self):
         """Create all GUI widgets."""
-        # Animated gradient background (lowest layer)
         self.gradient_bg = GradientBackground(
             self.root, colors=ColorTheme.GRADIENT_COLORS, transition_speed=8000, fps=30
         )
         self.gradient_bg.place(x=0, y=0, relwidth=1, relheight=1)
 
-        # Modern gradient-style top bar
         self.top_bar = ctk.CTkFrame(
             self.root, height=Spacing.TOPBAR_HEIGHT, corner_radius=0, fg_color=ColorTheme.BG_SECONDARY
         )
@@ -109,11 +107,9 @@ class GUIApp:
         )
         self.status_label.grid(row=0, column=3, padx=Spacing.PAD_XLARGE, pady=Spacing.MARGIN_MEDIUM)
 
-        # Chat panel with modern background
         self.chat_panel = ChatPanel(self.root, corner_radius=0, fg_color=ColorTheme.BG_PRIMARY)
         self.chat_panel.grid(row=1, column=0, sticky="nsew", padx=0, pady=0)
 
-        # Input panel with modern styling
         self.input_panel = InputPanel(self.root, on_send=self._handle_user_input, height=90)
         self.input_panel.grid(row=2, column=0, sticky="ew", padx=0, pady=0)
 
@@ -190,7 +186,6 @@ Just type your question below and press Enter to get started."""
         try:
             printer.info(f"User query: {user_input}")
 
-            # Get conversation history as message objects
             history_messages = self.history.get_messages(last_n=self.config.history_context_size)
 
             if history_messages:
@@ -220,7 +215,6 @@ Just type your question below and press Enter to get started."""
 
             printer.success("AI response complete")
 
-            # Wait for voice to complete
             if self.config.enable_voice_output and self.tts_processor:
                 while not self.tts_processor.is_processing_complete():
                     time.sleep(0.1)
@@ -253,7 +247,6 @@ Just type your question below and press Enter to get started."""
             args_str = ", ".join(f"{k}={v}" for k, v in list(tool_args.items())[:2])
             message = f"🔧 Using tool: {tool_name}({args_str}...)"
 
-        # Display in GUI (thread-safe)
         self.root.after(0, self.chat_panel.add_system_message, message)
 
     def _clear_chat(self):
@@ -272,7 +265,6 @@ Just type your question below and press Enter to get started."""
         printer.info("Settings saved, reinitializing backend...")
         self.config = config
 
-        # Update theme
         ColorTheme.set_mode(self.config.appearance_mode)
         self._refresh_theme()
 
@@ -298,18 +290,14 @@ Just type your question below and press Enter to get started."""
         """Refresh UI colors after theme change."""
         printer.info(f"Refreshing theme to: {ColorTheme.get_mode()}")
 
-        # Update gradient background with new theme colors
         if hasattr(self, "gradient_bg"):
             self.gradient_bg.update_theme(ColorTheme.GRADIENT_COLORS)
 
-        # Update main window background
         self.root.configure(fg_color=ColorTheme.BG_PRIMARY)
 
-        # Update top bar
         self.top_bar.configure(fg_color=ColorTheme.BG_SECONDARY)
         self.title_label.configure(text_color=ColorTheme.TEXT_PRIMARY)
 
-        # Update top bar buttons
         self.settings_button.configure(
             fg_color=ColorTheme.BTN_SECONDARY,
             hover_color=ColorTheme.BTN_SECONDARY_HOVER,
@@ -321,13 +309,10 @@ Just type your question below and press Enter to get started."""
             text_color=ColorTheme.TEXT_PRIMARY,
         )
 
-        # Update status label color
         self._update_status("Ready", ColorTheme.STATUS_SUCCESS)
 
-        # Update chat panel background
         self.chat_panel.configure(fg_color=ColorTheme.BG_PRIMARY)
 
-        # Update input panel colors
         self.input_panel.configure(fg_color=ColorTheme.BG_SECONDARY)
         self.input_panel.text_entry.configure(
             fg_color=ColorTheme.BG_TERTIARY,
@@ -343,7 +328,6 @@ Just type your question below and press Enter to get started."""
             text_color=ColorTheme.TEXT_PRIMARY,
         )
 
-        # Force chat panel to refresh all messages with new colors
         self.chat_panel.refresh_theme()
 
         printer.success("Theme refresh complete!")

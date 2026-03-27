@@ -52,7 +52,7 @@ async def create_schedule(
     printer.info(f"Schedule parsed: first_run={first_run.isoformat()}, recurrence={recurrence_seconds}s, tz={timezone}")
 
     schedule = Schedule(
-        id=0,  # Auto-assigned by DB
+        id=0,
         target_workflow_id=target_workflow_id,
         enabled=True,
         timezone=timezone,

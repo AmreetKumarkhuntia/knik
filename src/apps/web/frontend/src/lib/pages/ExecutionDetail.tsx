@@ -48,7 +48,6 @@ export default function ExecutionDetail() {
       }
     }
 
-    // Initial fetch
     void fetchExecutionDetail()
 
     // Poll every 3 s while running; stop once the interval callback sees a
@@ -86,7 +85,6 @@ export default function ExecutionDetail() {
     )
   }
 
-  // Calculate dynamic metrics
   const metrics = calculateMetrics({ success: true, execution, timeline })
 
   return (
@@ -96,10 +94,8 @@ export default function ExecutionDetail() {
         sticky={true}
       />
 
-      {/* Main content area with scroll */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
-          {/* Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {metrics.map(metric => (
               <MetricCard
@@ -113,13 +109,11 @@ export default function ExecutionDetail() {
             ))}
           </div>
 
-          {/* Execution Flow Graph */}
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-foreground">Execution Flow</h2>
             <ExecutionFlowGraph execution={execution} timeline={timeline} />
           </div>
 
-          {/* Structured Output (Inputs/Outputs) */}
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-foreground">Inputs & Outputs</h2>
             <StructuredOutput
@@ -129,7 +123,6 @@ export default function ExecutionDetail() {
             />
           </div>
 
-          {/* Execution Timeline */}
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-foreground">Execution Timeline</h2>
             <ExecutionTimeline timeline={timeline} loading={false} />

@@ -1,8 +1,3 @@
-/**
- * TopBar Component
- * App title and status
- */
-
 import type { TopBarProps } from '$types/sections/layout'
 
 export default function TopBar({ isLoading }: TopBarProps) {

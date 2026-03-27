@@ -18,7 +18,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 
-# Add src to path
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
@@ -30,18 +29,14 @@ from lib.services.ai_client.registry import MCPServerRegistry
 
 router = APIRouter()
 
-# Configuration
 config = WebBackendConfig()
 
-# Global clients
 ai_client: AIClient | None = None
 tts_processor: TTSAsyncProcessor | None = None
 mcp_registry: MCPServerRegistry | None = None
 
 
 class SimpleChatRequest(BaseModel):
-    """Simple chat request - just text"""
-
     message: str
     conversation_id: str | None = None
 
@@ -86,17 +81,14 @@ async def chat(request: SimpleChatRequest):
     try:
         await _init_clients()
 
-        # Full conversation lifecycle is handled by AIClient.achat
         response_text, conversation_id, usage = await ai_client.achat(
             prompt=request.message,
             conversation_id=request.conversation_id,
             provider_meta={"provider": config.ai_provider, "model": config.ai_model},
         )
 
-        # Generate audio (offloaded to thread — CPU-heavy PyTorch inference)
         audio_data, sample_rate = await asyncio.to_thread(tts_processor.tts_processor.generate, response_text)
 
-        # Convert to base64 (fast, stays on event loop)
         buffer = io.BytesIO()
         sf.write(buffer, audio_data, sample_rate, format="WAV")
         audio_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")

@@ -12,9 +12,6 @@ from lib.services.scheduler.db_client import SchedulerDB
 
 router = APIRouter()
 
-# Global scheduler instance for executing workflows
-# In a real app this might be dependency injected, but we'll instantiate it here.
-# Note: execution will need the AIClient if AI nodes are used.
 scheduler = Scheduler()
 
 

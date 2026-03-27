@@ -46,7 +46,6 @@ class ZAICodingProvider(LangChainProvider):
         return "zai_coding"
 
     def _create_agent(self, llm, mcp_registry, system_instruction):
-        """Create a LangChain agent using new v1.x create_agent pattern"""
         if not create_agent or not mcp_registry:
             return None
 
@@ -80,7 +79,6 @@ class ZAICodingProvider(LangChainProvider):
         if not LANGCHAIN_ZAI_CODING_AVAILABLE:
             raise ImportError("LangChain OpenAI not installed. Run: pip install langchain-openai")
 
-        # Fall back to ZAI_API_KEY if ZAI_CODING_API_KEY is not set
         self.api_key = os.getenv("ZAI_CODING_API_KEY") or os.getenv("ZAI_API_KEY")
         if not self.api_key:
             raise RuntimeError("No API key found. Set ZAI_CODING_API_KEY or ZAI_API_KEY environment variable.")

@@ -28,7 +28,6 @@ class VertexAIProvider(LangChainProvider):
         return "vertex"
 
     def _create_agent(self, llm, mcp_registry, system_instruction):
-        """Create a LangChain agent using new v1.x create_agent pattern"""
         if not create_agent or not mcp_registry:
             return None
 
@@ -73,7 +72,6 @@ class VertexAIProvider(LangChainProvider):
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-        # Create LangChain model (don't pass tool_callback - it's for internal use only)
         llm = ChatVertexAI(
             model_name=model_name,
             project=self.project_id,
@@ -101,9 +99,6 @@ class VertexAIProvider(LangChainProvider):
         """Query Vertex AI for available Gemini models."""
         try:
             import requests
-
-            # Use the Vertex AI REST API to list available publisher models
-            # This requires an access token from the default credentials
             from google.auth import default
             from google.auth.transport.requests import Request
 
