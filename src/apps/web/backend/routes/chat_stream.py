@@ -2,8 +2,10 @@
 Streaming Chat API endpoint with Server-Sent Events (SSE)
 Streams both text and audio progressively as they're generated.
 
-All blocking operations (AI inference, TTS, browser tools) are offloaded
-to background threads so the FastAPI/uvicorn event loop stays responsive.
+The route is a thin orchestrator: AI lifecycle (persistence, history,
+summarisation) is handled by ``AIClient.achat_stream``; this module
+only deals with web-specific concerns (SSE formatting, per-sentence
+TTS streaming, audio base64 encoding).
 """
 
 import asyncio
@@ -27,9 +29,9 @@ sys.path.insert(0, str(src_path))
 from apps.console.history import ConversationHistory
 from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, KokoroVoiceModel, printer
+from lib.core.config import Config
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
-from lib.services.conversation import ConversationDB
 
 
 router = APIRouter()
@@ -81,37 +83,6 @@ async def _init_clients():
         printer.success(f"TTS ready: {config.voice_name}")
 
 
-async def _get_history_for_conversation(conversation_id: str | None) -> list:
-    """Retrieve conversation history for LLM context.
-
-    If a conversation_id is provided and the DB is available, loads from DB.
-    Otherwise falls back to the in-memory ConversationHistory cache.
-    """
-    history_context_size = getattr(config, "history_context_size", 5)
-
-    if conversation_id and await ConversationDB.is_available():
-        try:
-            messages = await ConversationDB.get_recent_messages(
-                conversation_id,
-                last_n=history_context_size * 2,  # *2 because each turn = 2 messages
-            )
-            # Convert to LangChain-compatible format
-            from langchain_core.messages import AIMessage, HumanMessage
-
-            langchain_msgs = []
-            for msg in messages:
-                if msg.role == "user":
-                    langchain_msgs.append(HumanMessage(content=msg.content))
-                elif msg.role == "assistant":
-                    langchain_msgs.append(AIMessage(content=msg.content))
-            return langchain_msgs
-        except Exception as e:
-            printer.warning(f"Failed to load DB history, falling back to in-memory: {e}")
-
-    # Fallback: in-memory history
-    return conversation_history.get_messages(last_n=history_context_size)
-
-
 async def stream_chat_response(prompt: str, conversation_id: str | None = None) -> AsyncGenerator[str, None]:
     """
     Stream chat response with text and audio chunks via SSE.
@@ -120,83 +91,82 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
     - conversation_id: Emitted once at the start with the conversation ID
     - text: AI response text chunk
     - audio: Base64 encoded audio chunk
+    - usage: Token usage data
     - done: Streaming complete
     - error: Error occurred
     """
     try:
         await _init_clients()
-        db_available = await ConversationDB.is_available()
 
-        # Create or reuse a conversation in the DB
-        if db_available:
-            try:
-                if not conversation_id:
-                    conversation_id = await ConversationDB.create_conversation()
-                    printer.info(f"Created new conversation: {conversation_id}")
-                else:
-                    # Verify conversation exists
-                    existing = await ConversationDB.get_conversation(conversation_id)
-                    if not existing:
-                        conversation_id = await ConversationDB.create_conversation()
-                        printer.info(f"Conversation not found, created new: {conversation_id}")
-            except Exception as e:
-                printer.warning(f"DB conversation creation failed: {e}")
-                conversation_id = None
-
-        # Emit the conversation_id so the frontend can track it
-        if conversation_id:
-            yield f"event: conversation_id\ndata: {json.dumps({'conversation_id': conversation_id})}\n\n"
-
-        # Save user message to DB
-        if conversation_id and db_available:
-            try:
-                await ConversationDB.append_message(
-                    conversation_id=conversation_id,
-                    role="user",
-                    content=prompt,
-                    metadata={"provider": config.ai_provider, "model": config.ai_model},
-                )
-            except Exception as e:
-                printer.warning(f"Failed to save user message to DB: {e}")
-
-        # Fetch recent history for LLM context
-        history = await _get_history_for_conversation(conversation_id)
-
-        # -----------------------------------------------------------
-        # Consume the synchronous AI generator on a background thread
-        # and bridge chunks to the async world via an asyncio.Queue.
-        # -----------------------------------------------------------
-        queue: asyncio.Queue[str | None] = asyncio.Queue()
-        loop = asyncio.get_running_loop()
-
-        def _produce():
-            """Iterate the sync generator and push chunks into the queue."""
-            try:
-                for chunk in ai_client.chat_stream(prompt=prompt, history=history):
-                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
-            finally:
-                loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
-
-        # Fire the producer on the default thread-pool
-        producer = loop.run_in_executor(None, _produce)
+        # In-memory fallback: when no conversation_id is provided, pass
+        # the in-memory history to achat_stream so it can still use context.
+        # achat_stream will load DB history itself when conversation_id is set.
+        fallback_history = None
+        if not conversation_id:
+            fallback_history = conversation_history.get_messages(
+                last_n=Config().history_context_size,
+            )
 
         text_buffer = ""
         full_response = ""
         sentence_endings = [".", "!", "?", "\n"]
         audio_count = 0
 
-        while True:
-            text_chunk = await queue.get()
-            if text_chunk is None:
-                break
+        async for chunk in ai_client.achat_stream(
+            prompt=prompt,
+            conversation_id=conversation_id,
+            history=fallback_history,
+            provider_meta={"provider": config.ai_provider, "model": config.ai_model},
+        ):
+            # ── Dict sentinel: conversation_id (emitted first) ──
+            if isinstance(chunk, dict) and "__conversation_id__" in chunk:
+                conv_id = chunk["__conversation_id__"]
+                yield f"event: conversation_id\ndata: {json.dumps({'conversation_id': conv_id})}\n\n"
+                continue
 
-            # Send text chunk immediately
-            yield f"event: text\ndata: {json.dumps({'text': text_chunk})}\n\n"
+            # ── Dict sentinel: done (emitted last) ──
+            if isinstance(chunk, dict) and chunk.get("__done__"):
+                full_response = chunk.get("full_response", full_response)
+                usage = chunk.get("usage")
 
-            full_response += text_chunk
-            text_buffer += text_chunk
+                # Update in-memory history (backwards-compatible for anonymous sessions)
+                if full_response.strip():
+                    conversation_history.add_entry(user_input=prompt, ai_response=full_response.strip())
+                    printer.info(f"Saved turn to in-memory history (total turns: {len(conversation_history.entries)})")
 
-            # Check for complete sentences
+                # Flush remaining text buffer to TTS
+                if text_buffer.strip():
+                    printer.info(f"Generating audio for remaining: '{text_buffer[:50]}...'")
+                    audio_data, sr = await asyncio.to_thread(tts_processor.generate, text_buffer.strip())
+
+                    buf = io.BytesIO()
+                    sf.write(buf, audio_data, sr, format="WAV")
+                    audio_b64 = base64.b64encode(buf.getvalue()).decode()
+
+                    yield f"event: audio\ndata: {json.dumps({'audio': audio_b64, 'sample_rate': sr})}\n\n"
+                    audio_count += 1
+                    printer.success(f"Sent final audio chunk {audio_count}")
+
+                if usage:
+                    printer.info(
+                        f"Token usage: {usage.get('input_tokens', 0)} in / "
+                        f"{usage.get('output_tokens', 0)} out / "
+                        f"{usage.get('total_tokens', 0)} total"
+                    )
+                    yield f"event: usage\ndata: {json.dumps({'usage': usage})}\n\n"
+
+                printer.info(f"Stream complete: sent {audio_count} audio chunks")
+                yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
+                continue
+
+            # ── Regular text chunk (type-narrow after dict branches above) ──
+            assert isinstance(chunk, str)
+            yield f"event: text\ndata: {json.dumps({'text': chunk})}\n\n"
+
+            full_response += chunk
+            text_buffer += chunk
+
+            # Check for complete sentences → generate TTS per sentence
             for ending in sentence_endings:
                 if ending in text_buffer:
                     parts = text_buffer.split(ending, 1)
@@ -217,59 +187,6 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
                     text_buffer = parts[1] if len(parts) > 1 else ""
                     break
 
-        # Wait for the producer thread to finish cleanly
-        await producer
-
-        # Process any remaining text
-        if text_buffer.strip():
-            printer.info(f"Generating audio for remaining: '{text_buffer[:50]}...'")
-            audio_data, sr = await asyncio.to_thread(tts_processor.generate, text_buffer.strip())
-
-            buf = io.BytesIO()
-            sf.write(buf, audio_data, sr, format="WAV")
-            audio_b64 = base64.b64encode(buf.getvalue()).decode()
-
-            yield f"event: audio\ndata: {json.dumps({'audio': audio_b64, 'sample_rate': sr})}\n\n"
-            audio_count += 1
-            printer.success(f"Sent final audio chunk {audio_count}")
-
-        # Persist the assistant response
-        if full_response.strip():
-            # Always update in-memory history (backwards-compatible)
-            conversation_history.add_entry(user_input=prompt, ai_response=full_response.strip())
-            printer.info(f"Saved turn to in-memory history (total turns: {len(conversation_history.entries)})")
-
-            # Persist to DB
-            if conversation_id and db_available:
-                try:
-                    await ConversationDB.append_message(
-                        conversation_id=conversation_id,
-                        role="assistant",
-                        content=full_response.strip(),
-                        metadata={
-                            "provider": config.ai_provider,
-                            "model": config.ai_model,
-                            "audio_chunks": audio_count,
-                        },
-                    )
-                    printer.info(f"Saved assistant message to DB for conversation: {conversation_id}")
-
-                    # Generate title after first exchange (async fire-and-forget)
-                    msg_count = await ConversationDB.get_message_count(conversation_id)
-                    if msg_count == 2:  # First user + first assistant = 2 messages
-                        asyncio.create_task(
-                            ConversationDB.generate_and_set_title(
-                                conversation_id=conversation_id,
-                                first_message=prompt,
-                                ai_client=ai_client,
-                            )
-                        )
-                except Exception as e:
-                    printer.warning(f"Failed to save assistant message to DB: {e}")
-
-        printer.info(f"Stream complete: sent {audio_count} audio chunks")
-        yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
-
     except Exception as e:
         printer.error(f"Stream error: {e}")
         yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
@@ -285,6 +202,7 @@ async def stream_chat(request: StreamChatRequest):
         - conversation_id: Conversation ID for this session
         - text: Text chunks from AI
         - audio: Base64 encoded audio chunks
+        - usage: Token usage data
         - done: Streaming complete
         - error: Error message
     """

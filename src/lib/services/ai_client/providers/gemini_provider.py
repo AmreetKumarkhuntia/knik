@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ....utils import printer
 from ..registry import ProviderRegistry
+from ..token_utils import get_context_window
 from .base_provider import LangChainProvider
 
 
@@ -117,6 +118,40 @@ class GeminiAIProvider(LangChainProvider):
             tool_callback=tool_callback,
             model=model_name,
         )
+
+    def get_models(self) -> list[dict[str, Any]]:
+        """Query Gemini AI Studio API for available models."""
+        try:
+            import requests
+
+            url = "https://generativelanguage.googleapis.com/v1beta/models"
+            response = requests.get(url, params={"key": self.api_key}, timeout=5)
+            response.raise_for_status()
+
+            models = []
+            for model in response.json().get("models", []):
+                # model.name is like "models/gemini-1.5-flash"
+                model_id = model.get("name", "").replace("models/", "")
+                # Only include generative chat models (skip embedding, AQA, etc.)
+                supported_methods = model.get("supportedGenerationMethods", [])
+                if model_id and "generateContent" in supported_methods:
+                    # Use inputTokenLimit from API if available
+                    context_window = model.get("inputTokenLimit")
+                    if not context_window:
+                        context_window = get_context_window(model_id)
+
+                    models.append(
+                        {
+                            "id": model_id,
+                            "name": model.get("displayName", model_id),
+                            "context_window": context_window,
+                            "provider": "gemini",
+                        }
+                    )
+            return models
+        except Exception:
+            printer.debug("Gemini model discovery failed (API request error)")
+            return []
 
     def is_configured(self) -> bool:
         return self.api_key is not None and LANGCHAIN_GEMINI_AVAILABLE

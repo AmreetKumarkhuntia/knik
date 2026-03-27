@@ -33,6 +33,9 @@ nest-asyncio>=1.6.0
 psycopg[binary,pool]>=3.3.3
 dateparser>=1.2.0  # Natural language date/time parsing for schedules
 
+# Token counting (for context window management and summarization)
+tiktoken>=0.7.0
+
 # Browser automation (for Browser MCP tools)
 playwright>=1.40.0       # Headless Chromium/Firefox/Webkit automation
 

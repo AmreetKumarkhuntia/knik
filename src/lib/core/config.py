@@ -93,6 +93,14 @@ Be reliable, efficient, and action focused like Jarvis."""
         "am_ryan": "am_ryan",
     }
 
+    # Model discovery defaults
+    DEFAULT_MODEL_DISCOVERY_TIMEOUT: ClassVar[int] = 5  # seconds
+
+    # Summarization defaults
+    DEFAULT_SUMMARIZATION_THRESHOLD: ClassVar[float] = 0.75  # trigger at 75% of context window
+    DEFAULT_SUMMARIZATION_KEEP_RECENT: ClassVar[int] = 2  # keep last N turn pairs unsummarized
+    DEFAULT_SUMMARIZATION_ENABLED: ClassVar[bool] = True
+
     AI_MODELS: ClassVar[dict[str, str]] = {
         "gemini-2.0-flash-exp": "Latest experimental flash model (December 2024+)",
         "gemini-1.5-flash": "Fast, efficient model",
@@ -106,6 +114,39 @@ Be reliable, efficient, and action focused like Jarvis."""
         "glm-4.7": "Z.AI GLM-4.7 Coding model",
         "glm-4.6": "Z.AI GLM-4.6 Coding model",
         "glm-4.5": "Z.AI GLM-4.5 Coding model",
+    }
+
+    # Static fallback context windows (tokens) for models in AI_MODELS.
+    # Used when dynamic API discovery is unavailable.  Kept in Config so
+    # they can be updated in one place without touching token_utils.py.
+    AI_MODELS_CONTEXT_WINDOWS: ClassVar[dict[str, int]] = {
+        # Google Gemini / Vertex
+        "gemini-2.5-flash": 1_048_576,
+        "gemini-2.5-pro": 1_048_576,
+        "gemini-2.0-flash": 1_048_576,
+        "gemini-2.0-flash-exp": 1_048_576,
+        "gemini-1.5-flash": 1_048_576,
+        "gemini-1.5-flash-8b": 1_048_576,
+        "gemini-1.5-pro": 2_097_152,
+        "gemini-1.0-pro": 32_768,
+        # ZhipuAI / GLM
+        "glm-5": 128_000,
+        "glm-5-turbo": 128_000,
+        "glm-4": 128_000,
+        "glm-4-flash": 128_000,
+        "glm-4.5": 128_000,
+        "glm-4.5-flash": 128_000,
+        "glm-4.6": 128_000,
+        "glm-4.7": 128_000,
+        # OpenAI (for custom provider usage)
+        "gpt-4": 8_192,
+        "gpt-4-turbo": 128_000,
+        "gpt-4o": 128_000,
+        "gpt-4o-mini": 128_000,
+        "gpt-3.5-turbo": 16_385,
+        "o1": 200_000,
+        "o1-mini": 128_000,
+        "o3-mini": 200_000,
     }
 
     # ============================================================================
@@ -161,6 +202,33 @@ Be reliable, efficient, and action focused like Jarvis."""
 
     # Telegram configuration
     telegram_bot_token: str | None = field(default_factory=lambda: Config.from_env("KNIK_TELEGRAM_BOT_TOKEN", None))
+
+    # Model discovery configuration
+    model_discovery_timeout: int = field(
+        default_factory=lambda: Config.from_env(
+            "KNIK_MODEL_DISCOVERY_TIMEOUT", Config.DEFAULT_MODEL_DISCOVERY_TIMEOUT, int
+        )
+    )
+
+    # Conversation history context size (number of turn-pairs sent to LLM)
+    history_context_size: int = field(default_factory=lambda: Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int))
+
+    # Summarization configuration
+    summarization_enabled: bool = field(
+        default_factory=lambda: Config.from_env(
+            "KNIK_SUMMARIZATION_ENABLED", Config.DEFAULT_SUMMARIZATION_ENABLED, bool
+        )
+    )
+    summarization_threshold: float = field(
+        default_factory=lambda: Config.from_env(
+            "KNIK_SUMMARIZATION_THRESHOLD", Config.DEFAULT_SUMMARIZATION_THRESHOLD, float
+        )
+    )
+    summarization_keep_recent: int = field(
+        default_factory=lambda: Config.from_env(
+            "KNIK_SUMMARIZATION_KEEP_RECENT", Config.DEFAULT_SUMMARIZATION_KEEP_RECENT, int
+        )
+    )
 
     # ============================================================================
     # Initialization

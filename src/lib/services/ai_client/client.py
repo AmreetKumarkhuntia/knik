@@ -1,15 +1,59 @@
-"""Unified AI Client for interacting with multiple AI providers."""
+"""Unified AI Client for interacting with multiple AI providers.
 
-from collections.abc import Generator
-from typing import Any
+Provides both synchronous (``chat``, ``chat_stream``) and asynchronous
+(``achat``, ``achat_stream``) interfaces.  The async variants optionally
+manage the full conversation lifecycle — persistence, history loading,
+summary injection, token tracking, and background summarization — so
+that route handlers only need to deal with transport concerns (SSE, TTS,
+audio encoding, etc.).
+"""
 
+from __future__ import annotations
+
+import asyncio
+import contextlib
+from collections.abc import AsyncGenerator, Generator
+from typing import Any, ClassVar
+
+from langchain_core.messages import AIMessage, HumanMessage
+
+from ...core.config import Config
 from ...utils import printer
 from .providers import BaseAIProvider
+from .providers.base_provider import ChatResult
 from .registry import ProviderRegistry
 
 
 class AIClient:
-    """Unified AI client supporting multiple providers via registry."""
+    """Unified AI client supporting multiple providers via registry.
+
+    Sync methods (``chat``, ``chat_stream``) are provider-only — they
+    do not touch the database or summarisation system.  Use these in
+    console, GUI, and cron contexts.
+
+    Async methods (``achat``, ``achat_stream``) add full conversation
+    lifecycle management on top of the sync core.  Pass a
+    ``conversation_id`` to opt in; pass ``None`` to fall through to a
+    plain async wrapper around the sync method (no DB).
+    """
+
+    # Strong references for fire-and-forget tasks (e.g. background
+    # summarisation, title generation) to prevent GC mid-execution.
+    _background_tasks: ClassVar[set[asyncio.Task]] = set()
+
+    @staticmethod
+    def _conversation_db():
+        """Lazy import to avoid circular dependency at module load time."""
+        from ..conversation import ConversationDB
+
+        return ConversationDB
+
+    @staticmethod
+    def _conversation_summarizer():
+        """Lazy import to avoid circular dependency at module load time."""
+        from ..conversation.summarizer import ConversationSummarizer
+
+        return ConversationSummarizer
 
     def __init__(
         self,
@@ -25,8 +69,8 @@ class AIClient:
         self._provider: BaseAIProvider | None = None
         self._mcp_registry = mcp_registry
         self.tool_callback = tool_callback
+        self.last_usage: dict[str, int] | None = None
 
-        # Pass internal parameters to provider (not to LangChain model)
         if mcp_registry:
             provider_kwargs["mcp_registry"] = mcp_registry
         if system_instruction:
@@ -46,9 +90,14 @@ class AIClient:
             if not self._provider.is_configured() and auto_fallback_to_mock:
                 printer.warning(f"{provider} not configured. Using mock provider.")
                 mock_class = ProviderRegistry.get("mock")
-                # Pass mcp_registry to mock provider too
                 self._provider = mock_class(mcp_registry=mcp_registry)
                 self.provider_name = "mock"
+            else:
+                # Eagerly discover models to warm the context-window cache.
+                # This ensures get_context_window() returns API-sourced values
+                # before the first should_summarize() call.
+                with contextlib.suppress(Exception):
+                    self._provider.get_models_with_fallback()
 
         except Exception as e:
             if auto_fallback_to_mock:
@@ -59,6 +108,8 @@ class AIClient:
                 self.provider_name = "mock"
             else:
                 raise
+
+    # ─── Synchronous API (provider-only, no DB) ─────────────────────
 
     def chat(
         self,
@@ -74,6 +125,8 @@ class AIClient:
         Tool usage is automatic - if mcp_registry was provided during initialization,
         the AI can use registered tools. Otherwise, it's just a direct LLM call.
 
+        Token usage from the call is stored in self.last_usage after completion.
+
         Args:
             prompt: The user's message
             max_tokens: Maximum tokens in response
@@ -85,16 +138,25 @@ class AIClient:
             str: The AI's response
         """
         try:
-            return self._provider.chat(
+            result = self._provider.chat(
                 prompt=prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 history=history,
                 **kwargs,
             )
+
+            # Handle both ChatResult and plain str returns
+            if isinstance(result, ChatResult):
+                self.last_usage = result.usage
+                return result.content
+            else:
+                self.last_usage = getattr(self._provider, "last_usage", None)
+                return result
         except Exception as e:
             error_msg = f"Chat error: {e}"
             printer.error(error_msg)
+            self.last_usage = None
             return error_msg
 
     def chat_stream(
@@ -111,6 +173,8 @@ class AIClient:
         Tool usage is automatic - if mcp_registry was provided during initialization,
         the AI can use registered tools. Otherwise, it's just a direct LLM streaming.
 
+        Token usage is available in self.last_usage after the stream completes.
+
         Args:
             prompt: The user's message
             max_tokens: Maximum tokens in response
@@ -122,6 +186,7 @@ class AIClient:
             str: Chunks of the AI's response
         """
         try:
+            self.last_usage = None
             yield from self._provider.chat_stream(
                 prompt=prompt,
                 max_tokens=max_tokens,
@@ -129,10 +194,401 @@ class AIClient:
                 history=history,
                 **kwargs,
             )
+            self.last_usage = getattr(self._provider, "last_usage", None)
         except Exception as e:
             error_msg = f"Chat streaming error: {e}"
             printer.error(error_msg)
+            self.last_usage = None
             yield error_msg
+
+    # ─── Async API (full conversation lifecycle) ────────────────────
+
+    async def achat(
+        self,
+        prompt: str,
+        *,
+        conversation_id: str | None = None,
+        disable_summarization: bool = False,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        history: list | None = None,
+        provider_meta: dict[str, str] | None = None,
+        **kwargs,
+    ) -> tuple[str, str | None, dict[str, int] | None]:
+        """Async chat with optional full conversation lifecycle.
+
+        When *conversation_id* is provided (or successfully created),
+        the method handles:
+        1. Creating / verifying the conversation in DB
+        2. Persisting the user message
+        3. Loading conversation history from DB (unless *history* is
+           passed explicitly)
+        4. Injecting an existing summary into the history
+        5. Running the LLM call on a background thread
+        6. Persisting the assistant response
+        7. Tracking cumulative tokens and triggering background
+           summarisation when the threshold is crossed
+        8. Auto-generating a title after the first exchange
+
+        If the DB is unavailable every step silently degrades and the
+        method still returns a valid LLM response.
+
+        Args:
+            prompt: The user's message.
+            conversation_id: Existing conversation UUID.  ``None`` to
+                create a new one (requires DB).
+            disable_summarization: When ``True``, skip the threshold
+                check and never trigger summarisation.
+            max_tokens: Maximum tokens in response.
+            temperature: Response randomness (0.0–2.0).
+            history: Explicit LangChain message list.  When ``None``
+                and a conversation_id is available, history is loaded
+                from the DB.
+            provider_meta: ``{"provider": ..., "model": ...}`` dict
+                written into message metadata for auditing.
+            **kwargs: Forwarded to the underlying provider.
+
+        Returns:
+            ``(response_text, conversation_id, usage)``
+            *conversation_id* may be ``None`` if DB was unavailable.
+            *usage* may be ``None`` if the provider didn't report it.
+        """
+        meta = provider_meta or {}
+        cfg = Config()
+
+        # 1. Create / verify conversation
+        conversation_id = await self._ensure_conversation(conversation_id)
+
+        # 2. Persist user message
+        if conversation_id:
+            await self._conversation_db().append_message(
+                conversation_id=conversation_id,
+                role="user",
+                content=prompt,
+                metadata=meta,
+            )
+
+        # 3. Load history from DB (if not provided explicitly)
+        if history is None and conversation_id:
+            history = await self._load_history(conversation_id, cfg.history_context_size)
+
+        # 4. Inject existing summary
+        if conversation_id:
+            summary, _ = await self._conversation_db().get_summary(conversation_id)
+            history = self._conversation_summarizer().inject_summary(summary, history or [])
+
+        # 5. Run LLM (offloaded to thread)
+        response_text, usage = await asyncio.to_thread(
+            self._chat_with_usage,
+            prompt,
+            history,
+            max_tokens,
+            temperature,
+            **kwargs,
+        )
+
+        # 6–8. Post-call persistence & background tasks
+        if conversation_id and response_text.strip():
+            await self._post_chat(
+                conversation_id=conversation_id,
+                prompt=prompt,
+                response_text=response_text,
+                usage=usage,
+                meta=meta,
+                disable_summarization=disable_summarization,
+            )
+
+        return response_text, conversation_id, usage
+
+    async def achat_stream(
+        self,
+        prompt: str,
+        *,
+        conversation_id: str | None = None,
+        disable_summarization: bool = False,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        history: list | None = None,
+        provider_meta: dict[str, str] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[str | dict, None]:
+        """Async streaming chat with full conversation lifecycle.
+
+        Yields ``str`` chunks during streaming.  After the stream is
+        exhausted two *dict* sentinels may be yielded:
+
+        * ``{"__conversation_id__": "<uuid>"}`` — emitted first so the
+          caller can forward it before any text arrives.
+        * ``{"__done__": True, "conversation_id": ..., "usage": ...,
+          "full_response": ...}`` — emitted last with metadata.
+
+        See :meth:`achat` for the lifecycle description.
+
+        Args:
+            prompt: The user's message.
+            conversation_id: Existing conversation UUID.
+            disable_summarization: Skip summarisation trigger.
+            max_tokens: Maximum tokens in response.
+            temperature: Response randomness.
+            history: Explicit LangChain message list.
+            provider_meta: Metadata dict for auditing.
+            **kwargs: Forwarded to the underlying provider.
+
+        Yields:
+            ``str`` text chunks, then a metadata ``dict``.
+        """
+        meta = provider_meta or {}
+        cfg = Config()
+
+        # 1. Create / verify conversation
+        conversation_id = await self._ensure_conversation(conversation_id)
+
+        # Emit conversation_id early so the caller can forward it
+        if conversation_id:
+            yield {"__conversation_id__": conversation_id}
+
+        # 2. Persist user message
+        if conversation_id:
+            await self._conversation_db().append_message(
+                conversation_id=conversation_id,
+                role="user",
+                content=prompt,
+                metadata=meta,
+            )
+
+        # 3. Load history from DB (if not provided explicitly)
+        if history is None and conversation_id:
+            history = await self._load_history(conversation_id, cfg.history_context_size)
+
+        # 4. Inject existing summary
+        if conversation_id:
+            summary, _ = await self._conversation_db().get_summary(conversation_id)
+            history = self._conversation_summarizer().inject_summary(summary, history or [])
+
+        # 5. Bridge the sync generator to async via a Queue
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
+        loop = asyncio.get_running_loop()
+
+        def _produce():
+            """Iterate the sync generator and push chunks into the queue."""
+            try:
+                for chunk in self.chat_stream(
+                    prompt=prompt,
+                    history=history,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    **kwargs,
+                ):
+                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+
+        producer = loop.run_in_executor(None, _produce)
+
+        full_response = ""
+        while True:
+            chunk = await queue.get()
+            if chunk is None:
+                break
+            yield chunk
+            full_response += chunk
+
+        # Wait for the producer thread to finish cleanly
+        await producer
+
+        # Capture usage (set by chat_stream on the same instance)
+        usage = self.last_usage
+
+        # 6–8. Post-call persistence & background tasks
+        if conversation_id and full_response.strip():
+            await self._post_chat(
+                conversation_id=conversation_id,
+                prompt=prompt,
+                response_text=full_response,
+                usage=usage,
+                meta=meta,
+                disable_summarization=disable_summarization,
+            )
+
+        # Final metadata sentinel
+        yield {
+            "__done__": True,
+            "conversation_id": conversation_id,
+            "usage": usage,
+            "full_response": full_response,
+        }
+
+    # ─── Private helpers ────────────────────────────────────────────
+
+    def _chat_with_usage(
+        self,
+        prompt: str,
+        history: list | None,
+        max_tokens: int,
+        temperature: float,
+        **kwargs,
+    ) -> tuple[str, dict[str, int] | None]:
+        """Call :meth:`chat` and atomically capture usage on the same thread.
+
+        Returns ``(response_text, usage_dict_or_none)``.
+        """
+        text = self.chat(
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            history=history,
+            **kwargs,
+        )
+        return text, self.last_usage
+
+    @classmethod
+    async def _ensure_conversation(cls, conversation_id: str | None) -> str | None:
+        """Create a new conversation or verify an existing one.
+
+        Returns the valid conversation ID, or ``None`` if the DB is
+        unavailable.
+        """
+        db = cls._conversation_db()
+        if not conversation_id:
+            return await db.create_conversation()
+
+        existing = await db.get_conversation(conversation_id)
+        if existing:
+            return conversation_id
+
+        # Conversation not found — create a new one
+        return await db.create_conversation()
+
+    @classmethod
+    async def _load_history(cls, conversation_id: str, context_size: int) -> list:
+        """Load recent messages from DB and convert to LangChain types."""
+        messages = await cls._conversation_db().get_recent_messages(
+            conversation_id,
+            last_n=context_size * 2,  # *2 because each turn = user + assistant
+        )
+        history: list = []
+        for msg in messages:
+            if msg.role == "user":
+                history.append(HumanMessage(content=msg.content))
+            elif msg.role == "assistant":
+                history.append(AIMessage(content=msg.content))
+        return history
+
+    async def _post_chat(
+        self,
+        *,
+        conversation_id: str,
+        prompt: str,
+        response_text: str,
+        usage: dict[str, int] | None,
+        meta: dict[str, str],
+        disable_summarization: bool,
+    ) -> None:
+        """Handle post-call persistence: save response, track tokens,
+        trigger summarisation, and auto-generate title.
+
+        All operations are DB-resilient (ConversationDB methods no-op
+        on failure), so this method never raises.
+        """
+        db = self._conversation_db()
+        Summarizer = self._conversation_summarizer()
+
+        # Save assistant message
+        msg_metadata: dict[str, Any] = dict(meta)
+        if usage:
+            msg_metadata["usage"] = usage
+
+        await db.append_message(
+            conversation_id=conversation_id,
+            role="assistant",
+            content=response_text.strip(),
+            metadata=msg_metadata,
+        )
+
+        # Track cumulative tokens & trigger summarisation
+        if usage and usage.get("total_tokens") and not disable_summarization:
+            new_total = await db.increment_total_tokens(
+                conversation_id,
+                usage["total_tokens"],
+            )
+            model_name = self.get_model_name()
+            if Summarizer.should_summarize(new_total, model_name):
+                printer.info(f"Token threshold crossed ({new_total} tokens). Triggering background summarization.")
+                summarizer = Summarizer(self, model_name)
+                self._schedule_background(summarizer.run(conversation_id))
+        elif usage and usage.get("total_tokens"):
+            # Still track tokens even when summarisation is disabled
+            await db.increment_total_tokens(
+                conversation_id,
+                usage["total_tokens"],
+            )
+
+        # Auto-generate title after the first exchange (2 messages = 1 user + 1 assistant)
+        msg_count = await db.get_message_count(conversation_id)
+        if msg_count == 2:
+            self._schedule_background(
+                db.generate_and_set_title(
+                    conversation_id=conversation_id,
+                    first_message=prompt,
+                    ai_client=self,
+                )
+            )
+
+    @classmethod
+    def _schedule_background(cls, coro) -> None:
+        """Fire-and-forget an async coroutine with GC protection."""
+        task = asyncio.create_task(coro)
+        cls._background_tasks.add(task)
+        task.add_done_callback(cls._background_tasks.discard)
+
+    # ─── Introspection & utility ────────────────────────────────────
+
+    def get_last_usage(self) -> dict[str, int] | None:
+        """Get the token usage from the last chat() or chat_stream() call.
+
+        Returns:
+            Dict with input_tokens, output_tokens, total_tokens, or None.
+        """
+        return self.last_usage
+
+    def list_models_for_provider(self, provider_name: str | None = None) -> list[dict[str, Any]]:
+        """List available models for a specific provider.
+
+        Uses dynamic API discovery with static fallback.
+
+        Args:
+            provider_name: Provider to query. Defaults to current provider.
+
+        Returns:
+            List of model info dicts.
+        """
+        if provider_name is None or provider_name == self.provider_name:
+            return self._provider.get_models_with_fallback()
+
+        try:
+            provider_class = ProviderRegistry.get(provider_name)
+            if provider_class is None:
+                printer.warning(f"Unknown provider: {provider_name}")
+                return []
+
+            provider = provider_class()
+            return provider.get_models_with_fallback()
+        except Exception as e:
+            printer.debug(f"Could not list models for {provider_name}: {e}")
+            return []
+
+    def list_all_models(self) -> dict[str, list[dict[str, Any]]]:
+        """List available models across all registered providers.
+
+        Returns:
+            Dict mapping provider name to list of model info dicts.
+        """
+        all_models = {}
+        for provider_name in ProviderRegistry.list_providers():
+            models = self.list_models_for_provider(provider_name)
+            if models:
+                all_models[provider_name] = models
+        return all_models
 
     def is_configured(self) -> bool:
         return self._provider.is_configured()
@@ -145,6 +601,11 @@ class AIClient:
 
     def get_provider_name(self) -> str:
         return self.provider_name
+
+    def get_model_name(self) -> str:
+        """Get the model name from the underlying provider."""
+        info = self._provider.get_info()
+        return info.get("model", "unknown")
 
     @staticmethod
     def list_available_providers() -> list[str]:

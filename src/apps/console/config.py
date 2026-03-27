@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from lib.core.config import Config
 
@@ -10,7 +10,6 @@ class ConsoleConfig(Config):
     # Console-specific settings
     command_prefix: str = "/"
     max_history_size: int = 50
-    history_context_size: int = field(default_factory=lambda: Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int))
     show_timestamps: bool = False
     welcome_message: str = "🤖 Knik Console - Your AI Assistant with Voice"
     prompt_symbol: str = "You: "
