@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ....utils import printer
 from ..registry import ProviderRegistry
+from ..token_utils import get_context_window
 from .base_provider import LangChainProvider
 
 
@@ -122,6 +123,33 @@ class ZhipuAIProvider(LangChainProvider):
             tool_callback=tool_callback,
             model=model_name,
         )
+
+    def get_models(self) -> list[dict[str, Any]]:
+        """Query ZhipuAI API for available models."""
+        try:
+            import requests
+
+            url = "https://open.bigmodel.cn/api/paas/v4/models"
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            response = requests.get(url, headers=headers, timeout=5)
+            response.raise_for_status()
+
+            models = []
+            for model in response.json().get("data", []):
+                model_id = model.get("id", "")
+                if model_id:
+                    models.append(
+                        {
+                            "id": model_id,
+                            "name": model_id,
+                            "context_window": get_context_window(model_id),
+                            "provider": "zhipuai",
+                        }
+                    )
+            return models
+        except Exception as e:
+            printer.debug(f"ZhipuAI model discovery failed: {e}")
+            return []
 
     def is_configured(self) -> bool:
         return self.api_key is not None and LANGCHAIN_GLM_AVAILABLE

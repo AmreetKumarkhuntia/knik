@@ -1,12 +1,41 @@
 from abc import ABC, abstractmethod
 from collections.abc import Generator
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional
 
+from ....core.config import Config
 from ....utils import printer
+from ..token_utils import get_context_window, register_context_window
 
 
 if TYPE_CHECKING:
     from ..registry import MCPServerRegistry
+
+
+@dataclass
+class ChatResult:
+    """Result from a chat() call, including content and token usage."""
+
+    content: str
+    usage: dict[str, int] | None = None  # {input_tokens, output_tokens, total_tokens}
+
+
+@dataclass
+class ModelInfo:
+    """Information about an available model."""
+
+    id: str
+    name: str
+    context_window: int
+    provider: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "context_window": self.context_window,
+            "provider": self.provider,
+        }
 
 
 class BaseAIProvider(ABC):
@@ -20,7 +49,7 @@ class BaseAIProvider(ABC):
         pass
 
     @abstractmethod
-    def chat(self, prompt: str, history: list = None, **kwargs) -> str:
+    def chat(self, prompt: str, history: list = None, **kwargs) -> str | ChatResult:
         """Send a chat message. Uses tools automatically if mcp_registry was provided."""
         pass
 
@@ -36,6 +65,69 @@ class BaseAIProvider(ABC):
     @abstractmethod
     def get_info(self) -> dict[str, Any]:
         pass
+
+    @abstractmethod
+    def get_models(self) -> list[dict[str, Any]]:
+        """Query the provider API for available models.
+
+        Returns:
+            List of model info dicts: [{id, name, context_window, provider}]
+            Returns [] if the API call fails.
+        """
+        pass
+
+    # Maps provider names to model-ID prefixes used for filtering
+    # Config.AI_MODELS in the fallback path.
+    _PROVIDER_MODEL_PREFIXES: dict[str, list[str]] = {
+        "vertex": ["gemini"],
+        "gemini": ["gemini"],
+        "zhipuai": ["glm"],
+        "zai": ["glm"],
+        "zai_coding": ["glm"],
+    }
+
+    def get_models_with_fallback(self) -> list[dict[str, Any]]:
+        """Get models from API, falling back to Config.AI_MODELS on failure.
+
+        Tries get_models() first. If it returns an empty list or raises,
+        filters Config.AI_MODELS for models belonging to this provider.
+
+        All returned models have their context_window registered in the
+        runtime cache so that ``get_context_window()`` uses live values.
+        """
+        try:
+            models = self.get_models()
+            if models:
+                for m in models:
+                    register_context_window(m["id"], m["context_window"])
+                return models
+        except Exception as e:
+            printer.warning(f"Model discovery failed for {self.get_provider_name()}: {e}")
+
+        # Fallback to static Config.AI_MODELS, filtered by provider
+        try:
+            provider_name = self.get_provider_name()
+            prefixes = self._PROVIDER_MODEL_PREFIXES.get(provider_name, [])
+            fallback_models = []
+            for model_id, description in Config.AI_MODELS.items():
+                # If we have known prefixes for this provider, only include matching models
+                if prefixes and not any(model_id.startswith(p) for p in prefixes):
+                    continue
+                fallback_models.append(
+                    {
+                        "id": model_id,
+                        "name": description,
+                        "context_window": self._get_context_window_for_model(model_id),
+                        "provider": provider_name,
+                    }
+                )
+            return fallback_models
+        except Exception:
+            return []
+
+    def _get_context_window_for_model(self, model: str) -> int:
+        """Get context window size for a model from the static mapping."""
+        return get_context_window(model)
 
 
 class LangChainProvider(BaseAIProvider):
@@ -55,6 +147,7 @@ class LangChainProvider(BaseAIProvider):
         self.config = config
         self.system_instruction = system_instruction
         self.tool_callback = tool_callback
+        self.last_usage: dict[str, int] | None = None
 
         self.agent = agent
         self.mcp_registry = mcp_registry
@@ -101,6 +194,33 @@ class LangChainProvider(BaseAIProvider):
             return content.get("text", content.get("content", ""))
         return ""
 
+    def _extract_usage(self, result) -> dict[str, int] | None:
+        """Extract usage metadata from a LangChain response object.
+
+        Works with AIMessage, AIMessageChunk, and agent result dicts.
+        """
+        # Direct usage_metadata attribute (AIMessage / AIMessageChunk)
+        usage = getattr(result, "usage_metadata", None)
+        if usage is not None and isinstance(usage, dict):
+            return {
+                "input_tokens": usage.get("input_tokens", 0),
+                "output_tokens": usage.get("output_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
+            }
+
+        # Try response_metadata (some providers put it there)
+        response_meta = getattr(result, "response_metadata", None)
+        if response_meta is not None and isinstance(response_meta, dict):
+            token_usage = response_meta.get("token_usage") or response_meta.get("usage")
+            if token_usage is not None and isinstance(token_usage, dict):
+                return {
+                    "input_tokens": token_usage.get("prompt_tokens", token_usage.get("input_tokens", 0)),
+                    "output_tokens": token_usage.get("completion_tokens", token_usage.get("output_tokens", 0)),
+                    "total_tokens": token_usage.get("total_tokens", 0),
+                }
+
+        return None
+
     def _build_agent_messages(self, history: list | None, prompt: str) -> list[dict]:
         """Build message list for agent with conversation history."""
         messages = []
@@ -120,16 +240,19 @@ class LangChainProvider(BaseAIProvider):
     def get_provider_name(cls) -> str:
         return "langchain"
 
-    def chat(self, prompt: str, history: list = None, **kwargs) -> str:
+    def chat(self, prompt: str, history: list = None, **kwargs) -> ChatResult:
         """
         Chat with AI. Uses agent with tools if available, otherwise direct LLM call.
+        Returns ChatResult with content and usage metadata.
         """
         agent_messages = self._build_agent_messages(history, prompt)
 
         if not self.agent:
             # Direct LLM invocation
             result = self.llm.invoke(agent_messages, **kwargs)
-            return self._extract_text_from_content(result.content)
+            self.last_usage = self._extract_usage(result)
+            content = self._extract_text_from_content(result.content)
+            return ChatResult(content=content, usage=self.last_usage)
 
         # Agent invocation
         result = self.agent.invoke({"messages": agent_messages}, **kwargs)
@@ -138,6 +261,8 @@ class LangChainProvider(BaseAIProvider):
             messages = result.get("messages", [])
             if messages:
                 last_message = messages[-1]
+                # Try to extract usage from the last AI message
+                self.last_usage = self._extract_usage(last_message)
                 if hasattr(last_message, "content"):
                     output = last_message.content
                 elif isinstance(last_message, dict):
@@ -146,20 +271,27 @@ class LangChainProvider(BaseAIProvider):
                     output = str(last_message)
             else:
                 output = result.get("output", result.get("result", ""))
+                self.last_usage = None
         else:
             output = str(result)
+            self.last_usage = None
 
-        return self._extract_text_from_content(output) if output else ""
+        content = self._extract_text_from_content(output) if output else ""
+        return ChatResult(content=content, usage=self.last_usage)
 
     def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
         """
         Stream chat with AI. Uses agent with tools if available, otherwise direct LLM call.
+        After iteration, self.last_usage contains usage data from the final chunk.
         """
         agent_messages = self._build_agent_messages(history, prompt)
+        self.last_usage = None
 
         if not self.agent:
             # Direct LLM stream
+            last_chunk = None
             for chunk in self.llm.stream(agent_messages, **kwargs):
+                last_chunk = chunk
                 content = chunk.content
                 if isinstance(content, str) and content:
                     yield content
@@ -169,9 +301,14 @@ class LangChainProvider(BaseAIProvider):
                             text = item.get("text", "")
                             if text:
                                 yield text
+
+            # Extract usage from the final chunk
+            if last_chunk is not None:
+                self.last_usage = self._extract_usage(last_chunk)
             return
 
         # Agent stream
+        last_ai_message = None
         for event in self.agent.stream({"messages": agent_messages}, stream_mode="messages", **kwargs):
             if isinstance(event, tuple) and len(event) >= 1:
                 message = event[0]
@@ -183,6 +320,7 @@ class LangChainProvider(BaseAIProvider):
 
                 # Yield AI message content
                 if "AIMessage" in message_class and hasattr(message, "content"):
+                    last_ai_message = message
                     content = message.content
                     if isinstance(content, str) and content:
                         yield content
@@ -192,6 +330,17 @@ class LangChainProvider(BaseAIProvider):
                                 text = item.get("text", "")
                                 if text:
                                     yield text
+
+        # Extract usage from the last AI message in the agent stream
+        if last_ai_message is not None:
+            self.last_usage = self._extract_usage(last_ai_message)
+
+    def get_models(self) -> list[dict[str, Any]]:
+        """Default implementation returns empty list.
+
+        Concrete providers should override this to query their API.
+        """
+        return []
 
     def is_configured(self) -> bool:
         return self._llm_raw is not None

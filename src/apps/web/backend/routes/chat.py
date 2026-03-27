@@ -2,8 +2,9 @@
 Unified Chat API endpoint
 Handles AI chat + TTS in a single request.
 
-All blocking operations (AI inference, TTS) are offloaded to background
-threads via asyncio.to_thread so the event loop stays responsive.
+The route is a thin orchestrator: AI lifecycle (persistence, history,
+summarisation) is handled by ``AIClient.achat``; this module only deals
+with web-specific concerns (TTS audio encoding, response formatting).
 """
 
 import asyncio
@@ -25,7 +26,6 @@ from apps.web.backend.config import WebBackendConfig
 from imports import AIClient, TTSAsyncProcessor, printer
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
-from lib.services.conversation import ConversationDB
 
 
 router = APIRouter()
@@ -85,60 +85,13 @@ async def chat(request: SimpleChatRequest):
     """
     try:
         await _init_clients()
-        db_available = await ConversationDB.is_available()
 
-        conversation_id = request.conversation_id
-
-        # Create or verify conversation in DB
-        if db_available:
-            try:
-                if not conversation_id:
-                    conversation_id = await ConversationDB.create_conversation()
-                else:
-                    existing = await ConversationDB.get_conversation(conversation_id)
-                    if not existing:
-                        conversation_id = await ConversationDB.create_conversation()
-            except Exception as e:
-                printer.warning(f"DB conversation creation failed: {e}")
-                conversation_id = None
-
-        # Save user message to DB
-        if conversation_id and db_available:
-            try:
-                await ConversationDB.append_message(
-                    conversation_id=conversation_id,
-                    role="user",
-                    content=request.message,
-                    metadata={"provider": config.ai_provider, "model": config.ai_model},
-                )
-            except Exception as e:
-                printer.warning(f"Failed to save user message: {e}")
-
-        # Get AI response (offloaded to thread — blocks on LLM HTTP calls)
-        response_text = await asyncio.to_thread(lambda: "".join(ai_client.chat_stream(prompt=request.message)))
-
-        # Save assistant message to DB
-        if conversation_id and db_available and response_text.strip():
-            try:
-                await ConversationDB.append_message(
-                    conversation_id=conversation_id,
-                    role="assistant",
-                    content=response_text.strip(),
-                    metadata={"provider": config.ai_provider, "model": config.ai_model},
-                )
-
-                # Generate title after first exchange
-                msg_count = await ConversationDB.get_message_count(conversation_id)
-                if msg_count == 2:
-                    asyncio.create_task(
-                        ConversationDB.generate_and_set_title(
-                            conversation_id=conversation_id,
-                            first_message=request.message,
-                            ai_client=ai_client,
-                        )
-                    )
-            except Exception as e:
-                printer.warning(f"Failed to save assistant message: {e}")
+        # Full conversation lifecycle is handled by AIClient.achat
+        response_text, conversation_id, usage = await ai_client.achat(
+            prompt=request.message,
+            conversation_id=request.conversation_id,
+            provider_meta={"provider": config.ai_provider, "model": config.ai_model},
+        )
 
         # Generate audio (offloaded to thread — CPU-heavy PyTorch inference)
         audio_data, sample_rate = await asyncio.to_thread(tts_processor.tts_processor.generate, response_text)
@@ -148,12 +101,17 @@ async def chat(request: SimpleChatRequest):
         sf.write(buffer, audio_data, sample_rate, format="WAV")
         audio_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-        return {
+        response = {
             "text": response_text,
             "audio": audio_base64,
             "sample_rate": config.sample_rate,
             "conversation_id": conversation_id,
         }
+
+        if usage:
+            response["usage"] = usage
+
+        return response
 
     except Exception as e:
         printer.error(f"Chat error: {e}")

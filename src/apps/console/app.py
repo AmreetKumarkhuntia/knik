@@ -155,6 +155,16 @@ class ConsoleApp:
 
             print("\n")
 
+            # Display token usage if available
+            usage = self.ai_client.get_last_usage() if self.ai_client else None
+            if usage:
+                in_tok = usage.get("input_tokens", 0)
+                out_tok = usage.get("output_tokens", 0)
+                total_tok = usage.get("total_tokens", 0)
+                print(f"  [tokens: {in_tok} in / {out_tok} out / {total_tok} total]")
+            elif self.debug_mode:
+                print("🐛 [DEBUG] No token usage data available")
+
             if full_ai_response:
                 full_response_text = "".join(full_ai_response)
                 printer.info(f"AI response: {full_response_text}")

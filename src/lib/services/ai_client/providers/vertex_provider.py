@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ....utils import printer
 from ..registry import ProviderRegistry
+from ..token_utils import get_context_window
 from .base_provider import LangChainProvider
 
 
@@ -95,6 +96,46 @@ class VertexAIProvider(LangChainProvider):
             location=location,
             model=model_name,
         )
+
+    def get_models(self) -> list[dict[str, Any]]:
+        """Query Vertex AI for available Gemini models."""
+        try:
+            import requests
+
+            # Use the Vertex AI REST API to list available publisher models
+            # This requires an access token from the default credentials
+            from google.auth import default
+            from google.auth.transport.requests import Request
+
+            credentials, project = default()
+            credentials.refresh(Request())
+            access_token = credentials.token
+
+            url = f"https://{self.location}-aiplatform.googleapis.com/v1/publishers/google/models"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(url, headers=headers, timeout=5)
+            response.raise_for_status()
+
+            models = []
+            for model in response.json().get("publisherModels", []):
+                model_id = model.get("name", "").split("/")[-1]
+                if model_id and "gemini" in model_id.lower():
+                    # Try to extract context window from the API response.
+                    # Vertex exposes limits in the model spec when available.
+                    input_limit = model.get("inputTokenLimit") or model.get("modelSpec", {}).get("inputTokenLimit")
+                    context_window = int(input_limit) if input_limit else get_context_window(model_id)
+                    models.append(
+                        {
+                            "id": model_id,
+                            "name": model.get("displayName", model_id),
+                            "context_window": context_window,
+                            "provider": "vertex",
+                        }
+                    )
+            return models
+        except Exception as e:
+            printer.debug(f"Vertex model discovery failed: {e}")
+            return []
 
     def is_configured(self) -> bool:
         return self.project_id is not None and LANGCHAIN_VERTEX_AVAILABLE

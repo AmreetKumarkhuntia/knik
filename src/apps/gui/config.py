@@ -22,4 +22,3 @@ class GUIConfig(Config):
 
     # History
     max_history_size: int = field(default_factory=lambda: Config.from_env("KNIK_MAX_HISTORY_SIZE", 50, int))
-    history_context_size: int = field(default_factory=lambda: Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int))
