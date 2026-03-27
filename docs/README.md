@@ -30,6 +30,7 @@ npm run start:web:frontend       # Web frontend (port 12414)
 - [Linting](development/linting.md) - Code quality and formatting
 - [Deployment](development/deployment.md) - Deployment guide
 - [Streaming Architecture](development/streaming.md) - Streaming system details
+- [Web Migration](development/web-migration.md) - Migration from CustomTkinter to React
 
 ### Technical Reference
 
@@ -65,6 +66,7 @@ flowchart LR
     apps --> console
     apps --> gui
     apps --> web
+    apps --> cron_job
     lib --> core
     lib --> services
     lib --> mcp
@@ -79,6 +81,7 @@ flowchart LR
     style console fill:#50c878
     style gui fill:#50c878
     style web fill:#50c878
+    style cron_job fill:#50c878
     style core fill:#90caf9
     style services fill:#90caf9
     style mcp fill:#90caf9

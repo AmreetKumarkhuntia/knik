@@ -1,6 +1,6 @@
 # Knik - Multi-Interface AI Assistant with TTS
 
-High-quality text-to-speech powered by Kokoro-82M, with AI assistant interfaces (GUI, Console, Web), 6 AI providers, 31 MCP tools, workflow scheduling, and conversation history.
+High-quality text-to-speech powered by Kokoro-82M, with AI assistant interfaces (GUI, Console, Web), 7 AI providers, 31 MCP tools, workflow scheduling, and conversation history.
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ All documentation is in the `docs/` folder:
 ## Features
 
 - **TTS**: Kokoro-82M (82M parameters) with 9 voices (5 female, 4 male) and 10 languages
-- **AI Providers**: Vertex AI, Gemini, ZhipuAI, Z.AI, Custom (OpenAI-compatible), Mock
+- **AI Providers**: Vertex AI, Gemini, ZhipuAI, Z.AI, Z.AI Coding, Custom (OpenAI-compatible), Mock
 - **MCP Tools**: 31 tools across 7 categories (utils, text, shell, file, browser, cron, workflow)
 - **Interfaces**: GUI (CustomTkinter), Console, Web (React + FastAPI), Electron
 - **Workflows**: DAG-based workflow engine with natural language scheduling

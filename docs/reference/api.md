@@ -80,7 +80,7 @@ List all registered provider names.
 
 ```python
 providers = AIClient.list_available_providers()
-# ["vertex", "gemini", "zhipuai", "zai", "custom", "mock"]
+# ["vertex", "gemini", "zhipuai", "zai", "zai_coding", "custom", "mock"]
 ```
 
 #### `register_tool(tool_dict, implementation)`
@@ -120,6 +120,7 @@ result = client.execute_tool("calculate", expression="2 + 2")
 | Gemini | `gemini` | ChatGoogleGenerativeAI (LangChain) | Google AI Studio API |
 | ZhipuAI | `zhipuai` | ChatZhipuAI (LangChain) | ZhipuAI GLM models |
 | Z.AI | `zai` | ChatOpenAI (LangChain) | Z.AI Platform (OpenAI-compatible) |
+| Z.AI Coding | `zai_coding` | ChatOpenAI (LangChain) | Z.AI Coding Plan (coding-optimized endpoint) |
 | Custom | `custom` | ChatOpenAI (LangChain) | Any OpenAI-compatible endpoint |
 | Mock | `mock` | Built-in | Testing/development (canned responses) |
 
@@ -134,6 +135,7 @@ BaseAIProvider (ABC)
  |    +-- GeminiAIProvider    ("gemini")
  |    +-- ZhipuAIProvider     ("zhipuai")
  |    +-- ZAIProvider         ("zai")
+ |    +-- ZAICodingProvider   ("zai_coding")
  |    +-- CustomProvider      ("custom")
  +-- MockAIProvider           ("mock")
 ```
@@ -260,7 +262,7 @@ history.clear()                           # Clear history
 
 **Male:** `am_adam`, `am_michael`, `am_leo`, `am_ryan`
 
-## Web API Endpoints (22)
+## Web API Endpoints (32)
 
 ### Chat (`/api/chat`)
 
@@ -322,6 +324,17 @@ history.clear()                           # Clear history
 | GET | `/api/analytics/executions` | Get paginated execution records |
 | GET | `/api/analytics/workflows/list` | Get workflows list for analytics |
 | GET | `/api/analytics/activity` | Get activity timeline |
+
+### Conversations (`/api/conversations`)
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/conversations/` | List conversations (supports `limit` and `offset` query params) |
+| POST | `/api/conversations/` | Create a new empty conversation (optional `title` in body) |
+| GET | `/api/conversations/{id}` | Get a conversation with all its messages |
+| DELETE | `/api/conversations/{id}` | Delete a conversation |
+| PATCH | `/api/conversations/{id}` | Update a conversation's title |
+| GET | `/api/conversations/{id}/messages` | Get messages for a conversation (optional `last_n` query param) |
 
 ## File System Tools
 
