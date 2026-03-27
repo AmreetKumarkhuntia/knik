@@ -36,14 +36,11 @@ class GradientBackground(ctk.CTkCanvas):
         self.animation: AnimationController = None
         self.is_animating = False
 
-        # Store canvas size
         self.canvas_width = 800
         self.canvas_height = 600
 
-        # Bind resize event
         self.bind("<Configure>", self._on_resize)
 
-        # Start animation
         self.start_animation()
 
     def _on_resize(self, event):
@@ -54,7 +51,6 @@ class GradientBackground(ctk.CTkCanvas):
         """
         self.canvas_width = event.width
         self.canvas_height = event.height
-        # Redraw gradient with new size
         self._draw_gradient(self._get_current_progress())
 
     def _get_current_progress(self) -> float:
@@ -64,7 +60,6 @@ class GradientBackground(ctk.CTkCanvas):
             Progress value between 0.0 and 1.0
         """
         if self.animation and self.animation.is_running:
-            # Estimate current progress based on elapsed time
             import time
 
             if self.animation.start_time:
@@ -78,28 +73,21 @@ class GradientBackground(ctk.CTkCanvas):
         Args:
             progress: Animation progress (0.0 to 1.0)
         """
-        # Clear canvas
         self.delete("all")
 
-        # Get current and next colors
         current_color = self.colors[self.current_color_index]
         next_color = self.colors[(self.current_color_index + 1) % len(self.colors)]
 
-        # Interpolate color
         interpolated_color = interpolate_color(current_color, next_color, progress)
 
-        # Create vertical gradient effect (multiple rectangles with alpha)
         num_steps = 40
         for i in range(num_steps):
-            # Calculate position
             y1 = (i / num_steps) * self.canvas_height
             y2 = ((i + 1) / num_steps) * self.canvas_height
 
-            # Blend with next color based on position
             position_progress = i / num_steps
             step_color = interpolate_color(interpolated_color, next_color, position_progress * progress * 0.3)
 
-            # Draw rectangle
             self.create_rectangle(0, y1, self.canvas_width, y2, fill=step_color, outline="")
 
     def _animate_transition(self, progress: float):
@@ -112,10 +100,8 @@ class GradientBackground(ctk.CTkCanvas):
 
     def _on_transition_complete(self):
         """Called when transition animation completes."""
-        # Move to next color
         self.current_color_index = (self.current_color_index + 1) % len(self.colors)
 
-        # Restart animation for continuous loop
         if self.is_animating:
             self._start_next_transition()
 
@@ -168,10 +154,8 @@ class GradientBackground(ctk.CTkCanvas):
         self.colors = new_colors.copy()
         self.current_color_index = 0
 
-        # Redraw with new colors
         self._draw_gradient(0.0)
 
-        # Restart animation with new colors
         if self.is_animating:
             if self.animation:
                 self.animation.stop()

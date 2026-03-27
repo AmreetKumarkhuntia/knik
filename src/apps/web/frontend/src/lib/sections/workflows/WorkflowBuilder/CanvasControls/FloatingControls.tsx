@@ -15,7 +15,6 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
   const popoverRef = useRef<HTMLDivElement>(null)
   const nodeTypes = getAllNodeTypes()
 
-  // Close popover on outside click
   useEffect(() => {
     if (!popoverOpen) return
     function handleClick(e: MouseEvent) {
@@ -28,7 +27,6 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
   }, [popoverOpen])
 
   const handleAddNodeType = (type: string) => {
-    // screenToFlowPosition is valid here — inside ReactFlowProvider context
     const position = screenToFlowPosition({
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
@@ -48,12 +46,10 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
 
   return (
     <>
-      {/* + Add Node — bottom center */}
       <div
         ref={popoverRef}
         className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
       >
-        {/* Popover */}
         {popoverOpen && (
           <div className="mb-1 w-52 rounded-xl border border-border bg-surfaceRaised shadow-xl overflow-hidden">
             <div className="px-3 py-2 border-b border-border">
@@ -94,7 +90,6 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
         </button>
       </div>
 
-      {/* Zoom controls — bottom right */}
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
         <button
           onClick={() => void zoomIn()}

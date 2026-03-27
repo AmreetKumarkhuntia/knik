@@ -6,7 +6,6 @@ import type {
   DashboardWorkflow,
 } from './workflow'
 
-// Workflow node data types - extend node definitions with label
 export interface FunctionNodeData extends FunctionNodeDefinition {
   label?: string
 }
@@ -31,10 +30,8 @@ export interface EndNodeData {
   label?: string
 }
 
-// Workflow dashboard types
 export type TabType = 'schedules' | 'history' | 'builder'
 
-// Workflow component props
 export interface WorkflowsTableProps {
   workflows: DashboardWorkflow[]
   onEdit: (workflowId: string) => void

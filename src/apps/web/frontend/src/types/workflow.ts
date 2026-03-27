@@ -198,7 +198,6 @@ export interface DashboardResponse {
   }
 }
 
-// Execution detail types
 export interface ExecutionDetail {
   id: number
   workflow_id: string
@@ -230,7 +229,6 @@ export interface ExecutionDetailResponse {
   timeline: NodeExecutionStep[]
 }
 
-// Dynamic metric card
 export interface DynamicMetric {
   id: string
   label: string
@@ -245,7 +243,6 @@ export interface DynamicMetric {
   }
 }
 
-// Paginated executions
 export interface ExecutionsPaginatedResponse {
   success: boolean
   data: {
@@ -257,13 +254,11 @@ export interface ExecutionsPaginatedResponse {
   }
 }
 
-// Workflows list for filters
 export interface WorkflowsListResponse {
   success: boolean
   workflows: Array<{ id: string; name: string }>
 }
 
-// Analytics response types
 export interface WorkflowMetricsResponse {
   success: boolean
   metrics: Record<string, unknown>

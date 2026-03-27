@@ -1,8 +1,3 @@
-/**
- * Streaming Chat API Client
- * Handles Server-Sent Events (SSE) for real-time text and audio streaming
- */
-
 interface StreamCallbacks {
   onText?: (chunk: string) => void
   onAudio?: (audioBase64: string) => void
@@ -83,7 +78,7 @@ export async function streamChat(
       buffer += decoder.decode(value, { stream: true })
 
       const lines = buffer.split('\n')
-      buffer = lines.pop() || '' // Keep incomplete line in buffer
+      buffer = lines.pop() || ''
 
       for (const line of lines) {
         if (line.startsWith('event:')) {
@@ -116,7 +111,7 @@ export async function streamChat(
             console.error('[Streaming] Failed to parse SSE JSON:', e, data)
           }
 
-          currentEvent = '' // Reset after processing
+          currentEvent = ''
         }
       }
     }

@@ -9,9 +9,9 @@ from typing import Any
 class ConversationMessage:
     """A single message within a conversation."""
 
-    role: str  # "user", "assistant", "tool", "system"
+    role: str
     content: str
-    timestamp: str  # ISO 8601
+    timestamp: str
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

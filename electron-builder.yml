@@ -1,6 +1,3 @@
-# Electron Builder Configuration
-# More readable alternative to package.json build section
-
 appId: com.knik.app
 productName: Knik
 copyright: Copyright © 2025
@@ -15,7 +12,6 @@ files:
   - src/apps/web/frontend/dist/**/*
   - node_modules/**/*
 
-# macOS Configuration
 mac:
   category: public.app-category.productivity
   target:
@@ -33,7 +29,6 @@ mac:
   entitlements: assets/entitlements.mac.plist
   entitlementsInherit: assets/entitlements.mac.plist
 
-# Windows Configuration
 win:
   target:
     - target: nsis
@@ -44,7 +39,6 @@ win:
         - x64
   icon: assets/icon.ico
 
-# Linux Configuration
 linux:
   target:
     - target: AppImage
@@ -56,14 +50,12 @@ linux:
   icon: assets/icon.png
   category: Utility
 
-# NSIS Installer (Windows)
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
 
-# DMG Installer (macOS)
 dmg:
   background: assets/dmg-background.png
   icon: assets/icon.icns

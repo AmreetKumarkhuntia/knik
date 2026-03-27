@@ -1,8 +1,3 @@
-/**
- * useKeyboardShortcuts Hook
- * Manages global keyboard shortcuts
- */
-
 import { useEffect } from 'react'
 import type { KeyboardShortcut } from '../../types/hooks'
 

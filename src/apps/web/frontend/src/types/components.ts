@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { ExecutionStatus, NodeExecutionStep, ExecutionDetail } from '$types/workflow'
 
-// Existing types
 export type ToastType = 'success' | 'error' | 'info'
 
 export interface ToastProps {
@@ -36,7 +35,6 @@ export interface ConfirmDialogProps {
   loading?: boolean
 }
 
-// Component props
 export interface ActionButtonProps {
   icon?: ReactNode
   label?: string
@@ -232,7 +230,6 @@ export interface UserProfileProps {
   badgeType?: 'pro' | 'basic' | 'admin'
 }
 
-// Pagination component
 export interface PaginationProps {
   currentPage: number
   totalPages: number
@@ -240,7 +237,6 @@ export interface PaginationProps {
   disabled?: boolean
 }
 
-// Execution components
 export interface ExecutionTimelineProps {
   timeline: NodeExecutionStep[] | undefined
   loading?: boolean
@@ -257,7 +253,6 @@ export interface StructuredOutputProps {
   loading: boolean
 }
 
-// Page header
 export interface PageHeaderProps {
   breadcrumbs: string[]
   rightContent?: ReactNode

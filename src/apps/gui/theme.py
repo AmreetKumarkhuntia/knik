@@ -6,93 +6,78 @@ import customtkinter as ctk
 class DarkTheme:
     """Dark theme color palette."""
 
-    # Background colors
-    BG_PRIMARY = "#0F1419"  # Main chat background
-    BG_SECONDARY = "#1A1D28"  # Top bar, input panel
-    BG_TERTIARY = "#2D3142"  # Input fields, buttons
+    BG_PRIMARY = "#0F1419"
+    BG_SECONDARY = "#1A1D28"
+    BG_TERTIARY = "#2D3142"
 
-    # Message bubble colors
-    MSG_USER_BG = "#5B4FFF"  # User message bubble
-    MSG_AI_BG = "#2D3142"  # AI message bubble
-    MSG_SYSTEM_BG = "#2A2D37"  # System message bubble
+    MSG_USER_BG = "#5B4FFF"
+    MSG_AI_BG = "#2D3142"
+    MSG_SYSTEM_BG = "#2A2D37"
 
-    # Text colors
-    TEXT_PRIMARY = "#FFFFFF"  # Main text (white)
-    TEXT_SECONDARY = "#E8E9ED"  # AI message text (light gray)
-    TEXT_TERTIARY = "#8B92A8"  # Placeholder, subtle text
-    TEXT_ACCENT = "#8B92FF"  # AI badge, links
+    TEXT_PRIMARY = "#FFFFFF"
+    TEXT_SECONDARY = "#E8E9ED"
+    TEXT_TERTIARY = "#8B92A8"
+    TEXT_ACCENT = "#8B92FF"
 
-    # Button colors
-    BTN_PRIMARY = "#5B4FFF"  # Primary action (Send)
-    BTN_PRIMARY_HOVER = "#7B6FFF"  # Primary hover
-    BTN_SECONDARY = "#3A3F52"  # Secondary actions
-    BTN_SECONDARY_HOVER = "#4A5268"  # Secondary hover
+    BTN_PRIMARY = "#5B4FFF"
+    BTN_PRIMARY_HOVER = "#7B6FFF"
+    BTN_SECONDARY = "#3A3F52"
+    BTN_SECONDARY_HOVER = "#4A5268"
 
-    # Status colors
-    STATUS_SUCCESS = "#4ADE80"  # Green - Ready, success
-    STATUS_WARNING = "#FCD34D"  # Yellow - Warning
-    STATUS_ERROR = "#F87171"  # Red - Error
-    STATUS_INFO = "#60A5FA"  # Blue - Processing
+    STATUS_SUCCESS = "#4ADE80"
+    STATUS_WARNING = "#FCD34D"
+    STATUS_ERROR = "#F87171"
+    STATUS_INFO = "#60A5FA"
 
-    # Borders and separators
     BORDER_SUBTLE = "#2A2D37"
     BORDER_FOCUS = "#5B4FFF"
 
-    # Gradient background colors
     GRADIENT_COLORS = [
-        "#001F3F",  # Deep blue
-        "#2C1B47",  # Purple
-        "#004D4D",  # Teal
+        "#001F3F",
+        "#2C1B47",
+        "#004D4D",
     ]
 
 
 class LightTheme:
     """Light theme color palette."""
 
-    # Background colors
-    BG_PRIMARY = "#FFFFFF"  # Main chat background
-    BG_SECONDARY = "#F5F5F7"  # Top bar, input panel
-    BG_TERTIARY = "#E5E5EA"  # Input fields, buttons
+    BG_PRIMARY = "#FFFFFF"
+    BG_SECONDARY = "#F5F5F7"
+    BG_TERTIARY = "#E5E5EA"
 
-    # Message bubble colors
-    MSG_USER_BG = "#5B4FFF"  # User message bubble
-    MSG_AI_BG = "#E5E5EA"  # AI message bubble
-    MSG_SYSTEM_BG = "#F0F0F5"  # System message bubble
+    MSG_USER_BG = "#5B4FFF"
+    MSG_AI_BG = "#E5E5EA"
+    MSG_SYSTEM_BG = "#F0F0F5"
 
-    # Text colors
-    TEXT_PRIMARY = "#000000"  # Main text (black)
-    TEXT_SECONDARY = "#1D1D1F"  # AI message text (dark gray)
-    TEXT_TERTIARY = "#6E6E73"  # Placeholder, subtle text
-    TEXT_ACCENT = "#5B4FFF"  # AI badge, links
+    TEXT_PRIMARY = "#000000"
+    TEXT_SECONDARY = "#1D1D1F"
+    TEXT_TERTIARY = "#6E6E73"
+    TEXT_ACCENT = "#5B4FFF"
 
-    # Button colors
-    BTN_PRIMARY = "#5B4FFF"  # Primary action (Send)
-    BTN_PRIMARY_HOVER = "#4A3FE8"  # Primary hover
-    BTN_SECONDARY = "#E5E5EA"  # Secondary actions
-    BTN_SECONDARY_HOVER = "#D1D1D6"  # Secondary hover
+    BTN_PRIMARY = "#5B4FFF"
+    BTN_PRIMARY_HOVER = "#4A3FE8"
+    BTN_SECONDARY = "#E5E5EA"
+    BTN_SECONDARY_HOVER = "#D1D1D6"
 
-    # Status colors
-    STATUS_SUCCESS = "#34C759"  # Green - Ready, success
-    STATUS_WARNING = "#FF9500"  # Orange - Warning
-    STATUS_ERROR = "#FF3B30"  # Red - Error
-    STATUS_INFO = "#007AFF"  # Blue - Processing
+    STATUS_SUCCESS = "#34C759"
+    STATUS_WARNING = "#FF9500"
+    STATUS_ERROR = "#FF3B30"
+    STATUS_INFO = "#007AFF"
 
-    # Borders and separators
     BORDER_SUBTLE = "#E5E5EA"
     BORDER_FOCUS = "#5B4FFF"
 
-    # Gradient background colors
     GRADIENT_COLORS = [
-        "#E0F2FE",  # Light blue
-        "#EDE9FE",  # Light purple
-        "#CCFBF1",  # Light teal
+        "#E0F2FE",
+        "#EDE9FE",
+        "#CCFBF1",
     ]
 
 
 class ColorTheme:
     """Dynamic color theme that switches based on appearance mode."""
 
-    # Initialize with dark theme
     BG_PRIMARY = DarkTheme.BG_PRIMARY
     BG_SECONDARY = DarkTheme.BG_SECONDARY
     BG_TERTIARY = DarkTheme.BG_TERTIARY
@@ -121,7 +106,6 @@ class ColorTheme:
 
     GRADIENT_COLORS = DarkTheme.GRADIENT_COLORS
 
-    # Radius
     RADIUS_SMALL = 10
     RADIUS_MEDIUM = 18
     RADIUS_LARGE = 25
@@ -129,7 +113,6 @@ class ColorTheme:
     @classmethod
     def set_mode(cls, mode: str):
         """Set the theme mode (dark/light/system) and update all colors."""
-        # Determine which theme to use
         if mode == "light":
             theme = LightTheme
         elif mode == "dark":
@@ -138,7 +121,6 @@ class ColorTheme:
             current = ctk.get_appearance_mode().lower()
             theme = LightTheme if current == "light" else DarkTheme
 
-        # Update all color attributes
         cls.BG_PRIMARY = theme.BG_PRIMARY
         cls.BG_SECONDARY = theme.BG_SECONDARY
         cls.BG_TERTIARY = theme.BG_TERTIARY
@@ -210,18 +192,15 @@ class Fonts:
 class Spacing:
     """Spacing and padding constants."""
 
-    # Padding
     PAD_SMALL = 10
     PAD_MEDIUM = 18
     PAD_LARGE = 25
     PAD_XLARGE = 30
 
-    # Margins
     MARGIN_SMALL = 8
     MARGIN_MEDIUM = 15
     MARGIN_LARGE = 20
 
-    # Component sizes
     INPUT_HEIGHT = 50
     BUTTON_HEIGHT = 50
     TOPBAR_HEIGHT = 70

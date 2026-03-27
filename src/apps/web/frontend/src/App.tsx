@@ -13,7 +13,6 @@ function AppContent() {
   const handleNewChat = useStore(s => s.handleNewChat)
   const loadConversation = useStore(s => s.loadConversation)
 
-  // Initialize audio service callbacks on mount
   useEffect(() => {
     const cleanup = initAudioCallbacks()
     return cleanup

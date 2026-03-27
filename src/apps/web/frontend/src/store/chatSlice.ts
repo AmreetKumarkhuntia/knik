@@ -11,13 +11,11 @@ import type { AudioSlice } from './audioSlice'
 import type { ToastSlice } from './toastSlice'
 
 export interface ChatSlice {
-  // State
   messages: Message[]
   inputText: string
   loading: boolean
   conversationId: string | null
 
-  // Actions
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void
   setInputText: (text: string) => void
   setLoading: (loading: boolean) => void
@@ -34,13 +32,11 @@ export const createChatSlice: StateCreator<
   [],
   ChatSlice
 > = (set, get) => ({
-  // State
   messages: [],
   inputText: '',
   loading: false,
   conversationId: null,
 
-  // Actions
   setMessages: messagesOrUpdater => {
     if (typeof messagesOrUpdater === 'function') {
       set(state => ({ messages: messagesOrUpdater(state.messages) }))

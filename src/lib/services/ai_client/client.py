@@ -109,8 +109,6 @@ class AIClient:
             else:
                 raise
 
-    # ─── Synchronous API (provider-only, no DB) ─────────────────────
-
     def chat(
         self,
         prompt: str,
@@ -201,8 +199,6 @@ class AIClient:
             self.last_usage = None
             yield error_msg
 
-    # ─── Async API (full conversation lifecycle) ────────────────────
-
     async def achat(
         self,
         prompt: str,
@@ -256,10 +252,8 @@ class AIClient:
         meta = provider_meta or {}
         cfg = Config()
 
-        # 1. Create / verify conversation
         conversation_id = await self._ensure_conversation(conversation_id)
 
-        # 2. Persist user message
         if conversation_id:
             await self._conversation_db().append_message(
                 conversation_id=conversation_id,
@@ -268,16 +262,13 @@ class AIClient:
                 metadata=meta,
             )
 
-        # 3. Load history from DB (if not provided explicitly)
         if history is None and conversation_id:
             history = await self._load_history(conversation_id, cfg.history_context_size)
 
-        # 4. Inject existing summary
         if conversation_id:
             summary, _ = await self._conversation_db().get_summary(conversation_id)
             history = self._conversation_summarizer().inject_summary(summary, history or [])
 
-        # 5. Run LLM (offloaded to thread)
         response_text, usage = await asyncio.to_thread(
             self._chat_with_usage,
             prompt,
@@ -287,7 +278,6 @@ class AIClient:
             **kwargs,
         )
 
-        # 6–8. Post-call persistence & background tasks
         if conversation_id and response_text.strip():
             await self._post_chat(
                 conversation_id=conversation_id,
@@ -340,14 +330,12 @@ class AIClient:
         meta = provider_meta or {}
         cfg = Config()
 
-        # 1. Create / verify conversation
         conversation_id = await self._ensure_conversation(conversation_id)
 
         # Emit conversation_id early so the caller can forward it
         if conversation_id:
             yield {"__conversation_id__": conversation_id}
 
-        # 2. Persist user message
         if conversation_id:
             await self._conversation_db().append_message(
                 conversation_id=conversation_id,
@@ -356,16 +344,13 @@ class AIClient:
                 metadata=meta,
             )
 
-        # 3. Load history from DB (if not provided explicitly)
         if history is None and conversation_id:
             history = await self._load_history(conversation_id, cfg.history_context_size)
 
-        # 4. Inject existing summary
         if conversation_id:
             summary, _ = await self._conversation_db().get_summary(conversation_id)
             history = self._conversation_summarizer().inject_summary(summary, history or [])
 
-        # 5. Bridge the sync generator to async via a Queue
         queue: asyncio.Queue[str | None] = asyncio.Queue()
         loop = asyncio.get_running_loop()
 
@@ -393,13 +378,10 @@ class AIClient:
             yield chunk
             full_response += chunk
 
-        # Wait for the producer thread to finish cleanly
         await producer
 
-        # Capture usage (set by chat_stream on the same instance)
         usage = self.last_usage
 
-        # 6–8. Post-call persistence & background tasks
         if conversation_id and full_response.strip():
             await self._post_chat(
                 conversation_id=conversation_id,
@@ -410,15 +392,12 @@ class AIClient:
                 disable_summarization=disable_summarization,
             )
 
-        # Final metadata sentinel
         yield {
             "__done__": True,
             "conversation_id": conversation_id,
             "usage": usage,
             "full_response": full_response,
         }
-
-    # ─── Private helpers ────────────────────────────────────────────
 
     def _chat_with_usage(
         self,
@@ -493,7 +472,6 @@ class AIClient:
         db = self._conversation_db()
         Summarizer = self._conversation_summarizer()
 
-        # Save assistant message
         msg_metadata: dict[str, Any] = dict(meta)
         if usage:
             msg_metadata["usage"] = usage
@@ -505,7 +483,6 @@ class AIClient:
             metadata=msg_metadata,
         )
 
-        # Track cumulative tokens & trigger summarisation
         if usage and usage.get("total_tokens") and not disable_summarization:
             new_total = await db.increment_total_tokens(
                 conversation_id,
@@ -517,7 +494,6 @@ class AIClient:
                 summarizer = Summarizer(self, model_name)
                 self._schedule_background(summarizer.run(conversation_id))
         elif usage and usage.get("total_tokens"):
-            # Still track tokens even when summarisation is disabled
             await db.increment_total_tokens(
                 conversation_id,
                 usage["total_tokens"],
@@ -540,8 +516,6 @@ class AIClient:
         task = asyncio.create_task(coro)
         cls._background_tasks.add(task)
         task.add_done_callback(cls._background_tasks.discard)
-
-    # ─── Introspection & utility ────────────────────────────────────
 
     def get_last_usage(self) -> dict[str, int] | None:
         """Get the token usage from the last chat() or chat_stream() call.

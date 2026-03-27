@@ -13,7 +13,6 @@ export default function Home({ inputRef }: HomeProps) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
 
-  // Read from store
   const messages = useStore(s => s.messages)
   const inputText = useStore(s => s.inputText)
   const setInputText = useStore(s => s.setInputText)

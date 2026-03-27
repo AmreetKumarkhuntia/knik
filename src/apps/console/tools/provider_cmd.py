@@ -14,7 +14,6 @@ def provider_command(app, args: str) -> str:
     """
     args = args.strip().lower()
 
-    # Show current provider and list available
     if not args:
         current = app.ai_client.provider_name if app.ai_client else "unknown"
         available = ProviderRegistry.list_providers()
@@ -27,16 +26,13 @@ def provider_command(app, args: str) -> str:
         result += "\nUsage: /provider <name>"
         return result
 
-    # Validate provider
     if not ProviderRegistry.is_registered(args):
         available = ", ".join(ProviderRegistry.list_providers())
         return f"❌ Unknown provider '{args}'. Available: {available}"
 
-    # Switch provider
     try:
         old_provider = app.ai_client.provider_name if app.ai_client else "unknown"
 
-        # Create new AI client with the selected provider
         app.ai_client = AIClient(
             provider=args,
             mcp_registry=app.mcp_registry,

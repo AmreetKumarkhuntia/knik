@@ -1,10 +1,7 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force'
 
-// Re-export from $types/workflow to avoid duplication
 export type { ExecutionStatus } from './workflow'
-
-// ─── Graph core types ────────────────────────────────────────────────────────
 
 export interface GraphOptions {
   directed?: boolean
@@ -28,8 +25,6 @@ export interface DijkstraResult {
   path: string[]
 }
 
-// ─── Layout types ─────────────────────────────────────────────────────────────
-
 export interface LayoutOptions {
   width: number
   height: number
@@ -47,8 +42,6 @@ export interface SimLink extends SimulationLinkDatum<SimNode> {
   source: string
   target: string
 }
-
-// ─── Canvas types ─────────────────────────────────────────────────────────────
 
 export interface CanvasOptions {
   layout?: 'force' | 'grid' | 'circular' | 'dag'
@@ -70,8 +63,6 @@ export interface CanvasOutput {
   nodes: Node[]
   edges: Edge[]
 }
-
-// ─── Workflow graph types ─────────────────────────────────────────────────────
 
 export interface ExecutionNodeData {
   status?: import('./workflow').ExecutionStatus

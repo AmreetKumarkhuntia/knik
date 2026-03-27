@@ -45,17 +45,14 @@ class BaseAIProvider(ABC):
 
     @abstractmethod
     def __init__(self, **kwargs):
-        """Initialize provider with configuration."""
         pass
 
     @abstractmethod
     def chat(self, prompt: str, history: list = None, **kwargs) -> str | ChatResult:
-        """Send a chat message. Uses tools automatically if mcp_registry was provided."""
         pass
 
     @abstractmethod
     def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
-        """Stream a chat message. Uses tools automatically if mcp_registry was provided."""
         pass
 
     @abstractmethod
@@ -126,7 +123,6 @@ class BaseAIProvider(ABC):
             return []
 
     def _get_context_window_for_model(self, model: str) -> int:
-        """Get context window size for a model from the static mapping."""
         return get_context_window(model)
 
 
@@ -179,7 +175,6 @@ class LangChainProvider(BaseAIProvider):
                 printer.success(f"✓ {provider_name} initialized (no tools)")
 
     def _extract_text_from_content(self, content) -> str:
-        """Extract text from various content formats."""
         if isinstance(content, str):
             return content
         elif isinstance(content, list):
@@ -199,7 +194,6 @@ class LangChainProvider(BaseAIProvider):
 
         Works with AIMessage, AIMessageChunk, and agent result dicts.
         """
-        # Direct usage_metadata attribute (AIMessage / AIMessageChunk)
         usage = getattr(result, "usage_metadata", None)
         if usage is not None and isinstance(usage, dict):
             return {
@@ -208,7 +202,6 @@ class LangChainProvider(BaseAIProvider):
                 "total_tokens": usage.get("total_tokens", 0),
             }
 
-        # Try response_metadata (some providers put it there)
         response_meta = getattr(result, "response_metadata", None)
         if response_meta is not None and isinstance(response_meta, dict):
             token_usage = response_meta.get("token_usage") or response_meta.get("usage")
@@ -248,20 +241,17 @@ class LangChainProvider(BaseAIProvider):
         agent_messages = self._build_agent_messages(history, prompt)
 
         if not self.agent:
-            # Direct LLM invocation
             result = self.llm.invoke(agent_messages, **kwargs)
             self.last_usage = self._extract_usage(result)
             content = self._extract_text_from_content(result.content)
             return ChatResult(content=content, usage=self.last_usage)
 
-        # Agent invocation
         result = self.agent.invoke({"messages": agent_messages}, **kwargs)
 
         if isinstance(result, dict):
             messages = result.get("messages", [])
             if messages:
                 last_message = messages[-1]
-                # Try to extract usage from the last AI message
                 self.last_usage = self._extract_usage(last_message)
                 if hasattr(last_message, "content"):
                     output = last_message.content
@@ -288,7 +278,6 @@ class LangChainProvider(BaseAIProvider):
         self.last_usage = None
 
         if not self.agent:
-            # Direct LLM stream
             last_chunk = None
             for chunk in self.llm.stream(agent_messages, **kwargs):
                 last_chunk = chunk
@@ -302,12 +291,10 @@ class LangChainProvider(BaseAIProvider):
                             if text:
                                 yield text
 
-            # Extract usage from the final chunk
             if last_chunk is not None:
                 self.last_usage = self._extract_usage(last_chunk)
             return
 
-        # Agent stream
         last_ai_message = None
         for event in self.agent.stream({"messages": agent_messages}, stream_mode="messages", **kwargs):
             if isinstance(event, tuple) and len(event) >= 1:
@@ -318,7 +305,6 @@ class LangChainProvider(BaseAIProvider):
                 if "Tool" in message_class:
                     continue
 
-                # Yield AI message content
                 if "AIMessage" in message_class and hasattr(message, "content"):
                     last_ai_message = message
                     content = message.content
@@ -331,7 +317,6 @@ class LangChainProvider(BaseAIProvider):
                                 if text:
                                     yield text
 
-        # Extract usage from the last AI message in the agent stream
         if last_ai_message is not None:
             self.last_usage = self._extract_usage(last_ai_message)
 

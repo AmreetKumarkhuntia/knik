@@ -10,10 +10,8 @@ import time
 from typing import Any
 
 
-# Commands blocked for safety — prevents destructive operations
 BLOCKED_COMMANDS: list[str] = ["rm -rf", "mkfs", "dd if=", ":(){", "fork", ">(", "sudo rm"]
 
-# Maximum allowed timeout for shell commands
 MAX_TIMEOUT: int = 30
 
 
@@ -40,7 +38,6 @@ async def run_shell_command(
     effective_blocklist = blocked_commands if blocked_commands is not None else BLOCKED_COMMANDS
     timeout = min(timeout, MAX_TIMEOUT)
 
-    # Safety check: block dangerous commands
     command_lower = command.lower()
     for blocked in effective_blocklist:
         if blocked in command_lower:

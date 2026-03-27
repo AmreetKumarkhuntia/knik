@@ -19,10 +19,8 @@ class CronJobApp:
         """Run the application until interrupted."""
         logger.info("Initializing Cron Job Service...")
 
-        # Initialize Database Map
         await PostgresDB.initialize()
 
-        # Setup graceful shutdown handlers
         loop = asyncio.get_running_loop()
         stop_event = asyncio.Event()
 
@@ -37,7 +35,6 @@ class CronJobApp:
         self.scheduler.start()
 
         try:
-            # Wait until a stop signal is received
             await stop_event.wait()
         except asyncio.CancelledError:
             logger.info("Cron service cancelled")

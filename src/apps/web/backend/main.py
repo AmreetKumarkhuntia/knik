@@ -11,13 +11,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-# Add src to path for imports
 src_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(src_path))
 
 from apps.web.backend.config import WebBackendConfig
-
-# Import routers
 from apps.web.backend.routes.admin import router as admin_router
 from apps.web.backend.routes.analytics import router as analytics_router
 from apps.web.backend.routes.chat import router as chat_router
@@ -30,13 +27,10 @@ from imports import printer
 from lib.services.postgres.db import PostgresDB
 
 
-# Configuration
 config = WebBackendConfig()
 
-# Create FastAPI app
 app = FastAPI(title="Knik AI Assistant API", description="Simple voice-enabled AI chat API", version="2.0.0")
 
-# CORS middleware for frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,7 +40,6 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Register routers
 app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
 app.include_router(chat_stream_router, prefix="/api/chat/stream", tags=["chat-streaming"])
 app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
@@ -57,14 +50,11 @@ app.include_router(workflow_router, prefix="/api/workflows", tags=["workflows"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 
-# Startup and shutdown using lifespan (modern FastAPI pattern)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan event handler for startup/shutdown"""
-    # Startup
     printer.info("Starting Knik FastAPI backend...")
 
-    # Initialize PostgreSQL connection pool for conversation persistence
     try:
         await PostgresDB.initialize()
         printer.success("PostgreSQL connection pool initialized")
@@ -75,7 +65,6 @@ async def lifespan(app: FastAPI):
     printer.info(f"AI Provider: {config.ai_provider}/{config.ai_model}")
     printer.info(f"TTS Voice: {config.voice_name}")
     yield
-    # Shutdown
     printer.info("Shutting down Knik backend...")
     try:
         await PostgresDB.close()
@@ -89,20 +78,17 @@ app.router.lifespan_context = lifespan
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
     return {"name": "Knik AI Assistant API", "version": "2.0.0", "status": "running"}
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
     return {"status": "healthy"}
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # Run with config settings
     uvicorn.run(
         "apps.web.backend.main:app",  # Import string for reload to work
         host=config.host,

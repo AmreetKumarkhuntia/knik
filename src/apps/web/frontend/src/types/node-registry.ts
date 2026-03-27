@@ -1,8 +1,5 @@
 import type { NodeTypeName } from './workflow'
 
-/**
- * Handle configuration for node inputs/outputs
- */
 export interface HandleConfig {
   position: 'top' | 'bottom' | 'left' | 'right'
   id?: string // For conditional nodes: 'true', 'false'
@@ -11,9 +8,6 @@ export interface HandleConfig {
   style?: Record<string, string> // Additional inline styles
 }
 
-/**
- * Tip/hint configuration for form fields
- */
 export interface FormFieldTip {
   icon: string
   title: string
@@ -21,9 +15,6 @@ export interface FormFieldTip {
   color: 'teal' | 'purple' | 'orange' | 'blue' | 'green' | 'red'
 }
 
-/**
- * Form field configuration for node properties panel
- */
 export interface FormFieldConfig {
   field: string
   label: string
@@ -40,21 +31,15 @@ export interface FormFieldConfig {
   tagPlaceholder?: string
 }
 
-/**
- * Color configuration for node styling
- */
 export interface NodeColors {
-  primary: string // Base color name
+  primary: string
   iconBg: string // Tailwind class for icon background
   iconText: string // Tailwind class for icon color
-  border: string // Border color class
-  hoverBorder: string // Hover border class
-  neonBorder?: string // Optional neon border class
+  border: string
+  hoverBorder: string
+  neonBorder?: string
 }
 
-/**
- * Complete node metadata structure
- */
 export interface NodeMetadata {
   type: NodeTypeName | 'StartNode' | 'EndNode'
   label: string

@@ -47,7 +47,6 @@ class WorkflowEngine:
             # downstream nodes (e.g. FlowMergeNode) can still become ready.
             pruned_edges: set[tuple[str, str]] = set()
 
-            # Seed with root nodes (no dependencies)
             ready = [node_id for node_id in nodes if in_degree[node_id] == 0]
 
             # Level-based parallel execution: at each iteration, run all
@@ -57,7 +56,6 @@ class WorkflowEngine:
             while ready:
                 logger.info(f"Executing {len(ready)} node(s) in parallel: {ready}")
 
-                # --- build per-node inputs for this level (deep-copied) ---
                 level_inputs: dict[str, dict[str, Any]] = {}
                 for curr_id in ready:
                     predecessor_ids = reverse_adj.get(curr_id, [])
@@ -68,7 +66,6 @@ class WorkflowEngine:
                         }
                     )
 
-                # --- execute all nodes at this level concurrently ---
                 async def _execute_single(
                     nid: str,
                     _level_inputs: dict[str, dict[str, Any]] = level_inputs,
@@ -121,7 +118,6 @@ class WorkflowEngine:
                     return_exceptions=True,
                 )
 
-                # --- separate successes from failures ---
                 results: list[tuple[str, dict[str, Any]]] = []
                 errors: list[tuple[str, BaseException]] = []
                 for nid, res in zip(ready, raw_results, strict=False):
@@ -137,7 +133,6 @@ class WorkflowEngine:
                     first_err = errors[0][1]
                     raise RuntimeError(f"Node(s) failed: {', '.join(failed_ids)}") from first_err
 
-                # --- propagate outputs and find the next wave of ready nodes ---
                 next_ready: list[str] = []
                 for nid, output in results:
                     node = nodes[nid]
@@ -179,7 +174,6 @@ class WorkflowEngine:
 
                 ready = next_ready
 
-            # --- detect stranded nodes ---
             unvisited = [nid for nid, deg in in_degree.items() if deg > 0]
             if unvisited:
                 logger.warning(f"Nodes never became ready (possibly behind not-taken branches): {unvisited}")
@@ -200,10 +194,6 @@ class WorkflowEngine:
                 duration_ms=int((time.perf_counter() - workflow_start) * 1000),
             )
             raise
-
-    # ------------------------------------------------------------------
-    # Conditional-branch pruning helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _all_predecessors_pruned(
@@ -245,10 +235,6 @@ class WorkflowEngine:
                     else:
                         next_ready.append(succ_id)
 
-    # ------------------------------------------------------------------
-    # DAG parsing helpers
-    # ------------------------------------------------------------------
-
     def _get_edge_condition(self, definition: dict, from_id: str, to_id: str) -> str | None:
         """Fetch condition for specific edge to support branch nodes."""
         for edge in definition.get("connections", []):
@@ -279,7 +265,6 @@ class WorkflowEngine:
         return nodes, adj_list, reverse_adj, in_degree
 
     def _instantiate_node(self, node_id: str, data: dict[str, Any]) -> BaseNode:
-        """Map generic node string dictionary schema back to live classes."""
         node_type = data.get("type")
 
         if node_type not in VALID_NODE_TYPES:

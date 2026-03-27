@@ -12,7 +12,6 @@ export default function WorkflowNavbar({
 
   return (
     <header className="h-16 border-b border-border glass flex items-center justify-between px-8 flex-shrink-0 z-20">
-      {/* Breadcrumb — matches PageHeader style */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => void navigate(-1)}
@@ -36,7 +35,6 @@ export default function WorkflowNavbar({
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-2">
         {!readOnly && onExportJson && (
           <button

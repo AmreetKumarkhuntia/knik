@@ -146,7 +146,6 @@ export class ApiClient {
   static admin = AdminAPI
 }
 
-// Backward-compatible api export map
 export const api = {
   chat: ApiClient.chat.stream,
   getHistory: ApiClient.chat.getHistory,

@@ -146,8 +146,6 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
     [setNodes]
   )
 
-  // handleAddNode is called from FloatingControls which is inside ReactFlowProvider —
-  // it receives a fully-constructed node (with position already in flow coordinates)
   const handleAddNode = useCallback(
     (newNode: Node) => {
       setNodes(ns => [...ns, newNode])
@@ -207,7 +205,6 @@ const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasConte
         <NodePropertiesPanel selectedNode={selectedNode} onNodeUpdate={handleNodeUpdate} />
 
         <div className="flex-1 relative workflow-grid overflow-hidden">
-          {/* Canvas gradient blobs — show through transparent background */}
           <div
             className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20 animate-blob pointer-events-none z-0"
             style={{ backgroundColor: 'var(--color-primary)' }}

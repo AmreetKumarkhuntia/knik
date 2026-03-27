@@ -238,7 +238,6 @@ export const NODE_REGISTRY: NodeRegistry = {
   },
 }
 
-// Helper functions
 export function getNodeMetadata(type: string): NodeMetadata | undefined {
   return NODE_REGISTRY[type]
 }

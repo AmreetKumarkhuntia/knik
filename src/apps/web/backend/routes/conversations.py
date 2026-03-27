@@ -10,7 +10,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 
-# Add src to path
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
@@ -20,22 +19,12 @@ from lib.services.conversation import ConversationDB
 router = APIRouter()
 
 
-# ─── Request / Response Models ──────────────────────────────────────
-
-
 class ConversationCreate(BaseModel):
-    """Create a new conversation."""
-
     title: str | None = None
 
 
 class ConversationUpdate(BaseModel):
-    """Update a conversation's title."""
-
     title: str
-
-
-# ─── Endpoints ──────────────────────────────────────────────────────
 
 
 @router.get("/")

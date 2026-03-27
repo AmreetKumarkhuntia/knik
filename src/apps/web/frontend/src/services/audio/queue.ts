@@ -1,7 +1,3 @@
-/**
- * Audio queue management for streaming playback
- */
-
 import { playAudio } from './playback'
 
 let audioQueue: Array<{ audio: string; sampleRate: number }> = []

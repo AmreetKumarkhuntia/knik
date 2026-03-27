@@ -98,7 +98,6 @@ class MCPServerRegistry:
             if not impl:
                 continue
 
-            # Wrap implementation with logging
             impl = _wrap_with_logging(tool_name, impl)
 
             fields = {}
