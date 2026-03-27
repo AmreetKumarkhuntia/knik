@@ -1,8 +1,3 @@
-/**
- * Collapsible Sidebar Component
- * Permanently visible sidebar that expands on hover
- */
-
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -106,7 +101,6 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
         }}
       >
         <div className="flex flex-col h-full py-4">
-          {/* Header */}
           <div
             className={`flex items-center mb-6 ${isExpanded ? 'px-6 justify-between' : 'justify-center'}`}
           >
@@ -118,7 +112,6 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
             </div>
           </div>
 
-          {/* New Chat Button */}
           <div className={`mb-6 ${isExpanded ? 'px-6' : 'flex justify-center'}`}>
             <button
               onClick={() => {
@@ -139,7 +132,6 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
             </button>
           </div>
 
-          {/* Navigation */}
           <div className="mb-6 border-b border-border pb-4">
             <h3
               className={`text-sm font-semibold text-secondary mb-3 ${isExpanded ? 'px-6' : 'hidden'}`}
@@ -174,7 +166,6 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
             </div>
           </div>
 
-          {/* Recent Conversations - Only visible when expanded */}
           {isExpanded && (
             <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide px-6">
               <h3 className="text-sm font-semibold text-secondary mb-3">
@@ -216,7 +207,6 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
             </div>
           )}
 
-          {/* Footer */}
           <div className={`space-y-3 ${isExpanded ? 'px-6' : 'items-center flex flex-col'}`}>
             <button
               onClick={() => setThemeSelectorOpen(true)}

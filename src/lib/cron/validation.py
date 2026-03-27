@@ -12,7 +12,6 @@ from typing import Any
 from lib.utils.graph_utils import is_dag_acyclic
 
 
-# Canonical set of valid node types, matching the node classes in nodes.py.
 VALID_NODE_TYPES: set[str] = {
     "FunctionExecutionNode",
     "AIExecutionNode",
@@ -50,7 +49,6 @@ def validate_workflow_definition(definition: dict[str, Any]) -> dict[str, Any]:
     nodes = definition.get("nodes", {})
     connections = definition.get("connections", [])
 
-    # Validate each node
     for node_id, node_data in nodes.items():
         if not isinstance(node_data, dict):
             return {"valid": False, "message": f"Node {node_id} must be a dictionary", "details": {"node_id": node_id}}
@@ -70,7 +68,6 @@ def validate_workflow_definition(definition: dict[str, Any]) -> dict[str, Any]:
                 "details": {"node_id": node_id, "invalid_type": node_type, "valid_types": sorted(VALID_NODE_TYPES)},
             }
 
-    # Validate each connection
     for i, conn in enumerate(connections):
         if not isinstance(conn, dict):
             return {
@@ -103,7 +100,6 @@ def validate_workflow_definition(definition: dict[str, Any]) -> dict[str, Any]:
                 "details": {"connection": conn},
             }
 
-    # Check acyclicity
     if not is_dag_acyclic(nodes, connections):
         return {
             "valid": False,

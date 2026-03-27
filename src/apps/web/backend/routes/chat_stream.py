@@ -29,7 +29,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 
-# Add src to path
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
@@ -42,10 +41,8 @@ from lib.services.tts.utils import is_speakable
 
 router = APIRouter()
 
-# Configuration
 config = WebBackendConfig()
 
-# Global clients
 ai_client: AIClient | None = None
 tts_processor: KokoroVoiceModel | None = None
 mcp_registry: MCPServerRegistry | None = None
@@ -59,8 +56,6 @@ _TTS_QUEUE_MAX = 10
 
 
 class StreamChatRequest(BaseModel):
-    """Streaming chat request"""
-
     message: str
     conversation_id: str | None = None
 
@@ -172,7 +167,6 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
     try:
         await _init_clients()
 
-        # Start the TTS background worker
         tts_task = asyncio.create_task(_tts_worker(sentence_queue, audio_queue))
 
         text_buffer = ""

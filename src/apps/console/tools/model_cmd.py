@@ -18,7 +18,6 @@ def model_command(app, args: str) -> str:
     """
     args = args.strip()
 
-    # Show current model
     if not args:
         current_model = app.config.ai_model
         result = f"🤖 Current model: {current_model}\n\n"
@@ -29,14 +28,11 @@ def model_command(app, args: str) -> str:
         result += "\nUsage: /model <name>"
         return result
 
-    # Switch model
     try:
         old_model = app.config.ai_model
 
-        # Update config
         app.config.ai_model = args
 
-        # Recreate AI client with new model
         app.ai_client = AIClient(
             provider=app.ai_client.provider if app.ai_client else app.config.ai_provider,
             mcp_registry=app.mcp_registry,

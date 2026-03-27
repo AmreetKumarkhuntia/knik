@@ -1,8 +1,3 @@
-/**
- * Toast Component
- * Displays temporary notification messages
- */
-
 import { useEffect } from 'react'
 import { CheckCircle, Cancel, Info, Close } from '@mui/icons-material'
 import type { ToastProps } from '$types/components'

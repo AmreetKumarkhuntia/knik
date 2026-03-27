@@ -14,7 +14,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 
-# Add src to path
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
@@ -24,17 +23,13 @@ from imports import AIClient, TTSAsyncProcessor, printer
 
 router = APIRouter()
 
-# Import the global client from chat route
 from apps.web.backend.routes import chat as chat_module
 
 
-# Configuration
 config = WebBackendConfig()
 
 
 class SettingsUpdate(BaseModel):
-    """Update AI settings"""
-
     provider: str | None = None
     model: str | None = None
     voice: str | None = None

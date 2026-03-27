@@ -118,7 +118,6 @@ class ConversationSummarizer:
         if not summary:
             return history
 
-        # Remove any existing summary SystemMessages to avoid duplicates
         filtered = [
             msg
             for msg in history

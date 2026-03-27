@@ -31,7 +31,6 @@ class Scheduler:
             return False
 
     async def get_workflow(self, workflow_id: str):
-        """Retrieve a specific workflow."""
         return await workflow_service.get_workflow(workflow_id)
 
     async def unregister_workflow(self, workflow_id: str) -> bool:
@@ -48,14 +47,12 @@ class Scheduler:
             return False
 
     async def add_schedule(self, schedule: Schedule) -> int | None:
-        """Add a cron schedule."""
         schedule_id = await SchedulerDB.create_schedule(schedule)
         if schedule_id:
             logger.info(f"Added schedule ID {schedule_id} with target workflow {schedule.target_workflow_id}")
         return schedule_id
 
     async def remove_schedule(self, schedule_id: int) -> bool:
-        """Remove a cron schedule."""
         try:
             await SchedulerDB.delete_schedule(schedule_id)
             logger.info(f"Removed schedule ID {schedule_id}")
@@ -65,7 +62,6 @@ class Scheduler:
             return False
 
     async def execute_workflow(self, workflow_id: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Execute a workflow manually by ID."""
         logger.info(f"Manual execution triggered for workflow: {workflow_id}")
         workflow = await self.get_workflow(workflow_id)
         if not workflow:
@@ -75,17 +71,14 @@ class Scheduler:
         return result
 
     def start(self) -> None:
-        """Start the background cron loop."""
         if not self._running:
             self.cron_scheduler.start()
             self._running = True
 
     def stop(self) -> None:
-        """Stop the background cron loop."""
         if self._running:
             self.cron_scheduler.stop()
             self._running = False
 
     def is_running(self) -> bool:
-        """Check if the scheduler is running."""
         return self._running

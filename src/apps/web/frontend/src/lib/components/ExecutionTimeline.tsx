@@ -26,12 +26,10 @@ export default function ExecutionTimeline({ timeline, loading = false }: Executi
     <div className="space-y-3">
       {timeline.map((step, index) => (
         <div key={`${step.node_id}-${index}`} className="relative pl-8">
-          {/* Timeline connector line */}
           {index < timeline.length - 1 && (
             <div className="absolute left-3 top-8 bottom-0 w-0.5 bg-border" />
           )}
 
-          {/* Timeline dot */}
           <div
             className={`absolute left-0 top-2 w-6 h-6 rounded-full flex items-center justify-center ${
               step.status === 'success'
@@ -46,7 +44,6 @@ export default function ExecutionTimeline({ timeline, loading = false }: Executi
             </span>
           </div>
 
-          {/* Step content */}
           <div className="glass border border-border rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">

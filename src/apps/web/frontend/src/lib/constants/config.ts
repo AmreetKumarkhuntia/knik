@@ -1,6 +1,3 @@
-// Configuration constants
-
-// API configuration
 export const API = {
   baseURL: 'http://localhost:8000',
   port: 8000,
@@ -13,13 +10,11 @@ export const API = {
   },
 }
 
-// Storage keys
 export const STORAGE = {
   themeMode: 'knik-theme-mode',
   themeAccent: 'knik-theme-accent',
 }
 
-// CSS variables
 export const CSS_VARS = {
   backgroundColor: '--color-background',
   surfaceColor: '--color-surface',
@@ -42,35 +37,28 @@ export const CSS_VARS = {
   infoColor: '--color-info',
 }
 
-// CSS class names
 export const CSS_CLASSES = {
-  // FormField
   input:
     'w-full bg-surface border border-border rounded-lg px-4 py-2 text-text focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all',
 
-  // Canvas
   controls: '!bg-surface !border-border !rounded-lg',
   miniMap: '!bg-surface !border-border',
   draggingCursor: 'cursor-copy',
 }
 
-// Style configuration
 export const STYLE_CONFIG = {
-  // Card variants
   cardVariants: {
     default: 'bg-surface border border-border rounded-lg shadow-sm',
     elevated: 'bg-surface border border-border rounded-lg shadow-lg',
     glass: 'glass border border-white/10 shadow-sm',
   },
 
-  // Card padding
   cardPadding: {
     sm: 'p-3',
     md: 'p-6',
     lg: 'p-8',
   },
 
-  // Badge types
   badgeTypes: {
     pro: {
       bg: 'bg-primary',
@@ -86,7 +74,6 @@ export const STYLE_CONFIG = {
     },
   },
 
-  // Trend colors
   trendColors: {
     positive: {
       text: 'text-success',
@@ -102,7 +89,6 @@ export const STYLE_CONFIG = {
     },
   },
 
-  // Status colors
   statusColors: {
     active: {
       background: 'bg-success/10',

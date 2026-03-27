@@ -7,11 +7,6 @@ for creating smooth, performant animations in the Knik GUI.
 from collections.abc import Callable
 
 
-# ============================================================================
-# Easing Functions
-# ============================================================================
-
-
 def linear(t: float) -> float:
     """Linear easing - no acceleration.
 
@@ -99,13 +94,7 @@ def cubic_bezier(t: float, p1: float = 0.42, p2: float = 0.0) -> float:
     Returns:
         Eased progress value
     """
-    # Simplified cubic bezier approximation
     return 3 * p1 * (1 - t) ** 2 * t + 3 * p2 * (1 - t) * t**2 + t**3
-
-
-# ============================================================================
-# Color Utilities
-# ============================================================================
 
 
 def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
@@ -156,11 +145,6 @@ def interpolate_color(color1: str, color2: str, t: float) -> str:
     return rgb_to_hex(r, g, b)
 
 
-# ============================================================================
-# Timing Utilities
-# ============================================================================
-
-
 def fps_to_ms(fps: int) -> int:
     """Convert frames per second to milliseconds per frame.
 
@@ -184,11 +168,6 @@ def duration_to_frames(duration_ms: int, fps: int) -> int:
         Number of frames
     """
     return int((duration_ms / 1000) * fps)
-
-
-# ============================================================================
-# Animation Controller
-# ============================================================================
 
 
 class AnimationController:
@@ -234,7 +213,7 @@ class AnimationController:
 
         import time
 
-        self.start_time = time.time() * 1000  # Convert to milliseconds
+        self.start_time = time.time() * 1000
         self.is_running = True
         self.is_paused = False
         self.elapsed_pause = 0
@@ -284,13 +263,10 @@ class AnimationController:
         current_time = time.time() * 1000
         elapsed = current_time - self.start_time - self.elapsed_pause
 
-        # Calculate progress (0.0 to 1.0)
         progress = min(elapsed / self.duration_ms, 1.0)
 
-        # Apply easing
         eased_progress = self.easing(progress)
 
-        # Call update callback
         try:
             self.update_callback(eased_progress)
         except Exception as e:
@@ -298,7 +274,6 @@ class AnimationController:
             self.stop()
             return
 
-        # Continue animation or complete
         if progress < 1.0:
             frame_delay = fps_to_ms(self.fps)
             self.after_id = self.widget.after(frame_delay, self._animate)
@@ -309,11 +284,6 @@ class AnimationController:
                     self.on_complete()
                 except Exception as e:
                     print(f"Animation complete callback error: {e}")
-
-
-# ============================================================================
-# Multi-Animation Controller
-# ============================================================================
 
 
 class AnimationGroup:
@@ -363,11 +333,6 @@ class AnimationGroup:
     def cleanup_finished(self):
         """Remove completed animations from the group."""
         self.animations = [anim for anim in self.animations if anim.is_running]
-
-
-# ============================================================================
-# Value Interpolation Utilities
-# ============================================================================
 
 
 def interpolate_value(start: float, end: float, t: float) -> float:

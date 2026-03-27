@@ -11,7 +11,6 @@ export default function AudioControls({
 
   return (
     <div className="mb-3 flex justify-center gap-2">
-      {/* Pause/Resume button */}
       <button
         onClick={onTogglePause}
         className={`${
@@ -33,7 +32,6 @@ export default function AudioControls({
         )}
       </button>
 
-      {/* Stop button */}
       <button
         onClick={onStop}
         className="bg-error hover:bg-error/80 text-foreground px-6 py-3 rounded-lg font-semibold

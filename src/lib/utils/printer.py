@@ -10,7 +10,6 @@ from enum import Enum
 
 from loguru import logger
 
-# Import Config for environment variable support
 from ..core.config import Config
 
 
@@ -47,7 +46,6 @@ class PrinterConfig:
                        If None, loads from KNIK_USE_COLORS env var or defaults to True
             show_timestamps: Whether to show timestamps in output
         """
-        # Load from environment variables with fallback to defaults
         self.log_level = log_level if log_level is not None else Config.get_log_level()
         self.show_logs = show_logs if show_logs is not None else Config.get_show_logs()
         self.use_colors = use_colors if use_colors is not None else Config.get_use_colors()
@@ -151,7 +149,6 @@ class Printer:
         """
         import contextlib
 
-        # Remove existing handler before reconfiguring
         if hasattr(self, "_handler_id"):
             with contextlib.suppress(ValueError):
                 logger.remove(self._handler_id)
@@ -165,7 +162,6 @@ class Printer:
         if show_timestamps is not None:
             self.config.show_timestamps = show_timestamps
 
-        # Re-configure logger with new settings
         self._configure_logger()
 
     def set_log_level(self, level: str):
@@ -184,7 +180,6 @@ class Printer:
 printer = Printer()
 
 
-# Export everything
 __all__ = [
     "Printer",
     "PrinterConfig",

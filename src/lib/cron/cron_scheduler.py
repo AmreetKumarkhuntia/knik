@@ -20,7 +20,6 @@ class CronScheduler:
         self._poll_count = 0
 
     def start(self):
-        """Start the background poll loop."""
         if self._running:
             return
         logger.info("Starting CronScheduler background loop...")
@@ -28,7 +27,6 @@ class CronScheduler:
         self._task = asyncio.create_task(self._poll_loop())
 
     def stop(self):
-        """Stop the background loop gracefully."""
         if not self._running:
             return
         logger.info("Stopping CronScheduler background loop...")

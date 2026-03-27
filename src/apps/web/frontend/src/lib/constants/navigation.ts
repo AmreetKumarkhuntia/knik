@@ -1,12 +1,8 @@
-// Navigation-related constants
-
-// Routes
 export const ROUTES = {
   home: '/',
   workflows: '/workflows',
 }
 
-// Keyboard shortcuts
 export const KEYBOARD_SHORTCUTS = {
   focusInput: {
     key: 'k',
@@ -21,7 +17,6 @@ export const KEYBOARD_SHORTCUTS = {
   },
 }
 
-// Navigation items
 export const NAV_ITEMS = [
   {
     path: ROUTES.home,

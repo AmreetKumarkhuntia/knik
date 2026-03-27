@@ -82,7 +82,6 @@ class ConsoleApp:
     def _stream_response(self, user_input: str):
         printer.info("🤔 Thinking...")
 
-        # Get conversation history as message objects
         history_messages = self.history.get_messages(last_n=self.config.history_context_size)
 
         if self.debug_mode:
@@ -155,7 +154,6 @@ class ConsoleApp:
 
             print("\n")
 
-            # Display token usage if available
             usage = self.ai_client.get_last_usage() if self.ai_client else None
             if usage:
                 in_tok = usage.get("input_tokens", 0)

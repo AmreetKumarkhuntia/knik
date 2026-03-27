@@ -38,7 +38,6 @@ class ZhipuAIProvider(LangChainProvider):
         return "zhipuai"
 
     def _create_agent(self, llm, mcp_registry, system_instruction):
-        """Create a LangChain agent using new v1.x create_agent pattern"""
         if not create_agent or not mcp_registry:
             return None
 
@@ -102,7 +101,6 @@ class ZhipuAIProvider(LangChainProvider):
             ]
         }
 
-        # streaming=False avoids SSE header issues
         llm = ChatZhipuAI(
             model=self.model_name,
             api_key=self.api_key,

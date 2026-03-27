@@ -41,7 +41,6 @@ except ImportError:
             aiohttp = None
             requests = None
 
-# Import shared functions from service layer
 from lib.services.encoding import base64_decode, base64_encode
 from lib.services.shell import run_shell_command
 from lib.services.text import (
@@ -59,11 +58,6 @@ from lib.services.time import current_timestamp
 
 
 logger = logging.getLogger(__name__)
-
-
-# ========================
-# HTTP FUNCTIONS
-# ========================
 
 
 async def http_get(
@@ -178,11 +172,6 @@ async def http_request(
         return {"error": f"HTTP {method} failed: {str(e)}"}
 
 
-# ========================
-# DATA PROCESSING
-# ========================
-
-
 async def json_parse(data: str | dict) -> dict[str, Any]:
     """Parse JSON string to dict, or return dict if already parsed."""
     if isinstance(data, dict):
@@ -247,11 +236,6 @@ async def dict_set_path(data: dict[str, Any], path: str, value: Any) -> dict[str
     return data
 
 
-# ========================
-# UTILITY FUNCTIONS
-# ========================
-
-
 async def sleep(seconds: float) -> dict[str, Any]:
     """Async sleep with configurable duration."""
     await asyncio.sleep(seconds)
@@ -265,23 +249,16 @@ async def uuid_generate() -> str:
     return str(uuid.uuid4())
 
 
-# ========================
-# FUNCTION REGISTRY
-# ========================
-
 WORKFLOW_FUNCTIONS = {
-    # HTTP Functions
     "http_get": http_get,
     "http_post": http_post,
     "http_request": http_request,
-    # Data Processing Functions
     "json_parse": json_parse,
     "json_stringify": json_stringify,
     "dict_get_path": dict_get_path,
     "dict_merge": dict_merge,
     "dict_filter": dict_filter,
     "dict_set_path": dict_set_path,
-    # String/Text Functions (from services)
     "string_format": string_format,
     "string_replace": string_replace,
     "string_concat": string_concat,
@@ -291,12 +268,10 @@ WORKFLOW_FUNCTIONS = {
     "string_to_upper": string_to_upper,
     "string_strip": string_strip,
     "string_length": string_length,
-    # Utility Functions
     "sleep": sleep,
     "current_timestamp": current_timestamp,
     "uuid_generate": uuid_generate,
     "base64_encode": base64_encode,
     "base64_decode": base64_decode,
-    # Shell Functions (from services — now with blocked commands safety)
     "run_shell_command": run_shell_command,
 }

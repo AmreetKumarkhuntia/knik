@@ -50,7 +50,6 @@ function getStatusOverlay(status?: string) {
   }
 }
 
-// ── Pill Node (Start / End) ───────────────────────────────────────────────────
 function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, colors, handles, contentRenderer } = metadata
   const isStart = contentRenderer === 'start'
@@ -103,7 +102,6 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
   )
 }
 
-// ── AI Card Node (clean card with teal top accent strip) ──────────────────────
 function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
   const isExecution = data.mode === 'execution'
@@ -114,10 +112,8 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
       <div
         className={`rounded-xl border ${colors.border} bg-surfaceRaised overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
       >
-        {/* Thin teal top accent strip */}
         <div className="h-0.5 w-full bg-primary/60" />
 
-        {/* Header row */}
         <div className={`flex items-center gap-2 px-3 ${isExecution ? 'py-2' : 'pt-3 pb-2'}`}>
           <span
             className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'} ${colors.iconText}`}
@@ -136,7 +132,6 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
           </span>
         </div>
 
-        {/* Edit mode: content + port labels */}
         {!isExecution && (
           <div className="px-3 pb-3">
             <NodeContent renderer={contentRenderer} data={data} />
@@ -147,7 +142,6 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
           </div>
         )}
 
-        {/* Execution mode: duration only */}
         {isExecution && data.duration !== undefined && (
           <div className="px-3 pb-2 text-[10px] text-secondary">
             {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
@@ -170,7 +164,6 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
   )
 }
 
-// ── Default Node ──────────────────────────────────────────────────────────────
 function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
   const isExecution = data.mode === 'execution'
@@ -231,7 +224,6 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
   )
 }
 
-// ── Dispatcher ────────────────────────────────────────────────────────────────
 export default memo(function BaseNode({ data, type }: NodeProps) {
   const metadata = getNodeMetadata(type as string)
   if (!metadata) return null

@@ -1,7 +1,3 @@
-/**
- * Audio service - Unified audio management with queue and Media Session support
- */
-
 import { setMediaSessionUpdater } from './playback'
 import { updateMediaSession } from './mediaSession'
 

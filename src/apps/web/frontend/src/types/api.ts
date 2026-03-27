@@ -11,8 +11,6 @@ export interface ChatResponse {
   conversation_id?: string
 }
 
-// ─── Conversation API types ────────────────────────────────────────
-
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'tool' | 'system'
   content: string

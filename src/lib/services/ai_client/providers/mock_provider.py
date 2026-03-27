@@ -30,7 +30,6 @@ class MockAIProvider(BaseAIProvider):
         self._index = 0
 
     def chat(self, prompt: str, history: list = None, **kwargs) -> ChatResult:
-        """Mock chat response"""
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
         printer.debug(f"[MOCK] Chat: {prompt[:60]}...")
@@ -39,7 +38,6 @@ class MockAIProvider(BaseAIProvider):
         return ChatResult(content=response, usage=self.last_usage)
 
     def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
-        """Mock streaming chat response"""
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
         printer.debug(f"[MOCK] Streaming Chat: {prompt[:60]}...")
@@ -53,7 +51,6 @@ class MockAIProvider(BaseAIProvider):
         printer.debug("[MOCK] Streaming complete")
 
     def get_models(self) -> list[dict[str, Any]]:
-        """Return static mock model list."""
         return [
             {
                 "id": "mock-model",

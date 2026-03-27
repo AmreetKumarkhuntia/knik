@@ -27,7 +27,6 @@ class PostgresDB:
 
         config = Config()
 
-        # If no explicit dsn or kwargs are passed, use the ones from config
         if not dsn and not kwargs:
             kwargs = {
                 "host": config.db_host,
@@ -36,7 +35,6 @@ class PostgresDB:
                 "password": config.db_pass,
                 "dbname": config.db_name,
             }
-            # Remove empty values like empty passwords
             kwargs = {k: v for k, v in kwargs.items() if v}
 
         conn_string = dsn or make_conninfo(**kwargs)
@@ -83,7 +81,6 @@ class PostgresDB:
         async with cls._pool.connection() as conn:
             try:
                 yield conn
-                # If autocommit is false, we can commit explicitly upon success context exit
                 if not conn.autocommit:
                     await conn.commit()
             except Exception:

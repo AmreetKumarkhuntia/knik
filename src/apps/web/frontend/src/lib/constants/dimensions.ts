@@ -1,6 +1,3 @@
-// Dimension and spacing constants
-
-// Layout dimensions
 export const LAYOUT = {
   maxWidthPercentage: '70%',
   headerHeight: '80px',
@@ -10,30 +7,23 @@ export const LAYOUT = {
   },
 }
 
-// Animation values
 export const ANIMATION = {
-  // Offsets
   yOffset: 20,
   hoverYOffset: -4,
   xOffset: 20,
 
-  // Animation properties
   stiffness: 300,
   damping: 30,
   delay: 0.2,
 
-  // Scale values
   hoverScale: 1.1,
   tapScale: 0.9,
 
-  // Duration (in milliseconds)
   mediumDuration: 500,
   longDuration: 800,
 }
 
-// Spacing
 export const SPACING = {
-  // Padding
   p: {
     xs: 2,
     sm: 4,
@@ -42,7 +32,6 @@ export const SPACING = {
     xl: 12,
   },
 
-  // Margin
   m: {
     xs: 1,
     sm: 2,
@@ -51,7 +40,6 @@ export const SPACING = {
     xl: 12,
   },
 
-  // Gap
   gap: {
     xs: 1,
     sm: 2,
@@ -61,9 +49,7 @@ export const SPACING = {
   },
 }
 
-// Sizes
 export const SIZES = {
-  // Icon sizes
   icon: {
     sm: 16,
     md: 20,
@@ -71,21 +57,18 @@ export const SIZES = {
     xl: 48,
   },
 
-  // Avatar sizes
   avatar: {
     sm: 32,
     md: 40,
     lg: 48,
   },
 
-  // Loading spinner
   spinner: {
     sm: { width: 16, border: 2 },
     md: { width: 32, border: 3 },
     lg: { width: 48, border: 4 },
   },
 
-  // Box shadows
   boxShadow: {
     sm: '0 2px 4px -1px rgba(0, 0, 0, 0.1)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
@@ -93,7 +76,6 @@ export const SIZES = {
   },
 }
 
-// Canvas dimensions
 export const CANVAS = {
   nodePositions: {
     startX: 250,
@@ -111,7 +93,6 @@ export const CANVAS = {
   },
 }
 
-// Tab dimensions
 export const TABS = {
   padding: {
     underline: { x: 6, y: 3 },
@@ -119,7 +100,6 @@ export const TABS = {
   },
 }
 
-// Viewport
 export const VIEWPORT = {
   maxHeight: {
     detailTab: '90vh',
@@ -129,7 +109,6 @@ export const VIEWPORT = {
   },
 }
 
-// Status badge
 export const STATUS_BADGE = {
   gap: 1.5,
 }

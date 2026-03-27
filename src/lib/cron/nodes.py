@@ -29,11 +29,9 @@ class BaseNode(ABC):
         pass
 
     def validate(self) -> bool:
-        """Validate node configuration before execution starts."""
         return True
 
     def get_info(self) -> dict[str, Any]:
-        """Get node metadata."""
         return {
             "node_id": self.node_id,
             "type": self.__class__.__name__,
@@ -56,9 +54,6 @@ class FunctionExecutionNode(BaseNode):
         resolved_params = self._resolve_params(inputs)
 
         if self.code:
-            # Execute raw python code with resolved_params injected into globals
-            # The code is expected to define a 'result' variable or the last evaluated expression
-            # will be discarded (use a wrapper to capture output)
             local_env = {**resolved_params, "inputs": inputs}
             try:
                 # Offload synchronous exec() to a worker thread to avoid
@@ -68,14 +63,12 @@ class FunctionExecutionNode(BaseNode):
 
                 await asyncio.to_thread(_run_code)
 
-                # Fetch output from a standardized 'output' or 'result' variable if the script set it
                 code_output = local_env.get("output", local_env.get("result"))
                 return {"status": "success", "output": code_output}
             except Exception as e:
                 logger.error(f"[{self.node_id}] Python code execution failed: {e}")
                 raise RuntimeError(f"Python code evaluation failed: {e}") from e
 
-        # Look up and execute function from registry
         from .functions import WORKFLOW_FUNCTIONS
 
         func = WORKFLOW_FUNCTIONS.get(self.function_name)
@@ -83,9 +76,7 @@ class FunctionExecutionNode(BaseNode):
             try:
                 result = await func(**resolved_params)
 
-                # Check if function returned error
                 if isinstance(result, dict) and "error" in result:
-                    # Put error into workflow execution context
                     raise RuntimeError(result["error"])
 
                 return {"status": "success", **result}
@@ -93,14 +84,13 @@ class FunctionExecutionNode(BaseNode):
                 logger.error(f"[{self.node_id}] Function {self.function_name} execution failed: {e}")
                 raise RuntimeError(f"Function {self.function_name} execution failed: {e}") from e
 
-        # Function not found in registry — raise explicitly so the workflow fails clearly
+        # Function not found — raise explicitly so the workflow fails clearly
         raise RuntimeError(
             f"Function '{self.function_name}' is not registered in WORKFLOW_FUNCTIONS. "
             f"Available functions: {list(WORKFLOW_FUNCTIONS.keys())}"
         )
 
     def _resolve_params(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        """Simple mock resolver for string templates like {input.file_path}"""
         resolved = {}
         for k, v in self.params.items():
             if isinstance(v, str) and v.startswith("{") and v.endswith("}"):
@@ -125,7 +115,6 @@ class ConditionalBranchNode(BaseNode):
         self.condition = condition
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        """Evaluate the python string condition against inputs."""
         logger.info(f"[{self.node_id}] Evaluating condition: {self.condition}")
 
         resolved_condition = self.condition
@@ -221,7 +210,6 @@ class AIExecutionNode(BaseNode):
         1. Traditional template replacement (backward compatible)
         2. Auto-append structured context from previous connected nodes
         """
-        # Traditional template replacement
         resolved = prompt_template
         for key, val in inputs.items():
             if isinstance(val, dict):
@@ -230,7 +218,6 @@ class AIExecutionNode(BaseNode):
             else:
                 resolved = resolved.replace(f"{{{key}}}", str(val))
 
-        # Build previous execution context
         context_parts = []
 
         for node_id, node_output in inputs.items():

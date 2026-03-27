@@ -66,7 +66,6 @@ def calculate_first_run(schedule_description: str, timezone: str = "UTC") -> dat
     Raises:
         ValueError: If schedule_description cannot be parsed or timezone is invalid.
     """
-    # Parse timezone and get current time
     tz = parse_timezone(timezone)
     now = datetime.now(tz)
 

@@ -15,7 +15,6 @@ export default function NodePropertiesPanel({
 
   return (
     <aside className="w-72 border-r border-border bg-surfaceRaised/60 backdrop-blur-xl flex flex-col flex-shrink-0 overflow-hidden">
-      {/* Header */}
       <div className="px-5 py-4 border-b border-border">
         <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">
           Node Properties
@@ -25,7 +24,6 @@ export default function NodePropertiesPanel({
         </p>
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {selectedNode ? (
           <NodeProperties

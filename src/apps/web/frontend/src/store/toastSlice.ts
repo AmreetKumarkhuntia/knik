@@ -2,11 +2,9 @@ import type { StateCreator } from 'zustand'
 import type { ToastType, ToastState } from '$types/components'
 
 export interface ToastSlice {
-  // State
   toasts: ToastState[]
   _nextToastId: number
 
-  // Actions
   showToast: (message: string, type?: ToastType) => void
   hideToast: (id: number) => void
   success: (message: string) => void
@@ -15,11 +13,9 @@ export interface ToastSlice {
 }
 
 export const createToastSlice: StateCreator<ToastSlice, [], [], ToastSlice> = (set, get) => ({
-  // State
   toasts: [],
   _nextToastId: 0,
 
-  // Actions
   showToast: (message: string, type: ToastType = 'info') => {
     const id = get()._nextToastId
     set(state => ({

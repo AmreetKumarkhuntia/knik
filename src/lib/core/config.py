@@ -24,31 +24,22 @@ else:
 class Config:
     """Configuration class for application settings (TTS, AI, logging, etc.)."""
 
-    # ============================================================================
-    # Class-level constants and defaults
-    # ============================================================================
-
-    # Sample rate constant
     SAMPLE_RATE: ClassVar[int] = 24000
 
-    # TTS defaults
     DEFAULT_TTS: ClassVar[str] = "kokoro"
     DEFAULT_LANGUAGE: ClassVar[str] = "a"
     DEFAULT_VOICE: ClassVar[str] = "af_heart"
     DEFAULT_MODEL: ClassVar[str] = "hexgrad/Kokoro-82M"
 
-    # AI defaults
     DEFAULT_AI_MODEL: ClassVar[str] = "gemini-1.5-flash"
     DEFAULT_AI_LOCATION: ClassVar[str] = "us-central1"
     DEFAULT_AI_MAX_TOKENS: ClassVar[int] = 25565
     DEFAULT_AI_TEMPERATURE: ClassVar[float] = 0.7
 
-    # Logging defaults
     DEFAULT_LOG_LEVEL: ClassVar[str] = "INFO"
     DEFAULT_SHOW_LOGS: ClassVar[bool] = True
     DEFAULT_USE_COLORS: ClassVar[bool] = True
 
-    # System instruction for AI assistant
     DEFAULT_SYSTEM_INSTRUCTION: ClassVar[str] = """You are an intelligent, proactive assistant similar to Jarvis.
 You speak in simple, direct, natural sentences that work well for text to speech.
 
@@ -67,7 +58,6 @@ Keep your responses calm, clear, and steady.
 Ask for clarification only when absolutely necessary.
 Be reliable, efficient, and action focused like Jarvis."""
 
-    # Lookup dictionaries (used by utility methods)
     LANGUAGE_CODES: ClassVar[dict[str, str]] = {
         "american_english": "a",
         "british_english": "b",
@@ -93,10 +83,8 @@ Be reliable, efficient, and action focused like Jarvis."""
         "am_ryan": "am_ryan",
     }
 
-    # Model discovery defaults
     DEFAULT_MODEL_DISCOVERY_TIMEOUT: ClassVar[int] = 5  # seconds
 
-    # Summarization defaults
     DEFAULT_SUMMARIZATION_THRESHOLD: ClassVar[float] = 0.75  # trigger at 75% of context window
     DEFAULT_SUMMARIZATION_KEEP_RECENT: ClassVar[int] = 2  # keep last N turn pairs unsummarized
     DEFAULT_SUMMARIZATION_ENABLED: ClassVar[bool] = True
@@ -149,11 +137,6 @@ Be reliable, efficient, and action focused like Jarvis."""
         "o3-mini": 200_000,
     }
 
-    # ============================================================================
-    # Instance fields (common AI and TTS settings for all applications)
-    # ============================================================================
-
-    # AI configuration
     ai_provider: str = field(default_factory=lambda: Config.from_env("KNIK_AI_PROVIDER", "vertex"))
     ai_model: str = field(default_factory=lambda: Config.get_ai_model())
     ai_project_id: str | None = field(default_factory=lambda: Config.get_ai_project())
@@ -165,24 +148,20 @@ Be reliable, efficient, and action focused like Jarvis."""
         default_factory=lambda: Config.from_env("KNIK_TEMPERATURE", Config.DEFAULT_AI_TEMPERATURE, float)
     )
 
-    # Custom OpenAI-compatible endpoint configuration
     custom_api_base: str | None = field(default_factory=lambda: Config.from_env("KNIK_CUSTOM_API_BASE", None))
     custom_api_key: str | None = field(default_factory=lambda: Config.from_env("KNIK_CUSTOM_API_KEY", None))
 
-    # TTS configuration
     voice_language: str = field(default_factory=lambda: Config.get_language())
     voice_name: str = field(default_factory=lambda: Config.get_voice())
     sample_rate: int = field(default=24000)
     enable_voice_output: bool = field(default_factory=lambda: Config.from_env("KNIK_VOICE_OUTPUT", True, bool))
 
-    # Database configuration
     db_host: str = field(default_factory=lambda: Config.from_env("KNIK_DB_HOST", "localhost"))
     db_port: int = field(default_factory=lambda: Config.from_env("KNIK_DB_PORT", 5432, int))
     db_user: str = field(default_factory=lambda: Config.from_env("KNIK_DB_USER", "postgres"))
     db_pass: str = field(default_factory=lambda: Config.from_env("KNIK_DB_PASS", ""))
     db_name: str = field(default_factory=lambda: Config.from_env("KNIK_DB_NAME", "knik"))
 
-    # Scheduler configuration
     scheduler_check_interval: int = field(
         default_factory=lambda: Config.from_env("KNIK_SCHEDULER_CHECK_INTERVAL", 60, int)
     )
@@ -191,7 +170,6 @@ Be reliable, efficient, and action focused like Jarvis."""
         default_factory=lambda: Config.from_env("KNIK_SCHEDULER_MAX_CONCURRENT", 10, int)
     )
 
-    # Browser configuration
     browser_headless: bool = field(default_factory=lambda: Config.from_env("KNIK_BROWSER_HEADLESS", False, bool))
     browser_profile_dir: str = field(
         default_factory=lambda: Config.from_env(
@@ -200,10 +178,8 @@ Be reliable, efficient, and action focused like Jarvis."""
         )
     )
 
-    # Telegram configuration
     telegram_bot_token: str | None = field(default_factory=lambda: Config.from_env("KNIK_TELEGRAM_BOT_TOKEN", None))
 
-    # Model discovery configuration
     model_discovery_timeout: int = field(
         default_factory=lambda: Config.from_env(
             "KNIK_MODEL_DISCOVERY_TIMEOUT", Config.DEFAULT_MODEL_DISCOVERY_TIMEOUT, int
@@ -213,7 +189,6 @@ Be reliable, efficient, and action focused like Jarvis."""
     # Conversation history context size (number of turn-pairs sent to LLM)
     history_context_size: int = field(default_factory=lambda: Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int))
 
-    # Summarization configuration
     summarization_enabled: bool = field(
         default_factory=lambda: Config.from_env(
             "KNIK_SUMMARIZATION_ENABLED", Config.DEFAULT_SUMMARIZATION_ENABLED, bool
@@ -230,17 +205,9 @@ Be reliable, efficient, and action focused like Jarvis."""
         )
     )
 
-    # ============================================================================
-    # Initialization
-    # ============================================================================
-
     def __post_init__(self):
         """Initialize system instruction from environment."""
         self.system_instruction = Config.from_env("KNIK_AI_SYSTEM_INSTRUCTION", Config.DEFAULT_SYSTEM_INSTRUCTION)
-
-    # ============================================================================
-    # Utility class methods
-    # ============================================================================
 
     @classmethod
     def from_env(cls, key: str, default=None, type_cast=str):

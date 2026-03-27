@@ -137,12 +137,6 @@ def count_message_tokens(messages: list[dict[str, Any]], model: str = "gpt-4") -
     return total
 
 
-# ---------------------------------------------------------------------------
-# Context window resolution
-# ---------------------------------------------------------------------------
-
-# Runtime cache populated by provider get_models() API calls.
-# Highest priority — always checked first.
 _context_window_cache: dict[str, int] = {}
 
 DEFAULT_CONTEXT_WINDOW = 8_192
@@ -173,13 +167,10 @@ def get_context_window(model: str) -> int:
     Returns:
         Context window size in tokens.
     """
-    # 1. Runtime cache — populated dynamically from provider APIs
     if model in _context_window_cache:
         return _context_window_cache[model]
 
-    # 2. Static fallback from Config
     if model in Config.AI_MODELS_CONTEXT_WINDOWS:
         return Config.AI_MODELS_CONTEXT_WINDOWS[model]
 
-    # 3. Last-resort default
     return DEFAULT_CONTEXT_WINDOW

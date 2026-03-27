@@ -12,7 +12,6 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 
-# Add src to path
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
@@ -22,13 +21,10 @@ from lib.services.conversation import ConversationDB
 
 router = APIRouter()
 
-# In-memory fallback history
 conversation_history = ConversationHistory()
 
 
 class MessageAdd(BaseModel):
-    """Add message to history"""
-
     role: str  # "user" or "assistant"
     content: str
 

@@ -1,24 +1,19 @@
-// UI text and labels constants
 export const UI_TEXT = {
-  // Welcome section
   welcome: {
     title: 'How can I help you today?',
     description: 'Knik AI can assist with coding, content generation, and complex workflows.',
   },
 
-  // Search
   search: {
     placeholder: 'Search...',
     workflowsPlaceholder: 'Search workflows...',
   },
 
-  // Forms
   form: {
     selectPlaceholder: 'Select an option',
     requiredIndicator: '*',
   },
 
-  // Empty states
   empty: {
     defaultIcon: '📜',
     noHistoryTitle: 'No history yet',
@@ -26,7 +21,6 @@ export const UI_TEXT = {
     noNodeData: 'No node execution data available',
   },
 
-  // Workflow Hub
   workflow: {
     create: 'Create Workflow',
     metrics: {
@@ -48,7 +42,6 @@ export const UI_TEXT = {
     },
   },
 
-  // Execution Details
   execution: {
     tabs: {
       overview: 'Overview',
@@ -65,7 +58,6 @@ export const UI_TEXT = {
     },
   },
 
-  // Chat Panel
   chat: {
     buttons: {
       copy: 'Copy message',
@@ -74,7 +66,6 @@ export const UI_TEXT = {
     },
   },
 
-  // Navigation
   nav: {
     navigation: 'Navigation',
     recentConversations: 'Recent Conversations',
@@ -86,7 +77,6 @@ export const UI_TEXT = {
     settings: 'Settings',
   },
 
-  // Status and badges
   status: {
     pro: 'PRO',
     admin: 'ADMIN',
@@ -94,7 +84,6 @@ export const UI_TEXT = {
     proAccount: 'Pro Account',
   },
 
-  // Trends
   trends: {
     positive: '+12%',
     moderatePositive: '+5.2%',
@@ -102,7 +91,6 @@ export const UI_TEXT = {
   },
 }
 
-// Account constants
 export const ACCOUNT = {
   default: {
     initials: 'AR',
@@ -112,7 +100,6 @@ export const ACCOUNT = {
   profileLabel: (name?: string) => `${name || ACCOUNT.default.name || 'User'}'s profile`,
 }
 
-// Badge configuration
 export const BADGE = {
   types: {
     pro: 'pro',
@@ -121,13 +108,11 @@ export const BADGE = {
   },
 }
 
-// Node labels
 export const NODE_LABELS = {
   start: 'Start',
   end: 'End',
 }
 
-// Default AI values
 export const AI_DEFAULTS = {
   model: 'gemini-1.5-flash',
   prompt: 'Enter prompt',

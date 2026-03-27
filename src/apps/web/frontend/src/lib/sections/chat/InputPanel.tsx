@@ -1,8 +1,3 @@
-/**
- * InputPanel Component
- * Enhanced text input with attach, mic, and send buttons
- */
-
 import { forwardRef, useImperativeHandle, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { AttachFile, Mic, Send as SendIcon } from '@mui/icons-material'

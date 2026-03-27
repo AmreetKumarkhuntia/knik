@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# Exit on error
 set -e
 
 echo "Setting up Knik Project..."
 
-# Setup Node.js dependencies
 if [ -f "package.json" ]; then
     echo "Installing Node.js dependencies..."
     npm install
 fi
 
-# Setup Python virtual environment
 echo "Setting up Python virtual environment..."
 if command -v uv &> /dev/null; then
     echo "Using uv for dependency management..."
