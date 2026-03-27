@@ -57,7 +57,7 @@ You: /provider
 AI: Current provider: vertex
 
 Available providers:
-  vertex, gemini, zhipuai, zai, custom, mock
+  vertex, gemini, zhipuai, zai, zai_coding, custom, mock
 
 Usage: /provider <name>
 
@@ -110,7 +110,7 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 
 ## Features
 
-- 6 AI providers (vertex, gemini, zhipuai, zai, custom, mock)
+- 7 AI providers (vertex, gemini, zhipuai, zai, zai_coding, custom, mock)
 - Agent-powered streaming responses
 - Real-time voice output with 9 voices
 - 31 MCP tools across 7 categories (utils, text, shell, file, browser, cron, workflow)

@@ -20,6 +20,7 @@ src/apps/web/backend/
 │   ├── analytics.py     # GET /api/analytics/* (dashboard, metrics, activity)
 │   ├── chat.py          # POST /api/chat (non-streaming)
 │   ├── chat_stream.py   # POST /api/chat/stream (SSE streaming)
+│   ├── conversations.py # CRUD /api/conversations/* (persisted conversation history)
 │   ├── cron.py          # CRUD /api/cron/* (scheduled tasks)
 │   ├── history.py       # GET/POST /api/history (conversation history)
 │   └── workflow.py      # CRUD /api/workflows/* (workflow management)
@@ -99,11 +100,9 @@ src/apps/web/frontend/
     │   │   ├── layout/GraphLayout.ts
     │   │   └── adapters/        # canvasAdapter, graphAdapter, workflowAdapter
     │   ├── hooks/
-    │   │   ├── useAudio.ts
-    │   │   ├── useChat.ts
+    │   │   ├── index.ts
     │   │   ├── useKeyboardShortcuts.ts
-    │   │   ├── useTheme.ts
-    │   │   └── useToast.ts
+    │   │   └── useTheme.ts
     │   ├── pages/               # Top-level route pages
     │   │   ├── Home.tsx
     │   │   ├── Workflows.tsx
@@ -136,6 +135,11 @@ src/apps/web/frontend/
     │       ├── queue.ts         # queueAudio(), clearAudioQueue()
     │       ├── playback.ts      # playAudio(), pauseAudio(), etc.
     │       └── mediaSession.ts  # Browser Media Session API
+    ├── store/                   # Zustand state management
+    │   ├── index.ts             # Root store (useStore)
+    │   ├── audioSlice.ts        # Audio playback state
+    │   ├── chatSlice.ts         # Chat message state
+    │   └── toastSlice.ts        # Toast notification state
     └── types/
         ├── api.ts, common.ts, components.ts, workflow.ts, ...
         └── sections/            # Per-section type definitions
@@ -148,7 +152,7 @@ src/apps/web/frontend/
 │  React Frontend        │ ←────────────────→ │  FastAPI Backend     │
 │  (Vite dev: port 12414)│                    │  (Uvicorn: port 8000)│
 │                        │                    │                      │
-│  - 5 pages (Router)    │                    │  - 7 route files     │
+│  - 5 pages (Router)    │                    │  - 8 route files     │
 │  - 29 components       │                    │  - AIClient          │
 │  - SSE streaming       │                    │  - TTSAsyncProcessor │
 │  - Audio playback      │                    │  - MCP tools         │

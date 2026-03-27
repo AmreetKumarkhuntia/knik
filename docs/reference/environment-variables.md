@@ -8,7 +8,7 @@ Knik supports configuration via environment variables. All have sensible default
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `KNIK_AI_PROVIDER` | `vertex` | AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `custom`, `mock` |
+| `KNIK_AI_PROVIDER` | `vertex` | AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock` |
 | `KNIK_AI_MODEL` | `gemini-1.5-flash` | AI model name (see available models below) |
 | `KNIK_MAX_TOKENS` | `25565` | Maximum tokens for AI responses |
 | `KNIK_TEMPERATURE` | `0.7` | AI temperature (0.0 - 2.0) |
@@ -48,6 +48,15 @@ Set `KNIK_AI_PROVIDER=zai` to use this provider.
 | `ZAI_API_KEY` | None | Z.AI API key (**required**). Get one at https://z.ai/model-api |
 | `ZAI_API_BASE` | `https://api.z.ai/api/paas/v4/` | Z.AI API base URL |
 
+### Z.AI Coding Plan
+
+Set `KNIK_AI_PROVIDER=zai_coding` to use this provider. Requires a GLM Coding Plan subscription. Uses the coding-specific endpoint optimized for coding agents.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `ZAI_CODING_API_KEY` | None | Z.AI Coding API key (**required**). Falls back to `ZAI_API_KEY` if not set. Get one at https://bigmodel.cn |
+| `ZAI_CODING_API_BASE` | `https://open.bigmodel.cn/api/coding/paas/v4` | Z.AI Coding API base URL |
+
 ### Custom (OpenAI-Compatible Endpoint)
 
 Set `KNIK_AI_PROVIDER=custom` to use this provider. Works with Ollama, LM Studio, Together AI, Groq, vLLM, Fireworks, or any endpoint implementing the OpenAI `/v1/chat/completions` API.
@@ -66,9 +75,13 @@ Set `KNIK_AI_PROVIDER=custom` to use this provider. Works with Ollama, LM Studio
 | `gemini-1.5-flash-8b` | Smaller, faster flash variant |
 | `gemini-1.5-pro` | More capable, slower model |
 | `gemini-1.0-pro` | Legacy stable model |
-| `glm-5` | Z.AI GLM-5 model |
+| `glm-5` | Z.AI GLM-5 model (recommended) |
+| `glm-5-turbo` | Z.AI GLM-5 Turbo model |
 | `glm-4` | Z.AI GLM-4 model |
 | `glm-4-flash` | Faster GLM-4 variant |
+| `glm-4.7` | Z.AI GLM-4.7 Coding model |
+| `glm-4.6` | Z.AI GLM-4.6 Coding model |
+| `glm-4.5` | Z.AI GLM-4.5 Coding model |
 
 When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supported by your endpoint (e.g., `llama3.1`, `mistral`, `codellama`).
 
@@ -141,6 +154,19 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 | `KNIK_LOG_LEVEL` | `INFO` | Minimum log level: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `KNIK_SHOW_LOGS` | `true` | Whether to show logs |
 | `KNIK_USE_COLORS` | `true` | Whether to use colored output |
+
+## Browser Automation (Playwright)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `KNIK_BROWSER_HEADLESS` | `false` | `false` = visible browser window (headful), `true` = headless |
+| `KNIK_BROWSER_PROFILE_DIR` | None | Persistent session storage directory (cookies, logins survive restarts) |
+
+## Messaging (Telegram)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `KNIK_TELEGRAM_BOT_TOKEN` | None | Telegram bot token. Create a bot via @BotFather on Telegram |
 
 ## Usage
 

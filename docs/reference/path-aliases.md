@@ -12,6 +12,7 @@ This document describes the path aliases configured for the Knik frontend to sim
 | `$sections` | `src/lib/sections/*` | App-specific section components | ~13 files |
 | `$services` | `src/services/*` | API services and clients | ~7 files |
 | `$hooks` | `src/lib/hooks/*` | Custom React hooks | ~4 files |
+| `$store` | `src/store/*` | Zustand state management (audio, chat, toast slices) | ~4 files |
 | `$pages` | `src/lib/pages/*` | Top-level page components | ~1 file |
 | `$common` | `src/lib/components/*` | Alias for components (same as above) | unused |
 | `$utils` | `src/lib/utils/*` | Utility functions | unused |
@@ -93,6 +94,7 @@ Path aliases are defined in `compilerOptions.paths` with the `/*` glob suffix:
       "$utils/*": ["./src/lib/utils/*"],
       "$constants/*": ["./src/lib/constants/*"],
       "$hooks/*": ["./src/lib/hooks/*"],
+      "$store/*": ["./src/store/*"],
       "$assets/*": ["./src/assets/*"]
     }
   }
@@ -113,6 +115,7 @@ resolve: {
     "$sections": path.resolve(__dirname, "./src/lib/sections"),
     "$pages": path.resolve(__dirname, "./src/lib/pages"),
     "$hooks": path.resolve(__dirname, "./src/lib/hooks"),
+    "$store": path.resolve(__dirname, "./src/store"),
     "$assets": path.resolve(__dirname, "./src/assets"),
     "$common": path.resolve(__dirname, "./src/lib/components"),
     "$utils": path.resolve(__dirname, "./src/lib/utils"),

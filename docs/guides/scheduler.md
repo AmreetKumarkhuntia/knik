@@ -36,7 +36,12 @@ mindmap
       FlowMergeNode
     engine.py
     scheduler.py
+    cron_scheduler.py
     schedule_parser.py
+    schedule_service.py
+    workflow_service.py
+    functions.py
+    validation.py
 ```
 
 ### Component Hierarchy
@@ -87,7 +92,7 @@ class Schedule:
     target_workflow_id: str        # References a Workflow.id
     enabled: bool = True
     timezone: str = "UTC"
-    schedule_description: str      # Natural language description
+    schedule_description: str | None = None  # Natural language description
     next_run_at: datetime          # Computed next execution time
     recurrence_seconds: int        # Interval in seconds
     created_at: datetime
@@ -116,7 +121,7 @@ curl -X POST http://localhost:8000/api/cron/ \
 class BaseNode(ABC):
     node_id: str
 
-    def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute node logic. Return dict with results."""
 
     def validate(self) -> bool:
