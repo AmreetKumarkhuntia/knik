@@ -7,6 +7,7 @@ import {
   resumeAudio,
 } from '$services/index'
 
+/** Zustand slice for audio playback state and controls. */
 export interface AudioSlice {
   audioPlaying: boolean
   audioPaused: boolean
@@ -20,6 +21,7 @@ export interface AudioSlice {
   initAudioCallbacks: () => () => void
 }
 
+/** Creates the audio slice with play/pause/stop controls and callback initialization. */
 export const createAudioSlice: StateCreator<AudioSlice, [], [], AudioSlice> = (set, get) => ({
   audioPlaying: false,
   audioPaused: false,

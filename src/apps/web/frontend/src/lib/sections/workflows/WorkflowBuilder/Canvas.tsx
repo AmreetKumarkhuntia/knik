@@ -40,6 +40,7 @@ const edgeTypes: EdgeTypes = {
   custom: FlowEdge,
 }
 
+/** Converts a WorkflowDefinition into ReactFlow nodes and edges. */
 function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = []
   const edges: Edge[] = []
@@ -73,6 +74,7 @@ function definitionToReactFlow(definition: WorkflowDefinition): { nodes: Node[];
   return { nodes, edges }
 }
 
+/** Main workflow builder canvas with node editing, validation, and export. */
 const CanvasContent = forwardRef<CanvasHandle, CanvasProps>(function CanvasContent(
   {
     workflowId: _workflowId,

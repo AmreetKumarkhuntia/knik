@@ -17,7 +17,6 @@ import time
 from typing import Any
 
 
-# Try to import HTTP libraries, fall back to what's available
 try:
     import httpx
 

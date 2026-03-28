@@ -54,15 +54,18 @@ class MessagingClient:
         await asyncio.gather(*(p.stop() for p in self._providers.values()))
 
     def is_configured(self) -> bool:
+        """Return True if at least one provider is configured."""
         return any(p.is_configured() for p in self._providers.values())
 
     def get_provider(self, name: str) -> BaseMessagingProvider:
+        """Retrieve a loaded provider by name."""
         name_lower = name.lower()
         if name_lower not in self._providers:
             raise ValueError(f"Provider '{name}' not loaded. Loaded providers: {', '.join(self._providers.keys())}")
         return self._providers[name_lower]
 
     def get_info(self) -> dict[str, Any]:
+        """Return status info for all loaded providers."""
         return {
             "providers": {name: p.get_info() for name, p in self._providers.items()},
             "configured_count": sum(1 for p in self._providers.values() if p.is_configured()),
@@ -70,6 +73,7 @@ class MessagingClient:
 
     @staticmethod
     def list_available_providers() -> list[str]:
+        """List all registered provider names."""
         return MessagingProviderRegistry.list_providers()
 
     def _resolve_provider(self, provider: str | None) -> BaseMessagingProvider:

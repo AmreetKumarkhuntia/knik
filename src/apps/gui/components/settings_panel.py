@@ -9,6 +9,7 @@ class SettingsPanel(ctk.CTkToplevel):
     """Settings window for configuration."""
 
     def __init__(self, master, config, on_save: Callable | None = None, **kwargs):
+        """Initialize the settings window with provider, model, voice, and theme controls."""
         super().__init__(master, **kwargs)
 
         self.config = config

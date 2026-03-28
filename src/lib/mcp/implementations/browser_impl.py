@@ -1,13 +1,4 @@
-"""
-Browser automation tool implementations for MCP.
-Uses Playwright (sync API) to drive a persistent Chromium browser session.
-Supports headful (default) and headless modes with persistent profile storage
-so cookies, logins, and sessions survive across restarts.
-
-All Playwright operations are pinned to a single dedicated thread via a
-ThreadPoolExecutor(max_workers=1) to avoid Playwright's thread-affinity
-errors when called from async frameworks like FastAPI/uvicorn.
-"""
+"""MCP tool implementation for browser automation."""
 
 import atexit
 import base64
@@ -20,16 +11,6 @@ from ...core.config import Config
 from ...utils.printer import printer
 
 
-# ---------------------------------------------------------------------------
-# Dedicated browser thread
-# ---------------------------------------------------------------------------
-# Playwright's sync API binds to the thread that created it.  In an async
-# server (FastAPI/uvicorn) successive tool calls may land on different
-# threads, causing "cannot switch to a different thread" errors.
-#
-# We solve this by running *every* Playwright operation on a single,
-# dedicated background thread via a 1-worker ThreadPoolExecutor.
-
 _browser_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="pw")
 
 
@@ -39,16 +20,8 @@ def _run_on_browser_thread(fn, *args, **kwargs):
     return future.result()
 
 
-# ---------------------------------------------------------------------------
-# Persistent browser session (accessed ONLY from _browser_executor thread)
-# ---------------------------------------------------------------------------
-# We keep one Browser context + Page alive for the lifetime of the process so
-# the AI can navigate, interact, and query across multiple tool calls.
-# A persistent context is used so that cookies / localStorage / sessions are
-# stored to disk and survive process restarts.
-
 _playwright = None
-_context = None  # BrowserContext (persistent)
+_context = None
 _page = None
 
 
@@ -93,7 +66,6 @@ def _ensure_browser():
         headless = cfg.browser_headless
         profile_dir = cfg.browser_profile_dir
 
-        # Ensure the profile directory exists
         os.makedirs(profile_dir, exist_ok=True)
 
         mode = "headless" if headless else "headful"
@@ -116,10 +88,8 @@ def _ensure_browser():
             ],
         )
 
-        # Persistent contexts may already have a blank page open
         _page = _context.pages[0] if _context.pages else _context.new_page()
 
-        # Register cleanup so session data is flushed on exit
         atexit.register(_close_browser)
 
         printer.success(f"Browser ready ({mode}, profile: {profile_dir})")
@@ -157,11 +127,6 @@ def _clean_text(raw: str, max_chars: int, chunk: int = 1) -> str:
         result += f"\n\n[Use chunk={chunk + 1} to continue reading]"
 
     return result
-
-
-# ---------------------------------------------------------------------------
-# Tool implementations
-# ---------------------------------------------------------------------------
 
 
 def browser_navigate(url: str, wait_until: str = "domcontentloaded") -> str:

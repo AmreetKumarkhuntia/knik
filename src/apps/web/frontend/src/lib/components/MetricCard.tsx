@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import type { MetricCardProps } from '$types/components'
 
+/** Animated card displaying a key metric with icon and trend indicator. */
 export default function MetricCard({
   icon,
   label,

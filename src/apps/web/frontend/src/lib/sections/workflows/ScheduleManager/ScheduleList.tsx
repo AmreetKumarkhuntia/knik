@@ -4,6 +4,7 @@ import ScheduleCard from './ScheduleCard'
 import type { ScheduleListProps } from '$types/sections/schedule-manager'
 import { Schedule as ScheduleIcon } from '@mui/icons-material'
 
+/** Grid list of schedule cards with loading and empty states. */
 export default function ScheduleList({
   schedules,
   loading,

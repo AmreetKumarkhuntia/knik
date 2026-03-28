@@ -9,6 +9,7 @@ import Card from '$components/Card'
 import IconButton from '$components/IconButton'
 import type { ExecutionDetailProps } from '$types/sections/execution-history'
 
+/** Safely formats a value as pretty-printed JSON. */
 function formatJson(data: unknown): string {
   try {
     return JSON.stringify(data, null, 2)
@@ -17,6 +18,7 @@ function formatJson(data: unknown): string {
   }
 }
 
+/** Expanded execution detail panel with tabbed overview, node trace, I/O views. */
 export default function ExecutionDetail({ execution, isOpen, onClose }: ExecutionDetailProps) {
   const [nodeExecutions, setNodeExecutions] = useState<NodeExecutionRecord[]>([])
   const [loading, setLoading] = useState(false)

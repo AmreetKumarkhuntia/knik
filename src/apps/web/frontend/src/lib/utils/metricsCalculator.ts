@@ -1,5 +1,6 @@
 import type { DynamicMetric, ExecutionDetailResponse } from '$types/workflow'
 
+/** Builds an array of metric cards for an execution detail view. */
 export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicMetric[] {
   if (!data) return []
 
@@ -73,6 +74,7 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
   return metrics
 }
 
+/** Formats a millisecond duration into a compact human-readable string. */
 export function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`
   if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
@@ -86,6 +88,7 @@ export function formatDuration(ms: number): string {
   return `${hours}h ${minutes}m`
 }
 
+/** Formats a byte count into a human-readable size string. */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`

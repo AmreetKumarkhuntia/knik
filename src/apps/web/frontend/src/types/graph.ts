@@ -11,8 +11,10 @@ import type {
 } from '@xyflow/react'
 import type { ExecutionStatus } from './workflow'
 
+/** Interaction mode for the flow canvas. */
 export type FlowMode = 'edit' | 'execution'
 
+/** Base data shape for any workflow node on the canvas. */
 export interface BaseNodeData extends Record<string, unknown> {
   label?: string
   mode?: FlowMode
@@ -27,11 +29,13 @@ export interface BaseNodeData extends Record<string, unknown> {
   temperature?: number
 }
 
+/** Data attached to a flow edge. */
 export interface FlowEdgeData {
   mode?: FlowMode
   status?: ExecutionStatus
 }
 
+/** Props for the ReactFlow canvas wrapper. */
 export interface FlowCanvasProps {
   nodes: Node[]
   edges: Edge[]

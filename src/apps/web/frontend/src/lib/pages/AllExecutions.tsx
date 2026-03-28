@@ -7,6 +7,7 @@ import LoadingSpinner from '$lib/components/LoadingSpinner'
 import type { DashboardExecution } from '$types/workflow'
 import { workflowApi } from '$services/workflowApi'
 
+/** Paginated list of all executions with workflow and status filters. */
 export default function AllExecutions() {
   const navigate = useNavigate()
 

@@ -10,6 +10,7 @@ import { workflowApi } from '$services/workflowApi'
 import WorkflowsTable from './WorkflowsTable'
 import HistoryTable from './ExecutionHistory/HistoryTable'
 
+/** Dashboard hub showing workflow metrics, table, and recent executions. */
 export default function WorkflowHub() {
   const navigate = useNavigate()
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null)

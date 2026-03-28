@@ -17,6 +17,7 @@ import type { Conversation } from '$types/api'
 import { ConversationAPI } from '$services/api'
 import { UI_TEXT, NAV_ITEMS, EMPTY_STATE_DEFAULTS } from '$lib/constants'
 
+/** Collapsible sidebar with navigation, conversations, and theme settings. */
 export default function Sidebar({ onClearHistory, onNewChat, onSelectConversation }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -53,7 +54,6 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
 
   const handleSelectConversation = (id: string) => {
     onSelectConversation(id)
-    // Navigate to home page if not already there
     if (location.pathname !== '/') {
       void navigate('/')
     }

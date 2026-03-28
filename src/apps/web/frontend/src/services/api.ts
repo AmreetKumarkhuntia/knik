@@ -2,6 +2,7 @@ import type { ChatResponse, Conversation, ConversationListResponse } from '../ty
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
+/** Handles chat streaming, history retrieval, and history clearing. */
 class ChatAPI {
   static async stream(
     message: string,
@@ -83,6 +84,7 @@ class ChatAPI {
   }
 }
 
+/** CRUD operations for conversations. */
 class ConversationAPI {
   static async list(limit = 20, offset = 0): Promise<ConversationListResponse> {
     const response = await fetch(`${API_BASE_URL}/conversations?limit=${limit}&offset=${offset}`)
@@ -130,6 +132,7 @@ class ConversationAPI {
   }
 }
 
+/** Admin-related API calls. */
 class AdminAPI {
   static async getSettings() {
     const response = await fetch(`${API_BASE_URL}/admin/settings`)
@@ -140,12 +143,14 @@ class AdminAPI {
 
 export { ConversationAPI }
 
+/** Unified client exposing all API namespaces. */
 export class ApiClient {
   static chat = ChatAPI
   static conversations = ConversationAPI
   static admin = AdminAPI
 }
 
+/** Convenience object with commonly used API methods. */
 export const api = {
   chat: ApiClient.chat.stream,
   getHistory: ApiClient.chat.getHistory,

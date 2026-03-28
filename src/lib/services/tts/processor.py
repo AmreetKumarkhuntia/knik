@@ -44,13 +44,14 @@ class TTSAsyncProcessor:
         self.audio_processing_queue = deque()
         self.save_dir: Path | None = Path(save_dir) if save_dir else None
         self.is_async_playback_active = False
-        self.is_generating = False  # Track if TTS generation is in progress
+        self.is_generating = False
         self.sleep_duration = sleep_duration
         self.audio_ready_callback = audio_ready_callback
         if self.save_dir is not None:
             self.save_dir.mkdir(parents=True, exist_ok=True)
 
     def play_async(self, text: str) -> None:
+        """Add text to the TTS processing queue."""
         if not text:
             return
 
@@ -58,6 +59,7 @@ class TTSAsyncProcessor:
         printer.info("Text added to queue")
 
     def start_async_processing(self) -> None:
+        """Launch text and audio processing threads."""
         printer.info("Starting async TTS processing...")
         self.should_process = True
         self.tts_processor.load()
@@ -66,6 +68,7 @@ class TTSAsyncProcessor:
         printer.success("Async TTS processors started")
 
     def set_save_dir(self, save_dir: str | None) -> None:
+        """Set or clear the directory for saving audio segments."""
         if not save_dir:
             self.save_dir = None
             return
@@ -74,22 +77,27 @@ class TTSAsyncProcessor:
         self.save_dir = path
 
     def set_voice(self, voice: str) -> None:
+        """Change the TTS voice."""
         if self.audio_processor:
             self.audio_processor.set_voice(voice)
             printer.info(f"Voice changed to: {voice}")
 
     def set_language(self, language: str) -> None:
+        """Change the TTS language."""
         if self.audio_processor and language != self.language:
             self.language = language
             self.audio_processor.set_language(language)
 
     def is_audio_queue_empty(self) -> bool:
+        """Check if the audio processing queue is empty."""
         return len(self.audio_processing_queue) == 0
 
     def is_text_queue_empty(self) -> bool:
+        """Check if the text processing queue is empty."""
         return len(self.text_processing_queue) == 0
 
     def is_processing_complete(self) -> bool:
+        """Check if all queues are empty and nothing is playing."""
         queues_empty = self.is_text_queue_empty() and self.is_audio_queue_empty()
         not_playing = not self.is_async_playback_active
         not_generating = not self.is_generating
@@ -103,6 +111,7 @@ class TTSAsyncProcessor:
         self.audio_ready_callback = callback
 
     def __text_processor__(self) -> None:
+        """Background thread that converts text to audio via the TTS model."""
         printer.info("Text processor started")
         while self.should_process:
             if len(self.text_processing_queue) > 0:
@@ -120,6 +129,7 @@ class TTSAsyncProcessor:
         printer.info("Text processor stopped")
 
     def __audio_processor__(self) -> None:
+        """Background thread that plays or saves generated audio segments."""
         printer.info("Audio processor started")
         while self.should_process:
             if not self.audio_processor.is_playing():
@@ -127,7 +137,6 @@ class TTSAsyncProcessor:
                     self.is_async_playback_active = True
                     audio, sample_rate = self.audio_processing_queue.popleft()
 
-                    # Call callback if set (for streaming to frontend)
                     if self.audio_ready_callback:
                         try:
                             self.audio_ready_callback(audio, sample_rate)

@@ -1,3 +1,5 @@
+"""MCP tool definitions for cron/schedule operations."""
+
 CRON_DEFINITIONS = [
     {
         "name": "list_cron_schedules",

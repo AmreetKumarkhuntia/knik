@@ -1,3 +1,5 @@
+"""Workflow node implementations for the execution engine."""
+
 import asyncio
 import json
 from abc import ABC, abstractmethod
@@ -29,9 +31,11 @@ class BaseNode(ABC):
         pass
 
     def validate(self) -> bool:
+        """Check whether the node configuration is valid."""
         return True
 
     def get_info(self) -> dict[str, Any]:
+        """Return a summary dict for this node."""
         return {
             "node_id": self.node_id,
             "type": self.__class__.__name__,
@@ -91,6 +95,7 @@ class FunctionExecutionNode(BaseNode):
         )
 
     def _resolve_params(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Resolve parameter templates from upstream node outputs."""
         resolved = {}
         for k, v in self.params.items():
             if isinstance(v, str) and v.startswith("{") and v.endswith("}"):
@@ -115,6 +120,7 @@ class ConditionalBranchNode(BaseNode):
         self.condition = condition
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate the condition and return the boolean result."""
         logger.info(f"[{self.node_id}] Evaluating condition: {self.condition}")
 
         resolved_condition = self.condition
@@ -140,6 +146,7 @@ class FlowMergeNode(BaseNode):
         self.merge_strategy = merge_strategy
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Merge outputs from multiple incoming parallel nodes."""
         logger.info(f"[{self.node_id}] Merging inputs with strategy {self.merge_strategy}")
 
         if self.merge_strategy == "concat":
@@ -174,6 +181,7 @@ class AIExecutionNode(BaseNode):
         self.use_tools = use_tools
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Run the configured AI model and return its response."""
         logger.info(f"[{self.node_id}] Executing AI Node with prompt: {self.prompt}")
         resolved_prompt = self._resolve_prompt(inputs, self.prompt)
 

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { confirmDialogVariants } from '$lib/constants'
 import type { ConfirmDialogProps } from '$types/components'
 
+/** Modal confirmation dialog with customizable variants. */
 export default function ConfirmDialog({
   isOpen,
   title,

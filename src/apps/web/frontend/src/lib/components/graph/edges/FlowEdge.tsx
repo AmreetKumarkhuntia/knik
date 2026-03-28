@@ -5,6 +5,7 @@ import { EDGE_STATUS_COLORS } from '$lib/constants/themes'
 
 export type { FlowEdgeData }
 
+/** Memoized smooth-step edge with status-based coloring and edit-mode animation. */
 export default memo(function FlowEdge({
   id,
   sourceX,

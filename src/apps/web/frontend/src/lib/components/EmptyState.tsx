@@ -1,6 +1,7 @@
 import type { EmptyStateProps } from '$types/components'
 import { EMPTY_STATE_DEFAULTS } from '$lib/constants'
 
+/** Placeholder component shown when no data is available. */
 export default function EmptyState({
   icon = EMPTY_STATE_DEFAULTS.icon,
   title,

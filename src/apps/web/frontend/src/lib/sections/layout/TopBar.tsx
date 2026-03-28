@@ -1,5 +1,6 @@
 import type { TopBarProps } from '$types/sections/layout'
 
+/** Top bar displaying the app title and a processing indicator. */
 export default function TopBar({ isLoading }: TopBarProps) {
   return (
     <div className="bg-surface/50 backdrop-blur-lg rounded-3xl p-5 shadow-2xl border border-border">

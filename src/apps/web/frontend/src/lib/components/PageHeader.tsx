@@ -1,5 +1,6 @@
 import type { PageHeaderProps } from '$types/components'
 
+/** Page header bar with breadcrumbs and optional right-side content. */
 export default function PageHeader({
   breadcrumbs,
   rightContent,

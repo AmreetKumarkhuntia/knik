@@ -6,8 +6,10 @@ import type { ReactNode } from 'react'
 import { DEFAULT_MODE, DEFAULT_THEME, themePresets, lightThemePresets } from '$lib/constants/themes'
 import type { Theme, ThemeMode, ThemeName, ThemeContextType } from '$types/theme'
 
+/** React context providing the current theme mode, accent, and setter functions. */
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
+/** Provider component that manages theme mode and accent with localStorage persistence. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>(() => {
     try {
@@ -87,6 +89,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   )
 }
 
+/** Hook to access the current theme context values. */
 export function useTheme() {
   const context = useContext(ThemeContext)
   if (!context) {

@@ -10,6 +10,7 @@ import type { Message } from '$types/sections/chat'
 import type { AudioSlice } from './audioSlice'
 import type { ToastSlice } from './toastSlice'
 
+/** Zustand slice for chat messages, input, and conversation management. */
 export interface ChatSlice {
   messages: Message[]
   inputText: string
@@ -26,6 +27,7 @@ export interface ChatSlice {
   handleSend: () => Promise<void>
 }
 
+/** Creates the chat slice with message handling, streaming, and conversation loading. */
 export const createChatSlice: StateCreator<
   ChatSlice & AudioSlice & ToastSlice,
   [],
@@ -102,8 +104,6 @@ export const createChatSlice: StateCreator<
       clearAudioQueue()
       setAudioPlaying(true)
 
-      let audioChunkCount = 0
-
       const controller = await streamChat(
         messageCopy,
         {
@@ -123,12 +123,9 @@ export const createChatSlice: StateCreator<
             })
           },
           onAudio: (audioBase64: string) => {
-            audioChunkCount++
-            console.log(`[chatSlice] Queueing audio chunk ${audioChunkCount}`)
             queueAudio(audioBase64, 24000)
           },
-          onComplete: (count: number) => {
-            console.log(`[chatSlice] Stream complete: ${count} audio chunks`)
+          onComplete: (_count: number) => {
             set({ loading: false })
             get().success('Response received!')
           },

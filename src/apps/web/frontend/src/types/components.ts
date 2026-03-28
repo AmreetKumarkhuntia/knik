@@ -2,8 +2,10 @@ import type { ReactNode } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { ExecutionStatus, NodeExecutionStep, ExecutionDetail } from '$types/workflow'
 
+/** Supported toast notification types. */
 export type ToastType = 'success' | 'error' | 'info'
 
+/** Props for a toast notification. */
 export interface ToastProps {
   message: string
   type: ToastType
@@ -11,8 +13,10 @@ export interface ToastProps {
   duration?: number
 }
 
+/** Available sizes for a modal dialog. */
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
 
+/** Props for a modal dialog. */
 export interface ModalProps {
   isOpen: boolean
   onClose: () => void
@@ -23,6 +27,7 @@ export interface ModalProps {
   animationEnabled?: boolean
 }
 
+/** Props for a confirmation dialog. */
 export interface ConfirmDialogProps {
   isOpen: boolean
   title: string
@@ -35,6 +40,7 @@ export interface ConfirmDialogProps {
   loading?: boolean
 }
 
+/** Props for a generic action button. */
 export interface ActionButtonProps {
   icon?: ReactNode
   label?: string
@@ -47,6 +53,7 @@ export interface ActionButtonProps {
   title?: string
 }
 
+/** Props for a backdrop overlay. */
 export interface BackdropProps {
   visible: boolean
   onClick: () => void
@@ -55,6 +62,7 @@ export interface BackdropProps {
   className?: string
 }
 
+/** Props for a card container. */
 export interface CardProps {
   children: ReactNode
   variant?: 'default' | 'bordered' | 'elevated'
@@ -62,6 +70,7 @@ export interface CardProps {
   className?: string
 }
 
+/** Props for an empty state placeholder. */
 export interface EmptyStateProps {
   icon?: string | ReactNode
   title: string
@@ -70,6 +79,7 @@ export interface EmptyStateProps {
   className?: string
 }
 
+/** Props for a generic form field. */
 export interface FormFieldProps {
   label?: string
   type?: 'text' | 'select' | 'number'
@@ -83,6 +93,7 @@ export interface FormFieldProps {
   className?: string
 }
 
+/** Props for an icon-only button. */
 export interface IconButtonProps {
   icon: ReactNode
   onClick: () => void
@@ -93,12 +104,14 @@ export interface IconButtonProps {
   className?: string
 }
 
+/** Props for a text input field. */
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   error?: string
   fullWidth?: boolean
   id?: string
 }
 
+/** Props for a link-styled button. */
 export interface LinkButtonProps {
   icon?: string
   label: string
@@ -107,29 +120,34 @@ export interface LinkButtonProps {
   className?: string
 }
 
+/** Props for a loading spinner. */
 export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'
   className?: string
   text?: string
 }
 
+/** Props for a markdown message renderer. */
 export interface MarkdownMessageProps {
   content: string
   isStreaming?: boolean
 }
 
+/** Props for a status badge. */
 export interface StatusBadgeProps {
   status: ExecutionStatus
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
+/** Column definition for a data table. */
 export interface TableColumn<T> {
   key: keyof T | string
   label: string
   render?: (value: unknown, row: T) => ReactNode
 }
 
+/** Props for a generic data table. */
 export interface TableProps<T = Record<string, unknown>> {
   columns: TableColumn<T>[]
   data: T[]
@@ -142,12 +160,14 @@ export interface TableProps<T = Record<string, unknown>> {
   glassContainer?: boolean
 }
 
+/** A single tab item. */
 export interface Tab<T extends string> {
   id: T
   label: string
   icon?: string
 }
 
+/** Props for a tab switcher component. */
 export interface TabsProps<T extends string> {
   tabs: Tab<T>[]
   active: T
@@ -156,6 +176,7 @@ export interface TabsProps<T extends string> {
   className?: string
 }
 
+/** Props for a toggle switch. */
 export interface ToggleSwitchProps {
   checked: boolean
   onChange: (checked: boolean) => void
@@ -164,17 +185,20 @@ export interface ToggleSwitchProps {
   className?: string
 }
 
+/** Props for a hamburger menu button. */
 export interface HamburgerButtonProps {
   onClick: () => void
   className?: string
 }
 
+/** A trend indicator with direction and value. */
 export interface Trend {
   direction: 'up' | 'down' | 'neutral'
   value: string
   icon?: string
 }
 
+/** Props for a metric card. */
 export interface MetricCardProps {
   icon: string
   label: string
@@ -185,16 +209,19 @@ export interface MetricCardProps {
   loading?: boolean
 }
 
+/** A single breadcrumb navigation item. */
 export interface BreadcrumbItem {
   label: string
   path?: string
 }
 
+/** Props for a breadcrumb navigation component. */
 export interface BreadcrumbProps {
   items: BreadcrumbItem[]
   className?: string
 }
 
+/** Props for a navigation link. */
 export interface NavLinkProps {
   icon: string
   label: string
@@ -203,15 +230,18 @@ export interface NavLinkProps {
   onClick?: () => void
 }
 
+/** Props for a notification bell button. */
 export interface NotificationButtonProps {
   badgeCount?: number
   onClick?: () => void
 }
 
+/** Props for a search bar input. */
 export interface SearchBarProps {
   placeholder?: string
 }
 
+/** Props for a section header with optional action. */
 export interface SectionHeaderProps {
   title: string
   actionText?: string
@@ -220,6 +250,7 @@ export interface SectionHeaderProps {
   className?: string
 }
 
+/** Props for a user profile display. */
 export interface UserProfileProps {
   avatar?: string
   avatarColor?: string
@@ -230,6 +261,7 @@ export interface UserProfileProps {
   badgeType?: 'pro' | 'basic' | 'admin'
 }
 
+/** Props for a pagination control. */
 export interface PaginationProps {
   currentPage: number
   totalPages: number
@@ -237,22 +269,26 @@ export interface PaginationProps {
   disabled?: boolean
 }
 
+/** Props for an execution timeline visualization. */
 export interface ExecutionTimelineProps {
   timeline: NodeExecutionStep[] | undefined
   loading?: boolean
 }
 
+/** Props for an execution flow graph visualization. */
 export interface ExecutionFlowGraphProps {
   execution: ExecutionDetail
   timeline: NodeExecutionStep[]
 }
 
+/** Props for a structured input/output viewer. */
 export interface StructuredOutputProps {
   inputs: Record<string, unknown> | undefined
   outputs: Record<string, unknown> | undefined
   loading: boolean
 }
 
+/** Props for a page header with breadcrumbs. */
 export interface PageHeaderProps {
   breadcrumbs: string[]
   rightContent?: ReactNode
@@ -261,7 +297,7 @@ export interface PageHeaderProps {
   sticky?: boolean
 }
 
-// Markdown code component type for react-markdown compatibility
+/** Props for a markdown code block renderer. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CodeProps = any & {
   _node: unknown
@@ -270,6 +306,7 @@ export type CodeProps = any & {
   children: unknown
 }
 
+/** Internal state for a toast notification. */
 export interface ToastState {
   id: number
   message: string

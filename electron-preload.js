@@ -1,3 +1,5 @@
+/** @file Electron preload script exposing IPC bridge to the renderer process. */
+
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {

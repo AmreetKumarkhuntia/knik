@@ -16,6 +16,8 @@ scheduler = Scheduler()
 
 
 class WorkflowExecuteRequest(BaseModel):
+    """Request body for executing a workflow."""
+
     inputs: dict[str, Any] | None = None
 
 
@@ -69,8 +71,6 @@ async def delete_workflow(workflow_id: str):
 async def execute_workflow(workflow_id: str, request: WorkflowExecuteRequest):
     """Execute a workflow manually."""
     try:
-        # Note: If the workflow uses AI nodes, the scheduler needs an ai_client
-        # which should ideally be passed in or initialized by the app state.
         result = await scheduler.execute_workflow(workflow_id, request.inputs)
         return {"success": True, "result": result}
     except ValueError as e:

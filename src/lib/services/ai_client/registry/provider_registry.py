@@ -14,16 +14,20 @@ class ProviderRegistry:
 
     @classmethod
     def register(cls, name: str, provider_class: type["BaseAIProvider"]) -> None:
+        """Register a provider class by name."""
         cls._providers[name.lower()] = provider_class
 
     @classmethod
     def get(cls, name: str) -> type["BaseAIProvider"] | None:
+        """Look up a registered provider by name."""
         return cls._providers.get(name.lower())
 
     @classmethod
     def list_providers(cls) -> list[str]:
+        """Return all registered provider names."""
         return list(cls._providers.keys())
 
     @classmethod
     def is_registered(cls, name: str) -> bool:
+        """Check whether a provider is registered."""
         return name.lower() in cls._providers

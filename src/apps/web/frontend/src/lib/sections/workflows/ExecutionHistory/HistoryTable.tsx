@@ -7,6 +7,7 @@ import type { DashboardExecution, ExecutionStatus } from '$types/workflow'
 import type { HistoryTableProps } from '$types/sections/execution-history'
 import { History } from '@mui/icons-material'
 
+/** Table of execution history records with status, duration, and actions. */
 export default function HistoryTable({
   executions,
   loading,

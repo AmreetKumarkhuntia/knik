@@ -1,6 +1,7 @@
 import { MenuIcon } from './index'
 import type { HamburgerButtonProps } from '$types/components'
 
+/** Fixed-position hamburger button for toggling the sidebar. */
 export default function HamburgerButton({ onClick }: HamburgerButtonProps) {
   return (
     <button

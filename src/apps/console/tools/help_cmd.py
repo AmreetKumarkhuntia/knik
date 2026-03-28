@@ -1,4 +1,8 @@
+"""Console command for displaying help information."""
+
+
 def help_command(app, args: str) -> str:
+    """Show available console commands and usage instructions."""
     help_text = f"""
 Available Commands:
   {app.config.command_prefix}help             - Show this help message

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { AttachFile, Mic, Send as SendIcon } from '@mui/icons-material'
 import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
+/** Chat input bar with send, attach, and voice action buttons. */
 const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
   ({ value, onChange, onSend, disabled }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null)

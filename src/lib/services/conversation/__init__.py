@@ -1,3 +1,5 @@
+"""Conversation service exports."""
+
 from .db_client import ConversationDB
 from .models import Conversation, ConversationMessage
 from .summarizer import ConversationSummarizer

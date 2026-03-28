@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { AutoAwesome } from '@mui/icons-material'
 import { UI_TEXT, ANIMATION, SIZES } from '$lib/constants'
 
+/** Animated welcome heading with app logo and description. */
 export default function WelcomePrompt() {
   return (
     <div className="text-center mb-12">

@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { AccountTree, Schedule, Settings } from '@mui/icons-material'
 import type { NavLinkProps } from '$types/components'
 
+/** Navigation link with icon, label, and active state styling. */
 export function NavLink({ icon, label, active = false, href, onClick }: NavLinkProps) {
   const iconMap: Record<string, ComponentType> = {
     account_tree: AccountTree,

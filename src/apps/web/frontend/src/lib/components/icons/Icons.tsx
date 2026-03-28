@@ -1,5 +1,6 @@
 import type { IconProps } from '$types/common'
 
+/** Hamburger menu icon. */
 export function MenuIcon({ className = 'w-6 h-6' }: IconProps) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,6 +14,7 @@ export function MenuIcon({ className = 'w-6 h-6' }: IconProps) {
   )
 }
 
+/** Play triangle icon. */
 export function PlayIcon({ className = 'w-4 h-4' }: IconProps) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20">
@@ -21,6 +23,7 @@ export function PlayIcon({ className = 'w-4 h-4' }: IconProps) {
   )
 }
 
+/** Pause bars icon. */
 export function PauseIcon({ className = 'w-4 h-4' }: IconProps) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20">
@@ -29,6 +32,7 @@ export function PauseIcon({ className = 'w-4 h-4' }: IconProps) {
   )
 }
 
+/** Stop square icon. */
 export function StopIcon({ className = 'w-4 h-4' }: IconProps) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20">
@@ -37,6 +41,7 @@ export function StopIcon({ className = 'w-4 h-4' }: IconProps) {
   )
 }
 
+/** Close (X) icon. */
 export function CloseIcon({ className = 'w-5 h-5' }: IconProps) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,6 +50,7 @@ export function CloseIcon({ className = 'w-5 h-5' }: IconProps) {
   )
 }
 
+/** Trash/delete icon. */
 export function TrashIcon({ className = 'w-5 h-5' }: IconProps) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,6 +64,7 @@ export function TrashIcon({ className = 'w-5 h-5' }: IconProps) {
   )
 }
 
+/** Settings gear icon. */
 export function SettingsIcon({ className = 'w-5 h-5' }: IconProps) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">

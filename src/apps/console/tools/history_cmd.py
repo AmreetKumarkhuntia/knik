@@ -1,4 +1,8 @@
+"""Console command for viewing conversation history."""
+
+
 def history_command(app, args: str) -> str:
+    """Display the full conversation history with timestamps."""
     entries = app.history.get_all_entries()
     if not entries:
         return "No conversation history yet."

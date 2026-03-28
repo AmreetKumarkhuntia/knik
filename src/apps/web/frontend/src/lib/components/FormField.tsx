@@ -1,6 +1,7 @@
 import type { FormFieldProps } from '$types/components'
 import { FORM_FIELD_DEFAULTS, UI_TEXT, CSS_CLASSES } from '$lib/constants'
 
+/** Form input field supporting text, select, and other input types. */
 export default function FormField({
   label,
   type = FORM_FIELD_DEFAULTS.type,

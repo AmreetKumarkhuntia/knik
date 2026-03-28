@@ -33,6 +33,8 @@ except ImportError:
 
 
 class ZhipuAIProvider(LangChainProvider):
+    """ZhipuAI GLM provider via LangChain."""
+
     @classmethod
     def get_provider_name(cls) -> str:
         return "zhipuai"

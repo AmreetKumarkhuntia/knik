@@ -1,3 +1,5 @@
+"""MCP tool definitions for utility operations."""
+
 UTILS_DEFINITIONS = [
     {
         "name": "calculate",

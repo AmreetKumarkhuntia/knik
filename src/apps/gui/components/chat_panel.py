@@ -10,6 +10,7 @@ class ChatPanel(ctk.CTkScrollableFrame):
     """Scrollable chat panel showing conversation history."""
 
     def __init__(self, master, **kwargs):
+        """Initialize the scrollable chat panel with animation support."""
         super().__init__(master, **kwargs)
 
         self.messages = []
@@ -117,13 +118,12 @@ class ChatPanel(ctk.CTkScrollableFrame):
         self._scroll_to_bottom()
 
     def _animate_slide_in(self, widget, direction: str, duration: int = 350):
-        # TODO: Grid-based animation with negative padding causes errors in CustomTkinter.
-        # Could use place() geometry or canvas-based rendering instead.
+        """Placeholder for slide-in animation."""
         pass
 
     def _animate_fade_in(self, widget, duration: int = 200):
-        # Note: CustomTkinter doesn't support widget-level opacity;
-        # this is a timing placeholder for animation consistency.
+        """Placeholder for fade-in animation (CustomTkinter has no widget-level opacity)."""
+
         def update(progress: float):
             pass
 

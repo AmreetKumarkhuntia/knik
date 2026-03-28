@@ -22,6 +22,7 @@ class TelegramProvider(BaseMessagingProvider):
         return "telegram"
 
     def __init__(self, bot_token: str | None = None, **kwargs):
+        """Initialize TelegramProvider with bot token from args or config."""
         config = Config()
         self._token = bot_token or config.telegram_bot_token
         self._bot: Bot | None = None
@@ -91,6 +92,7 @@ class TelegramProvider(BaseMessagingProvider):
         }
 
     async def _handle_message(self, update: Update, context) -> None:
+        """Process an incoming Telegram update and forward to callback."""
         if update.message is None or update.message.text is None:
             return
 
@@ -108,6 +110,7 @@ class TelegramProvider(BaseMessagingProvider):
 
 
 def _split_text(text: str, max_len: int = 4096) -> list[str]:
+    """Split text into chunks at newline boundaries for Telegram's limit."""
     if len(text) <= max_len:
         return [text]
 

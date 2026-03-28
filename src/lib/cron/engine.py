@@ -1,3 +1,5 @@
+"""Workflow execution engine with DAG-based parallel processing."""
+
 import asyncio
 import copy
 import time
@@ -265,6 +267,7 @@ class WorkflowEngine:
         return nodes, adj_list, reverse_adj, in_degree
 
     def _instantiate_node(self, node_id: str, data: dict[str, Any]) -> BaseNode:
+        """Create the appropriate node instance from definition data."""
         node_type = data.get("type")
 
         if node_type not in VALID_NODE_TYPES:

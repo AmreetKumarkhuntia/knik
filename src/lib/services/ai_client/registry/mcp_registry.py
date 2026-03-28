@@ -45,6 +45,7 @@ class MCPServerRegistry:
         self._implementations: dict[str, Callable] = {}
 
     def register_tool(self, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None:
+        """Register a tool schema and optional implementation."""
         self._tools.append(tool_dict)
         if implementation:
             tool_name = tool_dict.get("name")
@@ -52,18 +53,22 @@ class MCPServerRegistry:
                 self._implementations[tool_name] = implementation
 
     def get_tools(self) -> list[dict[str, Any]]:
+        """Return all registered tool schemas."""
         return self._tools
 
     def get_implementation(self, tool_name: str) -> Callable | None:
+        """Look up the implementation function for a tool."""
         return self._implementations.get(tool_name)
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
+        """Execute a registered tool by name with the given arguments."""
         impl = self.get_implementation(tool_name)
         if impl is None:
             raise ValueError(f"No implementation found for tool: {tool_name}")
         return impl(**kwargs)
 
     def clear_tools(self) -> None:
+        """Remove all registered tools and implementations."""
         self._tools = []
         self._implementations = {}
 

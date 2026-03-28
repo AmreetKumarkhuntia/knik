@@ -144,7 +144,6 @@ class AIClient:
                 **kwargs,
             )
 
-            # Handle both ChatResult and plain str returns
             if isinstance(result, ChatResult):
                 self.last_usage = result.usage
                 return result.content
@@ -435,7 +434,6 @@ class AIClient:
         if existing:
             return conversation_id
 
-        # Conversation not found — create a new one
         return await db.create_conversation()
 
     @classmethod
@@ -565,15 +563,18 @@ class AIClient:
         return all_models
 
     def is_configured(self) -> bool:
+        """Check whether the underlying provider is configured."""
         return self._provider.is_configured()
 
     def get_info(self) -> dict[str, Any]:
+        """Return provider and client info."""
         info = self._provider.get_info()
         info["client_provider"] = self.provider_name
         info["auto_fallback"] = self.auto_fallback_to_mock
         return info
 
     def get_provider_name(self) -> str:
+        """Return the name of the current provider."""
         return self.provider_name
 
     def get_model_name(self) -> str:
@@ -597,6 +598,7 @@ class AIClient:
             self._mcp_registry.register_tool(tool_dict, implementation)
 
     def get_registered_tools(self) -> list[dict[str, Any]]:
+        """Return all tools registered in the MCP registry."""
         if self._mcp_registry:
             return self._mcp_registry.get_tools()
         return []

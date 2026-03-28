@@ -8,6 +8,7 @@ import { useKeyboardShortcuts } from '$hooks/index'
 import { useStore } from '$store/index'
 import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS, LAYOUT } from '$lib/constants'
 
+/** Home page with chat, audio controls, and welcome state. */
 export default function Home({ inputRef }: HomeProps) {
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)

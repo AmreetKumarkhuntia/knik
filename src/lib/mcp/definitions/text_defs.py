@@ -1,3 +1,5 @@
+"""MCP tool definitions for text operations."""
+
 TEXT_DEFINITIONS = [
     {
         "name": "word_count",

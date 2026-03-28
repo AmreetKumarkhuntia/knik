@@ -1,5 +1,6 @@
 import type { PaginationProps } from '$types/components'
 
+/** Page navigation controls with ellipsis for large page ranges. */
 export default function Pagination({
   currentPage,
   totalPages,

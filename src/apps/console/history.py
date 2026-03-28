@@ -18,6 +18,7 @@ class ConversationHistory:
     """Manages conversation history with support for both text and LangChain message formats."""
 
     def __init__(self, max_size: int = 50):
+        """Initialize history with a maximum number of entries."""
         self.max_size = max_size
         self.entries: list[dict[str, Any]] = []
 
@@ -58,7 +59,9 @@ class ConversationHistory:
         return messages
 
     def get_all_entries(self) -> list[dict[str, Any]]:
+        """Return a shallow copy of all history entries."""
         return self.entries.copy()
 
     def clear(self):
+        """Remove all history entries."""
         self.entries.clear()

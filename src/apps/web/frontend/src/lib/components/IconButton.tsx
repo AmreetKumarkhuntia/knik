@@ -13,6 +13,7 @@ const sizes = {
   lg: 'w-11 h-11',
 }
 
+/** Circular button displaying only an icon with variant styles. */
 export default function IconButton({
   icon,
   onClick,

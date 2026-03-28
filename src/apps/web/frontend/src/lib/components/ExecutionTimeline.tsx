@@ -1,6 +1,7 @@
 import type { ExecutionTimelineProps } from '$types/components'
 import { getNodeIcon } from '$lib/constants/nodes'
 
+/** Vertical timeline displaying execution step details. */
 export default function ExecutionTimeline({ timeline, loading = false }: ExecutionTimelineProps) {
   if (loading) {
     return (

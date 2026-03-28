@@ -1,4 +1,8 @@
+"""Console command for displaying system information."""
+
+
 def info_command(app, args: str) -> str:
+    """Display current AI, voice, and history configuration."""
     ai_info = app.ai_client.get_info()
     voice_status = "Enabled" if app.config.enable_voice_output else "Disabled"
 

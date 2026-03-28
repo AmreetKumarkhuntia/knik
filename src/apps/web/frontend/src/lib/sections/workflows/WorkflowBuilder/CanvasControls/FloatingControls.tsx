@@ -9,6 +9,7 @@ interface FloatingControlsProps {
 let nodeIdCounter = 0
 const generateNodeId = () => `node_${++nodeIdCounter}_${Date.now()}`
 
+/** Floating toolbar with node-type picker and zoom controls. */
 export default memo(function FloatingControls({ onAddNode }: FloatingControlsProps) {
   const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow()
   const [popoverOpen, setPopoverOpen] = useState(false)

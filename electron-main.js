@@ -1,3 +1,5 @@
+/** @file Electron main process entry point for window management and IPC. */
+
 import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -8,6 +10,9 @@ const __dirname = dirname(__filename);
 
 let mainWindow = null;
 
+/**
+ * Creates and configures the main application window.
+ */
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -30,7 +35,6 @@ function createWindow() {
 
   mainWindow.loadURL(startUrl);
 
-  // Show window when ready to prevent flashing
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
@@ -47,7 +51,6 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // macOS: Re-create window when dock icon is clicked
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -56,7 +59,6 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  // macOS: Keep app running until explicit quit
   if (process.platform !== "darwin") {
     app.quit();
   }
@@ -67,6 +69,5 @@ ipcMain.handle("get-app-version", () => {
 });
 
 ipcMain.handle("show-notification", (event, { title, body }) => {
-  // TODO: Implement desktop notifications
   console.log("Notification:", title, body);
 });

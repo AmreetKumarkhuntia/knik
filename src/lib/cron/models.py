@@ -1,3 +1,5 @@
+"""Data models for workflows, schedules, and execution records."""
+
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -19,6 +21,7 @@ class Workflow:
     last_executed_at: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the workflow to a JSON-friendly dict."""
         data = asdict(self)
         if self.created_at:
             data["created_at"] = self.created_at.isoformat()
@@ -28,6 +31,7 @@ class Workflow:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Workflow":
+        """Construct a Workflow from a database row dict."""
         definition = row.get("definition")
         if isinstance(definition, str):
             definition = json.loads(definition)
@@ -60,6 +64,7 @@ class Schedule:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Schedule":
+        """Construct a Schedule from a database row dict."""
         return cls(
             id=row["id"],
             target_workflow_id=row["target_workflow_id"],
@@ -90,6 +95,7 @@ class ExecutionRecord:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "ExecutionRecord":
+        """Construct an ExecutionRecord from a database row dict."""
         return cls(
             id=row["id"],
             workflow_id=row["workflow_id"],
@@ -121,6 +127,7 @@ class NodeExecutionRecord:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "NodeExecutionRecord":
+        """Construct a NodeExecutionRecord from a database row dict."""
         return cls(
             id=row["id"],
             execution_id=row["execution_id"],

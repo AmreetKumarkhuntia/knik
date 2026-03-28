@@ -1,6 +1,7 @@
 import { buttonVariants, sizeVariants } from '$lib/constants'
 import type { ActionButtonProps } from '$types/components'
 
+/** Action button with variant and size support. */
 export default function ActionButton({
   icon,
   label,

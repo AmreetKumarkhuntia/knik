@@ -32,10 +32,8 @@ def run_shell_command(command: str, timeout: int = 10) -> str:
 
     printer.info(f'Executing shell command: "{command}" with timeout {timeout}s')
 
-    # Use the common async implementation
     result = run_async(_async_run_shell_command(command, timeout=timeout, blocked_commands=BLOCKED_COMMANDS))
 
-    # Convert dict result to MCP-friendly string format
     if "error" in result:
         return f"Error: {result['error']}"
 

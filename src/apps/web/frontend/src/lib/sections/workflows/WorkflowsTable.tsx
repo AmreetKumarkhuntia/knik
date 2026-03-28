@@ -7,6 +7,7 @@ import { AccountTree } from '@mui/icons-material'
 import type { DashboardWorkflow } from '$types/workflow'
 import type { WorkflowsTableProps } from '$types/workflow-components'
 
+/** Table listing workflows with status, execution count, and action buttons. */
 export default function WorkflowsTable({ workflows, onEdit, onDelete }: WorkflowsTableProps) {
   const columns = [
     {

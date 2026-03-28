@@ -1,3 +1,5 @@
+"""MCP tool definitions for shell operations."""
+
 SHELL_DEFINITIONS = [
     {
         "name": "run_shell_command",

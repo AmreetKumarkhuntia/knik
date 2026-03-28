@@ -1,8 +1,10 @@
+/** Request payload for sending a chat message. */
 export interface ChatRequest {
   message: string
   conversation_id?: string
 }
 
+/** API response for a chat message. */
 export interface ChatResponse {
   text: string
   audio: string
@@ -11,6 +13,7 @@ export interface ChatResponse {
   conversation_id?: string
 }
 
+/** A single message within a conversation. */
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'tool' | 'system'
   content: string
@@ -18,6 +21,7 @@ export interface ConversationMessage {
   metadata: Record<string, unknown>
 }
 
+/** A conversation with its messages. */
 export interface Conversation {
   id: string
   title: string | null
@@ -26,6 +30,7 @@ export interface Conversation {
   updated_at: string | null
 }
 
+/** Paginated API response listing conversations. */
 export interface ConversationListResponse {
   conversations: Conversation[]
   count: number

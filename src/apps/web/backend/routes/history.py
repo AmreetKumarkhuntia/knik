@@ -25,6 +25,8 @@ conversation_history = ConversationHistory()
 
 
 class MessageAdd(BaseModel):
+    """Request body for adding a message to conversation history."""
+
     role: str  # "user" or "assistant"
     content: str
 
@@ -69,10 +71,7 @@ async def get_history():
 @router.post("/add")
 async def add_message(msg: MessageAdd):
     """Add message to history (backwards-compatible)."""
-    # Use add_entry for in-memory (requires both user and assistant)
-    # For single messages, we just accumulate them
     if msg.role == "user":
-        # Store temporarily; the assistant response will come next
         conversation_history._pending_user = msg.content
     else:
         user_content = getattr(conversation_history, "_pending_user", "")

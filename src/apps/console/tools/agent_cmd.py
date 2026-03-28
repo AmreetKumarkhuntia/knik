@@ -1,4 +1,8 @@
+"""Console command for agent management."""
+
+
 def agent_command(app, args: str) -> str:
+    """Execute a non-streaming AI chat query via the agent."""
     if not args.strip():
         return "Usage: /agent <your query>"
 

@@ -7,6 +7,7 @@ import { Home, Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions } from
 import { useStore } from '$store/index'
 import type { InputPanelRef } from '$types/sections/chat'
 
+/** Root app component with routing, audio setup, and theme provider. */
 function AppContent() {
   const inputRef = useRef<InputPanelRef>(null)
   const initAudioCallbacks = useStore(s => s.initAudioCallbacks)
@@ -48,6 +49,7 @@ function AppContent() {
   )
 }
 
+/** Application entry point wrapped in error boundary and theme provider. */
 export default function App() {
   return (
     <ErrorBoundary>

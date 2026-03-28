@@ -1,3 +1,5 @@
+"""Background CRON scheduler for periodic schedule polling."""
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 
@@ -11,6 +13,7 @@ class CronScheduler:
     """Background service that polls the DB for Schedules and triggers Workflows."""
 
     def __init__(self):
+        """Initialize scheduler with engine and config."""
         self._running = False
         self._task: asyncio.Task | None = None
         self.config = Config()
@@ -20,6 +23,7 @@ class CronScheduler:
         self._poll_count = 0
 
     def start(self):
+        """Start the background polling loop."""
         if self._running:
             return
         logger.info("Starting CronScheduler background loop...")
@@ -27,6 +31,7 @@ class CronScheduler:
         self._task = asyncio.create_task(self._poll_loop())
 
     def stop(self):
+        """Stop the background polling loop."""
         if not self._running:
             return
         logger.info("Stopping CronScheduler background loop...")
@@ -35,6 +40,7 @@ class CronScheduler:
             self._task.cancel()
 
     async def _poll_loop(self):
+        """Main polling loop that periodically checks for due schedules."""
         interval = self.config.scheduler_check_interval
         # Log heartbeat every ~1 minute (or at least every interval)
         heartbeat_frequency = max(1, 60 // interval)
@@ -55,6 +61,7 @@ class CronScheduler:
             await asyncio.sleep(interval)
 
     async def _check_schedules(self, schedules: list | None = None):
+        """Check and trigger schedules that are due."""
         now = datetime.now(UTC)
 
         if schedules is None:

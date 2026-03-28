@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { NodePropertiesProps } from '$types/sections/workflow-builder'
 import ConfigurationForm from './ConfigurationForm'
 
+/** Wrapper managing local state for a selected node's property edits. */
 export default function NodeProperties({ node, onUpdate }: NodePropertiesProps) {
   const [localData, setLocalData] = useState(node.data)
 

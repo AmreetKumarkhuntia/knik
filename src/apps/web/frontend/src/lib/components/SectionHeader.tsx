@@ -1,5 +1,6 @@
 import type { SectionHeaderProps } from '$types/components'
 
+/** Section title with optional badge and action link. */
 export default function SectionHeader({
   title,
   actionText,

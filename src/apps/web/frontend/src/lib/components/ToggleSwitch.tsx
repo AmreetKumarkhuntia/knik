@@ -1,5 +1,6 @@
 import type { ToggleSwitchProps } from '$types/components'
 
+/** Toggle switch control with optional label. */
 export default function ToggleSwitch({
   checked,
   onChange,

@@ -1,3 +1,5 @@
+"""PostgreSQL database service exports."""
+
 from .db import PostgresDB
 
 

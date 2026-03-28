@@ -1,3 +1,5 @@
+"""MCP tool implementation for cron schedule operations."""
+
 from typing import Any
 
 from lib.cron import schedule_service

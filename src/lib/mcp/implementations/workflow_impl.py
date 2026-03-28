@@ -1,3 +1,5 @@
+"""MCP tool implementation for workflow operations."""
+
 from typing import Any
 
 from lib.cron import workflow_service
