@@ -13,7 +13,6 @@ from ..utils import filter_tts_text, is_speakable
 from .base import VoiceModel
 
 
-# Suppress warnings from PyTorch and Kokoro
 warnings.filterwarnings("ignore", category=UserWarning, module="torch")
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch")
 
@@ -53,6 +52,7 @@ class KokoroVoiceModel(VoiceModel):
         return self._pipeline is not None
 
     def generate(self, text: str, voice: str | None = None) -> tuple[np.ndarray, int]:
+        """Generate speech audio from the given text."""
         if not self.is_loaded():
             self.load()
 

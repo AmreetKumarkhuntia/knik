@@ -1,6 +1,7 @@
 import { Notifications } from '@mui/icons-material'
 import type { NotificationButtonProps } from '$types/components'
 
+/** Notification bell button with badge count display. */
 export default function NotificationButton({ badgeCount = 0, onClick }: NotificationButtonProps) {
   return (
     <button

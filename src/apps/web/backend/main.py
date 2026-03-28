@@ -78,11 +78,13 @@ app.router.lifespan_context = lifespan
 
 @app.get("/")
 async def root():
+    """Return basic API identity and status."""
     return {"name": "Knik AI Assistant API", "version": "2.0.0", "status": "running"}
 
 
 @app.get("/health")
 async def health_check():
+    """Return health status for uptime monitoring."""
     return {"status": "healthy"}
 
 

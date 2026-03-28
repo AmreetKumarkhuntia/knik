@@ -8,18 +8,22 @@ type StateCallback = (isPaused: boolean, isPlaying: boolean) => void
 let stateCallback: StateCallback | null = null
 let mediaSessionUpdater: typeof UpdateMediaSessionFn | null = null
 
+/** Registers the media session updater function. */
 export function setMediaSessionUpdater(updater: typeof UpdateMediaSessionFn): void {
   mediaSessionUpdater = updater
 }
 
+/** Registers a callback invoked when audio playing/paused state changes. */
 export function setAudioStateCallback(callback: StateCallback | null): void {
   stateCallback = callback
 }
 
+/** Invokes the registered state callback with current pause/play status. */
 export function notifyStateChange(isPaused: boolean, isPlaying: boolean): void {
   if (stateCallback) stateCallback(isPaused, isPlaying)
 }
 
+/** Decodes a base64 audio chunk and plays it, resolving when playback ends. */
 export function playAudio(
   base64Audio: string,
   _sampleRate: number = 24000,
@@ -85,6 +89,7 @@ export function playAudio(
   })
 }
 
+/** Stops the currently playing audio and resets state. */
 export function stopAudio(): void {
   if (currentAudio) {
     currentAudio.pause()
@@ -101,6 +106,7 @@ export function stopAudio(): void {
   notifyStateChange(false, false)
 }
 
+/** Pauses the currently playing audio. */
 export function pauseAudio(): void {
   if (currentAudio && !currentAudio.paused) {
     currentAudio.pause()
@@ -110,6 +116,7 @@ export function pauseAudio(): void {
   }
 }
 
+/** Resumes playback of a paused audio track. */
 export function resumeAudio(): void {
   if (currentAudio && currentAudio.paused && isPaused) {
     currentAudio.play().catch(err => console.error('[Audio] Resume failed:', err))
@@ -119,14 +126,17 @@ export function resumeAudio(): void {
   }
 }
 
+/** Returns whether audio is currently playing. */
 export function isAudioPlaying(): boolean {
   return currentAudio !== null && !currentAudio.paused
 }
 
+/** Returns whether audio is currently paused. */
 export function isAudioPaused(): boolean {
   return isPaused
 }
 
+/** Returns the current HTMLAudioElement or null if none is active. */
 export function getCurrentAudio(): HTMLAudioElement | null {
   return currentAudio
 }

@@ -107,8 +107,8 @@ export async function streamChat(
             } else if (currentEvent === 'error' && callbacks.onError) {
               callbacks.onError(parsed.error || 'Unknown error')
             }
-          } catch (e) {
-            console.error('[Streaming] Failed to parse SSE JSON:', e, data)
+          } catch {
+            // skip malformed SSE events
           }
 
           currentEvent = ''

@@ -12,6 +12,7 @@ import ExecutionFlowGraph from '$lib/components/ExecutionFlowGraph'
 import StructuredOutput from '$lib/components/StructuredOutput'
 import ExecutionTimeline from '$lib/components/ExecutionTimeline'
 
+/** Execution detail page showing metrics, flow graph, I/O, and timeline. */
 export default function ExecutionDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()

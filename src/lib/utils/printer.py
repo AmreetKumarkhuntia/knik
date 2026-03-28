@@ -89,30 +89,37 @@ class Printer:
             )
 
     def debug(self, message: str):
+        """Log a debug-level message."""
         if self.config.show_logs:
             logger.opt(depth=1).debug(message)
 
     def info(self, message: str):
+        """Log an info-level message."""
         if self.config.show_logs:
             logger.opt(depth=1).info(message)
 
     def success(self, message: str):
+        """Log a success-level message."""
         if self.config.show_logs:
             logger.opt(depth=1).success(message)
 
     def warning(self, message: str):
+        """Log a warning-level message."""
         if self.config.show_logs:
             logger.opt(depth=1).warning(message)
 
     def error(self, message: str):
+        """Log an error-level message."""
         if self.config.show_logs:
             logger.opt(depth=1).error(message)
 
     def critical(self, message: str):
+        """Log a critical-level message."""
         if self.config.show_logs:
             logger.opt(depth=1).critical(message)
 
     def header(self, message: str, char: str = "=", width: int = 60):
+        """Print a bordered header message."""
         if not self.config.show_logs:
             return
         border = char * width
@@ -121,11 +128,13 @@ class Printer:
         print(border)
 
     def separator(self, char: str = "=", width: int = 60):
+        """Print a horizontal separator line."""
         if not self.config.show_logs:
             return
         print(char * width)
 
     def blank(self, count: int = 1):
+        """Print one or more blank lines."""
         if not self.config.show_logs:
             return
         for _ in range(count):
@@ -165,15 +174,19 @@ class Printer:
         self._configure_logger()
 
     def set_log_level(self, level: str):
+        """Change the minimum log level."""
         self.configure(log_level=level)
 
     def set_silent(self):
+        """Disable all log output."""
         self.configure(show_logs=False)
 
     def set_verbose(self):
+        """Enable debug-level logging."""
         self.configure(log_level="DEBUG")
 
     def get_config(self) -> PrinterConfig:
+        """Return the current printer configuration."""
         return self.config
 
 

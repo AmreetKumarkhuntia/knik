@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { BreadcrumbProps } from '$types/components'
 
+/** Navigation breadcrumb trail with linked and active items. */
 export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>

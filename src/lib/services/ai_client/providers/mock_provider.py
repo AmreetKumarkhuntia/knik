@@ -19,6 +19,7 @@ class MockAIProvider(BaseAIProvider):
         return "mock"
 
     def __init__(self, mcp_registry: "MCPServerRegistry" = None, system_instruction: str | None = None):
+        """Initialize the mock provider with canned responses."""
         self.mcp_registry = mcp_registry
         self.system_instruction = system_instruction
         self.last_usage: dict[str, int] | None = None

@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand'
 import type { ToastType, ToastState } from '$types/components'
 
+/** Zustand slice for toast notification state and actions. */
 export interface ToastSlice {
   toasts: ToastState[]
   _nextToastId: number
@@ -12,6 +13,7 @@ export interface ToastSlice {
   info: (message: string) => void
 }
 
+/** Creates the toast slice with show, hide, success, error, and info helpers. */
 export const createToastSlice: StateCreator<ToastSlice, [], [], ToastSlice> = (set, get) => ({
   toasts: [],
   _nextToastId: 0,

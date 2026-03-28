@@ -11,6 +11,7 @@ const accentColors = [
   { name: 'teal' as const, label: 'Teal', color: themePresets.teal.primary },
 ]
 
+/** Modal for selecting color mode and accent color with live preview. */
 export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {
   const { mode, accentName, setMode, setAccent } = useTheme()
 

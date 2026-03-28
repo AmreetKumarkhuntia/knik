@@ -2,6 +2,7 @@ import { Component } from 'react'
 import { Warning } from '@mui/icons-material'
 import type { ErrorBoundaryProps, ErrorBoundaryState } from '$types/sections/feedback'
 
+/** React error boundary that catches render errors and shows a fallback UI. */
 export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props)

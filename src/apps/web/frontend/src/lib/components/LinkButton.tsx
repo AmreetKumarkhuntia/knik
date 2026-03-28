@@ -1,5 +1,6 @@
 import type { LinkButtonProps } from '$types/components'
 
+/** Navigation-style button with active state highlighting. */
 export default function LinkButton({
   icon,
   label,

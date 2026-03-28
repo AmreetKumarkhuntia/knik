@@ -76,6 +76,7 @@ class ZAICodingProvider(LangChainProvider):
         tool_callback=None,
         **kwargs,
     ):
+        """Initialize Z.AI Coding Plan provider with API key and endpoint."""
         if not LANGCHAIN_ZAI_CODING_AVAILABLE:
             raise ImportError("LangChain OpenAI not installed. Run: pip install langchain-openai")
 

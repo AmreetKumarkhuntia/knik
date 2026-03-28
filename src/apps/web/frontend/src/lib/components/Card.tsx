@@ -13,6 +13,7 @@ const paddings = {
   lg: 'p-6',
 }
 
+/** Versatile card container with variant and padding options. */
 export default function Card({
   children,
   variant = 'default',

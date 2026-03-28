@@ -1,4 +1,8 @@
+"""Console command for TTS voice configuration."""
+
+
 def voice_command(app, args: str) -> str:
+    """Change the TTS voice or show the current voice."""
     if not args:
         return f"Current voice: {app.config.voice_name}\nUsage: {app.config.command_prefix}voice <name>"
 

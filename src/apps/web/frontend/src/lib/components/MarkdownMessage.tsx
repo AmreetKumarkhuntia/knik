@@ -5,6 +5,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { Components } from 'react-markdown'
 import type { MarkdownMessageProps, CodeProps } from '$types/components'
 
+/** Renders markdown content with syntax-highlighted code blocks. */
 export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) {
   const components: Components = {
     code(props: CodeProps) {

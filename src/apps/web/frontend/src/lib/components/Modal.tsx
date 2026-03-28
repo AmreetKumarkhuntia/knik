@@ -10,6 +10,7 @@ const sizeClasses: Record<ModalSize, string> = {
   xl: 'max-w-xl',
 }
 
+/** Animated modal dialog with backdrop and size variants. */
 export default function Modal({
   isOpen,
   onClose,

@@ -10,6 +10,7 @@ const shortcuts = [
   { key: 'Ctrl + /', description: 'Open shortcuts help' },
 ]
 
+/** Modal listing available keyboard shortcuts. */
 export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcutsProps) {
   return (
     <Modal

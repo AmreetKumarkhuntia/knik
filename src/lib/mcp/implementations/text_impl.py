@@ -1,3 +1,5 @@
+"""MCP tool implementation for text operations."""
+
 import re
 
 from ...utils.printer import printer
@@ -10,6 +12,7 @@ def _extract_pattern(text: str, pattern: str, pattern_name: str) -> str:
 
 
 def word_count(text: str) -> str:
+    """Count words, characters, and lines in text."""
     printer.info(f"🔧 Counting words in text ({len(text)} characters)")
     words = len(text.split())
     chars = len(text)
@@ -20,6 +23,7 @@ def word_count(text: str) -> str:
 
 
 def find_and_replace(text: str, find: str, replace: str, case_sensitive: bool = True) -> str:
+    """Find and replace text within a string."""
     printer.info(f"🔧 Finding and replacing: '{find}' → '{replace}' (case_sensitive={case_sensitive})")
     if not case_sensitive:
         pattern = re.compile(re.escape(find), re.IGNORECASE)
@@ -31,11 +35,13 @@ def find_and_replace(text: str, find: str, replace: str, case_sensitive: bool = 
 
 
 def extract_emails(text: str) -> str:
+    """Extract all email addresses from text."""
     printer.info("🔧 Extracting emails from text")
     return _extract_pattern(text, r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "email addresses")
 
 
 def extract_urls(text: str) -> str:
+    """Extract all URLs from text."""
     printer.info("🔧 Extracting URLs from text")
     return _extract_pattern(
         text, r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", "URLs"
@@ -69,6 +75,7 @@ _CASE_CONVERTERS = {
 
 
 def text_case_convert(text: str, case_type: str) -> str:
+    """Convert text to the specified case format."""
     printer.info(f"🔧 Converting text case to: {case_type}")
     converter = _CASE_CONVERTERS.get(case_type.lower())
 

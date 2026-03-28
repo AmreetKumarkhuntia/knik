@@ -7,12 +7,10 @@ async function playQueue(): Promise<void> {
   if (isPlayingQueue) return
 
   isPlayingQueue = true
-  console.log('[Audio Queue] Starting queue playback')
 
   while (audioQueue.length > 0) {
     const chunk = audioQueue.shift()
     if (chunk) {
-      console.log(`[Audio Queue] Playing chunk, remaining: ${audioQueue.length}`)
       try {
         await playAudio(chunk.audio, chunk.sampleRate, () => audioQueue.length)
       } catch (err) {
@@ -22,11 +20,10 @@ async function playQueue(): Promise<void> {
   }
 
   isPlayingQueue = false
-  console.log('[Audio Queue] Queue playback complete')
 }
 
+/** Enqueues a base64 audio chunk for sequential playback. */
 export function queueAudio(base64Audio: string, sampleRate: number = 24000): void {
-  console.log('[Audio Queue] Adding chunk to queue, current queue size:', audioQueue.length)
   audioQueue.push({ audio: base64Audio, sampleRate })
 
   if (!isPlayingQueue) {
@@ -34,22 +31,25 @@ export function queueAudio(base64Audio: string, sampleRate: number = 24000): voi
   }
 }
 
+/** Removes all pending audio chunks from the queue. */
 export function clearAudioQueue(): void {
-  console.log('[Audio Queue] Clearing queue')
   audioQueue = []
 }
 
+/** Resumes playing the queue if it was stopped with remaining chunks. */
 export function resumeQueue(): void {
   if (!isPlayingQueue && audioQueue.length > 0) {
     playQueue().catch(err => console.error('[Audio Queue] Error resuming queue:', err))
   }
 }
 
+/** Stops queue playback and clears all pending chunks. */
 export function stopQueue(): void {
   isPlayingQueue = false
   clearAudioQueue()
 }
 
+/** Plays an array of audio chunks sequentially, awaiting each one. */
 export async function playAudioChunks(
   audioChunks: string[],
   sampleRate: number = 24000

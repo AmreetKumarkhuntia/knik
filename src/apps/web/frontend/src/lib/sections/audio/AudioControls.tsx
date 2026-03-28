@@ -1,6 +1,7 @@
 import { PlayIcon, PauseIcon, StopIcon } from '$components/icons'
 import type { AudioControlsProps } from '$types/sections/audio'
 
+/** Audio playback controls with play/pause and stop buttons. */
 export default function AudioControls({
   isPlayingOrLoading,
   isPaused,

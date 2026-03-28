@@ -230,14 +230,12 @@ Be reliable, efficient, and action focused like Jarvis."""
         if value is None:
             return default
 
-        # Handle boolean conversion
         if type_cast is bool:
             lower_value = value.lower()
             if lower_value in ("false", "0", "no", "off"):
                 return False
             return lower_value in ("true", "1", "yes", "on")
 
-        # Handle int/float conversion
         try:
             return type_cast(value)
         except (ValueError, TypeError):

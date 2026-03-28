@@ -2,6 +2,7 @@ import { Search } from '@mui/icons-material'
 import type { SearchBarProps } from '$types/components'
 import { UI_TEXT, SIZES } from '$lib/constants'
 
+/** Search input field with a magnifying glass icon. */
 export default function SearchBar({ placeholder = UI_TEXT.search.placeholder }: SearchBarProps) {
   return (
     <label className="hidden sm:flex flex-col min-w-40 h-10 max-w-64">

@@ -1,3 +1,5 @@
+"""Audio playback processor with stream support."""
+
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +11,8 @@ from ....utils.printer import printer
 
 
 class AudioProcessor:
+    """Real-time audio playback using sounddevice and soundfile."""
+
     sample_rate = None
     _is_playing = False
 
@@ -25,6 +29,7 @@ class AudioProcessor:
             raise e
 
     def play(self, audio: np.ndarray, blocking: bool = True) -> None:
+        """Play a numpy audio array through the output stream."""
         if audio.size == 0:
             printer.warning("Cannot play empty audio")
             return
@@ -44,6 +49,7 @@ class AudioProcessor:
             self._is_playing = False
 
     def stream_play(self, audio_generator, show_progress: bool = True, blocking: bool = True) -> None:
+        """Play audio segments from a generator sequentially."""
         count = 0
 
         for g, _p, audio in audio_generator:
@@ -56,6 +62,7 @@ class AudioProcessor:
             printer.success(f"Played {count} segment(s)")
 
     def save(self, audio: np.ndarray, filepath: str | Path, format: str | None = None) -> None:
+        """Save a numpy audio array to a file."""
         if audio.size == 0:
             printer.warning("Cannot save empty audio")
             return
@@ -71,6 +78,7 @@ class AudioProcessor:
     def save_segments(
         self, audio_generator, output_dir: str | Path = ".", prefix: str = "segment", extension: str = "wav"
     ) -> list[Path]:
+        """Save audio segments from a generator to individual files."""
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -86,6 +94,7 @@ class AudioProcessor:
         return saved
 
     def load(self, filepath: str | Path) -> np.ndarray:
+        """Load audio from a file and return as a numpy array."""
         try:
             audio, sr = sf.read(str(filepath))
 
@@ -98,6 +107,7 @@ class AudioProcessor:
             return np.array([])
 
     def stop(self) -> None:
+        """Stop all playback immediately."""
         try:
             sd.stop()
             self._is_playing = False
@@ -106,11 +116,14 @@ class AudioProcessor:
             printer.error(f"Error stopping playback: {e}")
 
     def is_playing(self) -> bool:
+        """Return whether audio is currently playing."""
         return self._is_playing
 
     def get_devices(self) -> dict:
+        """Return available audio devices and the default output."""
         return {"devices": sd.query_devices(), "default_output": sd.query_devices(kind="output")}
 
     def set_sample_rate(self, sample_rate: int) -> None:
+        """Update the sample rate for future operations."""
         self.sample_rate = sample_rate
         printer.info(f"Sample rate set to {sample_rate}")

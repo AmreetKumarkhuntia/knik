@@ -2,6 +2,7 @@ import type { TabsProps } from '$types/components'
 
 export type { Tab } from '$types/components'
 
+/** Tab switcher with underline or pill variants. */
 export default function Tabs<T extends string>({
   tabs,
   active,

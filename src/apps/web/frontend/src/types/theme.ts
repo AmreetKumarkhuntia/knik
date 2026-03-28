@@ -1,6 +1,10 @@
+/** Light or dark color mode. */
 export type ThemeMode = 'dark' | 'light'
+
+/** Named accent theme. */
 export type ThemeName = 'purple' | 'blue' | 'teal'
 
+/** Complete set of color tokens for a theme. */
 export interface ThemeColors {
   background: string
   surface: string
@@ -28,12 +32,14 @@ export interface ThemeColors {
   nodeHandleBorder: string
 }
 
+/** A fully resolved theme with mode, name, and color tokens. */
 export interface Theme {
   mode: ThemeMode
   name: ThemeName
   colors: ThemeColors
 }
 
+/** Shape of the theme context value. */
 export interface ThemeContextType {
   theme: Theme
   mode: ThemeMode
@@ -42,6 +48,7 @@ export interface ThemeContextType {
   setAccent: (accent: ThemeName) => void
 }
 
+/** Props for the theme selector dropdown. */
 export interface ThemeSelectorProps {
   isOpen: boolean
   onClose: () => void

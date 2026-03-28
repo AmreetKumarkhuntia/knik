@@ -1,3 +1,4 @@
+/** A keyboard shortcut binding with modifier keys and handler. */
 export interface KeyboardShortcut {
   key: string
   ctrlKey?: boolean

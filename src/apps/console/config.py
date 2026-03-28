@@ -1,3 +1,5 @@
+"""Console application configuration."""
+
 from dataclasses import dataclass
 
 from lib.core.config import Config

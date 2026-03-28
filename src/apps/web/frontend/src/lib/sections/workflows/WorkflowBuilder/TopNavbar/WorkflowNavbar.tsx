@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import type { WorkflowNavbarProps } from '$types/sections/workflow-builder'
 
+/** Top navigation bar for the workflow builder with breadcrumbs and save/export actions. */
 export default function WorkflowNavbar({
   onExportJson,
   onSave,

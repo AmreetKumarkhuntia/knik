@@ -4,6 +4,7 @@ import { useState } from 'react'
 import LoadingSpinner from '$components/LoadingSpinner'
 import type { StructuredOutputProps } from '$types/components'
 
+/** Tabbed viewer for JSON inputs and outputs with copy support. */
 export default function StructuredOutput({ inputs, outputs, loading }: StructuredOutputProps) {
   const [activeTab, setActiveTab] = useState<'inputs' | 'outputs'>('outputs')
   const [copied, setCopied] = useState(false)

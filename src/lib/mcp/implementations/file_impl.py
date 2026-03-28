@@ -1,4 +1,4 @@
-"""File system operations for MCP tools."""
+"""MCP tool implementation for file system operations."""
 
 import re
 from datetime import datetime
@@ -71,6 +71,7 @@ def _build_file_response(
 def read_file_impl(
     file_path: str, encoding: str = "utf-8", start_line: int | None = None, end_line: int | None = None
 ) -> dict[str, Any]:
+    """Read file contents, optionally within a line range."""
     range_info = f" (lines {start_line}-{end_line})" if start_line or end_line else ""
     printer.info(f"🔧 Reading file: {file_path}{range_info}")
     try:
@@ -139,6 +140,7 @@ def _list_non_recursive(path: Path, pattern: str | None) -> tuple[list[dict[str,
 
 
 def list_directory_impl(directory_path: str, recursive: bool = False, pattern: str | None = None) -> dict[str, Any]:
+    """List files and directories at the given path."""
     mode = "recursively" if recursive else "non-recursively"
     pattern_info = f" with pattern '{pattern}'" if pattern else ""
     printer.info(f"🔧 Listing directory {mode}: {directory_path}{pattern_info}")
@@ -211,6 +213,7 @@ def search_in_files_impl(
     case_sensitive: bool = True,
     max_results: int = 100,
 ) -> dict[str, Any]:
+    """Search for a pattern across files in a directory."""
     printer.info(f"🔧 Searching in files: pattern='{pattern}', directory={directory_path}, file_pattern={file_pattern}")
     try:
         path = Path(directory_path)
@@ -261,6 +264,7 @@ def _get_line_count(path: Path) -> int | None:
 
 
 def file_info_impl(path: str) -> dict[str, Any]:
+    """Return metadata for a file or directory."""
     printer.info(f"🔧 Getting file/directory info for: {path}")
     try:
         p = Path(path)
@@ -309,6 +313,7 @@ def _write_to_file(path: Path, content: str, mode: str, encoding: str) -> dict[s
 
 
 def write_file_impl(file_path: str, content: str, encoding: str = "utf-8") -> dict[str, Any]:
+    """Write content to a file, creating parent directories as needed."""
     printer.info(f"🔧 Writing to file: {file_path} ({len(content)} bytes)")
     try:
         return _write_to_file(Path(file_path), content, "w", encoding)
@@ -317,6 +322,7 @@ def write_file_impl(file_path: str, content: str, encoding: str = "utf-8") -> di
 
 
 def append_to_file_impl(file_path: str, content: str, encoding: str = "utf-8") -> dict[str, Any]:
+    """Append content to an existing file."""
     printer.info(f"🔧 Appending to file: {file_path} ({len(content)} bytes)")
     try:
         return _write_to_file(Path(file_path), content, "a", encoding)
@@ -404,6 +410,7 @@ def find_in_file_impl(
     show_context: bool = False,
     context_lines: int = 2,
 ) -> dict[str, Any]:
+    """Search for a pattern within a single file."""
     try:
         path = Path(file_path)
         error = _validate_file_path(path, file_path)
@@ -434,6 +441,7 @@ def find_in_file_impl(
 def count_in_file_impl(
     file_path: str, pattern: str, is_regex: bool = False, case_sensitive: bool = True
 ) -> dict[str, Any]:
+    """Count occurrences of a pattern in a file."""
     printer.info(f"🔧 Counting pattern '{pattern}' in file: {file_path}")
     try:
         path = Path(file_path)

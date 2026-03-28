@@ -11,6 +11,7 @@ class InputPanel(ctk.CTkFrame):
     """Input panel with text entry and send button."""
 
     def __init__(self, master, on_send: Callable[[str], None] | None = None, **kwargs):
+        """Initialize the input panel with text entry, send, and voice buttons."""
         super().__init__(master, fg_color=ColorTheme.BG_SECONDARY, **kwargs)
 
         self.on_send = on_send
@@ -82,7 +83,6 @@ class InputPanel(ctk.CTkFrame):
 
     def _handle_voice(self):
         """Handle voice button click (placeholder for STT)."""
-        # TODO: Implement STT in Phase 2
         print("Voice input not yet implemented")
 
     def set_processing(self, processing: bool):

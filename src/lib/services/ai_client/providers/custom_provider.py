@@ -75,7 +75,6 @@ class CustomProvider(LangChainProvider):
         if not LANGCHAIN_OPENAI_AVAILABLE:
             raise ImportError("LangChain OpenAI not installed. Run: pip install langchain-openai")
 
-        # Accept api_base/api_key from kwargs or fall back to env vars
         self.api_base = api_base or os.getenv("KNIK_CUSTOM_API_BASE")
         if not self.api_base:
             raise RuntimeError(

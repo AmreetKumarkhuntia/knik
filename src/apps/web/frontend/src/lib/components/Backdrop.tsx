@@ -6,6 +6,7 @@ const blurClasses = {
   lg: 'backdrop-blur-lg',
 }
 
+/** Full-screen overlay backdrop with configurable blur and opacity. */
 export default function Backdrop({
   visible,
   onClick,

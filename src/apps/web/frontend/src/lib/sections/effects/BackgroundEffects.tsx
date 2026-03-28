@@ -1,3 +1,4 @@
+/** Animated gradient blobs for the page background. */
 export default function BackgroundEffects() {
   return (
     <>

@@ -1,3 +1,5 @@
+"""Interactive console application for Knik."""
+
 import time
 
 from imports import AIClient, ConsoleProcessor, TTSAsyncProcessor, printer
@@ -21,7 +23,10 @@ except ImportError:
 
 
 class ConsoleApp:
+    """Main interactive console application for Knik AI assistant."""
+
     def __init__(self, config: ConsoleConfig | None = None):
+        """Initialize the console application with optional configuration."""
         self.config = config or ConsoleConfig()
         self.ai_client: AIClient | None = None
         self.tts_processor: TTSAsyncProcessor | None = None
@@ -31,6 +36,7 @@ class ConsoleApp:
         self.debug_mode = False
 
     def initialize(self) -> bool:
+        """Initialize all application components (AI client, TTS, console processor)."""
         try:
             printer.info("Initializing console application...")
 
@@ -46,6 +52,7 @@ class ConsoleApp:
             return False
 
     def _initialize_ai_client(self):
+        """Set up the AI client with MCP tools registry."""
         self.mcp_registry = MCPServerRegistry()
         tools_registered = register_all_tools(self.mcp_registry)
         if tools_registered > 0:
@@ -61,6 +68,7 @@ class ConsoleApp:
         )
 
     def _initialize_tts_processor(self):
+        """Set up the text-to-speech async processor."""
         self.tts_processor = TTSAsyncProcessor(
             sample_rate=self.config.sample_rate,
             voice_model=self.config.voice_name,
@@ -69,17 +77,20 @@ class ConsoleApp:
         self.tts_processor.start_async_processing()
 
     def _initialize_console_processor(self):
+        """Set up the console command processor and register all commands."""
         self.console_processor = ConsoleProcessor(command_prefix=self.config.command_prefix)
         commands_count = register_commands(self, self.console_processor)
         printer.info(f"✓ Registered {commands_count} console commands")
 
     def _build_prompt(self, user_input: str) -> str:
+        """Build a prompt with conversation context prepended."""
         context = self.history.get_context(last_n=3)
         if context:
             return f"Previous conversation:\n{context}\n\nCurrent question: {user_input}"
         return user_input
 
     def _stream_response(self, user_input: str):
+        """Stream AI response chunks and record the conversation in history."""
         printer.info("🤔 Thinking...")
 
         history_messages = self.history.get_messages(last_n=self.config.history_context_size)
@@ -102,6 +113,7 @@ class ConsoleApp:
         self.history.add_entry(user_input, "".join(full_response))
 
     def _enqueue_voice(self, text: str):
+        """Queue text for async voice generation if voice output is enabled."""
         if self.config.enable_voice_output and self.tts_processor and text.strip():
             try:
                 self.tts_processor.play_async(text)
@@ -109,6 +121,7 @@ class ConsoleApp:
                 printer.error(f"Voice generation error: {e}")
 
     def wait_until(self, condition_fn, timeout: float | None = None, check_interval: float = 2) -> bool:
+        """Block until *condition_fn* returns True, with optional timeout."""
         start_time = time.time()
 
         while not condition_fn():
@@ -120,6 +133,7 @@ class ConsoleApp:
         return True
 
     def _handle_user_input(self, user_input: str):
+        """Process user input — dispatch commands or stream an AI response."""
         if user_input.startswith(self.config.command_prefix):
             if self.debug_mode:
                 print(f"🐛 [DEBUG] Executing command: {user_input}")
@@ -203,6 +217,7 @@ class ConsoleApp:
                 print(f"🐛 [DEBUG] Traceback:\n{traceback.format_exc()}")
 
     def _display_welcome(self):
+        """Print the welcome banner and usage hints."""
         print("\n" + "=" * 60)
         print(self.config.welcome_message)
         print("=" * 60)
@@ -210,6 +225,7 @@ class ConsoleApp:
         print(f"Type '{self.config.command_prefix}exit' to quit\n")
 
     def run(self):
+        """Main event loop — initialize, accept input, and handle shutdown."""
         if not self.initialize():
             printer.error("Failed to start application")
             return
@@ -244,6 +260,7 @@ class ConsoleApp:
             self._shutdown()
 
     def _shutdown(self):
+        """Clean up resources and display farewell message."""
         printer.info("Shutting down console application...")
         printer.success("Thanks for using Knik Console! 👋")
 

@@ -21,6 +21,7 @@ const edgeTypes: EdgeTypes = {
   default: FlowEdge,
 }
 
+/** Renders the workflow execution graph with node statuses. */
 export default function ExecutionFlowGraph({ execution, timeline }: ExecutionFlowGraphProps) {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])

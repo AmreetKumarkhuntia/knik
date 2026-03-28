@@ -26,6 +26,8 @@ except ImportError:
 
 
 class GeminiAIProvider(LangChainProvider):
+    """Google Gemini AI Studio provider via LangChain."""
+
     @classmethod
     def get_provider_name(cls) -> str:
         return "gemini"

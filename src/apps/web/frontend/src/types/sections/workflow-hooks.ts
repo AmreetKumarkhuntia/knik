@@ -1,5 +1,6 @@
 import type { Schedule, ExecutionRecord, Workflow } from '$types/workflow'
 
+/** Return type of the useWorkflows hook. */
 export interface UseWorkflowsReturn {
   workflows: Pick<Workflow, 'id' | 'name' | 'description'>[]
   loading: boolean
@@ -7,6 +8,7 @@ export interface UseWorkflowsReturn {
   refetch: () => Promise<void>
 }
 
+/** Return type of the useSchedules hook. */
 export interface UseSchedulesReturn {
   schedules: Schedule[]
   loading: boolean
@@ -16,6 +18,7 @@ export interface UseSchedulesReturn {
   deleteSchedule: (id: number) => Promise<void>
 }
 
+/** Return type of the useExecutions hook. */
 export interface UseExecutionsReturn {
   executions: ExecutionRecord[]
   loading: boolean
@@ -23,6 +26,7 @@ export interface UseExecutionsReturn {
   refetch: () => Promise<void>
 }
 
+/** Return type of the useRealtimeStatus hook. */
 export interface UseRealtimeStatusReturn {
   schedules: Array<{ id: number; last_status?: string; last_error?: string }>
   isConnected: boolean

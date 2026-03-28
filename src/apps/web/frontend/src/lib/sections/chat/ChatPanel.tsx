@@ -5,14 +5,13 @@ import { motion } from 'framer-motion'
 import { ContentCopy, ThumbUp, Refresh } from '@mui/icons-material'
 import type { ChatPanelProps } from '$types/sections/chat'
 
+/** Renders the list of chat messages with copy and regenerate actions. */
 export default function ChatPanel({ messages, isLoading }: ChatPanelProps) {
   const handleCopy = (content: string) => {
     void navigator.clipboard.writeText(content)
   }
 
-  const handleRegenerate = () => {
-    console.log('Regenerate response')
-  }
+  const handleRegenerate = () => {}
 
   return (
     <div className="min-h-full space-y-4">

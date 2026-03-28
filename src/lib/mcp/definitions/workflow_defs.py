@@ -1,3 +1,5 @@
+"""MCP tool definitions for workflow operations."""
+
 WORKFLOW_DEFINITIONS = [
     {
         "name": "create_workflow",

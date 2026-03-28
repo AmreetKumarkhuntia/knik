@@ -1,3 +1,5 @@
+"""MCP tool definition exports."""
+
 from .browser_defs import BROWSER_DEFINITIONS
 from .cron_defs import CRON_DEFINITIONS
 from .file_defs import FILE_DEFINITIONS

@@ -21,6 +21,7 @@ import type {
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
+/** Workflow CRUD, execution, and history APIs. */
 class WorkflowAPI {
   static async list(): Promise<WorkflowListResponse> {
     const response = await fetch(`${API_BASE_URL}/workflows`)
@@ -98,6 +99,7 @@ class WorkflowAPI {
   }
 }
 
+/** Scheduled job (cron) management APIs. */
 class ScheduleAPI {
   static async list(): Promise<SchedulesListResponse> {
     const response = await fetch(`${API_BASE_URL}/cron`)
@@ -135,6 +137,7 @@ class ScheduleAPI {
   }
 }
 
+/** Analytics dashboard, metrics, and activity APIs. */
 class AnalyticsAPI {
   static async getDashboard(
     workflowsLimit: number = 20,
@@ -216,6 +219,7 @@ class AnalyticsAPI {
   }
 }
 
+/** Aggregated workflow API client exposing workflows, schedules, and analytics. */
 export const workflowApi = {
   workflows: WorkflowAPI,
   schedules: ScheduleAPI,

@@ -3,11 +3,13 @@ import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force'
 
 export type { ExecutionStatus } from './workflow'
 
+/** Options for configuring graph behavior. */
 export interface GraphOptions {
   directed?: boolean
   weighted?: boolean
 }
 
+/** A node within a generic graph data structure. */
 export interface GraphNodeType<T> {
   readonly id: string
   value: T
@@ -15,16 +17,19 @@ export interface GraphNodeType<T> {
   config: Record<string, unknown>
 }
 
+/** Result of a shortest-path algorithm. */
 export interface ShortestPathResult {
   path: string[]
   distance: number
 }
 
+/** Result of Dijkstra's shortest-path algorithm. */
 export interface DijkstraResult {
   distance: number
   path: string[]
 }
 
+/** Options for graph layout algorithms. */
 export interface LayoutOptions {
   width: number
   height: number
@@ -43,6 +48,7 @@ export interface SimLink extends SimulationLinkDatum<SimNode> {
   target: string
 }
 
+/** Options for the canvas graph renderer. */
 export interface CanvasOptions {
   layout?: 'force' | 'grid' | 'circular' | 'dag'
   width?: number
@@ -59,11 +65,13 @@ export interface CanvasOptions {
   linkDistance?: number
 }
 
+/** Output of a canvas rendering pass containing ReactFlow nodes and edges. */
 export interface CanvasOutput {
   nodes: Node[]
   edges: Edge[]
 }
 
+/** Execution-related data attached to a workflow node. */
 export interface ExecutionNodeData {
   status?: import('./workflow').ExecutionStatus
   duration?: number
@@ -72,6 +80,7 @@ export interface ExecutionNodeData {
   error_message?: string
 }
 
+/** Options for rendering a workflow graph. */
 export interface WorkflowGraphOptions {
   mode?: 'edit' | 'execution'
   executionData?: Map<string, ExecutionNodeData>

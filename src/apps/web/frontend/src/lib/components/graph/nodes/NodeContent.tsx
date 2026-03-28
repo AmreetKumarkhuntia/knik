@@ -1,3 +1,4 @@
+/** Renders function node content showing name and parameter count. */
 export function FunctionContent({ data }: { data: Record<string, unknown> }) {
   const functionName = data.function_name as string
   const params = data.params as Record<string, unknown> | undefined
@@ -15,6 +16,7 @@ export function FunctionContent({ data }: { data: Record<string, unknown> }) {
   )
 }
 
+/** Renders conditional branch node content with true/false labels. */
 export function ConditionalContent({ data }: { data: Record<string, unknown> }) {
   const condition = data.condition as string
 
@@ -35,6 +37,7 @@ export function ConditionalContent({ data }: { data: Record<string, unknown> }) 
   )
 }
 
+/** Renders merge node content showing the merge strategy. */
 export function MergeContent({ data }: { data: Record<string, unknown> }) {
   const strategy = data.merge_strategy as string
 
@@ -46,6 +49,7 @@ export function MergeContent({ data }: { data: Record<string, unknown> }) {
   )
 }
 
+/** Renders AI node content showing the model name. */
 export function AIContent({ data }: { data: Record<string, unknown> }) {
   const model = data.model as string
 
@@ -60,6 +64,7 @@ export function AIContent({ data }: { data: Record<string, unknown> }) {
   )
 }
 
+/** Selects and renders the appropriate node content based on the renderer type. */
 export function NodeContent({
   renderer,
   data,

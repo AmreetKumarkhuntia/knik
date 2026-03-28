@@ -5,6 +5,7 @@ import { CANVAS_OVERLAY_COLORS } from '$lib/constants/themes'
 
 export type { FlowCanvasProps }
 
+/** Inner ReactFlow canvas with background and optional mini-map. */
 function FlowCanvasContent({
   nodes,
   edges,
@@ -70,6 +71,7 @@ function FlowCanvasContent({
   )
 }
 
+/** Flow canvas wrapped in a ReactFlow provider for context. */
 export default function FlowCanvas(props: FlowCanvasProps) {
   return (
     <ReactFlowProvider>

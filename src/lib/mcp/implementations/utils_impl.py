@@ -14,7 +14,6 @@ from lib.utils.async_utils import run_async
 from lib.utils.printer import printer
 
 
-# Shared safe functions for both simple and advanced calculations
 _SAFE_MATH_FUNCTIONS = {
     "abs": abs,
     "round": round,

@@ -1,6 +1,7 @@
 import { executionStatusConfig, badgeSizes } from '$lib/constants'
 import type { StatusBadgeProps } from '$types/components'
 
+/** Colored badge indicating execution status. */
 export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
   const config = executionStatusConfig[status]
 

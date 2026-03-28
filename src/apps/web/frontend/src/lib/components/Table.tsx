@@ -3,6 +3,7 @@ import LoadingSpinner from '$components/LoadingSpinner'
 
 export type { TableColumn } from '$types/components'
 
+/** Generic data table with column definitions and row click handling. */
 export default function Table<T>({
   columns,
   data,

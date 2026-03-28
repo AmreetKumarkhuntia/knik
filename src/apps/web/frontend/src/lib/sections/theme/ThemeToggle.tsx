@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { WbSunny, DarkMode } from '@mui/icons-material'
 import { useTheme } from '$hooks/useTheme'
 
+/** Animated toggle switch between light and dark mode. */
 export default function ThemeToggle() {
   const { mode, setMode } = useTheme()
   const isDark = mode === 'dark'

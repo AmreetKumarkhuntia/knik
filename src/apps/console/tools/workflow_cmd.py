@@ -44,6 +44,7 @@ def workflow_command(app, args: str) -> str:
 
 
 async def _list_workflows() -> str:
+    """List all registered workflows from the database."""
     try:
         await SchedulerDB.initialize()
         workflows = await workflow_service.list_workflows()
@@ -62,6 +63,7 @@ async def _list_workflows() -> str:
 
 
 async def _run_workflow(app, workflow_id: str, inputs: dict) -> str:
+    """Execute a workflow by ID with optional inputs."""
     from lib.cron.scheduler import Scheduler
 
     try:

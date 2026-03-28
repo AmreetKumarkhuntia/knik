@@ -4,6 +4,7 @@ import Toast from '$sections/feedback/Toast'
 import { useStore } from '$store/index'
 import type { MainLayoutProps } from '$types/sections/layout'
 
+/** Root layout with sidebar, background effects, and toast notifications. */
 export default function MainLayout({ children, onNewChat, onSelectConversation }: MainLayoutProps) {
   const toasts = useStore(s => s.toasts)
   const hideToast = useStore(s => s.hideToast)

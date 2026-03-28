@@ -7,6 +7,7 @@ import type {
 } from '$types/data-structures'
 import { graphToCanvasNodes } from '../adapters/graphAdapter'
 
+/** Adds a node with value to the graph, optionally with an directed and weighted flags options. */
 export class Graph<T = unknown> {
   private nodes: Map<string, GraphNode<T>>
   readonly directed: boolean
@@ -24,6 +25,7 @@ export class Graph<T = unknown> {
     return node
   }
 
+  /** Removes a node and the graph by ID, Returns true if removed, false. */
   removeNode(id: string): boolean {
     const node = this.nodes.get(id)
     if (!node) return false
@@ -32,18 +34,22 @@ export class Graph<T = unknown> {
     return this.nodes.delete(id)
   }
 
+  /** Returns the node by ID or Returns the node or undefined. */
   getNode(id: string): GraphNode<T> | undefined {
     return this.nodes.get(id)
   }
 
+  /** Checks whether a node exists in the graph. */
   hasNode(id: string): boolean {
     return this.nodes.has(id)
   }
 
+  /** Returns all nodes in the graph. */
   getNodes(): GraphNode<T>[] {
     return Array.from(this.nodes.values())
   }
 
+  /** Adds a directed edge from one node to another, optional weight. */
   addEdge(fromId: string, toId: string, weight?: number): this {
     const fromNode = this.nodes.get(fromId)
     const toNode = this.nodes.get(toId)
@@ -61,6 +67,7 @@ export class Graph<T = unknown> {
     return this
   }
 
+  /** Removes a directed edge between two nodes. Returns true on success. false if not node doesn't exist. */
   removeEdge(fromId: string, toId: string): boolean {
     const fromNode = this.nodes.get(fromId)
     if (!fromNode) return false
@@ -75,10 +82,12 @@ export class Graph<T = unknown> {
     return removed
   }
 
+  /** Checks whether a directed edge exists between two nodes. */
   hasEdge(fromId: string, toId: string): boolean {
     return this.nodes.get(fromId)?.hasEdge(toId) ?? false
   }
 
+  /** Returns all edges in the graph with from/to IDs and optional weight. */
   getEdges(): Array<{ from: string; to: string; weight?: number }> {
     const edges: Array<{ from: string; to: string; weight?: number }> = []
 
@@ -95,6 +104,7 @@ export class Graph<T = unknown> {
     return edges
   }
 
+  /** Depth-first search traversal the graph starting at startId. */
   dfs(startId: string, callback?: (node: GraphNode<T>) => void): GraphNode<T>[] {
     const startNode = this.nodes.get(startId)
     if (!startNode) return []
@@ -118,6 +128,7 @@ export class Graph<T = unknown> {
     return result
   }
 
+  /** Breadth-first search traversal the graph starting at startId. */
   bfs(startId: string, callback?: (node: GraphNode<T>) => void): GraphNode<T>[] {
     const startNode = this.nodes.get(startId)
     if (!startNode) return []

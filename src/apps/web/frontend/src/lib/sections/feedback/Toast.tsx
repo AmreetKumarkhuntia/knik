@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { CheckCircle, Cancel, Info, Close } from '@mui/icons-material'
 import type { ToastProps } from '$types/components'
 
+/** Auto-dismissing toast notification with success, error, and info variants. */
 export default function Toast({ message, type, onClose, duration = 5000 }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(onClose, duration)

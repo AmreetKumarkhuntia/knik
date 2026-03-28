@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import type { InputProps } from '$types/components'
 
+/** Styled text input with error state and forwarded ref. */
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ error, fullWidth = true, className = '', ...props }, ref) => {
     const inputClassName =

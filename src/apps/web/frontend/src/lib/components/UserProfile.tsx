@@ -1,6 +1,7 @@
 import type { UserProfileProps } from '$types/components'
 import { USER_PROFILE_DEFAULTS, UI_TEXT, BADGE, STYLE_CONFIG, ACCOUNT } from '$lib/constants'
 
+/** User avatar with name, account info, and optional badge. */
 export default function UserProfile({
   avatar = USER_PROFILE_DEFAULTS.initials,
   avatarColor = USER_PROFILE_DEFAULTS.avatarColor,

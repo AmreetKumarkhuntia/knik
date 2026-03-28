@@ -1,5 +1,6 @@
 import { pauseAudio, resumeAudio, stopAudio, isAudioPaused } from './playback'
 
+/** Updates the browser Media Session API with playback metadata and action handlers. */
 export function updateMediaSession(): void {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -9,17 +10,14 @@ export function updateMediaSession(): void {
     })
 
     navigator.mediaSession.setActionHandler('play', () => {
-      console.log('[Media Session] Play requested')
       resumeAudio()
     })
 
     navigator.mediaSession.setActionHandler('pause', () => {
-      console.log('[Media Session] Pause requested')
       pauseAudio()
     })
 
     navigator.mediaSession.setActionHandler('stop', () => {
-      console.log('[Media Session] Stop requested')
       stopAudio()
     })
 
@@ -27,6 +25,7 @@ export function updateMediaSession(): void {
   }
 }
 
+/** Clears the browser Media Session metadata and stops playback state. */
 export function clearMediaSession(): void {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.playbackState = 'none'

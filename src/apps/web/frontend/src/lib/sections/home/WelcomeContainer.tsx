@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { WelcomeContainerProps } from '$types/sections/home'
 
+/** Animated wrapper that fades in/out the welcome content. */
 export default function WelcomeContainer({ isVisible, children }: WelcomeContainerProps) {
   return (
     <AnimatePresence mode="wait">

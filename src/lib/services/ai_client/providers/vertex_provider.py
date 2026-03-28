@@ -23,6 +23,8 @@ except ImportError:
 
 
 class VertexAIProvider(LangChainProvider):
+    """Google Vertex AI provider via LangChain."""
+
     @classmethod
     def get_provider_name(cls) -> str:
         return "vertex"

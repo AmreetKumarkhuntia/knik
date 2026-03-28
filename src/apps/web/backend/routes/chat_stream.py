@@ -56,6 +56,8 @@ _TTS_QUEUE_MAX = 10
 
 
 class StreamChatRequest(BaseModel):
+    """Request body for the streaming chat endpoint."""
+
     message: str
     conversation_id: str | None = None
 
@@ -108,7 +110,6 @@ async def _tts_worker(
     while True:
         sentence = await sentence_queue.get()
         if sentence is _TTS_DONE:
-            # Signal the consumer that all audio has been produced
             await audio_queue.put(_TTS_DONE)
             break
 
@@ -179,23 +180,19 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
             conversation_id=conversation_id,
             provider_meta={"provider": config.ai_provider, "model": config.ai_model},
         ):
-            # ── Dict sentinel: conversation_id (emitted first) ──
             if isinstance(chunk, dict) and "__conversation_id__" in chunk:
                 conv_id = chunk["__conversation_id__"]
                 yield f"event: conversation_id\ndata: {json.dumps({'conversation_id': conv_id})}\n\n"
                 continue
 
-            # ── Dict sentinel: done (emitted last) ──
             if isinstance(chunk, dict) and chunk.get("__done__"):
                 full_response = chunk.get("full_response", full_response)
                 usage = chunk.get("usage")
 
-                # Queue any remaining text buffer for TTS
                 if text_buffer.strip() and is_speakable(text_buffer):
                     printer.info(f"Queueing remaining text for TTS: '{text_buffer[:50]}...'")
                     await sentence_queue.put(text_buffer.strip())
 
-                # Signal TTS worker that no more sentences are coming
                 await sentence_queue.put(_TTS_DONE)
 
                 # Wait for the TTS worker to finish (with timeout)
@@ -205,7 +202,6 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
                     printer.warning("TTS worker timed out after 30s, sending done anyway")
                     tts_task.cancel()
 
-                # Drain all remaining audio events
                 while True:
                     try:
                         item = await asyncio.wait_for(audio_queue.get(), timeout=0.1)
@@ -229,14 +225,12 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
                 yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
                 continue
 
-            # ── Regular text chunk ──
             assert isinstance(chunk, str)
             yield f"event: text\ndata: {json.dumps({'text': chunk})}\n\n"
 
             full_response += chunk
             text_buffer += chunk
 
-            # Check for complete sentences → queue for background TTS
             for ending in sentence_endings:
                 if ending in text_buffer:
                     parts = text_buffer.split(ending, 1)

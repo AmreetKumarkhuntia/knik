@@ -1,3 +1,5 @@
+"""In-memory workflow scheduler with cron-based schedule management."""
+
 from typing import Any
 
 from imports import printer as logger
@@ -12,6 +14,7 @@ class Scheduler:
     """Main orchestrator for the Workflow Scheduler system."""
 
     def __init__(self):
+        """Initialize the scheduler with engine and cron components."""
         self.workflow_engine = WorkflowEngine()
         self.cron_scheduler = CronScheduler()
         self._running = False
@@ -31,6 +34,7 @@ class Scheduler:
             return False
 
     async def get_workflow(self, workflow_id: str):
+        """Retrieve a workflow by ID."""
         return await workflow_service.get_workflow(workflow_id)
 
     async def unregister_workflow(self, workflow_id: str) -> bool:
@@ -47,12 +51,14 @@ class Scheduler:
             return False
 
     async def add_schedule(self, schedule: Schedule) -> int | None:
+        """Create a new schedule in the database."""
         schedule_id = await SchedulerDB.create_schedule(schedule)
         if schedule_id:
             logger.info(f"Added schedule ID {schedule_id} with target workflow {schedule.target_workflow_id}")
         return schedule_id
 
     async def remove_schedule(self, schedule_id: int) -> bool:
+        """Delete a schedule by ID."""
         try:
             await SchedulerDB.delete_schedule(schedule_id)
             logger.info(f"Removed schedule ID {schedule_id}")
@@ -62,6 +68,7 @@ class Scheduler:
             return False
 
     async def execute_workflow(self, workflow_id: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Manually trigger a workflow execution by ID."""
         logger.info(f"Manual execution triggered for workflow: {workflow_id}")
         workflow = await self.get_workflow(workflow_id)
         if not workflow:
@@ -71,14 +78,17 @@ class Scheduler:
         return result
 
     def start(self) -> None:
+        """Start the cron scheduler background loop."""
         if not self._running:
             self.cron_scheduler.start()
             self._running = True
 
     def stop(self) -> None:
+        """Stop the cron scheduler background loop."""
         if self._running:
             self.cron_scheduler.stop()
             self._running = False
 
     def is_running(self) -> bool:
+        """Return whether the scheduler is currently running."""
         return self._running

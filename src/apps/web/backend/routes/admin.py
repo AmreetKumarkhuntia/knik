@@ -30,6 +30,8 @@ config = WebBackendConfig()
 
 
 class SettingsUpdate(BaseModel):
+    """Request body for updating AI client settings."""
+
     provider: str | None = None
     model: str | None = None
     voice: str | None = None
@@ -56,7 +58,6 @@ async def update_settings(settings: SettingsUpdate):
     """Update AI client settings (recreates client with new config)"""
     try:
         if settings.provider or settings.model:
-            # Build provider-specific kwargs
             provider_kwargs = {
                 "model": settings.model or config.ai_model,
                 "mcp_registry": chat_module.mcp_registry,
@@ -65,7 +66,6 @@ async def update_settings(settings: SettingsUpdate):
                 "system_instruction": config.system_instruction,
             }
 
-            # Forward custom provider fields if applicable
             target_provider = settings.provider or config.ai_provider
             if target_provider == "custom":
                 if settings.api_base:
@@ -73,7 +73,6 @@ async def update_settings(settings: SettingsUpdate):
                 if settings.api_key:
                     provider_kwargs["api_key"] = settings.api_key
 
-            # Recreate AI client with updated settings (offloaded — may connect to API)
             chat_module.ai_client = await asyncio.to_thread(
                 AIClient,
                 provider=target_provider,
@@ -82,7 +81,6 @@ async def update_settings(settings: SettingsUpdate):
             printer.info(f"AI client updated: {target_provider}/{settings.model or config.ai_model}")
 
         if settings.voice:
-            # Recreate TTS processor with new voice (offloaded — may load PyTorch model)
             chat_module.tts_processor = await asyncio.to_thread(
                 TTSAsyncProcessor, voice_model=settings.voice, sample_rate=config.sample_rate
             )

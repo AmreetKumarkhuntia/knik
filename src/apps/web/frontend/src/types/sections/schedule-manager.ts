@@ -1,5 +1,6 @@
 import type { Schedule, ScheduleCreateRequest } from '$types/workflow'
 
+/** Props for the schedule list component. */
 export interface ScheduleListProps {
   schedules: Schedule[]
   loading: boolean
@@ -10,6 +11,7 @@ export interface ScheduleListProps {
   onRun: (workflowId: string) => void
 }
 
+/** Props for a single schedule card. */
 export interface ScheduleCardProps {
   schedule: Schedule
   workflowName?: string
@@ -19,6 +21,7 @@ export interface ScheduleCardProps {
   onRun: (workflowId: string) => void
 }
 
+/** Props for the schedule create/edit form modal. */
 export interface ScheduleFormProps {
   isOpen: boolean
   onClose: () => void

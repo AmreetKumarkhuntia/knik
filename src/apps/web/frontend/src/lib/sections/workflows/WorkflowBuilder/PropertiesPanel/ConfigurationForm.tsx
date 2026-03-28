@@ -3,6 +3,7 @@ import type { ConfigurationFormProps } from '$types/sections/workflow-builder'
 import { getNodeMetadata } from '$lib/constants/nodes'
 import type { FormFieldConfig, FormFieldTip } from '$types/node-registry'
 
+/** Info tip box with colored icon, title, and description. */
 function TipBox({ tip }: { tip: FormFieldTip }) {
   return (
     <div className={`p-3 rounded-lg bg-${tip.color}-500/10 border border-${tip.color}-500/20`}>
@@ -15,6 +16,7 @@ function TipBox({ tip }: { tip: FormFieldTip }) {
   )
 }
 
+/** Range slider field with min/max labels and live value display. */
 function SliderField({
   field,
   value,
@@ -56,6 +58,8 @@ function SliderField({
   )
 }
 
+/** Tag input field with add/remove chip functionality. */
+/** Tag input field with add/remove chip UI. */
 function TagsField({
   field,
   value,
@@ -132,6 +136,7 @@ function TagsField({
   )
 }
 
+/** Expandable/collapsible textarea field. */
 function CollapsibleTextareaField({
   field,
   value,
@@ -170,6 +175,7 @@ function CollapsibleTextareaField({
   )
 }
 
+/** Standard text, textarea, or select form field. */
 function StandardField({
   field,
   value,
@@ -218,6 +224,7 @@ function StandardField({
   )
 }
 
+/** Dynamic form renderer that selects the appropriate field component based on node type. */
 function FormField({
   field,
   value,
@@ -248,6 +255,7 @@ function FormField({
   return <StandardField field={field} value={value} onChange={v => onDataChange(field.field, v)} />
 }
 
+/** Auto-generated configuration form driven by node metadata field definitions. */
 export default function ConfigurationForm({
   nodeType,
   data,

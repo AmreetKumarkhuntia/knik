@@ -1,13 +1,15 @@
 import type { NodeTypeName } from './workflow'
 
+/** Configuration for a node's input or output handle. */
 export interface HandleConfig {
   position: 'top' | 'bottom' | 'left' | 'right'
-  id?: string // For conditional nodes: 'true', 'false'
-  label?: string // Display label for handle
-  color?: string // Tailwind color class for handle
-  style?: Record<string, string> // Additional inline styles
+  id?: string
+  label?: string
+  color?: string
+  style?: Record<string, string>
 }
 
+/** A contextual tip displayed alongside a form field. */
 export interface FormFieldTip {
   icon: string
   title: string
@@ -15,6 +17,7 @@ export interface FormFieldTip {
   color: 'teal' | 'purple' | 'orange' | 'blue' | 'green' | 'red'
 }
 
+/** Configuration for a single form field in the node editor. */
 export interface FormFieldConfig {
   field: string
   label: string
@@ -22,24 +25,24 @@ export interface FormFieldConfig {
   placeholder?: string
   options?: Array<{ value: string; label: string }>
   tip?: FormFieldTip
-  // slider-specific
   min?: number
   max?: number
   step?: number
   defaultValue?: number
-  // tags-specific
   tagPlaceholder?: string
 }
 
+/** Tailwind color classes for a node type. */
 export interface NodeColors {
   primary: string
-  iconBg: string // Tailwind class for icon background
-  iconText: string // Tailwind class for icon color
+  iconBg: string
+  iconText: string
   border: string
   hoverBorder: string
   neonBorder?: string
 }
 
+/** Full metadata describing a registered node type. */
 export interface NodeMetadata {
   type: NodeTypeName | 'StartNode' | 'EndNode'
   label: string
@@ -61,4 +64,5 @@ export interface NodeMetadata {
   contentRenderer?: 'function' | 'conditional' | 'merge' | 'ai' | 'start' | 'end'
 }
 
+/** Registry mapping node type names to their metadata. */
 export type NodeRegistry = Partial<Record<string, NodeMetadata>>

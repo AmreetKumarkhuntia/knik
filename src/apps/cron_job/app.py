@@ -1,3 +1,5 @@
+"""Background cron job application entry point."""
+
 import asyncio
 import contextlib
 import signal

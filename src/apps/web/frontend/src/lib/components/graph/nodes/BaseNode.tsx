@@ -15,6 +15,7 @@ const POSITION_MAP = {
   right: Position.Right,
 }
 
+/** Renders a single flow node handle at the configured position. */
 function NodeHandle({
   config,
   type,
@@ -35,6 +36,7 @@ function NodeHandle({
   )
 }
 
+/** Returns CSS classes for the execution status ring/animation overlay. */
 function getStatusOverlay(status?: string) {
   switch (status) {
     case 'success':
@@ -50,6 +52,7 @@ function getStatusOverlay(status?: string) {
   }
 }
 
+/** Pill-shaped node renderer for start and end nodes. */
 function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, colors, handles, contentRenderer } = metadata
   const isStart = contentRenderer === 'start'
@@ -102,6 +105,7 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
   )
 }
 
+/** Card-style node renderer for AI execution nodes. */
 function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
   const isExecution = data.mode === 'execution'
@@ -164,6 +168,7 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
   )
 }
 
+/** Standard rectangular node renderer for function and merge nodes. */
 function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
   const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
   const isExecution = data.mode === 'execution'

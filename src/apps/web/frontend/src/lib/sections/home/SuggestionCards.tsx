@@ -22,6 +22,7 @@ const suggestions = [
 
 import type { SuggestionCardsProps } from '$types/sections/home'
 
+/** Grid of clickable prompt suggestion cards. */
 export default function SuggestionCards({ onSelectPrompt }: SuggestionCardsProps) {
   const container = {
     hidden: { opacity: 0 },

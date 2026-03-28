@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { KeyboardShortcut } from '../../types/hooks'
 
+/** Registers keyboard shortcuts and cleans up on unmount. */
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

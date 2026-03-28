@@ -3,6 +3,7 @@ import ToggleSwitch from '$components/ToggleSwitch'
 import type { ScheduleCardProps } from '$types/sections/schedule-manager'
 import { PlayArrow, Edit, Delete } from '@mui/icons-material'
 
+/** Converts a recurrence interval in seconds to a human-readable string. */
 function formatRecurrence(seconds?: number): string {
   if (!seconds) return 'One-time'
   if (seconds < 3600) return `Every ${Math.round(seconds / 60)} min`
@@ -11,6 +12,7 @@ function formatRecurrence(seconds?: number): string {
   return `Every ${Math.round(seconds / 604800)} week`
 }
 
+/** Card displaying schedule details with toggle, run, edit, and delete actions. */
 export default function ScheduleCard({
   schedule,
   workflowName,

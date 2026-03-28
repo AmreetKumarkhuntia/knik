@@ -5,6 +5,7 @@ import type { WorkflowDefinition } from '$types/workflow'
 import type { CanvasHandle } from '$types/sections/workflow-builder'
 import { workflowApi } from '$services/workflowApi'
 
+/** Workflow builder page with canvas, save, execute, and export actions. */
 export default function WorkflowBuilder() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()

@@ -5,6 +5,7 @@ import FormField from '$components/FormField'
 import type { ScheduleFormProps } from '$types/sections/schedule-manager'
 import type { ScheduleCreateRequest } from '$types/workflow'
 
+/** Modal form for creating or editing a schedule. */
 export default function ScheduleForm({
   isOpen,
   onClose,

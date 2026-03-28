@@ -238,26 +238,31 @@ export const NODE_REGISTRY: NodeRegistry = {
   },
 }
 
+/** Returns the metadata for a node type from the registry. */
 export function getNodeMetadata(type: string): NodeMetadata | undefined {
   return NODE_REGISTRY[type]
 }
 
+/** Returns the Material Symbols icon name for a node type. */
 export function getNodeIcon(type: string): string {
   const node = NODE_REGISTRY[type]
   if (!node) return 'help'
   return node.icon
 }
 
+/** Returns the default data object for a node type. */
 export function getDefaultNodeData(type: string): Record<string, unknown> {
   const node = NODE_REGISTRY[type]
   if (!node) return {}
   return node.defaultData
 }
 
+/** Returns an array of all registered node metadata entries. */
 export function getAllNodeTypes(): NodeMetadata[] {
   return Object.values(NODE_REGISTRY).filter((node): node is NodeMetadata => node !== undefined)
 }
 
+/** Returns the human-readable label for a node type. */
 export function getNodeLabel(type: string): string {
   const node = NODE_REGISTRY[type]
   if (!node) return type.replace('Node', '')

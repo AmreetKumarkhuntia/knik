@@ -1,3 +1,5 @@
+"""Base AI provider interface and LangChain provider mixin."""
+
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from dataclasses import dataclass
@@ -45,6 +47,7 @@ class BaseAIProvider(ABC):
 
     @abstractmethod
     def __init__(self, **kwargs):
+        """Initialize the provider with the given configuration."""
         pass
 
     @abstractmethod
@@ -101,13 +104,11 @@ class BaseAIProvider(ABC):
         except Exception as e:
             printer.warning(f"Model discovery failed for {self.get_provider_name()}: {e}")
 
-        # Fallback to static Config.AI_MODELS, filtered by provider
         try:
             provider_name = self.get_provider_name()
             prefixes = self._PROVIDER_MODEL_PREFIXES.get(provider_name, [])
             fallback_models = []
             for model_id, description in Config.AI_MODELS.items():
-                # If we have known prefixes for this provider, only include matching models
                 if prefixes and not any(model_id.startswith(p) for p in prefixes):
                     continue
                 fallback_models.append(
@@ -123,10 +124,13 @@ class BaseAIProvider(ABC):
             return []
 
     def _get_context_window_for_model(self, model: str) -> int:
+        """Look up the context window size for a model."""
         return get_context_window(model)
 
 
 class LangChainProvider(BaseAIProvider):
+    """Mixin for providers built on LangChain LLM and agent APIs."""
+
     def __init__(
         self,
         llm,
@@ -301,7 +305,6 @@ class LangChainProvider(BaseAIProvider):
                 message = event[0]
                 message_class = message.__class__.__name__
 
-                # Skip tool messages
                 if "Tool" in message_class:
                     continue
 
