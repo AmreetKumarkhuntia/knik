@@ -58,6 +58,43 @@ class TelegramProvider(BaseMessagingProvider):
             printer.error(f"Telegram send_message failed: {e}")
             return MessageResult(success=False, error=str(e))
 
+    def supports_message_edit(self) -> bool:
+        return True
+
+    async def edit_message(self, chat_id: str, message_id: str, text: str, **kwargs) -> MessageResult:
+        if not self.is_configured():
+            return MessageResult(success=False, error="TelegramProvider is not configured")
+
+        bot = self._app.bot if self._app else self._bot
+
+        try:
+            chunks = _split_text(text, max_len=4096)
+
+            msg = await bot.edit_message_text(
+                chat_id=int(chat_id),
+                message_id=int(message_id),
+                text=chunks[0],
+                **kwargs,
+            )
+
+            for chunk in chunks[1:]:
+                await bot.send_message(
+                    chat_id=int(chat_id),
+                    text=chunk,
+                    **kwargs,
+                )
+
+            return MessageResult(
+                success=True,
+                message_id=str(msg.message_id),
+            )
+        except Exception as e:
+            error_str = str(e)
+            if "message is not modified" in error_str:
+                return MessageResult(success=True, message_id=message_id)
+            printer.error(f"Telegram edit_message failed: {error_str}")
+            return MessageResult(success=False, error=error_str)
+
     async def start(self, on_message: MessageCallback) -> None:
         if not self.is_configured():
             raise RuntimeError("Cannot start TelegramProvider: not configured (missing bot token)")
@@ -102,6 +139,7 @@ class TelegramProvider(BaseMessagingProvider):
             sender_id=str(update.message.from_user.id) if update.message.from_user else None,
             sender_name=update.message.from_user.full_name if update.message.from_user else None,
             timestamp=update.message.date.timestamp() if update.message.date else None,
+            provider_name="telegram",
             raw=update.to_dict(),
         )
 

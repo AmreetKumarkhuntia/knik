@@ -26,6 +26,8 @@ python-multipart>=0.0.6  # Form data parsing
 ruff>=0.7.0  # Modern Python linter and formatter
 pre-commit>=3.8.0
 pyright>=1.1.380
+pytest>=8.0.0  # Testing framework
+pytest-asyncio>=0.24.0  # Async test support
 
 # Scheduler packages
 croniter>=6.0.0

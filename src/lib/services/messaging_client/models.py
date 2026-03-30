@@ -23,4 +23,5 @@ class IncomingMessage:
     sender_id: str | None = None
     sender_name: str | None = None
     timestamp: float | None = None
+    provider_name: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
