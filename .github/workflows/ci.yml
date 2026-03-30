@@ -25,6 +25,9 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
 
+      - name: Install system dependencies
+        run: sudo apt-get install -y libportaudio2
+
       - name: Create venv and install dependencies
         run: |
           uv venv .venv
@@ -45,6 +48,11 @@ jobs:
         run: |
           source .venv/bin/activate
           pyright
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          PYTHONPATH=src pytest tests/ -v
 
   frontend:
     name: Frontend - Lint, Format, Typecheck & Build (${{ matrix.os }})

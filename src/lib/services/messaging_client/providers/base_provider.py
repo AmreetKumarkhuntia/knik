@@ -31,3 +31,11 @@ class BaseMessagingProvider(ABC):
 
     @abstractmethod
     def get_info(self) -> dict[str, Any]: ...
+
+    def supports_message_edit(self) -> bool:
+        """Whether this provider supports editing sent messages. Override in providers that support editing."""
+        return False
+
+    async def edit_message(self, chat_id: str, message_id: str, text: str, **kwargs) -> MessageResult:
+        """Edit an existing sent message. Override in providers that support editing."""
+        return MessageResult(success=False, error="Message editing not supported by this provider")
