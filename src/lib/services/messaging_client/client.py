@@ -41,6 +41,20 @@ class MessagingClient:
             return MessageResult(success=False, error=f"Provider '{provider}' is not configured")
         return await target.send_message(chat_id, text, **kwargs)
 
+    def supports_message_edit(self, provider: str | None = None) -> bool:
+        """Check if the resolved provider supports editing sent messages."""
+        target = self._resolve_provider(provider)
+        return target.supports_message_edit()
+
+    async def edit_message(
+        self, chat_id: str, message_id: str, text: str, provider: str | None = None, **kwargs
+    ) -> MessageResult:
+        """Edit an existing sent message via the resolved provider."""
+        target = self._resolve_provider(provider)
+        if not target.is_configured():
+            return MessageResult(success=False, error=f"Provider '{provider}' is not configured")
+        return await target.edit_message(chat_id, message_id, text, **kwargs)
+
     async def start(self, on_message: MessageCallback) -> None:
         """Start all configured providers concurrently."""
         configured = {name: p for name, p in self._providers.items() if p.is_configured()}
