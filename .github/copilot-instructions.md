@@ -165,7 +165,8 @@ while not processor.is_processing_complete():  # Wait for completion
 ### Coding Patterns
 
 - Code should be self-explanatory
-- Avoid useless comments. Keep comments when necessary
+- Comments/docstrings policy: remove comments that merely restate **what** the code does (the code already says that). Keep only comments/docstrings that explain **why** a decision was made, or document non-obvious constraints (e.g., error conditions, side effects, design rationale)
+- Module-level docstrings (one-liners) are fine. Class/method docstrings that just paraphrase the name should be removed
 - Documentation should be simple and straightforward
 - Small modules, helper functions, shared logic via unified base functions
 - Return structured dicts with `success` flag and descriptive `error` messages
