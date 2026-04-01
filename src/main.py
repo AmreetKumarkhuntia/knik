@@ -60,6 +60,24 @@ def run_cron_app():
         sys.exit(1)
 
 
+def run_bot_app():
+    """Run the Bot daemon application."""
+    try:
+        import asyncio
+
+        from apps.bot import BotApp, BotConfig
+
+        config = BotConfig()
+        app = BotApp(config)
+        asyncio.run(app.run())
+    except ImportError as e:
+        printer.error(f"Failed to import bot app: {e}")
+        sys.exit(1)
+    except Exception as e:
+        printer.error(f"Failed to start bot app: {e}")
+        sys.exit(1)
+
+
 def main():
     """Main application function with mode selection."""
     parser = argparse.ArgumentParser(
@@ -70,6 +88,8 @@ Examples:
   python main.py                   # Run GUI application (default)
   python main.py --mode gui        # Run GUI application
   python main.py --mode console    # Run terminal console
+  python main.py --mode cron       # Run background scheduler
+  python main.py --mode bot        # Run messaging bot daemon
 
 For TTS demos, use: python demo/tts/demo.py
         """,
@@ -77,9 +97,9 @@ For TTS demos, use: python demo/tts/demo.py
 
     parser.add_argument(
         "--mode",
-        choices=["console", "gui", "cron"],
+        choices=["console", "gui", "cron", "bot"],
         default="gui",
-        help="Application mode: console, gui, or cron (background scheduler)",
+        help="Application mode: console, gui, cron (background scheduler), or bot (messaging)",
     )
 
     args = parser.parse_args()
@@ -90,6 +110,8 @@ For TTS demos, use: python demo/tts/demo.py
         run_gui_app()
     elif args.mode == "cron":
         run_cron_app()
+    elif args.mode == "bot":
+        run_bot_app()
     else:
         printer.error(f"Unknown mode: {args.mode}")
         sys.exit(1)
