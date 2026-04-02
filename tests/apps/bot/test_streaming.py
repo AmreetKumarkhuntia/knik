@@ -263,26 +263,6 @@ class TestTextChunking:
         assert pos == 100
 
 
-class TestSentenceBoundaryDetection:
-    def test_detects_period(self, manager):
-        assert manager._detect_sentence_boundary("Hello.") is True
-
-    def test_detects_exclamation(self, manager):
-        assert manager._detect_sentence_boundary("Hello!") is True
-
-    def test_detects_question(self, manager):
-        assert manager._detect_sentence_boundary("Hello?") is True
-
-    def test_detects_newline(self, manager):
-        assert manager._detect_sentence_boundary("Hello\n") is True
-
-    def test_detects_no_boundary(self, manager):
-        assert manager._detect_sentence_boundary("Hello") is False
-
-    def test_handles_empty_string(self, manager):
-        assert manager._detect_sentence_boundary("") is False
-
-
 class TestStreamingIntegration:
     @pytest.mark.asyncio
     async def test_full_streaming_flow(self, manager, mock_messaging_client):

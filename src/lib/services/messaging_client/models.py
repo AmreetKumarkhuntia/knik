@@ -20,6 +20,7 @@ class IncomingMessage:
 
     chat_id: str
     text: str
+    message_id: str | None = None
     sender_id: str | None = None
     sender_name: str | None = None
     timestamp: float | None = None

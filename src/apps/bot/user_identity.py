@@ -17,35 +17,12 @@ class UserIdentity:
 
 
 class UserIdentityManager:
-    """
-    Manages cross-platform user identity resolution.
-
-    Maps (provider, sender_id) tuples to unified user_ids, enabling
-    conversation continuity across different messaging platforms.
-    """
-
     def __init__(self) -> None:
         self._identity_map: dict[tuple[str, str], str] = {}
         self._user_conversations: dict[str, str | None] = {}
         self._user_metadata: dict[str, dict[str, Any]] = {}
 
     def resolve(self, incoming: IncomingMessage, provider: str) -> UserIdentity:
-        """
-        Resolve an incoming message to a unified user identity.
-
-        Creates a new user_id if this (provider, sender_id) combination
-        hasn't been seen before.
-
-        Args:
-            incoming: The incoming message from a provider
-            provider: The provider name (e.g., 'telegram', 'whatsapp')
-
-        Returns:
-            UserIdentity with resolved user_id and conversation state
-
-        Raises:
-            ValueError: If sender_id is None
-        """
         if incoming.sender_id is None:
             raise ValueError(f"IncomingMessage from {provider} has no sender_id. Cannot resolve identity.")
 
@@ -107,17 +84,6 @@ class UserIdentityManager:
         return f"usr_{uuid.uuid4().hex[:12]}"
 
     def link_identities(self, user_id: str, provider: str, sender_id: str) -> None:
-        """
-        Link an additional (provider, sender_id) to an existing user.
-
-        Args:
-            user_id: Existing unified user identifier
-            provider: Provider to link
-            sender_id: Sender ID on that provider
-
-        Raises:
-            ValueError: If user_id doesn't exist or key already mapped
-        """
         if user_id not in self._user_conversations:
             raise ValueError(f"User {user_id} does not exist")
 

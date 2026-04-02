@@ -135,6 +135,7 @@ class TelegramProvider(BaseMessagingProvider):
 
         incoming = IncomingMessage(
             chat_id=str(update.message.chat_id),
+            message_id=str(update.message.message_id),
             text=update.message.text,
             sender_id=str(update.message.from_user.id) if update.message.from_user else None,
             sender_name=update.message.from_user.full_name if update.message.from_user else None,
@@ -144,7 +145,7 @@ class TelegramProvider(BaseMessagingProvider):
         )
 
         if self._on_message:
-            await self._on_message(incoming)
+            self._on_message(incoming)
 
 
 def _split_text(text: str, max_len: int = 4096) -> list[str]:

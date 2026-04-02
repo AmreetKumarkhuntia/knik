@@ -19,6 +19,9 @@ class BotConfig(Config):
         default_factory=lambda: Config.from_env("KNIK_BOT_CONCURRENT_LIMIT", BotConfig.DEFAULT_CONCURRENT_LIMIT, int)
     )
 
+    busy_message: str = "I'm still thinking about your previous message."
+    error_message: str = "Sorry, an error occurred while processing your message."
+
     @classmethod
     def _parse_providers(cls) -> list[str]:
         raw = Config.from_env("KNIK_BOT_PROVIDERS", None)

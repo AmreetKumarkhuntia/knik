@@ -1,8 +1,4 @@
-"""BotMessageHandler - Non-blocking message processor with per-chat task isolation.
-
-This is the core orchestrator for the Bot App. It receives incoming messages
-from any platform adapter and coordinates the full response lifecycle.
-"""
+"""BotMessageHandler - Non-blocking message processor with per-chat task isolation."""
 
 from __future__ import annotations
 
@@ -27,8 +23,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ChatKey:
-    """Immutable identifier for a unique chat across all platforms."""
-
     provider: str
     chat_id: str
 
@@ -38,8 +32,6 @@ class ChatKey:
 
 @dataclass
 class ActiveTaskInfo:
-    """Metadata about an active processing task."""
-
     task: asyncio.Task
     started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     message_id: str = ""
@@ -47,19 +39,6 @@ class ActiveTaskInfo:
 
 
 class BotMessageHandler:
-    """Non-blocking message processor with per-chat task isolation.
-
-    Key design:
-    - handle() returns immediately (fire-and-forget)
-    - Each message spawns an asyncio.Task
-    - Per-chat guard: only one task per chat_id at a time
-    - Error isolation: one user's failure doesn't affect others
-
-    Thread Safety:
-    - All state mutations protected by _lock
-    - Callbacks run in event loop context
-    """
-
     def __init__(
         self,
         ai_client: AIClient,
@@ -82,23 +61,14 @@ class BotMessageHandler:
         self._total_queued = 0
 
     async def handle(self, incoming: IncomingMessage) -> None:
-        """Non-blocking entry point. Returns immediately.
-
-        Flow:
-            1. Acquire lock and check for existing task
-            2. If task exists: send "busy" hint, increment queue counter, return
-            3. Create asyncio.Task for _process_message
-            4. Register task in _active_tasks
-            5. Add done_callback for cleanup
-            6. Release lock and return
-        """
         provider = incoming.provider_name or "unknown"
         chat_key = ChatKey(provider=provider, chat_id=incoming.chat_id)
+
+        logger.info("Received message: %s", incoming.text)
 
         async with self._lock:
             if chat_key in self._active_tasks:
                 self._total_queued += 1
-                logger.debug("Chat %s already has active task, sending busy hint", chat_key)
                 asyncio.create_task(
                     self._send_busy_hint(incoming, provider),
                     name=f"busy-hint-{chat_key}",
@@ -118,30 +88,20 @@ class BotMessageHandler:
 
             task.add_done_callback(lambda t: self._cleanup_callback(chat_key, t))
 
-            logger.info(
-                "Started processing task for %s (message: %s)",
-                chat_key,
-                incoming.message_id,
-            )
+            logger.info("Started processing task for %s (message: %s)", chat_key, incoming.message_id)
 
     async def cancel_all(self, timeout: float = 5.0) -> None:
-        """Cancel all active tasks. Called during shutdown."""
         async with self._lock:
             if not self._active_tasks:
                 logger.info("No active tasks to cancel")
                 return
 
             tasks_info = list(self._active_tasks.items())
-            logger.info(
-                "Cancelling %d active tasks with %.1fs timeout",
-                len(tasks_info),
-                timeout,
-            )
+            logger.info("Cancelling %d active tasks with %.1fs timeout", len(tasks_info), timeout)
 
-            for chat_key, info in tasks_info:
+            for _chat_key, info in tasks_info:
                 if not info.task.done():
                     info.task.cancel()
-                    logger.debug("Cancelled task for %s", chat_key)
 
             tasks = [info.task for _, info in tasks_info]
             try:
@@ -158,11 +118,9 @@ class BotMessageHandler:
             self._active_tasks.clear()
 
     def get_active_count(self) -> int:
-        """Return number of active tasks for monitoring."""
         return len(self._active_tasks)
 
     def get_metrics(self) -> dict:
-        """Return handler metrics for monitoring/health checks."""
         return {
             "total_processed": self._total_processed,
             "total_errors": self._total_errors,
@@ -181,22 +139,10 @@ class BotMessageHandler:
         }
 
     async def _process_message(self, incoming: IncomingMessage, provider: str) -> None:
-        """Full message processing lifecycle. Runs as independent asyncio task."""
         chat_key = ChatKey(provider=provider, chat_id=incoming.chat_id)
 
         try:
-            logger.debug(
-                "Processing message %s from %s",
-                incoming.message_id,
-                chat_key,
-            )
-
             identity = self._user_identity.resolve(incoming, provider)
-            logger.debug(
-                "Resolved user %s for sender %s",
-                identity.user_id,
-                incoming.sender_id,
-            )
 
             result = await self._streaming.deliver(
                 provider=provider,
@@ -209,28 +155,15 @@ class BotMessageHandler:
 
             if result.error:
                 self._total_errors += 1
-                logger.error(
-                    "Delivery failed for message %s: %s",
-                    incoming.message_id,
-                    result.error,
-                )
-                await self._send_error_message(incoming, provider, Exception(result.error))
+                logger.error("Delivery failed for message %s: %s", incoming.message_id, result.error)
+                await self._send_error_message(incoming, provider, result.error)
                 return
 
             if result.conversation_id and result.conversation_id != identity.conversation_id:
                 self._user_identity.set_conversation_id(identity.user_id, result.conversation_id)
-                logger.debug(
-                    "Updated conversation %s for user %s",
-                    result.conversation_id,
-                    identity.user_id,
-                )
 
             self._total_processed += 1
-            logger.info(
-                "Successfully processed message %s (conv: %s)",
-                incoming.message_id,
-                result.conversation_id,
-            )
+            logger.info("Message sent for %s (conv: %s)", incoming.message_id, result.conversation_id)
 
         except asyncio.CancelledError:
             logger.info("Processing cancelled for %s", chat_key)
@@ -238,50 +171,28 @@ class BotMessageHandler:
 
         except Exception as e:
             self._total_errors += 1
-            logger.exception(
-                "Error processing message %s from %s: %s",
-                incoming.message_id,
-                chat_key,
-                e,
-            )
+            logger.exception("Error processing message %s from %s: %s", incoming.message_id, chat_key, e)
 
             try:
-                await self._send_error_message(incoming, provider, e)
+                await self._send_error_message(incoming, provider, str(e))
             except Exception as inner_e:
-                logger.error(
-                    "Failed to send error message to %s: %s",
-                    chat_key,
-                    inner_e,
-                )
+                logger.error("Failed to send error message to %s: %s", chat_key, inner_e)
 
     def _cleanup_callback(self, chat_key: ChatKey, task: asyncio.Task) -> None:
-        """Done callback. Removes task from _active_tasks, logs any errors."""
         if task.cancelled():
             logger.info("Task for %s was cancelled", chat_key)
         elif task.exception():
-            exc = task.exception()
-            logger.error(
-                "Task for %s failed with exception: %s",
-                chat_key,
-                exc,
-            )
+            logger.error("Task for %s failed: %s", chat_key, task.exception())
         else:
-            logger.debug("Task for %s completed successfully", chat_key)
+            logger.info("Task for %s completed", chat_key)
 
-        asyncio.create_task(
-            self._remove_active_task(chat_key),
-            name=f"cleanup-{chat_key}",
-        )
+        async def _remove():
+            async with self._lock:
+                self._active_tasks.pop(chat_key, None)
 
-    async def _remove_active_task(self, chat_key: ChatKey) -> None:
-        """Remove a task from _active_tasks. Called by cleanup callback."""
-        async with self._lock:
-            if chat_key in self._active_tasks:
-                del self._active_tasks[chat_key]
-                logger.debug("Removed task for %s from active tasks", chat_key)
+        asyncio.create_task(_remove(), name=f"cleanup-{chat_key}")
 
     async def _send_busy_hint(self, incoming: IncomingMessage, provider: str) -> None:
-        """Send a "still thinking" message when chat already has active task."""
         try:
             await self._messaging_client.send_message(
                 chat_id=incoming.chat_id,
@@ -290,27 +201,18 @@ class BotMessageHandler:
                 reply_to_message_id=incoming.message_id,
             )
         except Exception as e:
-            logger.warning(
-                "Failed to send busy hint to %s:%s: %s",
-                provider,
-                incoming.chat_id,
-                e,
-            )
+            logger.warning("Failed to send busy hint to %s:%s: %s", provider, incoming.chat_id, e)
 
     async def _send_error_message(
         self,
         incoming: IncomingMessage,
         provider: str,
-        error: Exception,
+        error: str | Exception,
     ) -> None:
-        """Send a user-friendly error message."""
         try:
+            text = self._config.error_message
             if isinstance(error, asyncio.CancelledError):
                 text = "Processing was interrupted. Please try again."
-            elif hasattr(error, "is_retryable") and error.is_retryable:
-                text = f"{self._config.error_message} Please try again in a moment."
-            else:
-                text = self._config.error_message
 
             await self._messaging_client.send_message(
                 chat_id=incoming.chat_id,
@@ -319,9 +221,4 @@ class BotMessageHandler:
                 reply_to_message_id=incoming.message_id,
             )
         except Exception as e:
-            logger.error(
-                "Failed to send error message to %s:%s: %s",
-                provider,
-                incoming.chat_id,
-                e,
-            )
+            logger.error("Failed to send error message to %s:%s: %s", provider, incoming.chat_id, e)
