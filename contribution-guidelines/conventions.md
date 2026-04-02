@@ -1,5 +1,11 @@
 # Conventions & Pitfalls
 
+
+## Commenting on Code
+
+1. Comments should only be allowed if it explains why we are doing some specific thing
+2. Comments which explains what is straight up useless and shouldn't be kept at all
+
 ## Project-Specific Conventions
 
 1. **Printer vs print:** Use `printer` for internal logging. Use regular `print()` for direct user output (e.g., debug mode)
