@@ -15,10 +15,6 @@ class BotConfig(Config):
 
     bot_providers: list[str] = field(default_factory=lambda: BotConfig._parse_providers())
 
-    bot_system_instruction: str | None = field(
-        default_factory=lambda: Config.from_env("KNIK_BOT_SYSTEM_INSTRUCTION", None)
-    )
-
     bot_concurrent_limit: int = field(
         default_factory=lambda: Config.from_env("KNIK_BOT_CONCURRENT_LIMIT", BotConfig.DEFAULT_CONCURRENT_LIMIT, int)
     )
@@ -34,8 +30,3 @@ class BotConfig(Config):
 
     def is_provider_enabled(self, provider: str) -> bool:
         return provider.lower() in self.bot_providers
-
-    def get_effective_system_instruction(self) -> str:
-        if self.bot_system_instruction:
-            return self.bot_system_instruction
-        return self.system_instruction

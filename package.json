@@ -15,6 +15,8 @@
     "start:console:dual": "./scripts/start_console_dual.sh",
     "start:cron": "bash -c '. .env && .venv/bin/python -u src/main.py --mode cron'",
     "start:cron:logs": "bash -c '. .env && .venv/bin/python -u src/main.py --mode cron' 2>&1 | tee logs/cron.log",
+    "start:bot": "bash -c '. .env && .venv/bin/python -u src/main.py --mode bot'",
+    "start:bot:logs": "bash -c '. .env && .venv/bin/python -u src/main.py --mode bot' 2>&1 | tee logs/bot.log",
     "start:web:backend": "./scripts/start_web_backend.sh",
     "start:web:backend:logs": "./scripts/start_web_backend.sh 2>&1 | tee logs/web_backend.log",
     "start:web:frontend": "./scripts/start_web_frontend.sh 2>&1 | tee logs/frontend.log",
