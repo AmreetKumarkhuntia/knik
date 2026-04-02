@@ -6,12 +6,17 @@ from imports import AIClient, ConsoleProcessor, TTSAsyncProcessor, printer
 
 
 try:
+    from .commands import create_command_system
     from .config import ConsoleConfig
     from .history import ConversationHistory
+    from .identity import ConsoleIdentity
 except ImportError:
+    from apps.console.commands import create_command_system
     from apps.console.config import ConsoleConfig
     from apps.console.history import ConversationHistory
+    from apps.console.identity import ConsoleIdentity
 
+from lib.commands.service import CommandService
 from lib.mcp import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
 from lib.services.tool_session.manager import ToolSessionManager, current_conversation_id
@@ -27,7 +32,6 @@ class ConsoleApp:
     """Main interactive console application for Knik AI assistant."""
 
     def __init__(self, config: ConsoleConfig | None = None):
-        """Initialize the console application with optional configuration."""
         self.config = config or ConsoleConfig()
         self.ai_client: AIClient | None = None
         self.tts_processor: TTSAsyncProcessor | None = None
@@ -35,13 +39,15 @@ class ConsoleApp:
         self.history = ConversationHistory(max_size=self.config.max_history_size)
         self.running = False
         self.debug_mode = False
+        self.command_service: CommandService | None = None
+        self._console_identity: ConsoleIdentity | None = None
 
     def initialize(self) -> bool:
-        """Initialize all application components (AI client, TTS, console processor)."""
         try:
             printer.info("Initializing console application...")
 
             self._initialize_ai_client()
+            self._initialize_command_service()
             self._initialize_tts_processor()
             self._initialize_console_processor()
 
@@ -53,7 +59,6 @@ class ConsoleApp:
             return False
 
     def _initialize_ai_client(self):
-        """Set up the AI client with MCP tools registry."""
         self.mcp_registry = MCPServerRegistry()
         tools_registered = register_all_tools(self.mcp_registry)
         if tools_registered > 0:
@@ -68,8 +73,18 @@ class ConsoleApp:
             model_name=self.config.ai_model,
         )
 
+    def _initialize_command_service(self):
+        self._console_identity = ConsoleIdentity()
+        self.command_service = CommandService(
+            ai_client=self.ai_client,
+            user_identity=self._console_identity,
+            mcp_registry=self.mcp_registry,
+            system_instruction=self.config.system_instruction,
+        )
+        _registry, self._command_dispatcher = create_command_system(self.command_service)
+        printer.info(f"✓ Registered {len(_registry.list_commands())} shared commands")
+
     def _initialize_tts_processor(self):
-        """Set up the text-to-speech async processor."""
         self.tts_processor = TTSAsyncProcessor(
             sample_rate=self.config.sample_rate,
             voice_model=self.config.voice_name,
@@ -78,24 +93,13 @@ class ConsoleApp:
         self.tts_processor.start_async_processing()
 
     def _initialize_console_processor(self):
-        """Set up the console command processor and register all commands."""
         self.console_processor = ConsoleProcessor(command_prefix=self.config.command_prefix)
         commands_count = register_commands(self, self.console_processor)
         printer.info(f"✓ Registered {commands_count} console commands")
 
-    def _build_prompt(self, user_input: str) -> str:
-        """Build a prompt with conversation context prepended."""
-        context = self.history.get_context(last_n=3)
-        if context:
-            return f"Previous conversation:\n{context}\n\nCurrent question: {user_input}"
-        return user_input
-
     def _stream_response(self, user_input: str):
-        """Stream AI response chunks and record the conversation in history."""
         printer.info("🤔 Thinking...")
 
-        # Set a stable session key so browser tools share one tab for this
-        # console session rather than falling back to the module-level default.
         current_conversation_id.set("console")
 
         history_messages = self.history.get_messages(last_n=self.config.history_context_size)
@@ -118,7 +122,6 @@ class ConsoleApp:
         self.history.add_entry(user_input, "".join(full_response))
 
     def _enqueue_voice(self, text: str):
-        """Queue text for async voice generation if voice output is enabled."""
         if self.config.enable_voice_output and self.tts_processor and text.strip():
             try:
                 self.tts_processor.play_async(text)
@@ -126,7 +129,6 @@ class ConsoleApp:
                 printer.error(f"Voice generation error: {e}")
 
     def wait_until(self, condition_fn, timeout: float | None = None, check_interval: float = 2) -> bool:
-        """Block until *condition_fn* returns True, with optional timeout."""
         start_time = time.time()
 
         while not condition_fn():
@@ -138,10 +140,22 @@ class ConsoleApp:
         return True
 
     def _handle_user_input(self, user_input: str):
-        """Process user input — dispatch commands or stream an AI response."""
         if user_input.startswith(self.config.command_prefix):
             if self.debug_mode:
                 print(f"🐛 [DEBUG] Executing command: {user_input}")
+
+            # Try shared command dispatcher first (model, provider, sessions, etc.)
+            result = self._command_dispatcher.try_dispatch(user_input)
+            if result is not None:
+                # Sync ai_client back if a model/provider switch happened
+                if "ai_client" in result.data:
+                    self.ai_client = result.data["ai_client"]
+                    if self.command_service:
+                        self.command_service._ai_client = self.ai_client
+                print(f"{self.config.assistant_symbol}{result.message}\n")
+                return
+
+            # Fall through to console-only commands (exit, clear, history, etc.)
             response = self.console_processor.process_inline(user_input)
             if response:
                 print(f"{self.config.assistant_symbol}{response}\n")
@@ -197,8 +211,7 @@ class ConsoleApp:
             if self.debug_mode:
                 print(f"🐛 [DEBUG] Streaming complete! ({chunk_count} chunks)")
 
-            status = f"Streaming complete! ({chunk_count} chunks)"
-            printer.success(status)
+            printer.success(f"Streaming complete! ({chunk_count} chunks)")
 
             if self.config.enable_voice_output and self.tts_processor:
                 if self.debug_mode:
@@ -222,7 +235,6 @@ class ConsoleApp:
                 print(f"🐛 [DEBUG] Traceback:\n{traceback.format_exc()}")
 
     def _display_welcome(self):
-        """Print the welcome banner and usage hints."""
         print("\n" + "=" * 60)
         print(self.config.welcome_message)
         print("=" * 60)
@@ -230,7 +242,6 @@ class ConsoleApp:
         print(f"Type '{self.config.command_prefix}exit' to quit\n")
 
     def run(self):
-        """Main event loop — initialize, accept input, and handle shutdown."""
         if not self.initialize():
             printer.error("Failed to start application")
             return
@@ -265,7 +276,6 @@ class ConsoleApp:
             self._shutdown()
 
     def _shutdown(self):
-        """Clean up resources and display farewell message."""
         printer.info("Shutting down console application...")
         ToolSessionManager.get_instance().cleanup_all()
         printer.success("Thanks for using Knik Console! 👋")

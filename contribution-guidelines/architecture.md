@@ -74,10 +74,10 @@ Each app is a standalone entry point. Apps must **never** import from each other
 
 | App | Purpose | Structure |
 |---|---|---|
-| `console/` | Interactive CLI chat | `app.py` + `config.py` + `history.py` + `tools/` (command handlers) |
+| `console/` | Interactive CLI chat | `app.py` + `config.py` + `history.py` + `identity.py` + `commands/` (shared command system) + `tools/` (console-only handlers) |
 | `gui/` | Desktop GUI (CustomTkinter) | `app.py` + `config.py` + `theme.py` + `components/` |
 | `web/` | Web interface | `backend/` (FastAPI) + `frontend/` (React + TypeScript + Vite) |
-| `bot/` | Messaging bot | `app.py` + `config.py` + `message_handler.py` + `streaming.py` |
+| `bot/` | Messaging bot | `app.py` + `config.py` + `message_handler.py` + `streaming.py` + `user_identity.py` + `commands/` (shared command system) |
 | `cron_job/` | Scheduled workflow runner | `app.py` |
 
 When adding a new app, create a subdirectory under `src/apps/` with at least `__init__.py` and `app.py`. Add a corresponding mode to `src/main.py`.
@@ -88,7 +88,8 @@ Use the registry pattern for extensible systems:
 
 - **Providers** register via `ProviderRegistry.register()` at module load time
 - **MCP tools** auto-register via dictionary lookup in `lib/mcp/index.py`
-- **Console commands** register in `apps/console/tools/index.py`
+- **Shared commands** (model, provider, sessions, etc.) are handled by `CommandService` from `lib/commands/` and wired per-app in `apps/<app>/commands/`
+- **Console-only commands** (exit, clear, history, etc.) register in `apps/console/tools/index.py`
 
 When adding a new provider, tool, or command - register it through the existing registry mechanism. Do not bypass registries with direct references.
 

@@ -1,6 +1,6 @@
 """Command operations - shared session, model, and status management."""
 
-from .models import CommandDefinition, CommandResult, ModelInfo, SessionInfo, StatusInfo
+from .models import CommandDefinition, CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
 from .service import CommandService
 
 
@@ -11,4 +11,5 @@ __all__ = [
     "ModelInfo",
     "SessionInfo",
     "StatusInfo",
+    "UserIdentityProtocol",
 ]

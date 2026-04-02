@@ -12,11 +12,10 @@ from typing import TYPE_CHECKING
 
 from lib.services.ai_client.registry import ProviderRegistry
 
-from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo
+from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
 
 
 if TYPE_CHECKING:
-    from apps.bot.user_identity import UserIdentityManager
     from lib.services.ai_client.client import AIClient
     from lib.services.conversation import ConversationDB
 
@@ -27,7 +26,7 @@ class CommandService:
     def __init__(
         self,
         ai_client: AIClient,
-        user_identity: UserIdentityManager,
+        user_identity: UserIdentityProtocol,
         mcp_registry=None,
         system_instruction: str | None = None,
     ) -> None:

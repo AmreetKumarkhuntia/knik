@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass
@@ -41,3 +41,10 @@ class ModelInfo:
 class CommandDefinition:
     name: str
     description: str
+
+
+@runtime_checkable
+class UserIdentityProtocol(Protocol):
+    def get_conversation_id(self, user_id: str) -> str | None: ...
+    def set_conversation_id(self, user_id: str, conversation_id: str) -> None: ...
+    def clear_conversation_id(self, user_id: str) -> None: ...

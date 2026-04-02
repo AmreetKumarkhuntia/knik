@@ -27,17 +27,40 @@ while not processor.is_processing_complete():  # Wait before exiting
 
 ## Adding Console Commands
 
-1. Create handler in `src/apps/console/tools/my_cmd.py`:
-   ```python
-   def my_command(app, args: str) -> str:
-       return f"Result: {args}"
-   ```
-2. Register in `tools/index.py`:
-   ```python
-   from .my_cmd import my_command
-   # Add to get_command_registry() dict: 'my': my_command
-   ```
-3. Use with: `/my argument`
+There are two kinds of console commands with different patterns:
+
+### Shared commands (model, provider, sessions, new, resume, status, help)
+
+These delegate to `CommandService` from `lib/commands/`. Add a handler in `src/apps/console/commands/handlers.py`:
+
+```python
+def handle_my_cmd(command_service: CommandService, args: str, user_id: str) -> CommandResult:
+    return asyncio.run(command_service.some_operation(user_id, args))
+```
+
+Register in `src/apps/console/commands/__init__.py`:
+
+```python
+registry.register("my-cmd", "Description of command", handle_my_cmd)
+```
+
+### Console-only commands (exit, clear, history, voice, etc.)
+
+These interact with app state directly. Create a handler in `src/apps/console/tools/my_cmd.py`:
+
+```python
+def my_command(app, args: str) -> str:
+    return f"Result: {args}"
+```
+
+Register in `tools/index.py`:
+
+```python
+from .my_cmd import my_command
+# Add to get_command_registry() dict: 'my': my_command
+```
+
+Use with: `/my argument`
 
 ## Adding MCP Tools
 

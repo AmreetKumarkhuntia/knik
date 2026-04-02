@@ -6,7 +6,8 @@
 |---|---|
 | A new AI provider | `src/lib/services/ai_client/providers/` - extend `LangChainProvider`, register via `ProviderRegistry` |
 | A new MCP tool | Definition in `src/lib/mcp/definitions/`, implementation in `src/lib/mcp/implementations/`, export in both `__init__.py` files |
-| A new console command | `src/apps/console/tools/` as `*_cmd.py`, register in `tools/index.py` |
+| A new shared command (model/provider/sessions logic) | Handler in `src/apps/console/commands/handlers.py`, registered in `commands/__init__.py` |
+| A new console-only command | `src/apps/console/tools/` as `*_cmd.py`, register in `tools/index.py` |
 | A new web API route | `src/apps/web/backend/routes/` |
 | A new React page/section | Pages in `frontend/src/lib/pages/`, sections in `frontend/src/lib/sections/`, components in `frontend/src/lib/components/` |
 | A new reusable service/utility | `src/lib/services/` or `src/lib/utils/` |
