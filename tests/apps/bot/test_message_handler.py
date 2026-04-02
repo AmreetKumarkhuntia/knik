@@ -52,6 +52,13 @@ def mock_ai_client():
 
 
 @pytest.fixture
+def mock_command_service(mock_ai_client):
+    service = MagicMock()
+    service.ai_client = mock_ai_client
+    return service
+
+
+@pytest.fixture
 def mock_messaging_client():
     client = MagicMock()
     client.send_message = AsyncMock(return_value=MagicMock(success=True, message_id="sent_msg_123"))
@@ -83,9 +90,9 @@ def mock_streaming():
 
 
 @pytest.fixture
-def handler(mock_ai_client, mock_messaging_client, mock_user_identity, mock_streaming, mock_config):
+def handler(mock_command_service, mock_messaging_client, mock_user_identity, mock_streaming, mock_config):
     return BotMessageHandler(
-        ai_client=mock_ai_client,
+        command_service=mock_command_service,
         messaging_client=mock_messaging_client,
         user_identity=mock_user_identity,
         streaming_manager=mock_streaming,

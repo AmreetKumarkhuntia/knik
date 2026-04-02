@@ -148,7 +148,7 @@ class TelegramProvider(BaseMessagingProvider):
         )
 
         if self._on_message:
-            self._on_message(incoming)
+            await self._on_message(incoming)
 
     async def _handle_message(self, update: Update, context) -> None:
         if update.message is None or update.message.text is None:
@@ -166,7 +166,7 @@ class TelegramProvider(BaseMessagingProvider):
         )
 
         if self._on_message:
-            self._on_message(incoming)
+            await self._on_message(incoming)
 
     async def register_bot_commands(self, commands: list[CommandDefinition]) -> None:
         from telegram import BotCommand as TgBotCommand

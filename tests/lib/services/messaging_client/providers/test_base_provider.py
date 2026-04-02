@@ -28,6 +28,9 @@ class MockProvider(BaseMessagingProvider):
     def get_info(self) -> dict:
         return {}
 
+    async def register_bot_commands(self, commands) -> None:
+        pass
+
 
 def test_default_supports_message_edit():
     provider = MockProvider()
