@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from typing import Any
 
+from lib.services.tool_session.manager import current_conversation_id
 from lib.utils.printer import printer
 
 
@@ -20,13 +21,14 @@ def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
     """Wrap a tool function with input/output logging."""
 
     def wrapper(**kwargs):
-        printer.info(f"Tool Input: {tool_name}({kwargs})")
+        conv_id = current_conversation_id.get(None) or "__global__"
+        printer.info(f"Tool Input [{conv_id}]: {tool_name}({kwargs})")
         try:
             result = func(**kwargs)
-            printer.info(f"Tool Output: {tool_name} -> {result}")
+            printer.info(f"Tool Output [{conv_id}]: {tool_name} -> {result}")
             return result
         except Exception as e:
-            printer.error(f"Tool Error: {tool_name} -> {e}")
+            printer.error(f"Tool Error [{conv_id}]: {tool_name} -> {e}")
             return {"error": str(e)}
 
     return wrapper

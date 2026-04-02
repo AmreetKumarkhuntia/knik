@@ -14,6 +14,7 @@ except ImportError:
 
 from lib.mcp import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
+from lib.services.tool_session.manager import ToolSessionManager, current_conversation_id
 
 
 try:
@@ -92,6 +93,10 @@ class ConsoleApp:
     def _stream_response(self, user_input: str):
         """Stream AI response chunks and record the conversation in history."""
         printer.info("🤔 Thinking...")
+
+        # Set a stable session key so browser tools share one tab for this
+        # console session rather than falling back to the module-level default.
+        current_conversation_id.set("console")
 
         history_messages = self.history.get_messages(last_n=self.config.history_context_size)
 
@@ -262,6 +267,7 @@ class ConsoleApp:
     def _shutdown(self):
         """Clean up resources and display farewell message."""
         printer.info("Shutting down console application...")
+        ToolSessionManager.get_instance().cleanup_all()
         printer.success("Thanks for using Knik Console! 👋")
 
 

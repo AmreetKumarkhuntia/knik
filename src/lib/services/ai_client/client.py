@@ -18,6 +18,7 @@ from typing import Any, ClassVar
 from langchain_core.messages import AIMessage, HumanMessage
 
 from ...core.config import Config
+from ...services.tool_session.manager import current_conversation_id
 from ...utils import printer
 from .providers import BaseAIProvider
 from .providers.base_provider import ChatResult
@@ -268,6 +269,12 @@ class AIClient:
             summary, _ = await self._conversation_db().get_summary(conversation_id)
             history = self._conversation_summarizer().inject_summary(summary, history or [])
 
+        # Propagate conversation_id into the sync tool-execution thread via
+        # ContextVar.  Python 3.12 asyncio.to_thread() copies the current
+        # Context automatically, so tools running inside that thread will see
+        # the correct value without any explicit passing.
+        current_conversation_id.set(conversation_id)
+
         response_text, usage = await asyncio.to_thread(
             self._chat_with_usage,
             prompt,
@@ -353,8 +360,10 @@ class AIClient:
         queue: asyncio.Queue[str | None] = asyncio.Queue()
         loop = asyncio.get_running_loop()
 
+        # Propagate conversation_id into the sync producer thread via ContextVar.
+        current_conversation_id.set(conversation_id)
+
         def _produce():
-            """Iterate the sync generator and push chunks into the queue."""
             try:
                 for chunk in self.chat_stream(
                     prompt=prompt,

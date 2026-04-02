@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 from imports import printer as logger
 from lib.commands.service import CommandService
 from lib.services.postgres.db import PostgresDB
+from lib.services.tool_session.manager import ToolSessionManager
 
 from .commands import create_command_system
 from .config import BotConfig
@@ -145,6 +146,11 @@ class BotApp:
             except Exception as e:
                 logger.error(f"Error during {name} shutdown: {e}")
 
+        try:
+            self._shutdown_tool_sessions()
+        except Exception as e:
+            logger.error(f"Error during tool session shutdown: {e}")
+
         logger.info("Bot Application shutdown complete")
 
     async def _shutdown_handlers(self) -> None:
@@ -157,6 +163,9 @@ class BotApp:
 
     async def _shutdown_database(self) -> None:
         await PostgresDB.close()
+
+    def _shutdown_tool_sessions(self) -> None:
+        ToolSessionManager.get_instance().cleanup_all()
 
 
 def main() -> None:

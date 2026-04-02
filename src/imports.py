@@ -28,6 +28,12 @@ from lib.mcp import (
     get_tool_info,
     register_all_tools,
 )
+from lib.services.tool_session import (
+    SessionResource,
+    SessionResourceFactory,
+    ToolSessionManager,
+    current_conversation_id,
+)
 
 
 __all__ = [
@@ -53,4 +59,8 @@ __all__ = [
     "get_tool_info",
     "workflow_service",
     "schedule_service",
+    "ToolSessionManager",
+    "current_conversation_id",
+    "SessionResource",
+    "SessionResourceFactory",
 ]
