@@ -21,6 +21,7 @@ from lib import (
     create_processor,
     printer,
 )
+from lib.commands import CommandService
 from lib.cron import schedule_service, workflow_service
 from lib.mcp import (
     get_all_tools,
@@ -31,6 +32,7 @@ from lib.mcp import (
 
 __all__ = [
     "AIClient",
+    "CommandService",
     "ConsoleProcessor",
     "printer",
     "TTSAsyncProcessor",

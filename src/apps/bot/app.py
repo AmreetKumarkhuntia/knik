@@ -14,8 +14,10 @@ if TYPE_CHECKING:
     from lib.services.messaging_client.models import IncomingMessage
 
 from imports import printer as logger
+from lib.commands.service import CommandService
 from lib.services.postgres.db import PostgresDB
 
+from .commands import create_command_system
 from .config import BotConfig
 from .message_handler import BotMessageHandler
 from .streaming import StreamingResponseManager
@@ -32,6 +34,7 @@ class BotApp:
         self._mcp_registry: MCPServerRegistry | None = None
         self._user_identity: UserIdentityManager | None = None
         self._streaming: StreamingResponseManager | None = None
+        self._command_service: CommandService | None = None
 
         self._stop_event: asyncio.Event | None = None
 
@@ -79,12 +82,27 @@ class BotApp:
             messaging_client=self._messaging_client,
             config=self.config,
         )
-        self._message_handler = BotMessageHandler(
+
+        self._command_service = CommandService(
             ai_client=self._ai_client,
+            user_identity=self._user_identity,
+            mcp_registry=self._mcp_registry,
+            system_instruction=self.config.system_instruction,
+        )
+
+        registry, dispatcher = create_command_system(self._command_service)
+        logger.info(f"Registered {len(registry.list_commands())} bot commands")
+
+        await self._messaging_client.register_bot_commands(registry.get_definitions())
+        logger.info("Commands registered with messaging providers")
+
+        self._message_handler = BotMessageHandler(
+            command_service=self._command_service,
             messaging_client=self._messaging_client,
             user_identity=self._user_identity,
             streaming_manager=self._streaming,
             config=self.config,
+            command_dispatcher=dispatcher,
         )
         logger.info("All components initialized successfully")
 

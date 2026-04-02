@@ -26,3 +26,11 @@ class IncomingMessage:
     timestamp: float | None = None
     provider_name: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class CommandDefinition:
+    """Metadata for a bot command, used for provider-level registration."""
+
+    name: str
+    description: str

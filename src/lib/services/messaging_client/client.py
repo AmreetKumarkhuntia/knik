@@ -1,10 +1,11 @@
 """Async messaging client facade supporting multiple providers simultaneously."""
 
 import asyncio
+import contextlib
 from typing import Any
 
 from ...utils import printer
-from .models import MessageResult
+from .models import CommandDefinition, MessageResult
 from .providers.base_provider import BaseMessagingProvider, MessageCallback
 from .registry import MessagingProviderRegistry
 
@@ -66,6 +67,12 @@ class MessagingClient:
     async def stop(self) -> None:
         """Gracefully shut down all running providers."""
         await asyncio.gather(*(p.stop() for p in self._providers.values()))
+
+    async def register_bot_commands(self, commands: list[CommandDefinition]) -> None:
+        """Register commands with all configured providers that support it."""
+        for provider in self._providers.values():
+            with contextlib.suppress(Exception):
+                await provider.register_bot_commands(commands)
 
     def is_configured(self) -> bool:
         """Return True if at least one provider is configured."""

@@ -10,10 +10,12 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from lib.commands.service import CommandService
     from lib.services.ai_client.client import AIClient
     from lib.services.messaging_client.client import MessagingClient
     from lib.services.messaging_client.models import IncomingMessage
 
+    from .commands.registry import BotCommandDispatcher
     from .config import BotConfig
     from .streaming import StreamingResponseManager
     from .user_identity import UserIdentityManager
@@ -41,17 +43,20 @@ class ActiveTaskInfo:
 class BotMessageHandler:
     def __init__(
         self,
-        ai_client: AIClient,
+        command_service: CommandService,
         messaging_client: MessagingClient,
         user_identity: UserIdentityManager,
         streaming_manager: StreamingResponseManager,
         config: BotConfig,
+        command_dispatcher: BotCommandDispatcher | None = None,
     ) -> None:
-        self._ai_client = ai_client
+        self._command_service = command_service
+        self._ai_client: AIClient = command_service.ai_client
         self._messaging_client = messaging_client
         self._user_identity = user_identity
         self._streaming = streaming_manager
         self._config = config
+        self._command_dispatcher = command_dispatcher
 
         self._active_tasks: dict[ChatKey, ActiveTaskInfo] = {}
         self._lock = asyncio.Lock()
@@ -65,6 +70,22 @@ class BotMessageHandler:
         chat_key = ChatKey(provider=provider, chat_id=incoming.chat_id)
 
         logger.info("Received message: %s", incoming.text)
+
+        if self._command_dispatcher and incoming.text and incoming.text.startswith("/"):
+            try:
+                result = await self._command_dispatcher.try_dispatch(incoming, self._user_identity)
+                if result is not None:
+                    # Pull any state updates the command made back into the handler
+                    if "ai_client" in result.data:
+                        self._ai_client = result.data["ai_client"]
+                    await self._messaging_client.send_message(
+                        chat_id=incoming.chat_id,
+                        text=result.message,
+                        provider=provider,
+                    )
+                    return
+            except Exception as e:
+                logger.error("Command dispatch error: %s", e)
 
         async with self._lock:
             if chat_key in self._active_tasks:

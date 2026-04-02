@@ -95,3 +95,15 @@ class UserIdentityManager:
             return
 
         self._identity_map[key] = user_id
+
+    def get_user_id_for_sender(self, provider: str, sender_id: str | None) -> str | None:
+        if sender_id is None:
+            return None
+        key = (provider.lower(), sender_id)
+        return self._identity_map.get(key)
+
+    def get_conversation_id_for_sender(self, provider: str, sender_id: str | None) -> str | None:
+        user_id = self.get_user_id_for_sender(provider, sender_id)
+        if user_id is None:
+            return None
+        return self._user_conversations.get(user_id)

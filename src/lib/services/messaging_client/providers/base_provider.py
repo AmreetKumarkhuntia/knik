@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from ..models import IncomingMessage, MessageResult
+from ..models import CommandDefinition, IncomingMessage, MessageResult
 
 
 MessageCallback = Callable[[IncomingMessage], Awaitable[None]]
@@ -39,3 +39,8 @@ class BaseMessagingProvider(ABC):
     async def edit_message(self, chat_id: str, message_id: str, text: str, **kwargs) -> MessageResult:
         """Edit an existing sent message. Override in providers that support editing."""
         return MessageResult(success=False, error="Message editing not supported by this provider")
+
+    @abstractmethod
+    async def register_bot_commands(self, commands: list[CommandDefinition]) -> None:
+        """Register commands with the platform (e.g. Telegram command menu. Override in providers that support it."""
+        pass

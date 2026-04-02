@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from telegram import Bot, Update
-from telegram.ext import Application, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 from ....core.config import Config
 from ....utils import printer
-from ..models import IncomingMessage, MessageResult
+from ..models import CommandDefinition, IncomingMessage, MessageResult
 from ..registry import MessagingProviderRegistry
 from .base_provider import BaseMessagingProvider, MessageCallback
 
@@ -22,7 +22,6 @@ class TelegramProvider(BaseMessagingProvider):
         return "telegram"
 
     def __init__(self, bot_token: str | None = None, **kwargs):
-        """Initialize TelegramProvider with bot token from args or config."""
         config = Config()
         self._token = bot_token or config.telegram_bot_token
         self._bot: Bot | None = None
@@ -101,7 +100,8 @@ class TelegramProvider(BaseMessagingProvider):
 
         self._on_message = on_message
         self._app = Application.builder().token(self._token).build()
-        self._app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_message))
+        self._app.add_handler(CommandHandler("start", self._handle_command))
+        self._app.add_handler(MessageHandler(filters.TEXT, self._handle_message))
 
         printer.info("TelegramProvider starting long-polling...")
         await self._app.initialize()
@@ -128,8 +128,29 @@ class TelegramProvider(BaseMessagingProvider):
             "polling": self._app is not None,
         }
 
+    async def _handle_command(self, update: Update, context) -> None:
+        if update.message is None:
+            return
+
+        text = update.message.text or ""
+        if text.startswith("/start"):
+            text = "/new"
+
+        incoming = IncomingMessage(
+            chat_id=str(update.message.chat_id),
+            message_id=str(update.message.message_id),
+            text=text,
+            sender_id=str(update.message.from_user.id) if update.message.from_user else None,
+            sender_name=update.message.from_user.full_name if update.message.from_user else None,
+            timestamp=update.message.date.timestamp() if update.message.date else None,
+            provider_name="telegram",
+            raw=update.to_dict(),
+        )
+
+        if self._on_message:
+            self._on_message(incoming)
+
     async def _handle_message(self, update: Update, context) -> None:
-        """Process an incoming Telegram update and forward to callback."""
         if update.message is None or update.message.text is None:
             return
 
@@ -147,9 +168,19 @@ class TelegramProvider(BaseMessagingProvider):
         if self._on_message:
             self._on_message(incoming)
 
+    async def register_bot_commands(self, commands: list[CommandDefinition]) -> None:
+        from telegram import BotCommand as TgBotCommand
+
+        bot = self._app.bot if self._app else self._bot
+        if not bot:
+            return
+
+        tg_commands = [TgBotCommand(cmd.name, cmd.description) for cmd in commands]
+        await bot.set_my_commands(tg_commands)
+        printer.info(f"Registered {len(tg_commands)} commands with Telegram")
+
 
 def _split_text(text: str, max_len: int = 4096) -> list[str]:
-    """Split text into chunks at newline boundaries for Telegram's limit."""
     if len(text) <= max_len:
         return [text]
 
