@@ -1,14 +1,14 @@
-# Knik - AI Coding Agent Instructions
+# Knik - Coding Guidelines
 
-Knik is a multi-interface AI assistant with Text-to-Speech (TTS) capabilities. Built with Python, it features async audio processing, 6 pluggable AI providers (including any OpenAI-compatible endpoint), 31 MCP tools across 7 categories, and a React + FastAPI web app with workflow scheduling.
+Follow these guidelines when writing code for this project.
 
-## Contents
+## Guidelines
 
-| Document | Description |
+| Document | What it tells you |
 |---|---|
-| [Architecture](contribution-guidelines/architecture.md) | Three-layer structure, key components (TTS, AI client, apps, scheduler, providers, MCP tools, console commands) |
-| [Patterns](contribution-guidelines/patterns.md) | Import conventions, registry patterns, async TTS workflow, adding console commands/MCP tools, coding patterns |
-| [Development](contribution-guidelines/development.md) | Running the app, code quality commands, environment setup, cache management |
-| [Conventions](contribution-guidelines/conventions.md) | Project-specific conventions and common pitfalls |
-| [File Navigation](contribution-guidelines/file-navigation.md) | Key directories, entry points, documentation map |
-| [Commit Format](contribution-guidelines/commit-format.md) | Commit message format rules and examples |
+| [Architecture](contribution-guidelines/architecture.md) | Core structural rules to follow when writing or organizing code |
+| [Patterns](contribution-guidelines/patterns.md) | How to write code: imports, registries, adding new features |
+| [Development](contribution-guidelines/development.md) | How to run, lint, format, and typecheck |
+| [Conventions](contribution-guidelines/conventions.md) | Naming rules and pitfalls to avoid |
+| [File Navigation](contribution-guidelines/file-navigation.md) | Where to put new code |
+| [Commit Format](contribution-guidelines/commit-format.md) | How to write commit messages |

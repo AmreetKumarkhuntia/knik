@@ -1,112 +1,101 @@
-# Architecture
-
-## Project Overview
-
-Knik is a multi-interface AI assistant with Text-to-Speech (TTS) capabilities. Built with Python, it features async audio processing, 6 pluggable AI providers (including any OpenAI-compatible endpoint), 31 MCP tools across 7 categories, and a React + FastAPI web app with workflow scheduling.
-
-**Core Technologies:** Python 3.12+, Kokoro-82M TTS (82M parameters), LangChain, Google Vertex AI/Gemini, ZhipuAI, Z.AI, React 18 + TypeScript + Vite, FastAPI, PostgreSQL, Sounddevice/Soundfile, Threading/Asyncio
+# Architecture Rules
 
 ## Three-Layer Structure
 
-1. **`src/lib/`** - Reusable library components (core, services, utils, mcp, cron)
-2. **`src/apps/`** - Applications built on the library (console, gui, web)
-3. **`src/imports.py`** - Central import hub to avoid complex import paths
+All code must follow the three-layer structure:
 
-## Key Components
+1. **`src/lib/`** - Reusable library components (core, services, utils, mcp, cron). Shared logic goes here.
+2. **`src/apps/`** - Applications built on the library (console, gui, web). App-specific logic goes here.
+3. **`src/imports.py`** - Central import hub. Always import from here, never use deep paths directly.
 
-### TTSAsyncProcessor (`src/lib/core/tts_async_processor.py`)
+Do not put shared/reusable code in `src/apps/`. Do not put app-specific code in `src/lib/`.
 
-- Dual-thread architecture: text -> audio conversion queue + audio playback queue
-- Non-blocking voice output with `play_async(text)` method
-- Critical: Use `is_processing_complete()` to check if playback finished before exiting
-- Backed by `KokoroVoiceModel` (Kokoro-82M) and `AudioProcessor` (sounddevice)
+## Library Domains (`src/lib/`)
 
-### AIClient (`src/lib/services/ai_client/client.py`)
+`src/lib/` has five independent domains. Do not create cross-dependencies between them unless absolutely necessary.
 
-- Unified interface supporting 6 providers via `ProviderRegistry`
-- Auto-fallback to mock provider if real provider unconfigured (controlled by `auto_fallback_to_mock`)
-- Two query modes: `chat()` (blocking, returns str) and `chat_stream()` (generator, yields str chunks)
-- MCP tool integration via `MCPServerRegistry` and `register_tool()`
-- Constructor: `AIClient(provider, auto_fallback_to_mock, mcp_registry, system_instruction, tool_callback, **provider_kwargs)`
+| Domain | Purpose | Structure |
+|---|---|---|
+| `core/` | App-level configuration | Flat - `config.py` |
+| `services/` | Independent service modules (AI, TTS, messaging, DB, etc.) | Each service gets its own subdirectory |
+| `utils/` | Stateless helper functions (`printer`, `async_utils`, `graph_utils`, etc.) | Flat files, no subdirectories, no state |
+| `mcp/` | MCP tool definitions and implementations | Mirrored: `definitions/*_defs.py` + `implementations/*_impl.py` + `index.py` registry |
+| `cron/` | Workflow engine and scheduler | Flat files - models, nodes, engine, scheduler, parser |
 
-### ConsoleApp (`src/apps/console/`)
+## Service Independence (`src/lib/services/`)
 
-- Interactive AI chat with voice responses and conversation history
-- Modular architecture: `app.py` (main), `history.py` (context), `tools/` (commands)
-- Built-in command system with registry pattern
-- 14 commands: help, exit, quit, clear, history, voice, info, toggle-voice, tools, agent, provider, model, debug, workflow
-- Integrates AIClient + TTSAsyncProcessor with smart wait system
+Each service in `src/lib/services/` is a **self-contained module**. Services must not import from each other.
 
-### GUIApp (`src/apps/gui/`)
+**Complex services** follow the provider pattern:
 
-- Desktop GUI built with CustomTkinter featuring modern messenger-style chat interface
-- Modular architecture: `app.py` (main), `config.py`, `theme.py` (theming), `components/` (UI widgets)
-- Three main components: ChatPanel (messages), InputPanel (text entry + buttons), SettingsPanel (configuration)
-- Dynamic theme switching: Light/Dark/System modes with full UI refresh
-- AI Provider selection in settings includes all 6 providers
+| Service | Structure |
+|---|---|
+| `ai_client/` | `client.py` + `providers/` (base + 6 implementations) + `registry/` (provider + MCP registries) + `token_utils.py` |
+| `tts/` | `processor.py` + `providers/` (base + kokoro) + `audio/` (playback) + `utils.py` |
+| `messaging_client/` | `client.py` + `models.py` + `providers/` (base + telegram + mock) + `registry.py` |
 
-### WebApp (`src/apps/web/`)
+When adding a new complex service that supports multiple backends, follow this same pattern: a client module, a `providers/` subdirectory with a base class and implementations, and a registry.
 
-- Modern web interface with React + FastAPI
-- **Backend** (`backend/`): FastAPI REST API with 7 route files, 22 endpoints
-  - `routes/chat.py`: Chat endpoint (text in -> text + audio out)
-  - `routes/chat_stream.py`: SSE streaming chat endpoint
-  - `routes/admin.py`: Settings management (provider, model, voice lists)
-  - `routes/history.py`: Conversation history CRUD
-  - `routes/workflow.py`: Workflow CRUD and execution
-  - `routes/cron.py`: Schedule management (natural language)
-  - `routes/analytics.py`: Dashboard, metrics, execution analytics
-  - `config.py`: WebBackendConfig reads from environment variables
-  - `main.py`: App entry point with CORS, lifespan handlers
-- **Frontend** (`frontend/src/`): React 18 + TypeScript + Vite + Tailwind
-  - `lib/pages/`: Home, Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions
-  - `lib/sections/`: Domain-specific UI organized by subdirectory (audio, chat, effects, feedback, home, layout, theme, workflows)
-  - `lib/components/`: 30+ reusable UI components (ActionButton, Card, Modal, Table, Pagination, etc.)
-  - `lib/services/`: API client, audio playback, theme tokens
-- **Scripts**: `scripts/start_web_backend.sh`, `scripts/start_web_frontend.sh`
-- **Usage**: `npm run start:web:backend` + `npm run start:web:frontend` (separate processes)
-- Frontend dev server runs on port 12414, backend on port 8000
+**Medium services** have a few related files:
 
-### Workflow Scheduler (`src/lib/cron/`)
+| Service | Structure |
+|---|---|
+| `conversation/` | `db_client.py` + `models.py` + `summarizer.py` |
 
-- Poll-based scheduler with natural language schedule descriptions (NOT cron expressions)
-- `models.py`: Workflow, Schedule (with `target_workflow_id`, `schedule_description`, `recurrence_seconds`), ExecutionRecord, NodeExecutionRecord
-- `nodes.py`: 4 node types - AIExecutionNode, FunctionExecutionNode, ConditionalBranchNode, FlowMergeNode
-- `engine.py`: WorkflowEngine with DAG validation and topological BFS execution
-- `scheduler.py`: CronScheduler with asyncio poll loop
-- `schedule_parser.py`: Natural language to datetime/seconds conversion
+**Simple services** are single-file modules:
 
-### AI Providers (`src/lib/services/ai_client/providers/`)
+| Service | Structure |
+|---|---|
+| `postgres/` | `db.py` |
+| `scheduler/` | `db_client.py` |
+| `shell/` | `executor.py` |
+| `text/` | `operations.py` |
+| `time/` | `operations.py` |
+| `encoding/` | `operations.py` |
+
+When adding a new simple service, create a subdirectory with `__init__.py` and a single implementation file. Promote to the provider pattern only when multiple backends are needed.
+
+## MCP Tool Structure (`src/lib/mcp/`)
+
+Definitions and implementations mirror each other by category:
 
 ```
-BaseAIProvider (ABC)
- +-- LangChainProvider (chat/chat_stream via LangChain invoke/stream)
- |    +-- VertexAIProvider    ("vertex")   - ChatVertexAI
- |    +-- GeminiAIProvider    ("gemini")   - ChatGoogleGenerativeAI
- |    +-- ZhipuAIProvider     ("zhipuai")  - ChatZhipuAI
- |    +-- ZAIProvider         ("zai")      - ChatOpenAI -> z.ai endpoint
- |    +-- CustomProvider      ("custom")   - ChatOpenAI -> any OpenAI-compatible endpoint
- +-- MockAIProvider           ("mock")     - Canned responses for testing
+mcp/
+  definitions/   -> browser_defs.py, file_defs.py, shell_defs.py, text_defs.py, utils_defs.py, cron_defs.py, workflow_defs.py
+  implementations/ -> browser_impl.py, file_impl.py, shell_impl.py, text_impl.py, utils_impl.py, cron_impl.py, workflow_impl.py
+  index.py       -> auto-registers tools by matching definition keys to implementation functions
 ```
 
-Each provider self-registers at module load time via `ProviderRegistry.register()`.
+When adding a new tool category, create both a `*_defs.py` and a matching `*_impl.py`. Export in both `__init__.py` files. Do not modify `index.py`.
 
-### MCP Tools System (`src/lib/mcp/`)
+## App Independence (`src/apps/`)
 
-- Clean separation: `definitions/` (JSON schemas) -> `implementations/` (Python functions) -> `index.py` (registry)
-- 31 built-in tools across 7 categories:
-  - **Utils** (4): calculate, get_current_time, get_current_date, reverse_string
-  - **Text** (5): word_count, find_and_replace, extract_emails, extract_urls, text_case_convert
-  - **Shell** (1): run_shell_command
-  - **File** (8): read_file, list_directory, search_in_files, file_info, write_file, append_to_file, find_in_file, count_in_file
-  - **Browser** (6): browser_navigate, browser_get_text (supports chunked reading), browser_get_links, browser_click, browser_type, browser_screenshot
-  - **Cron** (3): list_cron_schedules, add_cron_schedule, remove_cron_schedule
-  - **Workflow** (4): create_workflow, remove_workflow, list_workflows, get_workflow_templates
-- Tools registered at app startup via `register_all_tools(ai_client)`
-- Separate from console commands (MCP = AI-callable tools, console commands = user-callable commands)
+Each app is a standalone entry point. Apps must **never** import from each other - only from `src/lib/` (via `src/imports.py`).
 
-### Console Commands (`src/apps/console/tools/`)
+| App | Purpose | Structure |
+|---|---|---|
+| `console/` | Interactive CLI chat | `app.py` + `config.py` + `history.py` + `tools/` (command handlers) |
+| `gui/` | Desktop GUI (CustomTkinter) | `app.py` + `config.py` + `theme.py` + `components/` |
+| `web/` | Web interface | `backend/` (FastAPI) + `frontend/` (React + TypeScript + Vite) |
+| `bot/` | Messaging bot | `app.py` + `config.py` + `message_handler.py` + `streaming.py` |
+| `cron_job/` | Scheduled workflow runner | `app.py` |
 
-- Modular command handlers: Each command in separate `*_cmd.py` file
-- Registry pattern in `index.py`: `get_command_registry()`, `register_commands()`
-- 14 commands: help, exit, quit, clear, history, voice, info, toggle-voice, tools, agent, provider, model, debug, workflow
+When adding a new app, create a subdirectory under `src/apps/` with at least `__init__.py` and `app.py`. Add a corresponding mode to `src/main.py`.
+
+## Registry Pattern
+
+Use the registry pattern for extensible systems:
+
+- **Providers** register via `ProviderRegistry.register()` at module load time
+- **MCP tools** auto-register via dictionary lookup in `lib/mcp/index.py`
+- **Console commands** register in `apps/console/tools/index.py`
+
+When adding a new provider, tool, or command - register it through the existing registry mechanism. Do not bypass registries with direct references.
+
+## Key Architectural Decisions
+
+- **TTS uses dual-thread architecture**: a text-to-audio conversion queue + an audio playback queue. Always call `start_async_processing()` before `play_async()`, and check `is_processing_complete()` before exiting.
+- **AIClient supports provider switching at runtime**: The `/provider` and `/model` commands recreate the client while preserving MCP tools and system instructions.
+- **AIClient auto-falls back to mock provider** if the configured provider is not available. Check logs if you get unexpected responses.
+- **Web app runs as two separate processes**: FastAPI backend + React frontend. There is no combined start script.
+- **Scheduler uses natural language**, not cron expressions. The schedule model has `schedule_description` + `recurrence_seconds`.
