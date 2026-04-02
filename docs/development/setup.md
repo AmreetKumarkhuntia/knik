@@ -69,6 +69,9 @@ npm run start:web:frontend    # Frontend on :12414
 # Cron scheduler
 npm run start:cron
 
+# Messaging bot daemon (requires KNIK_TELEGRAM_BOT_TOKEN)
+python src/main.py --mode bot
+
 # Electron desktop app
 npm run start:electron
 ```
@@ -96,3 +99,4 @@ npm run typecheck:frontend # Frontend type checking
 - **Import errors**: Ensure you're running from project root with venv activated
 - **No audio**: Test with `espeak-ng "test"`
 - **Mock provider**: If AI responses seem canned, check your provider configuration — AIClient auto-falls back to mock when unconfigured
+- **Bot not starting**: Verify `KNIK_TELEGRAM_BOT_TOKEN` is set in `.env`. Create a bot via @BotFather on Telegram

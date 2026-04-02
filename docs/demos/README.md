@@ -9,7 +9,10 @@ demo/
 ├── tts/       # Text-to-speech demos
 ├── ai/        # AI integration demos
 ├── console/   # Console app demos
-└── mcp/       # MCP tool demos
+├── mcp/       # MCP tool demos
+├── test_conversation_history.py  # Conversation history testing
+├── test_ai_history_integration.py  # AI + conversation history integration test
+└── README.md   # This file
 ```
 
 ## TTS Demos (`tts/`)
@@ -27,12 +30,27 @@ demo/
 - **`langchain_demo.py`** -- LangChain integration demo
 - **`function_calling_demo.py`** -- Function calling with AI
 - **`zai_comprehensive_demo.py`** -- ZAI provider demo
+- **`streaming_tts_demo.py`** -- Streaming TTS integration example
+- **`test_agent.py`** -- Agent testing without streaming
+- **`test_agent_comprehensive.py`** -- Comprehensive agent testing
+- **`verify_agent.py`** -- Agent verification
+- **`zai_coding_demo.py`** -- ZAI Coding provider demo
+- **`zai_langchain_demo.py`** -- ZAI LangChain integration demo
+- **`complete_function_calling_test.py`** -- Function calling integration test
 
 ## Console Demos (`console/`)
 
 - **`simple_console_demo.py`** -- Basic command processor usage
 - **`console_processor_demo.py`** -- Advanced console processing features
 - **`console_app_demo.py`** -- Full console app demo
+- **`test_console_agent.py`** -- Console agent testing
+
+## Root Demos
+
+These files exist at the project root level:
+
+- **`test_conversation_history.py`** -- Conversation history integration testing
+- **`test_ai_history_integration.py`** -- AI + conversation history integration test
 
 ## MCP Demos (`mcp/`)
 

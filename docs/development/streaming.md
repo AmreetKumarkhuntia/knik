@@ -44,15 +44,16 @@ SSE: event=audio
 Frontend audio queue --> sequential playback
 ```
 
-### Key Design Decision: Synchronous TTS
+### Key Design Decision: Asynchronous TTS
 
-The streaming endpoint generates audio **synchronously** using `KokoroVoiceModel.generate()` directly within the SSE generator. This means:
+The streaming endpoint uses an **asynchronous worker pattern with bounded queues** using a background `_tts_worker` task that pulls from `sentence_queue` and pushes generated audio to `audio_queue`. This means:
 
-- Audio generation blocks text streaming temporarily (per-sentence)
-- Simpler implementation than the async `TTSAsyncProcessor` pattern
-- Each sentence is fully generated before the next text chunk is sent
+- Text events are yielded immediately to the client
+- Audio is drained non-blockingly via `_drain_audio()`
+- TTS failure never blocks text delivery
+- Background worker processes sentences independently
 
-> **Note:** The `TTSAsyncProcessor` class (at `src/lib/services/tts/processor.py`) supports an `audio_ready_callback` parameter for non-blocking audio generation, but the web streaming endpoint does not currently use it.
+> **Note:** The actual implementation uses sentence_queue for text → worker and audio_queue for worker → generator, with text events yielded before audio processing begins.
 
 ## Components
 
@@ -68,7 +69,8 @@ The streaming endpoint generates audio **synchronously** using `KokoroVoiceModel
 
 ```json
 {
-  "message": "Tell me a joke"
+  "message": "Tell me a joke",
+  "conversation_id": "optional-uuid"
 }
 ```
 
@@ -78,6 +80,8 @@ The streaming endpoint generates audio **synchronously** using `KokoroVoiceModel
 | --- | --- | --- |
 | `text` | `{"text": "chunk"}` | AI text chunk |
 | `audio` | `{"audio": "base64...", "sample_rate": 24000}` | Base64-encoded WAV audio chunk |
+| `conversation_id` | `{"conversation_id": "uuid"}` | Unique conversation identifier |
+| `usage` | `{"total_tokens": N, "input_tokens": M, "output_tokens": L}` | Token usage stats |
 | `done` | `{"audio_count": N}` | Stream complete |
 | `error` | `{"error": "message"}` | Error message |
 
@@ -183,11 +187,6 @@ clearAudioQueue();  // Clear pending chunks only
 
 ### 4. React Integration
 
-**Hooks:**
-
-- `useChat` (`src/apps/web/frontend/src/lib/hooks/useChat.ts`) -- consumes `streamChat`, `queueAudio`, `clearAudioQueue`
-- `useAudio` (`src/apps/web/frontend/src/lib/hooks/useAudio.ts`) -- consumes `setAudioStateCallback`, `stopAudio`, `pauseAudio`, `resumeAudio`
-
 **UI Component:**
 
 - `AudioControls` (`src/apps/web/frontend/src/lib/sections/audio/AudioControls.tsx`) -- pause/resume/stop buttons
@@ -196,7 +195,7 @@ clearAudioQueue();  // Clear pending chunks only
 
 ### Sentence-Based Chunking
 
-Audio is generated at sentence boundaries for natural pacing:
+Audio is generated at sentence boundaries for natural pacing using an async worker pattern:
 
 ```python
 text_buffer = ""
@@ -213,10 +212,25 @@ for text_chunk in ai_client.chat_stream(prompt, history):
             sentence = parts[0] + ending
             text_buffer = parts[1] if len(parts) > 1 else ""
 
-            audio = voice_model.generate(sentence.strip())
-            wav_base64 = encode_wav_base64(audio, sample_rate)
-            yield sse_event("audio", {"audio": wav_base64, "sample_rate": sample_rate})
+            await sentence_queue.put(sentence.strip())
             break
+
+async def _tts_worker():
+    while True:
+        sentence = await sentence_queue.get()
+        try:
+            audio = voice_model.generate(sentence)
+            wav_base64 = encode_wav_base64(audio, sample_rate)
+            await audio_queue.put(wav_base64)
+        except Exception:
+            pass  # TTS failure doesn't block text delivery
+        finally:
+            sentence_queue.task_done()
+
+async def _drain_audio():
+    while not audio_queue.empty():
+        wav_base64 = await audio_queue.get()
+        yield sse_event("audio", {"audio": wav_base64, "sample_rate": sample_rate})
 ```
 
 ### Client-Side Audio Playback
@@ -262,10 +276,10 @@ The streaming endpoint maintains a global `ConversationHistory(max_size=50)` ins
 
 | Setting | Env Variable | Default |
 | --- | --- | --- |
-| Voice | `KNIK_VOICE_NAME` | `af_sarah` |
+| Voice | `KNIK_VOICE` | `af_heart` |
 | Sample Rate | `KNIK_SAMPLE_RATE` | `24000` |
 | AI Provider | `KNIK_AI_PROVIDER` | `vertex` |
-| AI Model | `KNIK_AI_MODEL` | `gemini-2.0-flash-exp` |
+| AI Model | `KNIK_AI_MODEL` | `gemini-1.5-flash` |
 | History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5` |
 
 ## Testing
@@ -338,6 +352,72 @@ Constructor parameters:
 3. Provide loading state during streaming
 4. Handle errors gracefully (network issues, timeouts)
 5. Clean up audio resources when navigating away
+
+## Bot Streaming (StreamingResponseManager)
+
+The bot streaming system (`src/lib/services/response/streaming.py`) provides real-time streaming for Discord and bot interfaces, with different design considerations compared to the web SSE streaming.
+
+### Architecture Comparison
+
+```
+Web SSE Streaming:                          Bot Streaming (StreamingResponseManager):
+
+User Request                               Discord/Bot Message
+       |                                          |
+       v                                          v
+POST /api/chat/stream/                  StreamingResponseManager.stream()
+       |                                          |
+   SSE Events                           Edit original message (debounced)
+   - text                              - Sentence boundary detection
+   - audio                             - Message chunking
+   - done/error                        - Error handling
+       |                                          |
+   Async worker                        Background task updates
+   - sentence_queue                            |
+   - audio_queue                               v
+       |                                 DeliveryResult dataclass
+   Frontend plays                           - content
+   - sequential                             - has_audio
+   - base64 WAV                              - last_edit_id
+                                            - edit_count
+```
+
+### Key Features
+
+- **Debounced Editing**: Message edits are debounced to avoid rate limits and provide smooth visual updates
+- **Sentence Boundary Detection**: Text is chunked at natural sentence boundaries (`.`, `!`, `?`, `\n`)
+- **Message Chunking**: Long messages are split into chunks for Discord's 2000 character limit
+- **Error Handling**: Failed edits are logged without stopping the stream
+
+### Configuration
+
+| Setting | Env Variable | Default | Description |
+| --- | --- | --- | --- |
+| Edit Interval | `STREAMING_EDIT_INTERVAL` | `1.0` | Seconds between message edits (debounce) |
+| Placeholder Text | `STREAMING_PLACEHOLDER` | `Thinking...` | Initial message before streaming starts |
+| Max Message Length | `STREAMING_MAX_MESSAGE_LENGTH` | `1900` | Maximum characters per Discord message (allowing room for truncation) |
+
+### DeliveryResult Dataclass
+
+```python
+@dataclass
+class DeliveryResult:
+    content: str                    # Final message content
+    has_audio: bool = False         # Whether audio was generated
+    last_edit_id: Optional[int] = None  # Last Discord message edit ID
+    edit_count: int = 0             # Total number of edits performed
+```
+
+### Differences from Web SSE Streaming
+
+| Aspect | Web SSE Streaming | Bot Streaming |
+| --- | --- | --- |
+| Transport | HTTP SSE | Discord API / Bot framework |
+| Text Delivery | Token-by-token events | Debounced message edits |
+| Audio Delivery | Base64 WAV to frontend | Optional audio file upload |
+| Rate Limiting | Not applicable | Must respect Discord rate limits |
+| Message Length | Not limited | 2000 character limit |
+| Update Strategy | Append to DOM | Edit original message |
 
 ## Related Documentation
 

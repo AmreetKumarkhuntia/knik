@@ -18,8 +18,8 @@ This guide covers deploying Knik applications for production use.
 ### Required Environment Variables
 
 ```bash
-# AI Provider Configuration (6 providers available)
-export KNIK_AI_PROVIDER="vertex"  # vertex, gemini, glm, zai, custom, mock
+# AI Provider Configuration (7 providers available)
+export KNIK_AI_PROVIDER="vertex"  # vertex, gemini, zhipuai, zai, zai_coding, custom, mock
 export KNIK_AI_MODEL="gemini-2.0-flash-exp"
 
 # Provider-specific credentials
@@ -30,7 +30,7 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"  # vertex provider
 # or: export KNIK_CUSTOM_API_BASE="http://..."  # custom provider (any OpenAI-compatible API)
 
 # Voice Configuration (9 voices available)
-export KNIK_VOICE_NAME="af_sarah"
+export KNIK_VOICE="af_heart"
 # Female: af_heart, af_bella, af_sarah, af_nicole, af_sky
 # Male: am_adam, am_michael, am_leo, am_ryan
 
@@ -117,7 +117,7 @@ User=your-user
 WorkingDirectory=/path/to/knik
 Environment="KNIK_AI_PROVIDER=vertex"
 Environment="GOOGLE_CLOUD_PROJECT=your-project"
-Environment="KNIK_VOICE_NAME=af_sarah"
+Environment="KNIK_VOICE=af_heart"
 ExecStart=/path/to/.venv/bin/uvicorn apps.web.backend.main:app --host 0.0.0.0 --port 8000
 Restart=always
 
@@ -138,7 +138,7 @@ sudo systemctl status knik-backend
 **1. Build for production:**
 
 ```bash
-npm run build:web:frontend
+cd src/apps/web/frontend && npm run build
 ```
 
 This creates optimized static files in `src/apps/web/frontend/dist/`.

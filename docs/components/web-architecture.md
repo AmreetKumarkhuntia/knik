@@ -122,12 +122,12 @@ src/apps/web/frontend/
     │   │       ├── ExecutionHistory/
     │   │       ├── ScheduleManager/
     │   │       └── WorkflowBuilder/Canvas.tsx, FloatingControls, ...
-    │   └── utils/
-    │       ├── format.ts
-    │       ├── metricsCalculator.ts
-    │       └── uuid.ts
+│   └── utils/
+│       ├── format.ts
+│       ├── metricsCalculator.ts
+│       └── uuid.ts
     ├── services/
-    │   ├── api.ts               # ChatAPI, AdminAPI
+    │   ├── api.ts               # ChatAPI, ConversationAPI, AdminAPI
     │   ├── streaming.ts         # streamChat() SSE client
     │   ├── workflowApi.ts       # WorkflowAPI, ScheduleAPI, AnalyticsAPI
     │   ├── theme.ts
@@ -150,7 +150,7 @@ src/apps/web/frontend/
 ```
 ┌────────────────────────┐     REST / SSE     ┌──────────────────────┐
 │  React Frontend        │ ←────────────────→ │  FastAPI Backend     │
-│  (Vite dev: port 12414)│                    │  (Uvicorn: port 8000)│
+│  (Vite dev: port 5173) │                    │  (Uvicorn: port 8000)│
 │                        │                    │                      │
 │  - 5 pages (Router)    │                    │  - 8 route files     │
 │  - 29 components       │                    │  - AIClient          │
@@ -185,6 +185,8 @@ from lib.services.ai_client.registry import MCPServerRegistry
 - `src/apps/console/` -- console app
 - `imports.py` -- central import hub
 
+> **Note:** The `src/lib/services/messaging_client/` module is a shared service primarily used by Bot app (`src/apps/bot/`). It provides a provider-agnostic messaging abstraction with implementations for Telegram and mock testing. See [API Reference](../reference/api.md) for `MessagingClient` documentation.
+
 ## Frontend Routes
 
 | Path | Page | Description |
@@ -203,6 +205,7 @@ from lib.services.ai_client.registry import MCPServerRegistry
 | `ChatAPI.stream()` | `chat_stream.py` `/api/chat/stream` | SSE streaming chat + audio |
 | `ChatAPI.getHistory()` | `history.py` `/api/history` | Get conversation history |
 | `ChatAPI.clearHistory()` | `history.py` `/api/history/clear` | Clear history |
+| `ConversationAPI.*` | `conversations.py` `/api/conversations` | CRUD for persisted conversation history |
 | `AdminAPI.getSettings()` | `admin.py` `/api/admin/settings` | Get server settings |
 | `WorkflowAPI.*` | `workflow.py` `/api/workflows` | Workflow CRUD + execution |
 | `ScheduleAPI.*` | `cron.py` `/api/cron` | Cron schedule management |
@@ -224,6 +227,13 @@ npm run start:web:backend
 ```bash
 npm run start:web:frontend
 # Starts Vite dev server on http://localhost:12414
+```
+
+### Bot App
+
+```bash
+python src/main.py --mode bot
+# Starts long-running bot daemon
 ```
 
 ### Full Stack (Separate Terminals)

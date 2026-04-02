@@ -38,13 +38,13 @@ This document tracks what has been built and what's planned for Knik -- a JARVIS
 
 | Category | Count | Tools |
 | --- | --- | --- |
-| Utils | 4 | calculator, timer, random_number, uuid_generator |
-| Text | 5 | word_count, text_transform, regex_search, summarize, translate |
-| Shell | 1 | execute_command |
-| File | 8 | read_file, write_file, list_directory, create_directory, delete_file, move_file, file_info, search_files |
-| Browser | 6 | open_url, search_web, scrape_page, screenshot, click_element, type_text |
-| Cron | 3 | schedule_task, list_schedules, delete_schedule |
-| Workflow | 4 | create_workflow, execute_workflow, list_workflows, get_workflow |
+| Utils | 4 | calculate, get_current_time, get_current_date, reverse_string |
+| Text | 5 | word_count, find_and_replace, extract_emails, extract_urls, text_case_convert |
+| Shell | 1 | run_shell_command |
+| File | 8 | read_file, list_directory, search_in_files, file_info, write_file, append_to_file, find_in_file, count_in_file |
+| Browser | 6 | browser_navigate, browser_get_text, browser_get_links, browser_click, browser_type, browser_screenshot |
+| Cron | 3 | add_cron_schedule, list_cron_schedules, remove_cron_schedule |
+| Workflow | 4 | create_workflow, remove_workflow, list_workflows, get_workflow_templates |
 
 #### Four Application Interfaces
 

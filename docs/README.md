@@ -1,6 +1,6 @@
 # Knik Documentation
 
-Multi-interface AI assistant with async TTS processing, workflow scheduling, and 31 MCP tools.
+Multi-interface AI assistant with async TTS processing, workflow scheduling, messaging bot, and 31 MCP tools.
 
 ## Quick Start
 
@@ -8,7 +8,8 @@ Multi-interface AI assistant with async TTS processing, workflow scheduling, and
 npm run start:gui                # GUI application
 npm run start:console            # Terminal console
 npm run start:web:backend        # Web backend (port 8000)
-npm run start:web:frontend       # Web frontend (port 12414)
+npm run start:web:frontend       # Web frontend (port 5173)
+python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_BOT_TOKEN)
 ```
 
 ## Documentation Index
@@ -34,11 +35,17 @@ npm run start:web:frontend       # Web frontend (port 12414)
 
 ### Technical Reference
 
-- [API Reference](reference/api.md) - AIClient, TTS, Web endpoints
+ - [API Reference](reference/api.md) - AIClient, TTS, Web endpoints, Bot app
+- [Environment Variables](reference/environment-variables.md) - All configuration options
+- [Conversation History](reference/conversation-history.md) - AI memory and context system
+- [Path Aliases](reference/path-aliases.md) - Import path configuration
+- [MCP LangChain Pattern](reference/mcp-langchain-pattern.md) - Tool binding pattern- [API Reference](reference/api.md) - AIClient, TTS, Web endpoints
 - [Environment Variables](reference/environment-variables.md) - All configuration options
 - [Conversation History](reference/conversation-history.md) - AI memory and context system
 - [Path Aliases](reference/path-aliases.md) - Import path configuration
 - [MCP LangChain Pattern](reference/mcp-langchain-pattern.md) - Tool binding pattern
+
+### Architecture Plans
 
 ### Components
 
@@ -55,6 +62,11 @@ npm run start:web:frontend       # Web frontend (port 12414)
 
 - [Design](design.md) - UI/screen designs from Stitch project
 
+### Architecture Plans
+
+- [Bot Architecture Overview](plan/bot/00-overview.md) - Bot design and phases
+- [Dynamic Models & Token Tracking](plan/dynamic-models-token-tracking-summarization.md) - Model discovery and summarization plan
+
 ## Project Structure
 
 ```mermaid
@@ -67,6 +79,7 @@ flowchart LR
     apps --> gui
     apps --> web
     apps --> cron_job
+    apps --> bot
     lib --> core
     lib --> services
     lib --> mcp
@@ -82,6 +95,7 @@ flowchart LR
     style gui fill:#50c878
     style web fill:#50c878
     style cron_job fill:#50c878
+    style bot fill:#e88d3c
     style core fill:#90caf9
     style services fill:#90caf9
     style mcp fill:#90caf9

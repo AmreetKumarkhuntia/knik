@@ -8,7 +8,7 @@ Modern web interface with React + FastAPI for AI chat, workflow management, and 
 
 ```mermaid
 flowchart TD
-    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 12414]
+    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 5173]
     B -->|REST API| C[FastAPI Backend AI TTS MCP Tools Port 8000]
     C -->|Direct imports| D[Python Services AIClient TTSProcessor MCP Tools]
 
@@ -66,7 +66,7 @@ src/apps/web/frontend/src/
 **Workflows** (`lib/sections/workflows/`)
 - WorkflowHub: Workflow dashboard
 - WorkflowsTable: Workflow listing
-- WorkflowBuilder/: Visual node graph editor with Canvas, FloatingControls, NodePropertiesPanel, WorkflowNavbar
+- WorkflowBuilder/: Visual node graph editor with Canvas, FloatingControls, NodePropertiesPanel, ConfigurationForm.tsx, WorkflowNavbar
 - ScheduleManager/: Create and manage schedules with ScheduleCard, ScheduleForm, ScheduleList
 - ExecutionHistory/: HistoryTable, ExecutionDetail
 
@@ -104,7 +104,7 @@ All animations use GPU-accelerated properties (transform, opacity) for 60fps:
 
 ## Backend (FastAPI)
 
-### API Endpoints (22 total)
+### API Endpoints (32 total)
 
 **Base URL:** `http://localhost:8000`
 
@@ -117,6 +117,7 @@ All animations use GPU-accelerated properties (transform, opacity) for 60fps:
 | `workflow.py` | `/api/workflows` | GET `/`, GET/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes` |
 | `cron.py` | `/api/cron` | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle` |
 | `analytics.py` | `/api/analytics` | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity` |
+| `conversations.py` | `/api/conversations` | GET `/`, POST `/`, GET `/{conversation_id}`, DELETE `/{conversation_id}`, PATCH `/{conversation_id}`, GET `/{conversation_id}/messages` |
 
 See [API Reference](../reference/api.md) for detailed endpoint documentation.
 
@@ -126,12 +127,13 @@ See [API Reference](../reference/api.md) for detailed endpoint documentation.
 src/apps/web/backend/
   main.py           # FastAPI app entry point with CORS, lifespan handlers
   config.py         # WebBackendConfig (reads from .env)
-  routes/
+    routes/
     chat.py         # Chat endpoint (text + audio response)
     chat_stream.py  # SSE streaming chat endpoint
     admin.py        # Settings and provider management
     history.py      # Conversation history CRUD
     workflow.py     # Workflow CRUD and execution
+    conversations.py  # Conversation management with messages
     cron.py         # Schedule management (natural language)
     analytics.py    # Dashboard, metrics, activity
 ```
@@ -164,7 +166,7 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 ```bash
 # Start backend and frontend separately (two terminals)
 npm run start:web:backend    # Backend on :8000
-npm run start:web:frontend   # Frontend on :12414
+npm run start:web:frontend   # Frontend on :5173 (Vite dev port)
 
 # Or use shell scripts
 ./scripts/start_web_backend.sh
