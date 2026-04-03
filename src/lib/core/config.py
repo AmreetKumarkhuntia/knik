@@ -177,10 +177,6 @@ Be reliable, efficient, and action focused like Jarvis."""
             str(Path.home() / ".knik" / "browser-profile"),
         )
     )
-    tool_session_idle_timeout: int = field(
-        default_factory=lambda: Config.from_env("KNIK_TOOL_SESSION_IDLE_TIMEOUT", 1800, int)
-    )
-
     telegram_bot_token: str | None = field(default_factory=lambda: Config.from_env("KNIK_TELEGRAM_BOT_TOKEN", None))
 
     model_discovery_timeout: int = field(

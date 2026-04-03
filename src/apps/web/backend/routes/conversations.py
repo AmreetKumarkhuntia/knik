@@ -13,8 +13,8 @@ from pydantic import BaseModel
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
+from lib.services.ai_client.base_tool import BaseTool
 from lib.services.conversation import ConversationDB
-from lib.services.tool_session.manager import ToolSessionManager
 
 
 router = APIRouter()
@@ -80,8 +80,7 @@ async def delete_conversation(conversation_id: str):
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
         await ConversationDB.delete_conversation(conversation_id)
-        # Clean up any browser / tool session associated with this conversation.
-        ToolSessionManager.get_instance().cleanup_session(conversation_id)
+        BaseTool.cleanup_all()
         return {"status": "deleted", "id": conversation_id}
     except HTTPException:
         raise

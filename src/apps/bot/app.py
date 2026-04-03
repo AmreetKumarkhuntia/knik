@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 from imports import printer as logger
 from lib.commands.service import CommandService
+from lib.services.ai_client.base_tool import BaseTool
 from lib.services.postgres.db import PostgresDB
-from lib.services.tool_session.manager import ToolSessionManager
 
 from .commands import create_command_system
 from .config import BotConfig
@@ -165,7 +165,7 @@ class BotApp:
         await PostgresDB.close()
 
     def _shutdown_tool_sessions(self) -> None:
-        ToolSessionManager.get_instance().cleanup_all()
+        BaseTool.cleanup_all()
 
 
 def main() -> None:
