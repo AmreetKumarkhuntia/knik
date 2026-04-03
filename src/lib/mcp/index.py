@@ -1,42 +1,44 @@
-"""MCP tool registry and discovery."""
+"""MCP tool registration and discovery."""
 
 from typing import Any
 
-from .definitions import ALL_DEFINITIONS
-from .implementations import ALL_IMPLEMENTATIONS
-
-
-def get_all_tools() -> list[dict[str, Any]]:
-    """Return all MCP tool definitions."""
-    return ALL_DEFINITIONS
+from lib.mcp.tools import ALL_TOOL_CLASSES
 
 
 def register_all_tools(registry) -> int:
-    """
-    Register all MCP tools to the registry.
+    """Register all MCP tools onto a MCPServerRegistry instance.
 
-    Args:
-        registry: MCPServerRegistry instance to register tools on.
+    Instantiates each tool class, then registers every definition +
+    implementation pair onto the registry.
 
-    Returns:
-        Number of tools registered
+    Returns the number of tools registered.
     """
     if registry is None:
         raise ValueError("An MCPServerRegistry instance is required")
 
     count = 0
-    for tool_def in ALL_DEFINITIONS:
-        tool_name = tool_def["name"]
-        implementation = ALL_IMPLEMENTATIONS.get(tool_name)
-
-        if implementation:
-            registry.register_tool(tool_def, implementation)
-            count += 1
+    for tool_cls in ALL_TOOL_CLASSES:
+        tool = tool_cls()
+        impls = tool.get_implementations()
+        for tool_def in tool.get_definitions():
+            tool_name = tool_def.get("name")
+            impl = impls.get(tool_name)
+            if impl:
+                registry.register_tool(tool_def, impl)
+                count += 1
 
     return count
+
+
+def get_all_tools() -> list[dict[str, Any]]:
+    """Return all MCP tool definition schemas."""
+    definitions = []
+    for tool_cls in ALL_TOOL_CLASSES:
+        definitions.extend(tool_cls().get_definitions())
+    return definitions
 
 
 def get_tool_info() -> dict[str, Any]:
     """Return summary info about all registered tools."""
     tools = get_all_tools()
-    return {"total_tools": len(tools), "tool_names": [tool["name"] for tool in tools], "tools": tools}
+    return {"total_tools": len(tools), "tool_names": [t["name"] for t in tools], "tools": tools}

@@ -22,7 +22,7 @@ src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
 from apps.web.backend.config import WebBackendConfig
-from imports import AIClient, TTSAsyncProcessor, printer
+from imports import AIClient, KokoroVoiceModel, printer
 from lib.mcp.index import register_all_tools
 from lib.services.ai_client.registry import MCPServerRegistry
 
@@ -32,7 +32,7 @@ router = APIRouter()
 config = WebBackendConfig()
 
 ai_client: AIClient | None = None
-tts_processor: TTSAsyncProcessor | None = None
+tts_processor: KokoroVoiceModel | None = None
 mcp_registry: MCPServerRegistry | None = None
 
 
@@ -58,7 +58,7 @@ async def _init_clients():
                 mcp_registry=registry,
                 project_id=config.ai_project_id,
                 location=config.ai_location,
-                system_instruction=config.system_instruction,
+                system_instruction=str(config.system_instruction) if config.system_instruction else None,
             )
             return registry, client
 
@@ -66,9 +66,7 @@ async def _init_clients():
         printer.success(f"AIClient ready: {config.ai_provider}/{config.ai_model}")
 
     if tts_processor is None:
-        tts_processor = await asyncio.to_thread(
-            TTSAsyncProcessor, voice_model=config.voice_name, sample_rate=config.sample_rate
-        )
+        tts_processor = await asyncio.to_thread(KokoroVoiceModel)
         printer.success(f"TTS ready: {config.voice_name}")
 
 
@@ -89,7 +87,7 @@ async def chat(request: SimpleChatRequest):
             provider_meta={"provider": config.ai_provider, "model": config.ai_model},
         )
 
-        audio_data, sample_rate = await asyncio.to_thread(tts_processor.tts_processor.generate, response_text)
+        audio_data, sample_rate = await asyncio.to_thread(tts_processor.generate, response_text)
 
         buffer = io.BytesIO()
         sf.write(buffer, audio_data, sample_rate, format="WAV")
