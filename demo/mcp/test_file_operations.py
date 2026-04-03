@@ -6,34 +6,28 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from lib.mcp.implementations.file_impl import (
-    append_to_file_impl,
-    count_in_file_impl,
-    file_info_impl,
-    find_in_file_impl,
-    list_directory_impl,
-    read_file_impl,
-    search_in_files_impl,
-    write_file_impl,
-)
+from lib.mcp.tools.file_tool import FileTool
 from lib.utils.printer import printer
 
 
+def _tool():
+    t = FileTool()
+    return t.get_implementations()
+
+
 def test_read_file():
-    """Test reading a file."""
+    impls = _tool()
     printer.header("Test 1: Read File")
 
-    # Test full file read
-    result = read_file_impl("README.md")
+    result = impls["read_file"]("README.md")
     if result.get("success"):
         printer.success(f"✓ Read {result['lines']} lines from {result['file_path']}")
         printer.info(f"First 100 chars: {result['content'][:100]}...")
     else:
         printer.error(f"✗ Error: {result.get('error')}")
 
-    # Test line range read
     printer.info("\n📖 Reading lines 1-5:")
-    result = read_file_impl("README.md", start_line=1, end_line=5)
+    result = impls["read_file"]("README.md", start_line=1, end_line=5)
     if result.get("success"):
         printer.success(f"✓ Read {result['lines_read']} lines (of {result['total_lines']} total)")
         print(result["content"])
@@ -42,11 +36,10 @@ def test_read_file():
 
 
 def test_list_directory():
-    """Test directory listing."""
+    impls = _tool()
     printer.header("\nTest 2: List Directory")
 
-    # Non-recursive
-    result = list_directory_impl("docs")
+    result = impls["list_directory"]("docs")
     if result.get("success"):
         printer.success(f"✓ Found {result['total_files']} files, {result['total_directories']} dirs")
         printer.info(f"Files: {[f['name'] for f in result['files'][:3]]}")
@@ -54,9 +47,8 @@ def test_list_directory():
     else:
         printer.error(f"✗ Error: {result.get('error')}")
 
-    # Recursive with pattern
     printer.info("\n📂 Recursive search for *.md files:")
-    result = list_directory_impl("docs", recursive=True, pattern="*.md")
+    result = impls["list_directory"]("docs", recursive=True, pattern="*.md")
     if result.get("success"):
         printer.success(f"✓ Found {result['total_files']} markdown files")
         for f in result["files"][:5]:
@@ -66,10 +58,10 @@ def test_list_directory():
 
 
 def test_search_in_files():
-    """Test searching across multiple files."""
+    impls = _tool()
     printer.header("\nTest 3: Search in Files")
 
-    result = search_in_files_impl(
+    result = impls["search_in_files"](
         directory_path="docs", pattern="MCP", file_pattern="*.md", case_sensitive=True, max_results=5
     )
 
@@ -82,10 +74,10 @@ def test_search_in_files():
 
 
 def test_file_info():
-    """Test getting file information."""
+    impls = _tool()
     printer.header("\nTest 4: File Info")
 
-    result = file_info_impl("README.md")
+    result = impls["file_info"]("README.md")
     if result.get("success"):
         printer.success("✓ File info retrieved")
         print(f"  Name: {result['name']}")
@@ -98,41 +90,36 @@ def test_file_info():
 
 
 def test_write_and_append():
-    """Test writing and appending to files."""
+    impls = _tool()
     printer.header("\nTest 5: Write & Append")
 
     test_file = "test_output.txt"
 
-    # Write
-    result = write_file_impl(test_file, "Hello, World!\nThis is line 2.\n")
+    result = impls["write_file"](test_file, "Hello, World!\nThis is line 2.\n")
     if result.get("success"):
         printer.success(f"✓ Wrote {result['lines_written']} lines to {test_file}")
     else:
         printer.error(f"✗ Write error: {result.get('error')}")
 
-    # Append
-    result = append_to_file_impl(test_file, "This is appended line 3.\n")
+    result = impls["append_to_file"](test_file, "This is appended line 3.\n")
     if result.get("success"):
         printer.success(f"✓ Appended {result['bytes_written']} bytes")
     else:
         printer.error(f"✗ Append error: {result.get('error')}")
 
-    # Read back
-    result = read_file_impl(test_file)
+    result = impls["read_file"](test_file)
     if result.get("success"):
         printer.info(f"📄 File contents:\n{result['content']}")
 
-    # Cleanup
     Path(test_file).unlink(missing_ok=True)
     printer.info("🗑️  Test file cleaned up")
 
 
 def test_find_in_file():
-    """Test finding pattern in a specific file."""
+    impls = _tool()
     printer.header("\nTest 6: Find in File")
 
-    # Without context
-    result = find_in_file_impl(file_path="README.md", pattern="AI", case_sensitive=True, max_results=3)
+    result = impls["find_in_file"](file_path="README.md", pattern="AI", case_sensitive=True, max_results=3)
 
     if result.get("success"):
         printer.success(f"✓ Found {result['total_matches']} matches")
@@ -141,9 +128,8 @@ def test_find_in_file():
     else:
         printer.error(f"✗ Error: {result.get('error')}")
 
-    # With context
     printer.info("\n🔍 With context lines:")
-    result = find_in_file_impl(
+    result = impls["find_in_file"](
         file_path="README.md",
         pattern="Features",
         case_sensitive=True,
@@ -164,10 +150,10 @@ def test_find_in_file():
 
 
 def test_count_in_file():
-    """Test counting pattern occurrences."""
+    impls = _tool()
     printer.header("\nTest 7: Count in File")
 
-    result = count_in_file_impl(file_path="README.md", pattern="the", case_sensitive=False)
+    result = impls["count_in_file"](file_path="README.md", pattern="the", case_sensitive=False)
 
     if result.get("success"):
         printer.success(f"✓ Pattern 'the' appears {result['total_occurrences']} times")
@@ -180,12 +166,12 @@ def test_count_in_file():
 
 
 def test_regex_search():
-    """Test regex pattern matching."""
+    impls = _tool()
     printer.header("\nTest 8: Regex Search")
 
-    result = find_in_file_impl(
+    result = impls["find_in_file"](
         file_path="README.md",
-        pattern=r"\b\d+\.\d+\b",  # Find version numbers like 1.5 or 82.0
+        pattern=r"\b\d+\.\d+\b",
         is_regex=True,
         max_results=5,
     )
@@ -199,7 +185,6 @@ def test_regex_search():
 
 
 def main():
-    """Run all tests."""
     printer.header("🧪 File Operations MCP Tools Test Suite")
 
     try:

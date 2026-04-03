@@ -1,88 +1,206 @@
-# Plan 01: Refactor Tool Session into a Generic Tool Base Class
+# Plan 01 — Tool Base Class Refactor
 
-**Status:** Planning
+**Status:** Complete
 **Last Updated:** April 2026
 
 ---
 
 ## Problem
 
-The current `ToolSessionManager` is a monolithic singleton that manages per-conversation resource lifecycles (browser, etc.). MCP tool implementations are tightly coupled to it — they call `ToolSessionManager.get_instance().run_on_thread("browser", ...)` directly everywhere in `browser_impl.py`. There is no clean abstraction boundary between "what a tool does" and "how it manages its session/resources".
+`ToolSessionManager` was a monolithic singleton. MCP tool implementations were bare functions that called `ToolSessionManager.get_instance()` directly. There was no abstraction boundary between what a tool does, how it manages resources, and how it gets session context. `conversation_id` was threaded through a ContextVar that each browser impl function read independently.
 
-This makes it hard to:
-- Add new tools that require session management (e.g., a file editor, a code runner)
-- Test tool logic in isolation
-- Understand what a tool is responsible for at a glance
-- Extend or replace session behaviour per tool without touching the manager
+## Goal
 
----
+1. **`BaseTool` ABC** — single contract for every tool (session-aware or stateless).
+2. **No global state** — no singletons, no ContextVars. Each call site creates its own `MCPServerRegistry` + tool instances per conversation context.
+3. **`BrowserTool` owns its own Playwright lifecycle** — standalone, self-managed, no dependency on `ToolSessionManager`.
+4. **Delete `tool_session/` entirely** — `ToolSessionManager`, `ToolRegistry`, `current_conversation_id` and all related infrastructure are removed.
 
-## Proposed Approach
+## Final Architecture
 
-Introduce a `BaseTool` abstract class that encapsulates:
-1. **Tool definitions** — the MCP tool schemas the tool exposes
-2. **Session/resource lifecycle** — how to acquire, use, and release resources for a conversation
-3. **Tool execution** — the actual tool handler logic
+```
+src/lib/services/ai_client/
+  base_tool.py                  ← BaseTool ABC with _instances tracking + cleanup_all()
 
-Each concrete tool (e.g., `BrowserTool`) inherits from `BaseTool` and provides its own implementation. The `ToolSessionManager` either becomes a thin coordinator used internally by `BaseTool`, or is dissolved into the base class itself.
+src/lib/mcp/
+  index.py                      ← register_all_tools(), get_all_tools(), get_tool_info()
+  tools/
+    __init__.py                 ← ALL_TOOL_CLASSES list + named exports
+    file_tool.py                ← FileTool(BaseTool) — FILE_DEFINITIONS inlined
+    shell_tool.py               ← ShellTool(BaseTool) — SHELL_DEFINITIONS inlined
+    text_tool.py                ← TextTool(BaseTool) — TEXT_DEFINITIONS inlined
+    utils_tool.py               ← UtilsTool(BaseTool) — UTILS_DEFINITIONS inlined
+    cron_tool.py                ← CronTool(BaseTool) — CRON_DEFINITIONS inlined
+    workflow_tool.py            ← WorkflowTool(BaseTool) — WORKFLOW_DEFINITIONS inlined
+    browser_tool.py             ← BrowserTool(BaseTool) — BROWSER_DEFINITIONS inlined, standalone Playwright
+```
 
-### Rough Shape
+`src/lib/services/tool_session/` — **deleted entirely**.
+`src/lib/mcp/definitions/` — **deleted entirely** (inlined into tool files).
+`src/lib/mcp/implementations/` — **deleted entirely** (logic already in tool classes).
+
+## What Was Deleted
+
+| Item | Reason |
+|---|---|
+| `src/lib/services/tool_session/` (7 files) | Entire directory removed — all infrastructure replaced by `BaseTool` |
+| `ToolSessionManager` | Replaced by per-instance lifecycle in `BrowserTool` |
+| `ToolRegistry` singleton | Replaced by `BaseTool.cleanup_all()` class method |
+| `current_conversation_id` ContextVar | Removed — no global state |
+| `src/lib/mcp/implementations/browser_impl.py` | Logic moved into `BrowserTool` |
+| `src/lib/mcp/implementations/` (entire directory) | Dead code — logic already inlined in tool classes |
+| `src/lib/mcp/definitions/` (entire directory) | Definition lists inlined into each `*_tool.py` |
+| `tool_session_idle_timeout` config field | No longer relevant |
+
+## Architecture
+
+### `BaseTool` ABC — `src/lib/services/ai_client/base_tool.py`
 
 ```python
-# src/lib/tools/base.py
 class BaseTool(ABC):
+    _instances: ClassVar[list["BaseTool"]] = []
+
+    @property
     @abstractmethod
-    def get_definitions(self) -> list[ToolDefinition]: ...
+    def name(self) -> str: ...
 
     @abstractmethod
-    async def execute(self, name: str, args: dict, conversation_id: str) -> ToolResult: ...
+    def get_definitions(self) -> list[dict[str, Any]]: ...
 
-    async def on_session_start(self, conversation_id: str) -> None: ...
-    async def on_session_end(self, conversation_id: str) -> None: ...
+    @abstractmethod
+    def get_implementations(self) -> dict[str, Callable]: ...
+
+    def cleanup(self) -> None:
+        pass  # no-op default; override in session-aware tools
+
+    def __init__(self) -> None:
+        BaseTool._instances.append(self)
+
+    @classmethod
+    def cleanup_all(cls) -> None:
+        for instance in cls._instances:
+            instance.cleanup()
 ```
+
+`BaseTool.cleanup_all()` replaces both `ToolRegistry.cleanup_all()` and `ToolRegistry.cleanup_session()` at all call sites.
+
+### `BrowserTool` — `src/lib/mcp/tools/browser_tool.py`
+
+Standalone: owns its own `Playwright` instance, `ThreadPoolExecutor`, and page map. No dependency on `ToolSessionManager`. `cleanup()` override shuts down Playwright and the executor.
+
+### Stateless Tool Classes
+
+`FileTool`, `ShellTool`, `TextTool`, `UtilsTool`, `CronTool`, `WorkflowTool` each:
+- Subclass `BaseTool`
+- `get_definitions()` returns the relevant MCP schema list
+- `get_implementations()` delegates to the corresponding `*_impl.py` functions
+- Do not override `cleanup()` (no resources to release)
+
+### Registration — `src/lib/mcp/index.py`
 
 ```python
-# src/lib/tools/browser_tool.py
-class BrowserTool(BaseTool):
-    def get_definitions(self): return BROWSER_TOOL_DEFINITIONS
-    async def execute(self, name, args, conversation_id): ...
-    async def on_session_start(self, conversation_id): # launch browser
-    async def on_session_end(self, conversation_id):   # close browser
+def register_all_tools(registry) -> int:
+    if registry is None:
+        raise ValueError("An MCPServerRegistry instance is required")
+
+    count = 0
+    for tool_cls in ALL_TOOL_CLASSES:
+        tool = tool_cls()
+        impls = tool.get_implementations()
+        for tool_def in tool.get_definitions():
+            tool_name = tool_def.get("name")
+            impl = impls.get(tool_name)
+            if impl:
+                registry.register_tool(tool_def, impl)
+                count += 1
+
+    return count
 ```
 
----
+Callers create a fresh `MCPServerRegistry()`, call `register_all_tools(registry)`, and pass the registry to `AIClient`. No shared state between conversations.
 
-## Key Files
+### `_wrap_with_logging` — `src/lib/services/ai_client/registry/mcp_registry.py`
 
-| File | Change |
-|------|--------|
-| `src/lib/services/tool_session/manager.py` | Refactor or dissolve into base class |
-| `src/lib/services/tool_session/resources.py` | Keep `SessionResource`/`SessionResourceFactory` ABCs, used internally by `BaseTool` |
-| `src/lib/services/tool_session/browser_resource.py` | Move resource logic into `BrowserTool` or keep as internal detail |
-| `src/lib/mcp/implementations/browser_impl.py` | Replace direct `ToolSessionManager` calls with `BrowserTool.execute()` |
-| `src/lib/mcp/definitions/browser_defs.py` | No change — consumed by `BrowserTool.get_definitions()` |
-| `src/lib/mcp/index.py` | Register `BrowserTool` instance instead of raw tool callables |
-| `src/lib/services/ai_client/registry/mcp_registry.py` | Accept `BaseTool` instances for registration |
-| `src/lib/tools/base.py` | **New** — `BaseTool` abstract class |
-| `src/lib/tools/browser_tool.py` | **New** — `BrowserTool` concrete implementation |
+```python
+def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
+    def wrapper(**kwargs):
+        printer.info(f"Tool Input: {tool_name}({kwargs})")
+        try:
+            result = func(**kwargs)
+            printer.info(f"Tool Output: {tool_name} -> {result}")
+            return result
+        except Exception as e:
+            printer.error(f"Tool Error: {tool_name} -> {e}")
+            return {"error": str(e)}
+    return wrapper
+```
 
----
+No ContextVar read. No `conversation_id` injection. Tools that need conversation context receive it through their own mechanisms.
 
-## Rough Steps
+### App Shutdown Pattern
 
-1. **Define `BaseTool` ABC** in `src/lib/tools/base.py` with `get_definitions`, `execute`, `on_session_start`, `on_session_end`
-2. **Create `BrowserTool`** in `src/lib/tools/browser_tool.py` — move browser impl logic from `browser_impl.py` and resource lifecycle from `browser_resource.py` into this class
-3. **Update `MCPServerRegistry`** to accept `BaseTool` instances and call `get_definitions()` + `execute()` instead of raw callables
-4. **Update tool registration** in `mcp/index.py` to instantiate and register `BrowserTool`
-5. **Wire session lifecycle** — when a conversation ends, call `on_session_end()` on all registered tools (currently done via `ToolSessionManager.cleanup_session()`)
-6. **Update all callers** of `ToolSessionManager.cleanup_session()` / `cleanup_all()` in console, GUI, bot, and web apps to use the new lifecycle API
-7. **Delete or slim down** `ToolSessionManager` — if it's still needed as a coordinator, keep it internal; do not expose it publicly
-8. **Update `src/lib/tools/__init__.py`** with public exports
+All app shutdown paths call `BaseTool.cleanup_all()` directly:
 
----
+| File | Call |
+|---|---|
+| `apps/console/app.py` | `BaseTool.cleanup_all()` |
+| `apps/gui/app.py` | `BaseTool.cleanup_all()` |
+| `apps/bot/app.py` | `BaseTool.cleanup_all()` |
+| `apps/web/backend/routes/conversations.py` | `BaseTool.cleanup_all()` |
 
-## Notes
+### Per-Invocation Client Construction (Web Routes)
 
-- Keep backward compatibility with the existing `ToolDefinition` schema — no changes to what tools look like from the LLM's perspective
-- The `run_on_thread` pattern (dedicated thread pool per resource type) should be preserved inside `BrowserTool` — Playwright requires a consistent thread
-- The `current_conversation_id` context variable pattern in the manager should be reviewed — it may be cleaner to pass `conversation_id` explicitly through `execute()`
+`chat.py` and `chat_stream.py` each build a fresh `MCPServerRegistry` on first request:
+
+```python
+def _build_ai():
+    registry = MCPServerRegistry()
+    register_all_tools(registry)
+    client = AIClient(
+        provider=config.ai_provider,
+        mcp_registry=registry,
+        ...
+    )
+    return registry, client
+
+mcp_registry, ai_client = await asyncio.to_thread(_build_ai)
+```
+
+`cron/nodes.py` follows the same pattern — fresh registry per invocation.
+
+## Files Changed
+
+**New files:**
+- `src/lib/services/ai_client/base_tool.py`
+- `src/lib/mcp/tools/__init__.py`
+- `src/lib/mcp/tools/file_tool.py`
+- `src/lib/mcp/tools/shell_tool.py`
+- `src/lib/mcp/tools/text_tool.py`
+- `src/lib/mcp/tools/utils_tool.py`
+- `src/lib/mcp/tools/cron_tool.py`
+- `src/lib/mcp/tools/workflow_tool.py`
+
+**Modified files:**
+- `src/lib/mcp/tools/browser_tool.py` — rewritten as standalone `BaseTool` subclass
+- `src/lib/mcp/index.py` — rewritten to use `ALL_TOOL_CLASSES`
+- `src/lib/mcp/implementations/__init__.py` — removed `browser_impl` import and `BROWSER_IMPLEMENTATIONS`
+- `src/lib/services/ai_client/registry/mcp_registry.py` — removed ContextVar import, simplified `_wrap_with_logging`
+- `src/lib/services/ai_client/client.py` — removed both `current_conversation_id.set()` calls and the import
+- `src/lib/services/__init__.py` — removed `tool_session` exports
+- `src/imports.py` — removed `tool_session` import block and `__all__` entries
+- `src/lib/core/config.py` — removed `tool_session_idle_timeout` field
+- `src/apps/console/app.py` — removed `ToolRegistry`/`current_conversation_id`, added `BaseTool`
+- `src/apps/gui/app.py` — same
+- `src/apps/bot/app.py` — removed `ToolRegistry`, added `BaseTool`
+- `src/apps/web/backend/routes/conversations.py` — removed `ToolRegistry`, added `BaseTool`
+
+**Deleted files:**
+- `src/lib/services/tool_session/__init__.py`
+- `src/lib/services/tool_session/manager.py`
+- `src/lib/services/tool_session/registry.py`
+- `src/lib/services/tool_session/browser_tool.py`
+- `src/lib/services/tool_session/browser_resource.py`
+- `src/lib/services/tool_session/models.py`
+- `src/lib/services/tool_session/resources.py`
+- `src/lib/mcp/implementations/` (entire directory: `file_impl.py`, `shell_impl.py`, `text_impl.py`, `utils_impl.py`, `cron_impl.py`, `workflow_impl.py`, `__init__.py`)
+- `src/lib/mcp/definitions/` (entire directory: `file_defs.py`, `shell_defs.py`, `text_defs.py`, `utils_defs.py`, `cron_defs.py`, `workflow_defs.py`, `browser_defs.py`, `__init__.py`)

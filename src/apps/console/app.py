@@ -18,8 +18,8 @@ except ImportError:
 
 from lib.commands.service import CommandService
 from lib.mcp import register_all_tools
+from lib.services.ai_client.base_tool import BaseTool
 from lib.services.ai_client.registry import MCPServerRegistry
-from lib.services.tool_session.manager import ToolSessionManager, current_conversation_id
 
 
 try:
@@ -99,8 +99,6 @@ class ConsoleApp:
 
     def _stream_response(self, user_input: str):
         printer.info("🤔 Thinking...")
-
-        current_conversation_id.set("console")
 
         history_messages = self.history.get_messages(last_n=self.config.history_context_size)
 
@@ -277,7 +275,7 @@ class ConsoleApp:
 
     def _shutdown(self):
         printer.info("Shutting down console application...")
-        ToolSessionManager.get_instance().cleanup_all()
+        BaseTool.cleanup_all()
         printer.success("Thanks for using Knik Console! 👋")
 
 

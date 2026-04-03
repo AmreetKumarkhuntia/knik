@@ -3,7 +3,6 @@
 from collections.abc import Callable
 from typing import Any
 
-from lib.services.tool_session.manager import current_conversation_id
 from lib.utils.printer import printer
 
 
@@ -18,17 +17,14 @@ except ImportError:
 
 
 def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
-    """Wrap a tool function with input/output logging."""
-
     def wrapper(**kwargs):
-        conv_id = current_conversation_id.get(None) or "__global__"
-        printer.info(f"Tool Input [{conv_id}]: {tool_name}({kwargs})")
+        printer.info(f"Tool Input: {tool_name}({kwargs})")
         try:
             result = func(**kwargs)
-            printer.info(f"Tool Output [{conv_id}]: {tool_name} -> {result}")
+            printer.info(f"Tool Output: {tool_name} -> {result}")
             return result
         except Exception as e:
-            printer.error(f"Tool Error [{conv_id}]: {tool_name} -> {e}")
+            printer.error(f"Tool Error: {tool_name} -> {e}")
             return {"error": str(e)}
 
     return wrapper
@@ -47,7 +43,6 @@ class MCPServerRegistry:
         self._implementations: dict[str, Callable] = {}
 
     def register_tool(self, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None:
-        """Register a tool schema and optional implementation."""
         self._tools.append(tool_dict)
         if implementation:
             tool_name = tool_dict.get("name")
@@ -55,30 +50,22 @@ class MCPServerRegistry:
                 self._implementations[tool_name] = implementation
 
     def get_tools(self) -> list[dict[str, Any]]:
-        """Return all registered tool schemas."""
         return self._tools
 
     def get_implementation(self, tool_name: str) -> Callable | None:
-        """Look up the implementation function for a tool."""
         return self._implementations.get(tool_name)
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
-        """Execute a registered tool by name with the given arguments."""
         impl = self.get_implementation(tool_name)
         if impl is None:
             raise ValueError(f"No implementation found for tool: {tool_name}")
         return impl(**kwargs)
 
     def clear_tools(self) -> None:
-        """Remove all registered tools and implementations."""
         self._tools = []
         self._implementations = {}
 
     def create_langchain_tools(self) -> list:
-        """
-        Create LangChain StructuredTool instances from registered MCP tools.
-        Returns empty list if LangChain not available.
-        """
         if not LANGCHAIN_AVAILABLE:
             return []
 
@@ -131,7 +118,6 @@ class MCPServerRegistry:
                 else:
                     py_type = type_mapping.get(prop_type, str)
                     is_required = name in params.get("required", [])
-
                     fields[name] = (
                         py_type if is_required else py_type | None,
                         Field(description=prop.get("description", ""), default=None if not is_required else ...),

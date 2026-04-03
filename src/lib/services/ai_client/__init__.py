@@ -5,6 +5,7 @@ Provides unified interface with dynamic provider loading and MCP server support.
 Use AIClient.list_available_providers() to see all registered providers.
 """
 
+from .base_tool import BaseTool
 from .client import AIClient, MockAIClient
 from .providers import BaseAIProvider, MockAIProvider, VertexAIProvider
 from .registry import MCPServerRegistry, ProviderRegistry
@@ -18,4 +19,5 @@ __all__ = [
     "MCPServerRegistry",
     "VertexAIProvider",
     "MockAIProvider",
+    "BaseTool",
 ]

@@ -25,8 +25,8 @@ except ImportError:
 
 from apps.console.history import ConversationHistory
 from lib.mcp import register_all_tools
+from lib.services.ai_client.base_tool import BaseTool
 from lib.services.ai_client.registry import MCPServerRegistry
-from lib.services.tool_session.manager import ToolSessionManager, current_conversation_id
 
 
 class GUIApp:
@@ -187,11 +187,6 @@ Just type your question below and press Enter to get started."""
         try:
             printer.info(f"User query: {user_input}")
 
-            # Set a stable session key so browser tools share one tab for this
-            # GUI session.  ContextVars are per-thread on plain threads (no
-            # automatic copy), so we set it here inside the worker thread.
-            current_conversation_id.set("gui")
-
             history_messages = self.history.get_messages(last_n=self.config.history_context_size)
 
             if history_messages:
@@ -347,7 +342,7 @@ Just type your question below and press Enter to get started."""
     def shutdown(self):
         """Cleanup and shutdown."""
         printer.info("Shutting down GUI application...")
-        ToolSessionManager.get_instance().cleanup_all()
+        BaseTool.cleanup_all()
         printer.success("Goodbye! 👋")
 
 
