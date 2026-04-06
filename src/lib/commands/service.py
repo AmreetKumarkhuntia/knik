@@ -96,12 +96,16 @@ class CommandService:
             return self._show_current_model()
 
         try:
+            from lib.mcp import register_all_tools
             from lib.services.ai_client.client import AIClient
+            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
             old_model = self._ai_client.get_model_name()
+            new_registry = MCPServerRegistry()
+            register_all_tools(new_registry)
             self._ai_client = AIClient(
                 provider=self._ai_client.provider_name,
-                mcp_registry=self._mcp_registry,
+                mcp_registry=new_registry,
                 system_instruction=self._system_instruction,
                 model_name=model_name,
             )
@@ -127,12 +131,16 @@ class CommandService:
             )
 
         try:
+            from lib.mcp import register_all_tools
             from lib.services.ai_client.client import AIClient
+            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
             old_provider = self._ai_client.provider_name
+            new_registry = MCPServerRegistry()
+            register_all_tools(new_registry)
             self._ai_client = AIClient(
                 provider=provider_name,
-                mcp_registry=self._mcp_registry,
+                mcp_registry=new_registry,
                 system_instruction=self._system_instruction,
                 model_name=self._ai_client.get_model_name(),
             )

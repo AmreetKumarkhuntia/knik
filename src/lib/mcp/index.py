@@ -19,6 +19,7 @@ def register_all_tools(registry) -> int:
     count = 0
     for tool_cls in ALL_TOOL_CLASSES:
         tool = tool_cls()
+        registry.add_tool_instance(tool)
         impls = tool.get_implementations()
         for tool_def in tool.get_definitions():
             tool_name = tool_def.get("name")
