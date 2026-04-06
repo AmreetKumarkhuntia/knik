@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import signal
 from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from lib.services.ai_client.client import AIClient
-    from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
     from lib.services.messaging_client.client import MessagingClient
     from lib.services.messaging_client.models import IncomingMessage
 
 from imports import printer as logger
 from lib.commands.service import CommandService
+from lib.mcp.tools.browser_tool import BrowserTool
 from lib.services.ai_client.base_tool import BaseTool
 from lib.services.postgres.db import PostgresDB
 
@@ -22,6 +22,7 @@ from .commands import create_command_system
 from .config import BotConfig
 from .message_handler import BotMessageHandler
 from .streaming import StreamingResponseManager
+from .user_client_manager import UserClientManager
 from .user_identity import UserIdentityManager
 
 
@@ -30,9 +31,8 @@ class BotApp:
         self.config = config or BotConfig()
 
         self._messaging_client: MessagingClient | None = None
-        self._ai_client: AIClient | None = None
+        self._user_client_manager: UserClientManager | None = None
         self._message_handler: BotMessageHandler | None = None
-        self._mcp_registry: MCPServerRegistry | None = None
         self._user_identity: UserIdentityManager | None = None
         self._streaming: StreamingResponseManager | None = None
         self._command_service: CommandService | None = None
@@ -58,20 +58,24 @@ class BotApp:
         logger.info("PostgresDB initialized")
 
         from lib.mcp import register_all_tools
+        from lib.services.ai_client.client import AIClient
         from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
-        self._mcp_registry = MCPServerRegistry()
-        tool_count = register_all_tools(self._mcp_registry)
-        logger.info(f"Registered {tool_count} MCP tools")
-
-        from lib.services.ai_client.client import AIClient
-
-        self._ai_client = AIClient(
+        # Default client used by CommandService for model/provider/status queries.
+        # Per-user clients are managed by UserClientManager.
+        default_mcp = MCPServerRegistry()
+        register_all_tools(default_mcp)
+        default_client = AIClient(
             provider=self.config.ai_provider,
-            mcp_registry=self._mcp_registry,
+            mcp_registry=default_mcp,
             system_instruction=self.config.system_instruction,
         )
-        logger.info(f"AI client initialized: {self._ai_client.provider_name}")
+        logger.info(f"Default AI client initialized: {default_client.provider_name}")
+
+        self._user_client_manager = UserClientManager(
+            provider=self.config.ai_provider,
+            system_instruction=self.config.system_instruction,
+        )
 
         from lib.services.messaging_client.client import MessagingClient
 
@@ -85,9 +89,9 @@ class BotApp:
         )
 
         self._command_service = CommandService(
-            ai_client=self._ai_client,
+            ai_client=default_client,
             user_identity=self._user_identity,
-            mcp_registry=self._mcp_registry,
+            mcp_registry=default_mcp,
             system_instruction=self.config.system_instruction,
         )
 
@@ -104,6 +108,7 @@ class BotApp:
             streaming_manager=self._streaming,
             config=self.config,
             command_dispatcher=dispatcher,
+            user_client_manager=self._user_client_manager,
         )
         logger.info("All components initialized successfully")
 
@@ -120,11 +125,24 @@ class BotApp:
         logger.info("Press Ctrl+C to shutdown")
 
         try:
+            cleaner_task = asyncio.create_task(self._auto_cleaner(), name="browser-auto-cleaner")
             await self._stop_event.wait()
+            cleaner_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await cleaner_task
         except asyncio.CancelledError:
             logger.info("Bot service cancelled")
 
-    def _on_message(self, incoming: IncomingMessage) -> None:
+    async def _auto_cleaner(self) -> None:
+        """Background task: close idle browser sessions every 5 minutes."""
+        while True:
+            await asyncio.sleep(300)
+            try:
+                BrowserTool.cleanup_idle(self.config.browser_idle_timeout)
+            except Exception as e:
+                logger.warning(f"Auto-cleaner error: {e}")
+
+    async def _on_message(self, incoming: IncomingMessage) -> None:
         if self._message_handler is None:
             logger.warning("Message received but handler not initialized")
             return

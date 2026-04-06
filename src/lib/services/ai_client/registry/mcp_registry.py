@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from typing import Any
 
+from lib.services.ai_client.base_tool import BaseTool
 from lib.utils.printer import printer
 
 
@@ -41,6 +42,7 @@ class MCPServerRegistry:
     def __init__(self):
         self._tools: list[dict[str, Any]] = []
         self._implementations: dict[str, Callable] = {}
+        self._tool_instances: list[BaseTool] = []
 
     def register_tool(self, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None:
         self._tools.append(tool_dict)
@@ -64,6 +66,21 @@ class MCPServerRegistry:
     def clear_tools(self) -> None:
         self._tools = []
         self._implementations = {}
+        self._tool_instances = []
+
+    def add_tool_instance(self, tool: BaseTool) -> None:
+        self._tool_instances.append(tool)
+
+    def get_tool_instances(self) -> list[BaseTool]:
+        return list(self._tool_instances)
+
+    def cleanup_tools(self) -> None:
+        """Call cleanup() on every tool instance registered with this registry."""
+        for tool in self._tool_instances:
+            try:
+                tool.cleanup()
+            except Exception as e:
+                printer.warning(f"[MCPServerRegistry] cleanup error for {tool.name}: {e}")
 
     def create_langchain_tools(self) -> list:
         if not LANGCHAIN_AVAILABLE:

@@ -1,10 +1,4 @@
-"""
-Admin API endpoints
-Manage AI client settings and configuration.
-
-Heavy constructors (AIClient, TTSAsyncProcessor) are offloaded to
-background threads via asyncio.to_thread so the event loop stays responsive.
-"""
+"""Admin API endpoints — manage AI client settings and configuration."""
 
 import asyncio
 import sys
@@ -17,14 +11,12 @@ from pydantic import BaseModel
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
+from apps.web.backend import state
 from apps.web.backend.config import WebBackendConfig
-from imports import AIClient, TTSAsyncProcessor, printer
+from imports import KokoroVoiceModel, printer
 
 
 router = APIRouter()
-
-from apps.web.backend.routes import chat as chat_module
-
 
 config = WebBackendConfig()
 
@@ -35,55 +27,39 @@ class SettingsUpdate(BaseModel):
     provider: str | None = None
     model: str | None = None
     voice: str | None = None
-    api_base: str | None = None  # Custom provider: OpenAI-compatible API base URL
-    api_key: str | None = None  # Custom provider: API key (optional for local servers)
+    api_base: str | None = None
+    api_key: str | None = None
 
 
 @router.get("/settings")
 async def get_settings():
-    """Get current AI settings from config and running clients"""
     return {
-        "provider": config.ai_provider,
-        "model": config.ai_model,
+        "provider": state.get_factory_provider() or config.ai_provider,
+        "model": state.get_factory_model() or config.ai_model,
         "voice": config.voice_name,
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
         "sample_rate": config.sample_rate,
-        "initialized": chat_module.ai_client is not None,
+        "initialized": state.is_initialized(),
     }
 
 
 @router.post("/settings")
 async def update_settings(settings: SettingsUpdate):
-    """Update AI client settings (recreates client with new config)"""
     try:
-        if settings.provider or settings.model:
-            provider_kwargs = {
-                "model": settings.model or config.ai_model,
-                "mcp_registry": chat_module.mcp_registry,
-                "project_id": config.ai_project_id,
-                "location": config.ai_location,
-                "system_instruction": config.system_instruction,
-            }
+        await state.init(config)
 
-            target_provider = settings.provider or config.ai_provider
-            if target_provider == "custom":
-                if settings.api_base:
-                    provider_kwargs["api_base"] = settings.api_base
-                if settings.api_key:
-                    provider_kwargs["api_key"] = settings.api_key
-
-            chat_module.ai_client = await asyncio.to_thread(
-                AIClient,
-                provider=target_provider,
-                **provider_kwargs,
+        if settings.provider or settings.model or settings.api_base or settings.api_key:
+            state.update_factory_config(
+                provider=settings.provider,
+                model=settings.model,
+                api_base=settings.api_base,
+                api_key=settings.api_key,
             )
-            printer.info(f"AI client updated: {target_provider}/{settings.model or config.ai_model}")
+            printer.info(f"AI factory config updated: {settings.provider or 'same'}/{settings.model or 'same'}")
 
         if settings.voice:
-            chat_module.tts_processor = await asyncio.to_thread(
-                TTSAsyncProcessor, voice_model=settings.voice, sample_rate=config.sample_rate
-            )
+            state.tts_processor = await asyncio.to_thread(KokoroVoiceModel, voice=settings.voice)
             printer.info(f"TTS voice updated: {settings.voice}")
 
         return {"status": "success", "message": "Settings updated"}
@@ -95,7 +71,6 @@ async def update_settings(settings: SettingsUpdate):
 
 @router.get("/providers")
 async def list_providers():
-    """List available AI providers"""
     from lib.services.ai_client.registry import ProviderRegistry as Registry
 
     provider_names = {
@@ -113,7 +88,6 @@ async def list_providers():
 
 @router.get("/models")
 async def list_models():
-    """List available AI models"""
     from lib.core.config import Config
 
     return {"models": [{"id": model_id, "name": description} for model_id, description in Config.AI_MODELS.items()]}
@@ -121,7 +95,6 @@ async def list_models():
 
 @router.get("/voices")
 async def list_voices():
-    """List available TTS voices from config"""
     from lib.core.config import Config
 
     return {

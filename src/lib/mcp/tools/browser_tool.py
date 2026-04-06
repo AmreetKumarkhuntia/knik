@@ -6,8 +6,9 @@ import math
 import os
 import re
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from lib.services.ai_client.base_tool import BaseTool
 from lib.utils.printer import printer
@@ -196,10 +197,13 @@ if TYPE_CHECKING:
 
 
 class BrowserTool(BaseTool):
-    _shared_playwright: ClassVar[Playwright | None] = None
-    _shared_browser_context: ClassVar[BrowserContext | None] = None
-    _shared_lock: ClassVar[threading.Lock] = threading.Lock()
-    _shared_executor: ClassVar[ThreadPoolExecutor | None] = None
+    """One browser instance per tool instance (= one per user/conversation).
+
+    Each instance owns its own ThreadPoolExecutor (single worker), its own
+    Playwright handle, and its own persistent browser context.  All Playwright
+    objects are created and used exclusively on that one thread, so there is
+    never a cross-thread access violation.
+    """
 
     @property
     def name(self) -> str:
@@ -208,96 +212,145 @@ class BrowserTool(BaseTool):
     def __init__(self) -> None:
         super().__init__()
         self._page: Page | None = None
+        self._playwright: Playwright | None = None
+        self._browser_context: BrowserContext | None = None
+        self._executor: ThreadPoolExecutor | None = None
+        self._lock: threading.Lock = threading.Lock()
+        self._last_used: float = 0.0
 
-    @classmethod
-    def _ensure_browser(cls) -> None:
-        if cls._shared_browser_context is not None:
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _get_or_create_executor(self) -> ThreadPoolExecutor:
+        """Return the dedicated executor, creating it if needed.
+
+        Uses double-checked locking so the executor is always created before
+        any Playwright work is submitted to it.
+        """
+        if self._executor is None:
+            with self._lock:
+                if self._executor is None:
+                    self._executor = ThreadPoolExecutor(
+                        max_workers=1,
+                        thread_name_prefix=f"browser-{id(self)}",
+                    )
+        return self._executor
+
+    def _ensure_browser(self) -> None:
+        """Initialise Playwright + browser context for this instance.
+
+        Must be called from *inside* the dedicated executor thread (i.e. from
+        within a function passed to run_on_thread).  That guarantees all
+        Playwright objects are owned by the same thread for their entire life.
+        """
+        if self._browser_context is not None:
             return
-        with cls._shared_lock:
-            if cls._shared_browser_context is not None:
-                return
-            try:
-                from playwright.sync_api import sync_playwright
+        try:
+            from playwright.sync_api import sync_playwright
 
-                cfg = Config()
-                headless = cfg.browser_headless
-                profile_dir = cfg.browser_profile_dir
+            cfg = Config()
+            headless = cfg.browser_headless
+            profile_dir = cfg.browser_profile_dir
 
-                os.makedirs(profile_dir, exist_ok=True)
+            os.makedirs(profile_dir, exist_ok=True)
 
-                mode = "headless" if headless else "headful"
-                printer.info(f"[BrowserTool] Launching {mode} Chromium (profile: {profile_dir})...")
+            mode = "headless" if headless else "headful"
+            printer.info(f"[BrowserTool] Launching {mode} Chromium (profile: {profile_dir})...")
 
-                cls._shared_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="browser-tool")
-                cls._shared_playwright = sync_playwright().start()
-                cls._shared_browser_context = cls._shared_playwright.chromium.launch_persistent_context(
-                    user_data_dir=profile_dir,
-                    headless=headless,
-                    viewport={"width": 1280, "height": 800},
-                    user_agent=(
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/120.0.0.0 Safari/537.36"
-                    ),
-                    args=[
-                        "--no-sandbox",
-                        "--disable-dev-shm-usage",
-                        "--disable-blink-features=AutomationControlled",
-                    ],
-                )
-                printer.success(f"[BrowserTool] Browser ready ({mode}, profile: {profile_dir})")
-            except ImportError as err:
-                raise RuntimeError(
-                    "Playwright is not installed. Run: pip install playwright && playwright install chromium"
-                ) from err
+            self._playwright = sync_playwright().start()
+            self._browser_context = self._playwright.chromium.launch_persistent_context(
+                user_data_dir=profile_dir,
+                headless=headless,
+                viewport={"width": 1280, "height": 800},
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
+                ),
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-blink-features=AutomationControlled",
+                ],
+            )
+            printer.success(f"[BrowserTool] Browser ready ({mode}, profile: {profile_dir})")
+        except ImportError as err:
+            raise RuntimeError(
+                "Playwright is not installed. Run: pip install playwright && playwright install chromium"
+            ) from err
 
     def _ensure_page(self) -> None:
         """Lazily initialise the browser and open a page for this instance.
 
-        Safe to call from a background thread (inside run_on_thread) because
-        _ensure_browser() uses a threading.Lock and sync_playwright runs fine
-        outside the asyncio event loop.
+        Safe to call only from within run_on_thread (i.e. on the dedicated
+        executor thread).
         """
         self._ensure_browser()
         if self._page is None or self._page.is_closed():
-            self._page = self._shared_browser_context.new_page()
+            self._page = self._browser_context.new_page()
 
     def run_on_thread(self, fn, *args, **kwargs):
-        """Run *fn* on the shared browser thread.
+        """Run *fn* on this instance's dedicated browser thread.
 
-        If the executor does not exist yet (browser not yet initialised) we
-        submit the work to a fresh one-shot thread so that sync_playwright
-        never runs on the asyncio event loop.
+        The executor is created (via double-checked lock) before the first
+        submission, so sync_playwright is always initialised on the same
+        persistent thread that handles all subsequent calls.
         """
-        executor = self._shared_executor
-        if executor is None:
-            # Browser hasn't been initialised yet – use a temporary thread so
-            # sync_playwright doesn't see the asyncio loop.
-            with ThreadPoolExecutor(max_workers=1) as tmp:
-                return tmp.submit(fn, *args, **kwargs).result()
-        future = executor.submit(fn, *args, **kwargs)
-        return future.result()
+        self._last_used = time.monotonic()
+        executor = self._get_or_create_executor()
+        return executor.submit(fn, *args, **kwargs).result()
 
     def cleanup(self) -> None:
-        if self._page is not None and not self._page.is_closed():
+        """Close the page, browser context, Playwright, and thread executor."""
+        executor = self._executor
+        if executor is not None:
+            # Run teardown on the browser thread so Playwright objects are
+            # closed by the thread that owns them.
             with contextlib.suppress(Exception):
+                executor.submit(self._teardown_on_thread).result(timeout=10)
+            with contextlib.suppress(Exception):
+                executor.shutdown(wait=False)
+            self._executor = None
+        self._last_used = 0.0
+
+    def _teardown_on_thread(self) -> None:
+        """Close Playwright resources — must run on the browser thread."""
+        with contextlib.suppress(Exception):
+            if self._page is not None and not self._page.is_closed():
                 self._page.close()
         self._page = None
+        with contextlib.suppress(Exception):
+            if self._browser_context is not None:
+                self._browser_context.close()
+        self._browser_context = None
+        with contextlib.suppress(Exception):
+            if self._playwright is not None:
+                self._playwright.stop()
+        self._playwright = None
+
+    # ------------------------------------------------------------------
+    # Class-level idle cleaner
+    # ------------------------------------------------------------------
 
     @classmethod
-    def _shutdown_browser(cls) -> None:
-        with cls._shared_lock:
-            with contextlib.suppress(Exception):
-                if cls._shared_browser_context is not None:
-                    cls._shared_browser_context.close()
-            with contextlib.suppress(Exception):
-                if cls._shared_playwright is not None:
-                    cls._shared_playwright.stop()
-            if cls._shared_executor is not None:
-                cls._shared_executor.shutdown(wait=False)
-            cls._shared_browser_context = None
-            cls._shared_playwright = None
-            cls._shared_executor = None
+    def cleanup_idle(cls, idle_seconds: int) -> None:
+        """Close browser sessions that have been idle for *idle_seconds*.
+
+        Called periodically by the bot's auto-cleaner background task.
+        """
+        from lib.services.ai_client.base_tool import BaseTool as _BaseTool
+
+        threshold = time.monotonic() - idle_seconds
+        for instance in list(_BaseTool._instances):
+            if not isinstance(instance, cls):
+                continue
+            if instance._last_used > 0 and instance._last_used < threshold:
+                printer.info(
+                    f"[BrowserTool] Closing idle browser session (idle {time.monotonic() - instance._last_used:.0f}s)"
+                )
+                with contextlib.suppress(Exception):
+                    instance.cleanup()
 
     def get_definitions(self):
         return BROWSER_DEFINITIONS

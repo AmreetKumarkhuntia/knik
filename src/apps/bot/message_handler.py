@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from lib.commands.service import CommandService
-    from lib.services.ai_client.client import AIClient
     from lib.services.messaging_client.client import MessagingClient
     from lib.services.messaging_client.models import IncomingMessage
 
     from .commands.registry import BotCommandDispatcher
     from .config import BotConfig
     from .streaming import StreamingResponseManager
+    from .user_client_manager import UserClientManager
     from .user_identity import UserIdentityManager
 
 logger = logging.getLogger(__name__)
@@ -49,14 +49,15 @@ class BotMessageHandler:
         streaming_manager: StreamingResponseManager,
         config: BotConfig,
         command_dispatcher: BotCommandDispatcher | None = None,
+        user_client_manager: UserClientManager | None = None,
     ) -> None:
         self._command_service = command_service
-        self._ai_client: AIClient = command_service.ai_client
         self._messaging_client = messaging_client
         self._user_identity = user_identity
         self._streaming = streaming_manager
         self._config = config
         self._command_dispatcher = command_dispatcher
+        self._user_client_manager = user_client_manager
 
         self._active_tasks: dict[ChatKey, ActiveTaskInfo] = {}
         self._lock = asyncio.Lock()
@@ -75,9 +76,13 @@ class BotMessageHandler:
             try:
                 result = await self._command_dispatcher.try_dispatch(incoming, self._user_identity)
                 if result is not None:
-                    # Pull any state updates the command made back into the handler
-                    if "ai_client" in result.data:
-                        self._ai_client = result.data["ai_client"]
+                    identity = self._user_identity.resolve(incoming, provider)
+                    if "ai_client" in result.data and self._user_client_manager is not None:
+                        self._user_client_manager.set(identity.user_id, result.data["ai_client"])
+                    # Clean up tool sessions (e.g. browser) when the user resets their session.
+                    _cmd = incoming.text.split()[0].lstrip("/").split("@")[0].lower()
+                    if _cmd in ("new", "start") and self._user_client_manager is not None:
+                        self._user_client_manager.cleanup_tools(identity.user_id)
                     await self._messaging_client.send_message(
                         chat_id=incoming.chat_id,
                         text=result.message,
@@ -165,10 +170,15 @@ class BotMessageHandler:
         try:
             identity = self._user_identity.resolve(incoming, provider)
 
+            if self._user_client_manager is not None:
+                ai_client = await self._user_client_manager.get_or_create(identity.user_id)
+            else:
+                ai_client = self._command_service.ai_client
+
             result = await self._streaming.deliver(
                 provider=provider,
                 chat_id=incoming.chat_id,
-                ai_client=self._ai_client,
+                ai_client=ai_client,
                 prompt=incoming.text or "",
                 conversation_id=identity.conversation_id,
                 provider_meta={},
