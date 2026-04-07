@@ -17,14 +17,11 @@ from lib.services.ai_client.registry import MCPServerRegistry
 
 @dataclass
 class _FactoryConfig:
-    """Parameters used to construct each new AIClient."""
-
     provider: str
     model: str
     project_id: str | None
     location: str | None
     system_instruction: str | None
-    # Custom-provider extras (optional)
     api_base: str | None = None
     api_key: str | None = None
 
@@ -65,7 +62,6 @@ def _build_client(cfg: _FactoryConfig) -> tuple[MCPServerRegistry, AIClient]:
 
 
 async def init(cfg_source) -> None:
-    """Initialise TTS once.  cfg_source is a WebBackendConfig instance."""
     global tts_processor, _factory_config
 
     async with _get_init_lock():
@@ -84,9 +80,7 @@ async def init(cfg_source) -> None:
 
 
 async def get_or_create_ai_client(conversation_id: str | None) -> AIClient:
-    """Return the cached AIClient for *conversation_id*, creating one if needed.
-
-    A None conversation_id still gets a fresh client (the achat lifecycle
+    """A None conversation_id still gets a fresh client (the achat lifecycle
     will create a real conversation_id and the caller should cache-update
     using set_client() once the id is known.
     """
@@ -109,7 +103,6 @@ async def get_or_create_ai_client(conversation_id: str | None) -> AIClient:
 
 
 def set_client(conversation_id: str, client: AIClient) -> None:
-    """Cache *client* under *conversation_id* (call after a new conv is created)."""
     conversation_clients.set(conversation_id, client)
 
 
@@ -120,9 +113,7 @@ def update_factory_config(
     api_base: str | None = None,
     api_key: str | None = None,
 ) -> None:
-    """Update the parameters used for future AIClient construction.
-
-    Clears the entire client cache so subsequent requests get fresh clients
+    """Clears the entire client cache so subsequent requests get fresh clients
     built with the new config.  Existing in-flight requests are unaffected.
     """
     global _factory_config, conversation_clients

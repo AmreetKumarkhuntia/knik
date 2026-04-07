@@ -14,6 +14,8 @@ sys.path.insert(0, str(src_path))
 from apps.web.backend import state
 from apps.web.backend.config import WebBackendConfig
 from imports import KokoroVoiceModel, printer
+from lib.core.config import Config
+from lib.services.ai_client.registry import ProviderRegistry
 
 
 router = APIRouter()
@@ -22,8 +24,6 @@ config = WebBackendConfig()
 
 
 class SettingsUpdate(BaseModel):
-    """Request body for updating AI client settings."""
-
     provider: str | None = None
     model: str | None = None
     voice: str | None = None
@@ -71,8 +71,6 @@ async def update_settings(settings: SettingsUpdate):
 
 @router.get("/providers")
 async def list_providers():
-    from lib.services.ai_client.registry import ProviderRegistry as Registry
-
     provider_names = {
         "vertex": "Google Vertex AI",
         "gemini": "Google Gemini AI Studio",
@@ -82,21 +80,17 @@ async def list_providers():
         "custom": "Custom (OpenAI-Compatible)",
         "mock": "Mock Provider (Testing)",
     }
-    registered = Registry.list_providers()
+    registered = ProviderRegistry.list_providers()
     return {"providers": [{"id": pid, "name": provider_names.get(pid, pid.title())} for pid in registered]}
 
 
 @router.get("/models")
 async def list_models():
-    from lib.core.config import Config
-
     return {"models": [{"id": model_id, "name": description} for model_id, description in Config.AI_MODELS.items()]}
 
 
 @router.get("/voices")
 async def list_voices():
-    from lib.core.config import Config
-
     return {
         "voices": [
             {

@@ -10,13 +10,15 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from lib.mcp import register_all_tools
+from lib.services.ai_client.client import AIClient
 from lib.services.ai_client.registry import ProviderRegistry
+from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
 from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
 
 
 if TYPE_CHECKING:
-    from lib.services.ai_client.client import AIClient
     from lib.services.conversation import ConversationDB
 
 logger = logging.getLogger(__name__)
@@ -96,10 +98,6 @@ class CommandService:
             return self._show_current_model()
 
         try:
-            from lib.mcp import register_all_tools
-            from lib.services.ai_client.client import AIClient
-            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
-
             old_model = self._ai_client.get_model_name()
             new_registry = MCPServerRegistry()
             register_all_tools(new_registry)
@@ -131,10 +129,6 @@ class CommandService:
             )
 
         try:
-            from lib.mcp import register_all_tools
-            from lib.services.ai_client.client import AIClient
-            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
-
             old_provider = self._ai_client.provider_name
             new_registry = MCPServerRegistry()
             register_all_tools(new_registry)

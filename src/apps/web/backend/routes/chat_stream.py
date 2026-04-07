@@ -33,17 +33,13 @@ router = APIRouter()
 
 config = WebBackendConfig()
 
-# Sentinel pushed into the audio queue to signal "no more sentences"
 _TTS_DONE = object()
 
-# Maximum number of sentences that can be queued for TTS at once.
 # Provides natural back-pressure if the LLM streams much faster than TTS.
 _TTS_QUEUE_MAX = 10
 
 
 class StreamChatRequest(BaseModel):
-    """Request body for the streaming chat endpoint."""
-
     message: str
     conversation_id: str | None = None
 
@@ -58,7 +54,6 @@ async def _tts_worker(
     sentence_queue: asyncio.Queue,
     audio_queue: asyncio.Queue,
 ) -> None:
-    """Pull sentences from *sentence_queue*, run TTS, push audio into *audio_queue*."""
     while True:
         sentence = await sentence_queue.get()
         if sentence is _TTS_DONE:
@@ -77,8 +72,6 @@ async def _tts_worker(
 
 
 async def stream_chat_response(prompt: str, conversation_id: str | None = None) -> AsyncGenerator[str, None]:
-    """Stream chat response with text and audio chunks via SSE."""
-
     sentence_queue: asyncio.Queue = asyncio.Queue(maxsize=_TTS_QUEUE_MAX)
     audio_queue: asyncio.Queue = asyncio.Queue()
     tts_task: asyncio.Task | None = None
