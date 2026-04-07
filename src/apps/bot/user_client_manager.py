@@ -3,11 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from lib.services.ai_client.client import AIClient
 
 from imports import AIClient, printer
 from lib.mcp.index import register_all_tools
@@ -15,11 +10,7 @@ from lib.services.ai_client.registry import MCPServerRegistry
 
 
 class UserClientManager:
-    """Holds one AIClient per bot user_id.
-
-    Each client gets its own MCPServerRegistry so tool state is fully
-    isolated between users.
-    """
+    """Each client gets its own MCPServerRegistry so tool state is fully isolated between users."""
 
     def __init__(
         self,
@@ -55,7 +46,6 @@ class UserClientManager:
         return client
 
     def create_new(self) -> AIClient:
-        """Build a fresh AIClient with its own MCPServerRegistry."""
         registry = MCPServerRegistry()
         register_all_tools(registry)
         return AIClient(

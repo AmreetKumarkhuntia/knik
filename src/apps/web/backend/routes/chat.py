@@ -25,8 +25,6 @@ config = WebBackendConfig()
 
 
 class SimpleChatRequest(BaseModel):
-    """Request body for the simple (non-streaming) chat endpoint."""
-
     message: str
     conversation_id: str | None = None
 

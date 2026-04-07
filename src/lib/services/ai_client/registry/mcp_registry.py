@@ -75,7 +75,6 @@ class MCPServerRegistry:
         return list(self._tool_instances)
 
     def cleanup_tools(self) -> None:
-        """Call cleanup() on every tool instance registered with this registry."""
         for tool in self._tool_instances:
             try:
                 tool.cleanup()

@@ -218,14 +218,8 @@ class BrowserTool(BaseTool):
         self._lock: threading.Lock = threading.Lock()
         self._last_used: float = 0.0
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
     def _get_or_create_executor(self) -> ThreadPoolExecutor:
-        """Return the dedicated executor, creating it if needed.
-
-        Uses double-checked locking so the executor is always created before
+        """Uses double-checked locking so the executor is always created before
         any Playwright work is submitted to it.
         """
         if self._executor is None:
@@ -238,9 +232,7 @@ class BrowserTool(BaseTool):
         return self._executor
 
     def _ensure_browser(self) -> None:
-        """Initialise Playwright + browser context for this instance.
-
-        Must be called from *inside* the dedicated executor thread (i.e. from
+        """Must be called from *inside* the dedicated executor thread (i.e. from
         within a function passed to run_on_thread).  That guarantees all
         Playwright objects are owned by the same thread for their entire life.
         """
@@ -281,9 +273,7 @@ class BrowserTool(BaseTool):
             ) from err
 
     def _ensure_page(self) -> None:
-        """Lazily initialise the browser and open a page for this instance.
-
-        Safe to call only from within run_on_thread (i.e. on the dedicated
+        """Safe to call only from within run_on_thread (i.e. on the dedicated
         executor thread).
         """
         self._ensure_browser()
@@ -291,9 +281,7 @@ class BrowserTool(BaseTool):
             self._page = self._browser_context.new_page()
 
     def run_on_thread(self, fn, *args, **kwargs):
-        """Run *fn* on this instance's dedicated browser thread.
-
-        The executor is created (via double-checked lock) before the first
+        """The executor is created (via double-checked lock) before the first
         submission, so sync_playwright is always initialised on the same
         persistent thread that handles all subsequent calls.
         """
@@ -302,7 +290,6 @@ class BrowserTool(BaseTool):
         return executor.submit(fn, *args, **kwargs).result()
 
     def cleanup(self) -> None:
-        """Close the page, browser context, Playwright, and thread executor."""
         executor = self._executor
         if executor is not None:
             # Run teardown on the browser thread so Playwright objects are
@@ -329,16 +316,9 @@ class BrowserTool(BaseTool):
                 self._playwright.stop()
         self._playwright = None
 
-    # ------------------------------------------------------------------
-    # Class-level idle cleaner
-    # ------------------------------------------------------------------
-
     @classmethod
     def cleanup_idle(cls, idle_seconds: int) -> None:
-        """Close browser sessions that have been idle for *idle_seconds*.
-
-        Called periodically by the bot's auto-cleaner background task.
-        """
+        """Called periodically by the bot's auto-cleaner background task."""
         from lib.services.ai_client.base_tool import BaseTool as _BaseTool
 
         threshold = time.monotonic() - idle_seconds
@@ -362,7 +342,7 @@ class BrowserTool(BaseTool):
             "browser_get_links": self._get_links,
             "browser_click": self._click,
             "browser_type": self._type,
-            "browser_screenshot": self._screenshot,
+            # "browser_screenshot": self._screenshot,
         }
 
     @staticmethod
