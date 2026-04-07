@@ -231,6 +231,42 @@ class BrowserTool(BaseTool):
                     )
         return self._executor
 
+    @staticmethod
+    def _clear_stale_singleton_lock(profile_dir: str) -> bool:
+        """Remove a stale Chromium SingletonLock left by an unclean shutdown.
+
+        Chromium writes SingletonLock as a symlink whose target is
+        ``{hostname}-{pid}``.  If that PID is no longer running the lock is
+        orphaned and blocks the next launch.
+
+        Returns True if a stale lock was removed, False otherwise.
+        """
+        lock_path = os.path.join(profile_dir, "SingletonLock")
+        if not os.path.lexists(lock_path):
+            return False
+
+        try:
+            if os.path.islink(lock_path):
+                target = os.readlink(lock_path)
+                parts = target.rsplit("-", 1)
+                if len(parts) == 2:
+                    try:
+                        pid = int(parts[1])
+                        os.kill(pid, 0)
+                        printer.warning(f"[BrowserTool] SingletonLock held by live PID {pid}; leaving it")
+                        return False
+                    except ProcessLookupError:
+                        pass
+                    except (ValueError, PermissionError):
+                        pass
+
+            os.remove(lock_path)
+            printer.info(f"[BrowserTool] Removed stale SingletonLock ({lock_path})")
+            return True
+        except Exception as exc:
+            printer.warning(f"[BrowserTool] Could not clean up SingletonLock: {exc}")
+            return False
+
     def _ensure_browser(self) -> None:
         """Must be called from *inside* the dedicated executor thread (i.e. from
         within a function passed to run_on_thread).  That guarantees all
@@ -246,6 +282,7 @@ class BrowserTool(BaseTool):
             profile_dir = cfg.browser_profile_dir
 
             os.makedirs(profile_dir, exist_ok=True)
+            self._clear_stale_singleton_lock(profile_dir)
 
             mode = "headless" if headless else "headful"
             printer.info(f"[BrowserTool] Launching {mode} Chromium (profile: {profile_dir})...")

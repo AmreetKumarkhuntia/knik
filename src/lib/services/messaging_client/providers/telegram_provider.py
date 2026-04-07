@@ -41,7 +41,7 @@ class TelegramProvider(BaseMessagingProvider):
 
         bot = self._app.bot if self._app else self._bot
         try:
-            chunks = _split_text(text, max_len=4096)
+            chunks = self.chunk_text(text)
             last_msg_id = None
 
             for chunk in chunks:
@@ -67,7 +67,7 @@ class TelegramProvider(BaseMessagingProvider):
         bot = self._app.bot if self._app else self._bot
 
         try:
-            chunks = _split_text(text, max_len=4096)
+            chunks = self.chunk_text(text)
 
             msg = await bot.edit_message_text(
                 chat_id=int(chat_id),
@@ -178,23 +178,6 @@ class TelegramProvider(BaseMessagingProvider):
         tg_commands = [TgBotCommand(cmd.name, cmd.description) for cmd in commands]
         await bot.set_my_commands(tg_commands)
         printer.info(f"Registered {len(tg_commands)} commands with Telegram")
-
-
-def _split_text(text: str, max_len: int = 4096) -> list[str]:
-    if len(text) <= max_len:
-        return [text]
-
-    chunks = []
-    while text:
-        if len(text) <= max_len:
-            chunks.append(text)
-            break
-        split_at = text.rfind("\n", 0, max_len)
-        if split_at == -1:
-            split_at = max_len
-        chunks.append(text[:split_at])
-        text = text[split_at:].lstrip("\n")
-    return chunks
 
 
 MessagingProviderRegistry.register(TelegramProvider.get_provider_name(), TelegramProvider)

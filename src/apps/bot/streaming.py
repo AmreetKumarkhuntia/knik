@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_EDIT_DEBOUNCE_INTERVAL: float = 0.5
 DEFAULT_PLACEHOLDER_TEXT: str = "..."
-DEFAULT_MAX_MESSAGE_LENGTH: int = 4096
 SENTENCE_BOUNDARY_PATTERN = re.compile(r"[.!?。\uff01\uff1f\n]")
 MIN_CHUNK_SIZE_FOR_EDIT: int = 10
 
@@ -54,13 +53,11 @@ class StreamingResponseManager:
         config: BotConfig,
         edit_debounce_interval: float = DEFAULT_EDIT_DEBOUNCE_INTERVAL,
         placeholder_text: str = DEFAULT_PLACEHOLDER_TEXT,
-        max_message_length: int = DEFAULT_MAX_MESSAGE_LENGTH,
     ):
         self._messaging_client = messaging_client
         self._config = config
         self._edit_debounce_interval = max(0.1, edit_debounce_interval)
         self._placeholder_text = placeholder_text
-        self._max_message_length = max_message_length
 
     @property
     def edit_debounce_interval(self) -> float:
@@ -181,7 +178,7 @@ class StreamingResponseManager:
             if not response_text:
                 response_text = "I apologize, but I couldn't generate a response."
 
-            chunks = self._chunk_text(response_text)
+            chunks = self._messaging_client.chunk_text(response_text, provider=provider)
             message_ids: list[str] = []
 
             for chunk in chunks:
@@ -229,39 +226,6 @@ class StreamingResponseManager:
             return True
 
         return time_since_last_edit >= self._edit_debounce_interval
-
-    def _chunk_text(self, text: str) -> list[str]:
-        if len(text) <= self._max_message_length:
-            return [text]
-
-        chunks: list[str] = []
-        remaining = text
-
-        while remaining:
-            if len(remaining) <= self._max_message_length:
-                chunks.append(remaining)
-                break
-
-            split_point = self._find_split_point(remaining, self._max_message_length)
-            chunks.append(remaining[:split_point].rstrip())
-            remaining = remaining[split_point:].lstrip()
-
-        return chunks
-
-    def _find_split_point(self, text: str, max_length: int) -> int:
-        search_start = max(0, max_length - 500)
-        newline_pos = text.rfind("\n", search_start, max_length)
-
-        if newline_pos > search_start:
-            return newline_pos + 1
-
-        space_start = max(0, max_length - 200)
-        space_pos = text.rfind(" ", space_start, max_length)
-
-        if space_pos > space_start:
-            return space_pos + 1
-
-        return max_length
 
     async def _send_message(self, provider: str, chat_id: str, text: str, provider_meta: dict) -> str | None:
         try:
@@ -337,7 +301,7 @@ class StreamingResponseManager:
         if not self._should_edit_now(state, force=force):
             return
 
-        chunks = self._chunk_text(state.accumulated_text)
+        chunks = self._messaging_client.chunk_text(state.accumulated_text, provider=provider)
 
         for i, chunk in enumerate(chunks):
             if i < len(state.message_ids):

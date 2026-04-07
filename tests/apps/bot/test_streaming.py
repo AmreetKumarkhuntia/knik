@@ -19,6 +19,7 @@ def mock_messaging_client():
     client.send_message.return_value = MagicMock(success=True, message_id="msg_123", error=None, raw={})
     client.edit_message = AsyncMock()
     client.edit_message.return_value = MagicMock(success=True, message_id="msg_123", error=None, raw={})
+    client.chunk_text = MagicMock(side_effect=lambda text, provider=None: [text])
     return client
 
 
@@ -231,38 +232,6 @@ class TestDebounceLogic:
         assert manager._should_edit_now(state) is True
 
 
-class TestTextChunking:
-    def test_chunk_text_returns_single_chunk_for_short_text(self, manager):
-        text = "Hello world"
-        chunks = manager._chunk_text(text)
-        assert len(chunks) == 1
-        assert chunks[0] == text
-
-    def test_chunk_text_splits_long_text(self, manager):
-        manager._max_message_length = 100
-        text = "A" * 250
-        chunks = manager._chunk_text(text)
-        assert len(chunks) == 3
-        assert all(len(c) <= 100 for c in chunks)
-        assert "".join(chunks) == text
-
-    def test_chunk_text_splits_at_newline(self, manager):
-        manager._max_message_length = 50
-        text = "First paragraph here.\n\nSecond paragraph here.\n\nThird one."
-        chunks = manager._chunk_text(text)
-        assert len(chunks) > 1
-
-    def test_find_split_point_returns_newline_position(self, manager):
-        text = "First line\nSecond line\nThird line"
-        pos = manager._find_split_point(text, 25)
-        assert text[pos - 1] == "\n" or text[pos] == "\n"
-
-    def test_find_split_point_falls_back_to_hard_split(self, manager):
-        text = "A" * 300
-        pos = manager._find_split_point(text, 100)
-        assert pos == 100
-
-
 class TestStreamingIntegration:
     @pytest.mark.asyncio
     async def test_full_streaming_flow(self, manager, mock_messaging_client):
@@ -297,16 +266,23 @@ class TestStreamingIntegration:
 
     @pytest.mark.asyncio
     async def test_long_response_chunking(self, manager, mock_messaging_client):
-        manager._max_message_length = 100
+        long_text = "A" * 250
+        chunk_size = 100
+        mock_messaging_client.chunk_text = MagicMock(
+            side_effect=lambda text, provider=None: [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+        )
+        mock_messaging_client.send_message.return_value = MagicMock(
+            success=True, message_id="msg_new", error=None, raw={}
+        )
 
         async def mock_stream(*args, **kwargs):
             yield {"__conversation_id__": "conv_789"}
-            yield "A" * 250
+            yield long_text
             yield {
                 "__done__": True,
                 "conversation_id": "conv_789",
                 "usage": {"total_tokens": 100},
-                "full_response": "A" * 250,
+                "full_response": long_text,
             }
 
         mock_ai = MagicMock()

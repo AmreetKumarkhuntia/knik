@@ -56,6 +56,10 @@ class MessagingClient:
             return MessageResult(success=False, error=f"Provider '{provider}' is not configured")
         return await target.edit_message(chat_id, message_id, text, **kwargs)
 
+    def chunk_text(self, text: str, provider: str | None = None) -> list[str]:
+        """Split text into chunks sized for the resolved provider."""
+        return self._resolve_provider(provider).chunk_text(text)
+
     async def start(self, on_message: MessageCallback) -> None:
         """Start all configured providers concurrently."""
         configured = {name: p for name, p in self._providers.items() if p.is_configured()}
