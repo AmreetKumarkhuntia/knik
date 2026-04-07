@@ -7,13 +7,9 @@ import contextlib
 import signal
 from typing import TYPE_CHECKING
 
-from lib.mcp import register_all_tools
-from lib.services.ai_client.client import AIClient
-from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
-from lib.services.messaging_client.client import MessagingClient
-
 
 if TYPE_CHECKING:
+    from lib.services.messaging_client.client import MessagingClient
     from lib.services.messaging_client.models import IncomingMessage
 
 from imports import printer as logger
@@ -61,6 +57,10 @@ class BotApp:
         await PostgresDB.initialize()
         logger.info("PostgresDB initialized")
 
+        from lib.mcp import register_all_tools
+        from lib.services.ai_client.client import AIClient
+        from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
+
         # Default client used by CommandService for model/provider/status queries.
         # Per-user clients are managed by UserClientManager.
         default_mcp = MCPServerRegistry()
@@ -76,6 +76,8 @@ class BotApp:
             provider=self.config.ai_provider,
             system_instruction=self.config.system_instruction,
         )
+
+        from lib.services.messaging_client.client import MessagingClient
 
         self._messaging_client = MessagingClient(providers=self.config.bot_providers)
         logger.info(f"Messaging client created for: {self.config.bot_providers}")
