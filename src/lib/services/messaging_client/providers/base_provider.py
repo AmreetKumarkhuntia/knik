@@ -13,6 +13,8 @@ MessageCallback = Callable[[IncomingMessage], Awaitable[None]]
 class BaseMessagingProvider(ABC):
     """Base class for all messaging providers (Telegram, Slack, Discord, etc.)."""
 
+    max_message_length: int = 4096
+
     @classmethod
     @abstractmethod
     def get_provider_name(cls) -> str: ...
@@ -44,3 +46,37 @@ class BaseMessagingProvider(ABC):
     async def register_bot_commands(self, commands: list[CommandDefinition]) -> None:
         """Register commands with the platform (e.g. Telegram command menu. Override in providers that support it."""
         pass
+
+    def chunk_text(self, text: str) -> list[str]:
+        if len(text) <= self.max_message_length:
+            return [text]
+
+        chunks: list[str] = []
+        remaining = text
+
+        while remaining:
+            if len(remaining) <= self.max_message_length:
+                chunks.append(remaining)
+                break
+
+            split_point = self._find_split_point(remaining, self.max_message_length)
+            chunks.append(remaining[:split_point].rstrip())
+            remaining = remaining[split_point:].lstrip()
+
+        return chunks
+
+    @staticmethod
+    def _find_split_point(text: str, max_length: int) -> int:
+        search_start = max(0, max_length - 500)
+        newline_pos = text.rfind("\n", search_start, max_length)
+
+        if newline_pos > search_start:
+            return newline_pos + 1
+
+        space_start = max(0, max_length - 200)
+        space_pos = text.rfind(" ", space_start, max_length)
+
+        if space_pos > space_start:
+            return space_pos + 1
+
+        return max_length

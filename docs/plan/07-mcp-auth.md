@@ -1,84 +1,183 @@
-# Plan 07: MCP Authentication — Per-Tool Credentials
+# Plan 07: MCP Auth — Tool Execution Consent Layer
 
-**Status:** Planning
+**Status:** In Progress
 **Last Updated:** April 2026
 
 ---
 
 ## Problem
 
-Currently there is no per-MCP/per-tool authentication in Knik. All tools are registered and available unconditionally. The browser tool relies on a persistent Playwright profile to retain login state (cookies/sessions), which is a workaround rather than a proper auth mechanism.
-
-There is no way to:
-- Store credentials for a specific MCP tool (e.g., an API key for a search tool, OAuth tokens for a calendar tool)
-- Authenticate a user to an external service through the Knik UI
-- Restrict which tools are available based on whether credentials are provided
-- Rotate or revoke per-tool credentials at runtime
-
-The existing `SettingsUpdate` model has `api_key` for the AI provider — this pattern could be extended but is not sufficient on its own for per-tool credentials.
+There is no user-facing consent mechanism for tool execution in Knik. When the AI decides to run a potentially dangerous tool (e.g. `execute_shell`, `write_file`), it does so silently without any user awareness or approval. This is a security and trust concern, especially in the bot backend where a remote user's AI session can trigger shell commands or file writes on the host machine.
 
 ---
 
-## Proposed Approach
+## Approach
 
-Introduce a **credential store** for MCP tools: a DB-backed key-value store mapping `(tool_name, credential_key)` → encrypted value. Tools declare what credentials they need; the `MCPServerRegistry` checks whether required credentials are present before registering a tool, and injects them into tool execution context.
+Introduce a **consent gate** interface into `MCPServerRegistry`. Tools declare which of their functions require user consent via a `consent_required_for` class attribute. Before executing a flagged function, the registry pauses execution and asks the user to approve or deny. Each app backend provides its own gate implementation — the bot sends a Telegram message and waits for a reply; the console prompts via `input()`.
 
-### Phases
+The gate is a pluggable protocol, not baked into any specific backend, so it can be wired up in web, GUI, or any future backend without touching the registry.
 
-**Phase 1 — Credential storage and injection**
-- DB table: `tool_credentials (tool_name, key, encrypted_value, created_at, updated_at)`
-- Backend API: `GET/POST/DELETE /api/admin/tools/:tool_name/credentials`
-- `BaseTool` (from Plan 01) declares `required_credentials: list[str]`
-- `MCPServerRegistry` reads credentials from DB and passes them to `execute()`
+---
 
-**Phase 2 — Browser OAuth flow (optional)**
-- Add an OAuth callback endpoint to the web backend
-- A tool can declare `oauth_config` with authorize URL, token URL, scopes
-- The settings UI shows an "Authorize" button per tool that opens the OAuth flow
+## The Thread Bridge Problem
+
+`AIClient.achat` runs the LangChain call (and therefore all tool execution) inside `asyncio.to_thread()` — a background thread. This means `execute_tool()` is called from a worker thread, not the event loop.
+
+A naive `await consent_gate.request()` won't work from a thread. The solution: `ConsentGate` exposes a `request_sync()` method that uses `asyncio.run_coroutine_threadsafe(self.request(req), loop).result(timeout)` to block the worker thread while the event loop handles the async consent flow (sending the message, awaiting the user reply via a `Future`).
+
+---
+
+## Data Flow
+
+```
+AI decides → shell_execute(command="rm -rf ...")
+    │
+    ▼
+create_langchain_tools() closure → execute_tool("shell_execute", ...)
+    │
+    ▼
+execute_tool(): "shell_execute" ∈ _consent_required?  YES
+    │
+    ▼
+consent_gate.request_sync(ConsentRequest("shell_execute", kwargs))
+    │  [blocks worker thread; bridges to event loop via run_coroutine_threadsafe]
+    ▼
+BotConsentGate.request():
+    send_message(chat_id, "Allow shell_execute(command='rm -rf ...')? Reply yes/no")
+    future = loop.create_future()
+    PendingConsents.add(chat_id, future)
+    await asyncio.wait_for(future, timeout=30)
+    │
+    ▼  [user replies "yes" as a new Telegram message]
+    │
+BotMessageHandler.handle():
+    PendingConsents.has_pending(chat_id)? → YES
+    PendingConsents.resolve(chat_id, True)  ← resolves the future
+    return  ← message consumed, not routed to AI
+    │
+    ▼
+request_sync() unblocks → returns True
+    │
+    ▼
+execute_tool() proceeds → calls impl → returns result
+```
 
 ---
 
 ## Key Files
 
 | File | Change |
-|------|--------|
-| `src/lib/services/tool_credentials/` | **New** — credential store service (`db_client.py`, `models.py`, `encryption.py`) |
-| `src/lib/services/ai_client/registry/mcp_registry.py` | Load credentials from store before registering tools; pass to `execute()` |
-| `src/lib/tools/base.py` | Add `required_credentials` and `optional_credentials` class attributes |
-| `src/apps/web/backend/routes/admin.py` | Add `GET/POST/DELETE /api/admin/tools/:name/credentials` endpoints |
-| `src/apps/web/backend/routes/` | Optionally add `oauth.py` for OAuth callback handling (Phase 2) |
-| `src/apps/web/frontend/src/lib/pages/Settings.tsx` | Add "Tools" tab showing per-tool credential status and input forms |
-| `src/apps/web/frontend/src/services/api.ts` | Add `toolCredentialsApi` methods |
+|---|---|
+| `src/lib/services/ai_client/consent.py` | **New** — `ConsentRequest` dataclass + `ConsentGate` Protocol |
+| `src/lib/services/ai_client/base_tool.py` | Add `consent_required_for: ClassVar[frozenset[str]] = frozenset()` |
+| `src/lib/services/ai_client/registry/mcp_registry.py` | Store `_consent_gate` + `_consent_required`; consent check in `execute_tool()`; route `create_langchain_tools()` through `execute_tool()` |
+| `src/lib/mcp/tools/shell_tool.py` | Declare `consent_required_for` for shell execution functions |
+| `src/lib/mcp/tools/file_tool.py` | Declare `consent_required_for` for `write_file`, `append_to_file` |
+| `src/apps/bot/consent.py` | **New** — `PendingConsents` (global `chat_id → Future` dict) + `BotConsentGate` |
+| `src/apps/bot/message_handler.py` | Check `PendingConsents` before busy-hint logic; resolve on yes/no reply |
+| `src/apps/bot/user_client_manager.py` | Add `update_consent_gate(user_id, chat_id, messaging_client, loop)` |
+| `src/apps/console/tools/consent_gate.py` | **New** — `ConsoleConsentGate` using `input()` |
 
 ---
 
-## Rough Steps
+## Implementation Steps
 
-**Phase 1:**
+1. **`consent.py` (lib layer)** — define `ConsentRequest` and `ConsentGate` Protocol with both `async request()` and sync `request_sync()` methods
 
-1. **Design DB schema** — `tool_credentials` table with `tool_name TEXT`, `key TEXT`, `encrypted_value TEXT`, `created_at`, `updated_at`; primary key on `(tool_name, key)`
-2. **Create credential service** in `src/lib/services/tool_credentials/`:
-   - `db_client.py` — CRUD operations on `tool_credentials` table
-   - `encryption.py` — symmetric encryption/decryption using a key derived from a `KNIK_SECRET_KEY` env var (use `cryptography` library's Fernet or similar)
-   - `models.py` — `ToolCredential` dataclass
-3. **Update `BaseTool`** (Plan 01 prerequisite) — add `required_credentials: list[str] = []` and `optional_credentials: list[str] = []` class attributes
-4. **Update `MCPServerRegistry`** — before registering a tool, load its credentials from the store; pass as a `credentials: dict[str, str]` argument to `execute()`; if required credentials are missing, register the tool as "unavailable" with a descriptive error
-5. **Add admin API endpoints** — `GET /api/admin/tools` (list all tools with credential status), `POST /api/admin/tools/:name/credentials` (set a credential), `DELETE /api/admin/tools/:name/credentials/:key` (revoke)
-6. **Add Tools tab to Settings UI** — list registered tools, show which credentials are set vs. missing, provide input fields to set credentials
-7. **Test** — add a credential via the UI, verify tool becomes available; remove it, verify tool is marked unavailable
+2. **`BaseTool`** — add `consent_required_for: ClassVar[frozenset[str]] = frozenset()`; tools override this to declare which function names require consent
 
-**Phase 2 (OAuth — optional):**
+3. **`MCPServerRegistry`**:
+   - `_consent_gate: ConsentGate | None` and `_consent_required: set[str]`
+   - `set_consent_gate(gate)` method
+   - `add_tool_instance()` populates `_consent_required` from `tool.consent_required_for`
+   - `execute_tool()` checks gate before calling impl
+   - `create_langchain_tools()` routes through `execute_tool()` (not raw impl) so consent is enforced for LangChain-invoked tools too
 
-8. **Add `oauth_config` to `BaseTool`** — `authorize_url`, `token_url`, `scopes`, `callback_path`
-9. **Add OAuth callback route** — `GET /api/oauth/callback/:tool_name` — exchanges code for token, stores in credential store
-10. **Add "Authorize" button** in Settings UI for tools with `oauth_config`
+4. **Tool declarations** — set `consent_required_for` on `ShellTool` (all shell execution functions) and `FileTool` (`write_file`, `append_to_file`)
+
+5. **`BotConsentGate`** — `request()` sends a message and parks an `asyncio.Future` in `PendingConsents`; `request_sync()` bridges via `run_coroutine_threadsafe`
+
+6. **`BotMessageHandler`** — at the top of `handle()`, check if `PendingConsents.has_pending(chat_id)` and route yes/no text to the resolver before the normal busy-check logic
+
+7. **`UserClientManager`** — add `update_consent_gate()` to attach a fresh `BotConsentGate` to the user's registry on each message (so `chat_id` + `loop` are always current)
+
+8. **`_process_message()`** in the bot — call `update_consent_gate()` after `get_or_create()`
+
+9. **`ConsoleConsentGate`** — `request_sync()` calls `input()` directly (thread-safe; blocks the worker thread while the event loop stays free); wire into the console app's registry
 
 ---
 
-## Notes
+## Interface Sketch
 
-- Credential encryption is important — even if the DB is local, values should not be stored in plaintext
-- `KNIK_SECRET_KEY` must be set in `.env`; generate a warning at startup if it is missing
-- This plan has a soft dependency on Plan 01 (Tool base class) — the `required_credentials` declaration on `BaseTool` is cleaner than adding it to the existing `ToolSessionManager`
-- This plan also has a soft dependency on Plan 03 (Settings page) — the Tools tab in settings is an extension of the settings page
-- For the browser tool specifically, per-tool auth is less critical because the Playwright profile already persists sessions; focus Phase 1 on tools that need API keys
+```python
+# src/lib/services/ai_client/consent.py
+
+@dataclass
+class ConsentRequest:
+    tool_name: str
+    kwargs: dict[str, Any]
+
+class ConsentGate(Protocol):
+    async def request(self, req: ConsentRequest) -> bool: ...
+    def request_sync(self, req: ConsentRequest, timeout: float = 30.0) -> bool: ...
+```
+
+```python
+# MCPServerRegistry.execute_tool()
+def execute_tool(self, tool_name: str, **kwargs) -> Any:
+    if self._consent_gate and tool_name in self._consent_required:
+        req = ConsentRequest(tool_name=tool_name, kwargs=kwargs)
+        allowed = self._consent_gate.request_sync(req)
+        if not allowed:
+            return {"error": f"Permission denied for {tool_name}"}
+    impl = self.get_implementation(tool_name)
+    if impl is None:
+        raise ValueError(f"No implementation found for tool: {tool_name}")
+    return impl(**kwargs)
+```
+
+```python
+# src/apps/bot/consent.py
+
+class PendingConsents:
+    _pending: ClassVar[dict[str, asyncio.Future]] = {}
+
+    @classmethod
+    def add(cls, chat_id: str, future: asyncio.Future) -> None: ...
+
+    @classmethod
+    def has_pending(cls, chat_id: str) -> bool: ...
+
+    @classmethod
+    def resolve(cls, chat_id: str, allowed: bool) -> bool: ...  # returns True if resolved
+
+
+class BotConsentGate:
+    def __init__(self, chat_id: str, messaging_client, loop: asyncio.AbstractEventLoop) -> None: ...
+
+    async def request(self, req: ConsentRequest) -> bool:
+        # send message, park Future, await with timeout
+        ...
+
+    def request_sync(self, req: ConsentRequest, timeout: float = 30.0) -> bool:
+        future = asyncio.run_coroutine_threadsafe(self.request(req), self._loop)
+        try:
+            return future.result(timeout=timeout)
+        except TimeoutError:
+            return False
+```
+
+---
+
+## Scope
+
+**In scope:**
+- Consent gate protocol in `MCPServerRegistry` (backend-agnostic)
+- `ShellTool` and `FileTool` write-op declarations
+- Bot backend gate (Telegram message + Future-based reply detection)
+- Console backend gate (`input()`)
+
+**Out of scope:**
+- Web frontend consent (requires WebSocket/SSE round-trip — separate plan)
+- Per-user allow-lists or "always allow this tool" preference storage
+- OAuth / external service authentication (original plan doc direction — deferred indefinitely)

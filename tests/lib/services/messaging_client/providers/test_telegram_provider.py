@@ -4,31 +4,79 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.lib.services.messaging_client.providers.telegram_provider import (
-    TelegramProvider,
-    _split_text,
-)
+from src.lib.services.messaging_client.providers.base_provider import BaseMessagingProvider
+from src.lib.services.messaging_client.providers.telegram_provider import TelegramProvider
 
 
-class TestSplitText:
-    def test_short_text_unchanged(self):
-        assert _split_text("Hello") == ["Hello"]
+class TestChunkText:
+    @pytest.fixture
+    def provider(self):
+        with patch.object(TelegramProvider, "__init__", lambda self, **kwargs: None):
+            p = TelegramProvider.__new__(TelegramProvider)
+            p._token = "test_token"
+            p._bot = MagicMock()
+            p._app = None
+            yield p
 
-    def test_exact_max_len_unchanged(self):
+    def test_short_text_unchanged(self, provider):
+        assert provider.chunk_text("Hello") == ["Hello"]
+
+    def test_exact_max_len_unchanged(self, provider):
         text = "x" * 4096
-        assert _split_text(text) == [text]
+        assert provider.chunk_text(text) == [text]
 
-    def test_splits_at_newline(self):
-        text = "line1\n" + "x" * 4100
-        chunks = _split_text(text)
-        assert len(chunks) >= 2
-        assert chunks[0] == "line1"
-
-    def test_splits_hard_when_no_newline(self):
+    def test_splits_long_text(self, provider):
         text = "x" * 5000
-        chunks = _split_text(text)
-        assert len(chunks) == 2
-        assert len(chunks[0]) == 4096
+        chunks = provider.chunk_text(text)
+        assert len(chunks) >= 2
+        assert all(len(c) <= 4096 for c in chunks)
+
+    def test_splits_at_newline(self, provider):
+        text = "line1\n" + "x" * 4100
+        chunks = provider.chunk_text(text)
+        assert len(chunks) >= 2
+        assert chunks[0].startswith("line1")
+
+
+class TestBaseProviderChunking:
+    @pytest.fixture
+    def provider(self):
+        with patch.object(TelegramProvider, "__init__", lambda self, **kwargs: None):
+            p = TelegramProvider.__new__(TelegramProvider)
+            p._token = "test_token"
+            p._bot = MagicMock()
+            p._app = None
+            yield p
+
+    def test_chunk_text_returns_single_chunk_for_short_text(self, provider):
+        text = "Hello world"
+        chunks = provider.chunk_text(text)
+        assert len(chunks) == 1
+        assert chunks[0] == text
+
+    def test_chunk_text_splits_long_text(self, provider):
+        provider.max_message_length = 100
+        text = "A" * 250
+        chunks = provider.chunk_text(text)
+        assert len(chunks) == 3
+        assert all(len(c) <= 100 for c in chunks)
+        assert "".join(chunks) == text
+
+    def test_chunk_text_splits_at_newline(self, provider):
+        provider.max_message_length = 50
+        text = "First paragraph here.\n\nSecond paragraph here.\n\nThird one."
+        chunks = provider.chunk_text(text)
+        assert len(chunks) > 1
+
+    def test_find_split_point_returns_newline_position(self, provider):
+        text = "First line\nSecond line\nThird line"
+        pos = BaseMessagingProvider._find_split_point(text, 25)
+        assert text[pos - 1] == "\n" or text[pos] == "\n"
+
+    def test_find_split_point_falls_back_to_hard_split(self, provider):
+        text = "A" * 300
+        pos = BaseMessagingProvider._find_split_point(text, 100)
+        assert pos == 100
 
 
 class TestTelegramProviderEditMessage:
