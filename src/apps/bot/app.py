@@ -5,17 +5,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from lib.services.messaging_client.client import MessagingClient
-    from lib.services.messaging_client.models import IncomingMessage
 
 from imports import printer as logger
 from lib.commands.service import CommandService
 from lib.mcp.tools.browser_tool import BrowserTool
 from lib.services.ai_client.base_tool import BaseTool
+from lib.services.messaging_client.client import MessagingClient
+from lib.services.messaging_client.models import IncomingMessage
 from lib.services.postgres.db import PostgresDB
 
 from .commands import create_command_system
@@ -61,6 +57,8 @@ class BotApp:
         from lib.services.ai_client.client import AIClient
         from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
 
+        loop = asyncio.get_running_loop()
+
         # Default client used by CommandService for model/provider/status queries.
         # Per-user clients are managed by UserClientManager.
         default_mcp = MCPServerRegistry()
@@ -72,15 +70,15 @@ class BotApp:
         )
         logger.info(f"Default AI client initialized: {default_client.provider_name}")
 
+        self._messaging_client = MessagingClient(providers=self.config.bot_providers)
+        logger.info(f"Messaging client created for: {self.config.bot_providers}")
+
         self._user_client_manager = UserClientManager(
             provider=self.config.ai_provider,
             system_instruction=self.config.system_instruction,
+            messaging_client=self._messaging_client,
+            loop=loop,
         )
-
-        from lib.services.messaging_client.client import MessagingClient
-
-        self._messaging_client = MessagingClient(providers=self.config.bot_providers)
-        logger.info(f"Messaging client created for: {self.config.bot_providers}")
 
         self._user_identity = UserIdentityManager()
         self._streaming = StreamingResponseManager(

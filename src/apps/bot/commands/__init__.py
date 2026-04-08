@@ -10,6 +10,7 @@ from .handlers import (
     handle_new,
     handle_provider,
     handle_resume,
+    handle_revoke,
     handle_sessions,
     handle_status,
 )
@@ -29,6 +30,7 @@ def create_command_system(command_service: CommandService) -> tuple[BotCommandRe
     registry.register("model", "Show or switch AI model", handle_model)
     registry.register("provider", "Show or switch AI provider", handle_provider)
     registry.register("status", "Show current configuration", handle_status)
+    registry.register("revoke", "Revoke all tool approvals", handle_revoke)
     registry.register("help", "Show available commands", handle_help)
 
     dispatcher = BotCommandDispatcher(registry, command_service)

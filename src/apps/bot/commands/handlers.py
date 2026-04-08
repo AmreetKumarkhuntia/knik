@@ -26,6 +26,7 @@ async def handle_new(command_service: CommandService, args: str, user_id: str) -
             "  /model [name] - Show or switch model\n"
             "  /provider [name] - Show or switch provider\n"
             "  /status - Current configuration\n"
+            "  /revoke - Revoke all tool approvals\n"
             "  /help - Show this message"
         )
         return CommandResult(success=True, message=welcome)
@@ -109,6 +110,14 @@ async def handle_status(command_service: CommandService, args: str, user_id: str
     )
 
 
+async def handle_revoke(command_service: CommandService, args: str, user_id: str) -> CommandResult:
+    return CommandResult(
+        success=True,
+        message="All tool approvals revoked. Each tool will ask for permission again.",
+        data={"revoke_consent": True},
+    )
+
+
 async def handle_help(command_service: CommandService, args: str, user_id: str) -> CommandResult:
     message = (
         "Available commands:\n\n"
@@ -118,6 +127,7 @@ async def handle_help(command_service: CommandService, args: str, user_id: str) 
         "  /model [name] - Show current or switch AI model\n"
         "  /provider [name] - Show current or switch AI provider\n"
         "  /status - Show current configuration\n"
+        "  /revoke - Revoke all tool approvals\n"
         "  /help - Show this message\n"
     )
     return CommandResult(success=True, message=message)

@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from .consent import PendingConsents
+
 
 if TYPE_CHECKING:
     from lib.commands.service import CommandService
@@ -68,6 +70,22 @@ class BotMessageHandler:
 
     async def handle(self, incoming: IncomingMessage) -> None:
         provider = incoming.provider_name or "unknown"
+
+        if PendingConsents.has_pending(incoming.chat_id):
+            text = (incoming.text or "").strip().lower()
+            if text in ("yes all", "ya"):
+                response = "yes_all"
+            elif text in ("yes", "y"):
+                response = "yes"
+            else:
+                response = "no"
+            logger.info("Consent reply from %s: %r -> %s", incoming.chat_id, text, response)
+            PendingConsents.resolve(incoming.chat_id, response)
+            if response == "yes_all" and self._user_client_manager is not None:
+                identity = self._user_identity.resolve(incoming, provider)
+                self._user_client_manager.approve_all_tools(identity.user_id)
+            return
+
         chat_key = ChatKey(provider=provider, chat_id=incoming.chat_id)
 
         logger.info("Received message: %s", incoming.text)
@@ -79,10 +97,11 @@ class BotMessageHandler:
                     identity = self._user_identity.resolve(incoming, provider)
                     if "ai_client" in result.data and self._user_client_manager is not None:
                         self._user_client_manager.set(identity.user_id, result.data["ai_client"])
-                    # Clean up tool sessions (e.g. browser) when the user resets their session.
                     _cmd = incoming.text.split()[0].lstrip("/").split("@")[0].lower()
                     if _cmd in ("new", "start") and self._user_client_manager is not None:
                         self._user_client_manager.cleanup_tools(identity.user_id)
+                    if result.data.get("revoke_consent") and self._user_client_manager is not None:
+                        self._user_client_manager.revoke_tool_consent(identity.user_id)
                     await self._messaging_client.send_message(
                         chat_id=incoming.chat_id,
                         text=result.message,
@@ -171,6 +190,7 @@ class BotMessageHandler:
             identity = self._user_identity.resolve(incoming, provider)
 
             if self._user_client_manager is not None:
+                self._user_client_manager.set_chat_context(identity.user_id, incoming.chat_id, provider)
                 ai_client = await self._user_client_manager.get_or_create(identity.user_id)
             else:
                 ai_client = self._command_service.ai_client

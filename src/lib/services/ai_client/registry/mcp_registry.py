@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from lib.services.ai_client.base_tool import BaseTool
+from lib.services.ai_client.consent import ConsentGate, ConsentRequest
 from lib.utils.printer import printer
 
 
@@ -15,20 +16,6 @@ try:
 except ImportError:
     LANGCHAIN_AVAILABLE = False
     StructuredTool = None
-
-
-def _wrap_with_logging(tool_name: str, func: Callable) -> Callable:
-    def wrapper(**kwargs):
-        printer.info(f"Tool Input: {tool_name}({kwargs})")
-        try:
-            result = func(**kwargs)
-            printer.info(f"Tool Output: {tool_name} -> {result}")
-            return result
-        except Exception as e:
-            printer.error(f"Tool Error: {tool_name} -> {e}")
-            return {"error": str(e)}
-
-    return wrapper
 
 
 class MCPServerRegistry:
@@ -43,6 +30,13 @@ class MCPServerRegistry:
         self._tools: list[dict[str, Any]] = []
         self._implementations: dict[str, Callable] = {}
         self._tool_instances: list[BaseTool] = []
+        self._consent_gate: ConsentGate | None = None
+        self._allowed_tools: set[str] = set()
+        self._all_approved: bool = False
+
+    def set_consent_gate(self, gate: ConsentGate) -> None:
+        self._consent_gate = gate
+        printer.info(f"Consent gate attached: {type(gate).__name__}")
 
     def register_tool(self, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None:
         self._tools.append(tool_dict)
@@ -58,6 +52,15 @@ class MCPServerRegistry:
         return self._implementations.get(tool_name)
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
+        if self._consent_gate and not self._all_approved and tool_name not in self._allowed_tools:
+            printer.info(f"Consent required for {tool_name}, requesting approval...")
+            req = ConsentRequest(tool_name=tool_name, kwargs=kwargs)
+            allowed = self._consent_gate.request_sync(req)
+            if not allowed:
+                printer.warning(f"Consent denied for {tool_name}")
+                return {"error": f"Permission denied for {tool_name}"}
+            self._allowed_tools.add(tool_name)
+            printer.info(f"Consent granted for {tool_name} (now auto-approved for this conversation)")
         impl = self.get_implementation(tool_name)
         if impl is None:
             raise ValueError(f"No implementation found for tool: {tool_name}")
@@ -67,9 +70,21 @@ class MCPServerRegistry:
         self._tools = []
         self._implementations = {}
         self._tool_instances = []
+        self._allowed_tools = set()
+        self._all_approved = False
 
     def add_tool_instance(self, tool: BaseTool) -> None:
         self._tool_instances.append(tool)
+
+    def revoke_allowed_tools(self) -> None:
+        cleared = self._allowed_tools.copy()
+        self._allowed_tools.clear()
+        self._all_approved = False
+        printer.info(f"Revoked tool approvals: {cleared}")
+
+    def approve_all_tools(self) -> None:
+        self._all_approved = True
+        printer.info("All tools approved for this conversation")
 
     def get_tool_instances(self) -> list[BaseTool]:
         return list(self._tool_instances)
@@ -104,11 +119,21 @@ class MCPServerRegistry:
             if not tool_name:
                 continue
 
-            impl = self._implementations.get(tool_name)
-            if not impl:
+            if tool_name not in self._implementations:
                 continue
 
-            impl = _wrap_with_logging(tool_name, impl)
+            def make_tool_func(name: str) -> Callable:
+                def tool_func(**kwargs):
+                    printer.info(f"Tool Input: {name}({kwargs})")
+                    try:
+                        result = self.execute_tool(name, **kwargs)
+                        printer.info(f"Tool Output: {name} -> {result}")
+                        return result
+                    except Exception as e:
+                        printer.error(f"Tool Error: {name} -> {e}")
+                        return {"error": str(e)}
+
+                return tool_func
 
             fields = {}
             for name, prop in params.get("properties", {}).items():
@@ -143,7 +168,10 @@ class MCPServerRegistry:
 
             tools.append(
                 StructuredTool(
-                    name=tool_name, description=description or f"Execute {tool_name}", func=impl, args_schema=ArgsModel
+                    name=tool_name,
+                    description=description or f"Execute {tool_name}",
+                    func=make_tool_func(tool_name),
+                    args_schema=ArgsModel,
                 )
             )
 
