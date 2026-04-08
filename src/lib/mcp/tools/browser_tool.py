@@ -393,7 +393,7 @@ class BrowserTool(BaseTool):
             return ""
 
         total_chunks = math.ceil(total_chars / max_chars)
-        chunk = max(1, chunk)
+        chunk = max(1, chunk or 1)
 
         if chunk > total_chunks:
             return f"[No content at chunk {chunk}. Total chunks available: {total_chunks} (total {total_chars} chars)]"
