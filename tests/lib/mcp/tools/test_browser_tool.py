@@ -27,6 +27,8 @@ if _SRC not in sys.path:
 
 def _load_module(name: str, filepath: str):
     """Load a Python module from *filepath* without triggering its package __init__."""
+    if name in sys.modules:
+        return sys.modules[name]
     spec = importlib.util.spec_from_file_location(name, filepath)
     mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
@@ -892,3 +894,216 @@ class TestExecutorThreadSafety:
 
         assert len(results) == 5
         assert all(r is results[0] for r in results)
+
+
+class TestParallelToolCalls:
+    """Verify behaviour when tool calls overlap from multiple threads."""
+
+    def test_parallel_navigate_same_instance_serializes(self, wired_tool):
+        """Two _navigate calls on the same tool serialize — no page corruption."""
+        tool, page, _ = wired_tool
+        order = []
+
+        original_goto = page.goto
+
+        def slow_goto(url, **kwargs):
+            order.append(f"goto_start:{url}")
+            time.sleep(0.05)
+            order.append(f"goto_end:{url}")
+            return original_goto(url, **kwargs)
+
+        page.goto = slow_goto
+        page.title.return_value = "Page"
+
+        results: list[str | None] = [None, None]
+        errors: list[Exception] = []
+
+        def nav(idx, url):
+            try:
+                results[idx] = tool._navigate(url)
+            except Exception as e:
+                errors.append(e)
+
+        t1 = threading.Thread(target=nav, args=(0, "https://first.com"))
+        t2 = threading.Thread(target=nav, args=(1, "https://second.com"))
+        t1.start()
+        time.sleep(0.01)  # give t1 a head start
+        t2.start()
+        t1.join(timeout=10)
+        t2.join(timeout=10)
+
+        assert not errors, f"Errors in threads: {errors}"
+        assert results[0] is not None and results[1] is not None
+        # Both should succeed
+        assert "Navigated to: https://first.com" in results[0]
+        assert "Navigated to: https://second.com" in results[1]
+        # First navigate must finish before second starts (single-worker executor)
+        assert order.index("goto_end:https://first.com") < order.index("goto_start:https://second.com")
+
+    def test_parallel_tool_calls_different_instances(self):
+        """Two separate BrowserTool instances run tool calls truly in parallel."""
+        tool_a = BrowserTool()
+        tool_b = BrowserTool()
+
+        page_a = _make_mock_page()
+        page_b = _make_mock_page()
+        pw_a = _make_mock_playwright(page=page_a)
+        pw_b = _make_mock_playwright(page=page_b)
+
+        for tool, page, pw in [(tool_a, page_a, pw_a), (tool_b, page_b, pw_b)]:
+            tool._playwright = pw
+            tool._browser_context = pw.chromium.launch_persistent_context.return_value
+            tool._page = page
+            tool._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="test")
+
+        overlap = threading.Event()
+        order = []
+
+        original_goto_a = page_a.goto
+
+        def slow_goto_a(url, **kwargs):
+            order.append("a_start")
+            overlap.wait(timeout=5)  # wait until b has also started
+            order.append("a_end")
+            return original_goto_a(url, **kwargs)
+
+        original_goto_b = page_b.goto
+
+        def slow_goto_b(url, **kwargs):
+            order.append("b_start")
+            overlap.set()  # signal that b has started
+            order.append("b_end")
+            return original_goto_b(url, **kwargs)
+
+        page_a.goto = slow_goto_a
+        page_b.goto = slow_goto_b
+        page_a.title.return_value = "A"
+        page_b.title.return_value = "B"
+
+        results: list[str | None] = [None, None]
+
+        def nav(idx, tool, url):
+            results[idx] = tool._navigate(url)
+
+        t1 = threading.Thread(target=nav, args=(0, tool_a, "https://a.com"))
+        t2 = threading.Thread(target=nav, args=(1, tool_b, "https://b.com"))
+        t1.start()
+        time.sleep(0.01)
+        t2.start()
+        t1.join(timeout=10)
+        t2.join(timeout=10)
+
+        # Both succeed
+        assert results[0] is not None and results[1] is not None
+        assert "Navigated to: https://a.com" in results[0]
+        assert "Navigated to: https://b.com" in results[1]
+        # b_start should appear before a_end — proving true parallelism
+        assert order.index("b_start") < order.index("a_end")
+
+        for tool in (tool_a, tool_b):
+            tool._executor.shutdown(wait=False)
+            tool._executor = None
+
+    def test_cleanup_during_active_tool_call(self, wired_tool):
+        """cleanup() called while _navigate is mid-flight doesn't crash either thread."""
+        tool, page, _ = wired_tool
+
+        navigate_started = threading.Event()
+        navigate_can_finish = threading.Event()
+
+        original_goto = page.goto
+
+        def blocking_goto(url, **kwargs):
+            navigate_started.set()
+            navigate_can_finish.wait(timeout=5)
+            return original_goto(url, **kwargs)
+
+        page.goto = blocking_goto
+        page.title.return_value = "Page"
+
+        nav_result: list[str | None] = [None]
+        nav_error: list[Exception | None] = [None]
+        cleanup_error: list[Exception | None] = [None]
+
+        def do_navigate():
+            try:
+                nav_result[0] = tool._navigate("https://example.com")
+            except Exception as e:
+                nav_error[0] = e
+
+        def do_cleanup():
+            try:
+                navigate_started.wait(timeout=5)
+                # Navigate is now in progress on the executor thread —
+                # cleanup submits _teardown to the same single-worker executor,
+                # so it queues behind the navigate.
+                tool.cleanup()
+            except Exception as e:
+                cleanup_error[0] = e
+            finally:
+                # Unblock navigate so the test doesn't hang
+                navigate_can_finish.set()
+
+        t_nav = threading.Thread(target=do_navigate)
+        t_clean = threading.Thread(target=do_cleanup)
+        t_nav.start()
+        t_clean.start()
+        t_nav.join(timeout=10)
+        t_clean.join(timeout=10)
+
+        # Neither thread should have crashed
+        assert nav_error[0] is None, f"Navigate raised: {nav_error[0]}"
+        assert cleanup_error[0] is None, f"Cleanup raised: {cleanup_error[0]}"
+
+    def test_concurrent_navigate_and_get_text(self, wired_tool):
+        """Navigate and get_text submitted concurrently — get_text waits for navigate."""
+        tool, page, _ = wired_tool
+        order = []
+
+        original_goto = page.goto
+
+        def slow_goto(url, **kwargs):
+            order.append("goto_start")
+            time.sleep(0.05)
+            order.append("goto_end")
+            return original_goto(url, **kwargs)
+
+        page.goto = slow_goto
+        page.title.return_value = "Page"
+        page.evaluate.return_value = "page body text"
+
+        results: list[str | None] = [None, None]
+
+        def do_navigate():
+            results[0] = tool._navigate("https://example.com")
+
+        def do_get_text():
+            results[1] = tool._get_text()
+
+        t1 = threading.Thread(target=do_navigate)
+        t2 = threading.Thread(target=do_get_text)
+        t1.start()
+        time.sleep(0.01)  # ensure navigate starts first
+        t2.start()
+        t1.join(timeout=10)
+        t2.join(timeout=10)
+
+        assert results[0] is not None and results[1] is not None
+        assert "Navigated to" in results[0]
+        assert "page body text" in results[1]
+        # Navigate must finish before get_text runs (single-worker)
+        assert order.index("goto_end") < len(order)
+
+    def test_sequential_navigate_then_get_text(self, wired_tool):
+        """Navigate followed by get_text on the same page returns correct data."""
+        tool, page, _ = wired_tool
+        page.goto.return_value = MagicMock(status=200)
+        page.title.return_value = "Example"
+        page.evaluate.return_value = "Hello from example.com"
+
+        nav_result = tool._navigate("https://example.com")
+        text_result = tool._get_text()
+
+        assert "Navigated to: https://example.com" in nav_result
+        assert "Example" in nav_result
+        assert "Hello from example.com" in text_result
