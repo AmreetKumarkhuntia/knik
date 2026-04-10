@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
-import logging
-import re
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -16,13 +13,6 @@ if TYPE_CHECKING:
 
     from .config import BotConfig
 
-logger = logging.getLogger(__name__)
-
-DEFAULT_EDIT_DEBOUNCE_INTERVAL: float = 0.5
-DEFAULT_PLACEHOLDER_TEXT: str = "..."
-SENTENCE_BOUNDARY_PATTERN = re.compile(r"[.!?。\uff01\uff1f\n]")
-MIN_CHUNK_SIZE_FOR_EDIT: int = 10
-
 
 @dataclass
 class DeliveryResult:
@@ -30,42 +20,13 @@ class DeliveryResult:
     conversation_id: str | None = None
     usage: dict[str, int] | None = None
     message_ids: list[str] = field(default_factory=list)
-    was_streaming: bool = False
-    edit_count: int = 0
-    error: str | None = None
-
-
-@dataclass
-class StreamingState:
-    accumulated_text: str = ""
-    last_edit_text: str = ""
-    last_edit_time: float = 0.0
-    message_ids: list[str] = field(default_factory=list)
-    edit_count: int = 0
-    stream_complete: bool = False
     error: str | None = None
 
 
 class StreamingResponseManager:
-    def __init__(
-        self,
-        messaging_client: MessagingClient,
-        config: BotConfig,
-        edit_debounce_interval: float = DEFAULT_EDIT_DEBOUNCE_INTERVAL,
-        placeholder_text: str = DEFAULT_PLACEHOLDER_TEXT,
-    ):
+    def __init__(self, messaging_client: MessagingClient, config: BotConfig):
         self._messaging_client = messaging_client
         self._config = config
-        self._edit_debounce_interval = max(0.1, edit_debounce_interval)
-        self._placeholder_text = placeholder_text
-
-    @property
-    def edit_debounce_interval(self) -> float:
-        return self._edit_debounce_interval
-
-    @edit_debounce_interval.setter
-    def edit_debounce_interval(self, value: float) -> None:
-        self._edit_debounce_interval = max(0.1, value)
 
     async def deliver(
         self,
@@ -76,261 +37,44 @@ class StreamingResponseManager:
         conversation_id: str | None,
         provider_meta: dict,
     ) -> DeliveryResult:
-        try:
-            supports_edit = self._messaging_client.supports_message_edit(provider)
+        captured_conv_id: str | None = conversation_id
+        captured_usage: dict[str, int] | None = None
+        captured_text = ""
 
-            if supports_edit:
-                return await self._send_and_edit(
-                    provider=provider,
-                    chat_id=chat_id,
-                    ai_client=ai_client,
-                    prompt=prompt,
-                    conversation_id=conversation_id,
-                    provider_meta=provider_meta,
-                )
+        async def _text_only() -> AsyncIterator[str]:
+            nonlocal captured_conv_id, captured_usage, captured_text
 
-            return await self._send_complete(
-                provider=provider,
-                chat_id=chat_id,
-                ai_client=ai_client,
-                prompt=prompt,
-                conversation_id=conversation_id,
-                provider_meta=provider_meta,
-            )
-        except Exception as e:
-            logger.exception("Delivery failed")
-            return DeliveryResult(response_text="", conversation_id=conversation_id, error=str(e))
-
-    async def _send_and_edit(
-        self,
-        provider: str,
-        chat_id: str,
-        ai_client: AIClient,
-        prompt: str,
-        conversation_id: str | None,
-        provider_meta: dict,
-    ) -> DeliveryResult:
-        state = StreamingState()
-        state.last_edit_time = asyncio.get_event_loop().time()
-        usage: dict[str, int] | None = None
-
-        message_id = await self._send_message(provider, chat_id, self._placeholder_text, provider_meta)
-        if not message_id:
-            return DeliveryResult(
-                response_text="", conversation_id=conversation_id, error="Failed to send placeholder message"
-            )
-        state.message_ids.append(message_id)
-
-        try:
-            async for chunk in ai_client.achat_stream(
-                prompt=prompt,
-                conversation_id=conversation_id,
-            ):
+            async for chunk in ai_client.achat_stream(prompt=prompt, conversation_id=conversation_id):
                 if isinstance(chunk, dict):
                     if "__conversation_id__" in chunk:
-                        conversation_id = chunk["__conversation_id__"]
+                        captured_conv_id = chunk["__conversation_id__"]
                     elif chunk.get("__done__"):
-                        conversation_id = chunk.get("conversation_id", conversation_id)
-                        usage = chunk.get("usage")
+                        captured_conv_id = chunk.get("conversation_id", captured_conv_id)
+                        captured_usage = chunk.get("usage")
+                        captured_text = chunk.get("full_response", "")
                     continue
 
-                state.accumulated_text += chunk
+                captured_text += chunk
+                yield chunk
 
-                if self._should_edit_now(state):
-                    await self._update_messages(provider, chat_id, state, provider_meta)
-
-            await self._update_messages(provider, chat_id, state, provider_meta, force=True)
-            state.stream_complete = True
+        try:
+            result = await self._messaging_client.send_stream(
+                chat_id=chat_id,
+                text_stream=_text_only(),
+                provider=provider,
+                **provider_meta,
+            )
 
             return DeliveryResult(
-                response_text=state.accumulated_text,
-                conversation_id=conversation_id,
-                usage=usage,
-                message_ids=state.message_ids,
-                was_streaming=True,
-                edit_count=state.edit_count,
+                response_text=captured_text,
+                conversation_id=captured_conv_id,
+                usage=captured_usage,
+                message_ids=[result.message_id] if result.message_id else [],
+                error=result.error,
             )
         except Exception as e:
-            await self._handle_stream_error(provider, chat_id, state, e, provider_meta)
             return DeliveryResult(
-                response_text=state.accumulated_text,
-                conversation_id=conversation_id,
-                usage=usage,
-                message_ids=state.message_ids,
+                response_text=captured_text,
+                conversation_id=captured_conv_id,
                 error=str(e),
             )
-
-    async def _send_complete(
-        self,
-        provider: str,
-        chat_id: str,
-        ai_client: AIClient,
-        prompt: str,
-        conversation_id: str | None,
-        provider_meta: dict,
-    ) -> DeliveryResult:
-        try:
-            response_text, conversation_id, usage = await ai_client.achat(
-                prompt=prompt,
-                conversation_id=conversation_id,
-            )
-
-            if not response_text:
-                response_text = "I apologize, but I couldn't generate a response."
-
-            chunks = self._messaging_client.chunk_text(response_text, provider=provider)
-            message_ids: list[str] = []
-
-            for chunk in chunks:
-                result = await self._messaging_client.send_message(
-                    provider=provider,
-                    chat_id=chat_id,
-                    text=chunk,
-                    **provider_meta,
-                )
-                if result.message_id:
-                    message_ids.append(result.message_id)
-
-            return DeliveryResult(
-                response_text=response_text,
-                conversation_id=conversation_id,
-                usage=usage,
-                message_ids=message_ids,
-                was_streaming=False,
-            )
-        except Exception as e:
-            logger.exception("Complete delivery failed")
-            with contextlib.suppress(Exception):
-                await self._messaging_client.send_message(
-                    provider=provider,
-                    chat_id=chat_id,
-                    text="\u274c An error occurred while generating the response.",
-                    **provider_meta,
-                )
-
-            return DeliveryResult(response_text="", conversation_id=conversation_id, error=str(e))
-
-    def _should_edit_now(self, state: StreamingState, force: bool = False) -> bool:
-        if force:
-            return state.accumulated_text != state.last_edit_text
-
-        current_time = asyncio.get_event_loop().time()
-        time_since_last_edit = current_time - state.last_edit_time
-
-        new_text = state.accumulated_text[len(state.last_edit_text) :]
-
-        if len(new_text) < MIN_CHUNK_SIZE_FOR_EDIT:
-            return False
-
-        if new_text and SENTENCE_BOUNDARY_PATTERN.match(new_text[-1]):
-            return True
-
-        return time_since_last_edit >= self._edit_debounce_interval
-
-    async def _send_message(self, provider: str, chat_id: str, text: str, provider_meta: dict) -> str | None:
-        try:
-            result = await self._messaging_client.send_message(
-                provider=provider,
-                chat_id=chat_id,
-                text=text,
-                **provider_meta,
-            )
-            return result.message_id
-        except Exception as e:
-            logger.error(
-                "Failed to send message",
-                extra={"provider": provider, "chat_id": chat_id, "error": str(e)},
-            )
-            return None
-
-    async def _edit_message_safe(
-        self, provider: str, chat_id: str, message_id: str, text: str, provider_meta: dict
-    ) -> bool:
-        try:
-            result = await self._messaging_client.edit_message(
-                provider=provider,
-                chat_id=chat_id,
-                message_id=message_id,
-                text=text,
-                **provider_meta,
-            )
-            return result.success
-        except Exception as e:
-            logger.warning(
-                "Failed to edit message",
-                extra={"provider": provider, "chat_id": chat_id, "message_id": message_id, "error": str(e)},
-            )
-            return False
-
-    async def _handle_stream_error(
-        self,
-        provider: str,
-        chat_id: str,
-        state: StreamingState,
-        error: Exception,
-        provider_meta: dict,
-    ) -> None:
-        error_message = "\u274c An error occurred while generating the response."
-
-        if state.message_ids:
-            await self._edit_message_safe(
-                provider=provider,
-                chat_id=chat_id,
-                message_id=state.message_ids[0],
-                text=error_message,
-                provider_meta=provider_meta,
-            )
-        else:
-            await self._send_message(
-                provider=provider,
-                chat_id=chat_id,
-                text=error_message,
-                provider_meta=provider_meta,
-            )
-
-        state.error = str(error)
-
-    async def _update_messages(
-        self,
-        provider: str,
-        chat_id: str,
-        state: StreamingState,
-        provider_meta: dict,
-        force: bool = False,
-    ) -> None:
-        if not self._should_edit_now(state, force=force):
-            return
-
-        chunks = self._messaging_client.chunk_text(state.accumulated_text, provider=provider)
-
-        for i, chunk in enumerate(chunks):
-            if i < len(state.message_ids):
-                success = await self._edit_message_safe(
-                    provider=provider,
-                    chat_id=chat_id,
-                    message_id=state.message_ids[i],
-                    text=chunk,
-                    provider_meta=provider_meta,
-                )
-                if not success and i == 0:
-                    new_id = await self._send_message(
-                        provider=provider,
-                        chat_id=chat_id,
-                        text=chunk,
-                        provider_meta=provider_meta,
-                    )
-                    if new_id:
-                        state.message_ids[i] = new_id
-            else:
-                new_id = await self._send_message(
-                    provider=provider,
-                    chat_id=chat_id,
-                    text=chunk,
-                    provider_meta=provider_meta,
-                )
-                if new_id:
-                    state.message_ids.append(new_id)
-
-        state.last_edit_text = state.accumulated_text
-        state.last_edit_time = asyncio.get_event_loop().time()
-        state.edit_count += 1

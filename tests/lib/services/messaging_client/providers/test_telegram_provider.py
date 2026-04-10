@@ -145,6 +145,93 @@ class TestTelegramProviderEditMessage:
             assert "not configured" in result.error.lower()
 
 
+class TestTelegramProviderSendStream:
+    @pytest.fixture
+    def provider(self):
+        with patch.object(TelegramProvider, "__init__", lambda self, **kwargs: None):
+            p = TelegramProvider.__new__(TelegramProvider)
+            p._token = "test_token"
+            p._bot = MagicMock()
+            p._app = None
+            yield p
+
+    @pytest.mark.asyncio
+    async def test_send_stream_sends_drafts_and_finalizes(self, provider):
+        provider._bot.send_message_draft = AsyncMock(return_value=True)
+        mock_msg = MagicMock()
+        mock_msg.message_id = 42
+        provider._bot.send_message = AsyncMock(return_value=mock_msg)
+
+        async def chunks():
+            yield "Hello"
+            yield " world"
+
+        result = await provider.send_stream("123", chunks())
+
+        assert result.success is True
+        assert result.message_id == "42"
+        provider._bot.send_message_draft.assert_called()
+        provider._bot.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_send_stream_empty_stream(self, provider):
+        async def empty():
+            return
+            yield
+
+        result = await provider.send_stream("123", empty())
+
+        assert result.success is True
+        provider._bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_send_stream_not_configured(self):
+        with patch.object(TelegramProvider, "__init__", lambda self, **kwargs: None):
+            p = TelegramProvider.__new__(TelegramProvider)
+            p._token = None
+            p._bot = None
+            p._app = None
+
+            async def chunks():
+                yield "hi"
+
+            result = await p.send_stream("123", chunks())
+            assert result.success is False
+
+    @pytest.mark.asyncio
+    async def test_send_stream_draft_failure_silently_ignored(self, provider):
+        provider._bot.send_message_draft = AsyncMock(side_effect=Exception("draft fail"))
+        mock_msg = MagicMock()
+        mock_msg.message_id = 99
+        provider._bot.send_message = AsyncMock(return_value=mock_msg)
+
+        async def chunks():
+            yield "text"
+
+        result = await provider.send_stream("123", chunks())
+
+        assert result.success is True
+        assert result.message_id == "99"
+
+    @pytest.mark.asyncio
+    async def test_send_stream_chunks_long_final_text(self, provider):
+        provider._bot.send_message_draft = AsyncMock(return_value=True)
+        provider.max_message_length = 10
+        mock_msg1 = MagicMock()
+        mock_msg1.message_id = 1
+        mock_msg2 = MagicMock()
+        mock_msg2.message_id = 2
+        provider._bot.send_message = AsyncMock(side_effect=[mock_msg1, mock_msg2])
+
+        async def chunks():
+            yield "A" * 15
+
+        result = await provider.send_stream("123", chunks())
+
+        assert result.success is True
+        assert provider._bot.send_message.call_count == 2
+
+
 class TestTelegramProviderProviderName:
     @pytest.fixture
     def provider(self):

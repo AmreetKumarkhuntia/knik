@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import random
+from collections.abc import AsyncIterator
 from typing import Any
 
 from telegram import Bot, Update
@@ -12,6 +15,9 @@ from ....utils import printer
 from ..models import CommandDefinition, IncomingMessage, MessageResult
 from ..registry import MessagingProviderRegistry
 from .base_provider import BaseMessagingProvider, MessageCallback
+
+
+_DRAFT_DEBOUNCE: float = 0.2
 
 
 class TelegramProvider(BaseMessagingProvider):
@@ -57,6 +63,54 @@ class TelegramProvider(BaseMessagingProvider):
             printer.error(f"Telegram send_message failed: {e}")
             return MessageResult(success=False, error=str(e))
 
+    async def send_stream(self, chat_id: str, text_stream: AsyncIterator[str], **kwargs) -> MessageResult:
+        if not self.is_configured():
+            return MessageResult(success=False, error="TelegramProvider is not configured")
+
+        bot = self._app.bot if self._app else self._bot
+        chat_id_int = int(chat_id)
+        draft_id = random.randint(1, 2**31 - 1)
+        accumulated = ""
+        last_draft_time: float = 0.0
+
+        try:
+            async for chunk in text_stream:
+                accumulated += chunk
+                now = asyncio.get_event_loop().time()
+                if now - last_draft_time >= _DRAFT_DEBOUNCE:
+                    display = (
+                        accumulated[-self.max_message_length :]
+                        if len(accumulated) > self.max_message_length
+                        else accumulated
+                    )
+                    try:
+                        await bot.send_message_draft(chat_id=chat_id_int, draft_id=draft_id, text=display)
+                        last_draft_time = now
+                    except Exception:
+                        pass
+
+            if not accumulated:
+                return MessageResult(success=True)
+
+            chunks = self.chunk_text(accumulated)
+            last_msg_id = None
+            for c in chunks:
+                msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
+                last_msg_id = str(msg.message_id)
+
+            return MessageResult(success=True, message_id=last_msg_id)
+        except Exception as e:
+            printer.error(f"Telegram send_stream failed: {e}")
+            if accumulated:
+                try:
+                    msg = await bot.send_message(
+                        chat_id=chat_id_int, text="\u274c An error occurred while generating the response."
+                    )
+                    return MessageResult(success=False, message_id=str(msg.message_id), error=str(e))
+                except Exception:
+                    pass
+            return MessageResult(success=False, error=str(e))
+
     def supports_message_edit(self) -> bool:
         return True
 
@@ -99,7 +153,15 @@ class TelegramProvider(BaseMessagingProvider):
             raise RuntimeError("Cannot start TelegramProvider: not configured (missing bot token)")
 
         self._on_message = on_message
-        self._app = Application.builder().token(self._token).build()
+        self._app = (
+            Application.builder()
+            .token(self._token)
+            .read_timeout(10.0)
+            .write_timeout(10.0)
+            .connect_timeout(10.0)
+            .pool_timeout(5.0)
+            .build()
+        )
         self._app.add_handler(CommandHandler("start", self._handle_command))
         self._app.add_handler(MessageHandler(filters.TEXT, self._handle_message))
 

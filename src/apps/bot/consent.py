@@ -66,7 +66,7 @@ class BotConsentGate:
         )
         send_fut = asyncio.run_coroutine_threadsafe(send_coro, self._loop)
         try:
-            send_fut.result(timeout=10.0)
+            send_fut.result(timeout=20.0)
         except Exception:
             printer.error(f"Failed to send consent prompt for {req.tool_name}")
             return "no"
