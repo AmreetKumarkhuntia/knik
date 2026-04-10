@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import contextlib
 import math
@@ -287,6 +288,9 @@ class BrowserTool(BaseTool):
             mode = "headless" if headless else "headful"
             printer.info(f"[BrowserTool] Launching {mode} Chromium (profile: {profile_dir})...")
 
+            # Clear any inherited running loop from nest_asyncio so
+            # Playwright's sync API doesn't refuse to start.
+            asyncio._set_running_loop(None)
             self._playwright = sync_playwright().start()
             self._browser_context = self._playwright.chromium.launch_persistent_context(
                 user_data_dir=profile_dir,
