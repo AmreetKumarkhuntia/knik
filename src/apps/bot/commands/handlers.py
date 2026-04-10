@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from lib.commands.models import CommandResult
@@ -10,8 +9,6 @@ from lib.commands.models import CommandResult
 
 if TYPE_CHECKING:
     from lib.commands.service import CommandService
-
-logger = logging.getLogger(__name__)
 
 
 async def handle_new(command_service: CommandService, args: str, user_id: str) -> CommandResult:

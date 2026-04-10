@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
+
+from imports import printer
 
 from .consent import PendingConsents
 
@@ -21,8 +22,6 @@ if TYPE_CHECKING:
     from .streaming import StreamingResponseManager
     from .user_client_manager import UserClientManager
     from .user_identity import UserIdentityManager
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -79,7 +78,7 @@ class BotMessageHandler:
                 response = "yes"
             else:
                 response = "no"
-            logger.info("Consent reply from %s: %r -> %s", incoming.chat_id, text, response)
+            printer.info(f"Consent reply from {incoming.chat_id}: {text!r} -> {response}")
             PendingConsents.resolve(incoming.chat_id, response)
             confirm = {"yes": "Approved.", "yes_all": "Approved all.", "no": "Denied."}
             try:
@@ -90,20 +89,25 @@ class BotMessageHandler:
                     reply_to_message_id=incoming.message_id,
                 )
             except Exception:
-                logger.warning("Failed to send consent confirmation to %s", incoming.chat_id)
+                printer.warning(f"Failed to send consent confirmation to {incoming.chat_id}")
             return
 
         chat_key = ChatKey(provider=provider, chat_id=incoming.chat_id)
 
-        logger.info("Received message: %s", incoming.text)
+        printer.info(f"Received message: {incoming.text}")
 
         if self._command_dispatcher and incoming.text and incoming.text.startswith("/"):
             try:
                 result = await self._command_dispatcher.try_dispatch(incoming, self._user_identity)
                 if result is not None:
                     identity = self._user_identity.resolve(incoming, provider)
-                    if "ai_client" in result.data and self._user_client_manager is not None:
-                        self._user_client_manager.set(identity.user_id, result.data["ai_client"])
+                    if self._user_client_manager is not None:
+                        user_client = self._user_client_manager.get(identity.user_id)
+                        if user_client:
+                            if "new_model" in result.data:
+                                user_client.set_model(result.data["new_model"])
+                            if "new_provider" in result.data:
+                                user_client.set_provider(result.data["new_provider"])
                     _cmd = incoming.text.split()[0].lstrip("/").split("@")[0].lower()
                     if _cmd in ("new", "start") and self._user_client_manager is not None:
                         self._user_client_manager.cleanup_tools(identity.user_id)
@@ -116,7 +120,7 @@ class BotMessageHandler:
                     )
                     return
             except Exception as e:
-                logger.error("Command dispatch error: %s", e)
+                printer.error(f"Command dispatch error: {e}")
 
         async with self._lock:
             if chat_key in self._active_tasks:
@@ -140,16 +144,16 @@ class BotMessageHandler:
 
             task.add_done_callback(lambda t: self._cleanup_callback(chat_key, t))
 
-            logger.info("Started processing task for %s (message: %s)", chat_key, incoming.message_id)
+            printer.info(f"Started processing task for {chat_key} (message: {incoming.message_id})")
 
     async def cancel_all(self, timeout: float = 5.0) -> None:
         async with self._lock:
             if not self._active_tasks:
-                logger.info("No active tasks to cancel")
+                printer.info("No active tasks to cancel")
                 return
 
             tasks_info = list(self._active_tasks.items())
-            logger.info("Cancelling %d active tasks with %.1fs timeout", len(tasks_info), timeout)
+            printer.info(f"Cancelling {len(tasks_info)} active tasks with {timeout:.1f}s timeout")
 
             for _chat_key, info in tasks_info:
                 if not info.task.done():
@@ -162,10 +166,8 @@ class BotMessageHandler:
                     timeout=timeout,
                 )
             except TimeoutError:
-                logger.warning(
-                    "Timeout waiting for tasks to cancel, %d remaining",
-                    sum(1 for t in tasks if not t.done()),
-                )
+                remaining = sum(1 for t in tasks if not t.done())
+                printer.warning(f"Timeout waiting for tasks to cancel, {remaining} remaining")
 
             self._active_tasks.clear()
 
@@ -213,7 +215,7 @@ class BotMessageHandler:
 
             if result.error:
                 self._total_errors += 1
-                logger.error("Delivery failed for message %s: %s", incoming.message_id, result.error)
+                printer.error(f"Delivery failed for message {incoming.message_id}: {result.error}")
                 await self._send_error_message(incoming, provider, result.error)
                 return
 
@@ -221,28 +223,28 @@ class BotMessageHandler:
                 self._user_identity.set_conversation_id(identity.user_id, result.conversation_id)
 
             self._total_processed += 1
-            logger.info("Message sent for %s (conv: %s)", incoming.message_id, result.conversation_id)
+            printer.info(f"Message sent for {incoming.message_id} (conv: {result.conversation_id})")
 
         except asyncio.CancelledError:
-            logger.info("Processing cancelled for %s", chat_key)
+            printer.info(f"Processing cancelled for {chat_key}")
             raise
 
         except Exception as e:
             self._total_errors += 1
-            logger.exception("Error processing message %s from %s: %s", incoming.message_id, chat_key, e)
+            printer.error(f"Error processing message {incoming.message_id} from {chat_key}: {e}")
 
             try:
                 await self._send_error_message(incoming, provider, str(e))
             except Exception as inner_e:
-                logger.error("Failed to send error message to %s: %s", chat_key, inner_e)
+                printer.error(f"Failed to send error message to {chat_key}: {inner_e}")
 
     def _cleanup_callback(self, chat_key: ChatKey, task: asyncio.Task) -> None:
         if task.cancelled():
-            logger.info("Task for %s was cancelled", chat_key)
+            printer.info(f"Task for {chat_key} was cancelled")
         elif task.exception():
-            logger.error("Task for %s failed: %s", chat_key, task.exception())
+            printer.error(f"Task for {chat_key} failed: {task.exception()}")
         else:
-            logger.info("Task for %s completed", chat_key)
+            printer.info(f"Task for {chat_key} completed")
 
         async def _remove():
             async with self._lock:
@@ -259,7 +261,7 @@ class BotMessageHandler:
                 reply_to_message_id=incoming.message_id,
             )
         except Exception as e:
-            logger.warning("Failed to send busy hint to %s:%s: %s", provider, incoming.chat_id, e)
+            printer.warning(f"Failed to send busy hint to {provider}:{incoming.chat_id}: {e}")
 
     async def _send_error_message(
         self,
@@ -279,4 +281,4 @@ class BotMessageHandler:
                 reply_to_message_id=incoming.message_id,
             )
         except Exception as e:
-            logger.error("Failed to send error message to %s:%s: %s", provider, incoming.chat_id, e)
+            printer.error(f"Failed to send error message to {provider}:{incoming.chat_id}: {e}")

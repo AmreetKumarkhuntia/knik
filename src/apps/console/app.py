@@ -149,10 +149,6 @@ class ConsoleApp:
             # Try shared command dispatcher first (model, provider, sessions, etc.)
             result = self._command_dispatcher.try_dispatch(user_input)
             if result is not None:
-                if "ai_client" in result.data:
-                    self.ai_client = result.data["ai_client"]
-                    if self.command_service:
-                        self.command_service._ai_client = self.ai_client
                 if result.data.get("revoke_consent"):
                     self.mcp_registry.revoke_allowed_tools()
                 print(f"{self.config.assistant_symbol}{result.message}\n")

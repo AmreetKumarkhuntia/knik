@@ -7,10 +7,10 @@ logic lives here so that app-level handlers stay thin.
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from lib.services.ai_client.registry import ProviderRegistry
+from lib.utils.printer import printer
 
 from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
 
@@ -18,8 +18,6 @@ from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdent
 if TYPE_CHECKING:
     from lib.services.ai_client.client import AIClient
     from lib.services.conversation import ConversationDB
-
-logger = logging.getLogger(__name__)
 
 
 class CommandService:
@@ -96,27 +94,16 @@ class CommandService:
             return self._show_current_model()
 
         try:
-            from lib.mcp import register_all_tools
-            from lib.services.ai_client.client import AIClient
-            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
-
             old_model = self._ai_client.get_model_name()
-            new_registry = MCPServerRegistry()
-            register_all_tools(new_registry)
-            self._ai_client = AIClient(
-                provider=self._ai_client.provider_name,
-                mcp_registry=new_registry,
-                system_instruction=self._system_instruction,
-                model_name=model_name,
-            )
-            logger.info("Switched model: %s -> %s", old_model, model_name)
+            self._ai_client.set_model(model_name)
+            printer.info(f"Switched model: {old_model} -> {model_name}")
             return CommandResult(
                 success=True,
                 message=f"Model switched to {model_name}",
-                data={"old_model": old_model, "new_model": model_name, "ai_client": self._ai_client},
+                data={"old_model": old_model, "new_model": model_name},
             )
         except Exception as e:
-            logger.error("Failed to switch model: %s", e)
+            printer.error(f"Failed to switch model: {e}")
             return CommandResult(success=False, message=f"Failed to switch model: {e}")
 
     async def switch_provider(self, provider_name: str) -> CommandResult:
@@ -131,27 +118,17 @@ class CommandService:
             )
 
         try:
-            from lib.mcp import register_all_tools
-            from lib.services.ai_client.client import AIClient
-            from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
-
             old_provider = self._ai_client.provider_name
-            new_registry = MCPServerRegistry()
-            register_all_tools(new_registry)
-            self._ai_client = AIClient(
-                provider=provider_name,
-                mcp_registry=new_registry,
-                system_instruction=self._system_instruction,
-                model_name=self._ai_client.get_model_name(),
-            )
-            logger.info("Switched provider: %s -> %s", old_provider, provider_name)
+            current_model = self._ai_client.get_model_name()
+            self._ai_client.set_provider(provider_name, model_name=current_model)
+            printer.info(f"Switched provider: {old_provider} -> {provider_name}")
             return CommandResult(
                 success=True,
                 message=f"Provider switched to {provider_name}",
-                data={"old_provider": old_provider, "new_provider": provider_name, "ai_client": self._ai_client},
+                data={"old_provider": old_provider, "new_provider": provider_name},
             )
         except Exception as e:
-            logger.error("Failed to switch provider: %s", e)
+            printer.error(f"Failed to switch provider: {e}")
             return CommandResult(success=False, message=f"Failed to switch provider: {e}")
 
     def list_models(self) -> list[ModelInfo]:

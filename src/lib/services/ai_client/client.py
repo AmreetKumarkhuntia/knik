@@ -70,6 +70,8 @@ class AIClient:
         self._mcp_registry = mcp_registry
         self.tool_callback = tool_callback
         self.last_usage: dict[str, int] | None = None
+        self._system_instruction = system_instruction
+        self._provider_kwargs = dict(provider_kwargs)
 
         if mcp_registry:
             provider_kwargs["mcp_registry"] = mcp_registry
@@ -108,6 +110,41 @@ class AIClient:
                 self.provider_name = "mock"
             else:
                 raise
+
+    def _build_provider_kwargs(self, **overrides) -> dict[str, Any]:
+        """Build provider kwargs from stored state, with optional overrides."""
+        kwargs: dict[str, Any] = dict(self._provider_kwargs)
+        if self._mcp_registry:
+            kwargs["mcp_registry"] = self._mcp_registry
+        if self._system_instruction:
+            kwargs["system_instruction"] = self._system_instruction
+        if self.tool_callback:
+            kwargs["tool_callback"] = self.tool_callback
+        kwargs.update(overrides)
+        return kwargs
+
+    def set_model(self, model_name: str) -> None:
+        """Swap the model in-place, preserving registry and all other state."""
+        provider_class = ProviderRegistry.get(self.provider_name)
+        if provider_class is None:
+            raise ValueError(f"Unknown provider: {self.provider_name}")
+        kwargs = self._build_provider_kwargs(model_name=model_name)
+        self._provider = provider_class(**kwargs)
+        printer.info(f"Model swapped to {model_name} (provider: {self.provider_name})")
+
+    def set_provider(self, provider_name: str, model_name: str | None = None) -> None:
+        """Swap the provider in-place, preserving registry and all other state."""
+        provider_name = provider_name.lower()
+        provider_class = ProviderRegistry.get(provider_name)
+        if provider_class is None:
+            available = ProviderRegistry.list_providers()
+            raise ValueError(f"Unknown provider: {provider_name}. Available: {', '.join(available)}")
+        kwargs = self._build_provider_kwargs()
+        if model_name:
+            kwargs["model_name"] = model_name
+        self._provider = provider_class(**kwargs)
+        self.provider_name = provider_name
+        printer.info(f"Provider swapped to {provider_name}")
 
     def chat(
         self,
