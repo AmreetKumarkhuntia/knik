@@ -1,16 +1,13 @@
 """Bot consent gate — Telegram message + Future-based reply detection."""
 
 import asyncio
-import logging
 from collections import deque
 from concurrent.futures import Future
 from typing import ClassVar
 
+from imports import printer
 from lib.services.ai_client.consent import ConsentRequest
 from lib.services.messaging_client.client import MessagingClient
-
-
-logger = logging.getLogger(__name__)
 
 
 class PendingConsents:
@@ -37,10 +34,10 @@ class PendingConsents:
         if not q:
             del cls._pending[chat_id]
         if consent_future.done():
-            logger.warning("Consent future already done for chat %s, skipping", chat_id)
+            printer.warning(f"Consent future already done for chat {chat_id}, skipping")
             return False
         consent_future.set_result(response)
-        logger.info("Consent resolved for chat %s: %s", chat_id, response)
+        printer.info(f"Consent resolved for chat {chat_id}: {response}")
         return True
 
 
@@ -60,7 +57,7 @@ class BotConsentGate:
     def request_sync(self, req: ConsentRequest, timeout: float = 30.0) -> str:
         args_preview = ", ".join(f"{k}={repr(v)[:60]}" for k, v in req.kwargs.items())
         text = f"Allow {req.tool_name}({args_preview})? Reply yes (y) / yes all (ya) / no"
-        logger.info("Sending consent prompt to chat %s for %s", self._chat_id, req.tool_name)
+        printer.info(f"Sending consent prompt to chat {self._chat_id} for {req.tool_name}")
 
         send_coro = self._messaging_client.send_message(
             chat_id=self._chat_id,
@@ -71,7 +68,7 @@ class BotConsentGate:
         try:
             send_fut.result(timeout=10.0)
         except Exception:
-            logger.exception("Failed to send consent prompt for %s", req.tool_name)
+            printer.error(f"Failed to send consent prompt for {req.tool_name}")
             return "no"
 
         consent_future: Future[str] = Future()
@@ -79,5 +76,5 @@ class BotConsentGate:
         try:
             return consent_future.result(timeout=timeout)
         except Exception:
-            logger.warning("Consent request timed out for %s in chat %s", req.tool_name, self._chat_id)
+            printer.warning(f"Consent request timed out for {req.tool_name} in chat {self._chat_id}")
             return "no"

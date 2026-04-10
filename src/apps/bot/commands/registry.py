@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from imports import printer
 from lib.commands.models import CommandDefinition, CommandResult
 from lib.services.messaging_client.models import IncomingMessage
 
@@ -14,8 +14,6 @@ from lib.services.messaging_client.models import IncomingMessage
 if TYPE_CHECKING:
     from apps.bot.user_identity import UserIdentityManager
     from lib.commands.service import CommandService
-
-logger = logging.getLogger(__name__)
 
 CommandHandler = Callable[..., Coroutine[Any, Any, CommandResult]]
 
@@ -77,7 +75,7 @@ class BotCommandDispatcher:
         if registered is None:
             return None
 
-        logger.info("Dispatching command: /%s (args: %s)", command_name, args[:50])
+        printer.info(f"Dispatching command: /{command_name} (args: {args[:50]})")
 
         try:
             return await registered.handler(
@@ -89,5 +87,5 @@ class BotCommandDispatcher:
                 ),
             )
         except Exception as e:
-            logger.error("Command handler error for /%s: %s", command_name, e)
+            printer.error(f"Command handler error for /{command_name}: {e}")
             return CommandResult(success=False, message=f"Error executing command: {e}")

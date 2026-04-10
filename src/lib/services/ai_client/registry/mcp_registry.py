@@ -53,7 +53,9 @@ class MCPServerRegistry:
         return self._implementations.get(tool_name)
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
-        if self._consent_gate:
+        if not self._consent_gate:
+            printer.debug(f"No consent gate attached — executing {tool_name} without approval check")
+        else:
             with self._consent_lock:
                 needs_consent = tool_name not in self._allowed_tools
             if needs_consent:
