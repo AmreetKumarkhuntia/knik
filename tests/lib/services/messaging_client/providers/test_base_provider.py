@@ -43,3 +43,29 @@ async def test_default_edit_message_returns_error():
     result = await provider.edit_message("123", "1", "text")
     assert result.success is False
     assert "not supported" in result.error.lower()
+
+
+@pytest.mark.asyncio
+async def test_default_send_stream_consumes_and_sends():
+    provider = MockProvider()
+
+    async def chunks():
+        yield "Hello"
+        yield " world"
+        yield "!"
+
+    result = await provider.send_stream("chat_123", chunks())
+    assert result.success is True
+    assert result.message_id == "1"
+
+
+@pytest.mark.asyncio
+async def test_default_send_stream_empty_iterator():
+    provider = MockProvider()
+
+    async def empty():
+        return
+        yield
+
+    result = await provider.send_stream("chat_123", empty())
+    assert result.success is True

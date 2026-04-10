@@ -62,7 +62,6 @@ def mock_command_service(mock_ai_client):
 def mock_messaging_client():
     client = MagicMock()
     client.send_message = AsyncMock(return_value=MagicMock(success=True, message_id="sent_msg_123"))
-    client.supports_message_edit = MagicMock(return_value=True)
     return client
 
 
@@ -83,7 +82,6 @@ def mock_streaming():
             conversation_id="conv_123",
             usage={"total_tokens": 10},
             message_ids=["msg_1"],
-            was_streaming=True,
         )
     )
     return manager
@@ -297,8 +295,6 @@ class TestBotMessageHandler:
                 conversation_id="conv_789",
                 usage={"total_tokens": 25},
                 message_ids=["msg_1", "msg_2"],
-                was_streaming=True,
-                edit_count=3,
             )
         )
 

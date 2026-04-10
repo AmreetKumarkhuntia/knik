@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+from collections.abc import AsyncIterator
 from typing import Any
 
 from ...utils import printer
@@ -36,61 +37,43 @@ class MessagingClient:
                 printer.warning(f"MessagingClient: '{name}' provider is not configured.")
 
     async def send_message(self, chat_id: str, text: str, provider: str | None = None, **kwargs) -> MessageResult:
-        """Send a text message. Provider is required when multiple are loaded."""
         target = self._resolve_provider(provider)
         if not target.is_configured():
             return MessageResult(success=False, error=f"Provider '{provider}' is not configured")
         return await target.send_message(chat_id, text, **kwargs)
 
-    def supports_message_edit(self, provider: str | None = None) -> bool:
-        """Check if the resolved provider supports editing sent messages."""
-        target = self._resolve_provider(provider)
-        return target.supports_message_edit()
-
-    async def edit_message(
-        self, chat_id: str, message_id: str, text: str, provider: str | None = None, **kwargs
+    async def send_stream(
+        self, chat_id: str, text_stream: AsyncIterator[str], provider: str | None = None, **kwargs
     ) -> MessageResult:
-        """Edit an existing sent message via the resolved provider."""
         target = self._resolve_provider(provider)
         if not target.is_configured():
             return MessageResult(success=False, error=f"Provider '{provider}' is not configured")
-        return await target.edit_message(chat_id, message_id, text, **kwargs)
-
-    def chunk_text(self, text: str, provider: str | None = None) -> list[str]:
-        """Split text into chunks sized for the resolved provider."""
-        return self._resolve_provider(provider).chunk_text(text)
+        return await target.send_stream(chat_id, text_stream, **kwargs)
 
     async def start(self, on_message: MessageCallback) -> None:
-        """Start all configured providers concurrently."""
         configured = {name: p for name, p in self._providers.items() if p.is_configured()}
         if not configured:
             raise RuntimeError("Cannot start: no providers are configured")
-
         await asyncio.gather(*(p.start(on_message) for p in configured.values()))
 
     async def stop(self) -> None:
-        """Gracefully shut down all running providers."""
         await asyncio.gather(*(p.stop() for p in self._providers.values()))
 
     async def register_bot_commands(self, commands: list[CommandDefinition]) -> None:
-        """Register commands with all configured providers that support it."""
         for provider in self._providers.values():
             with contextlib.suppress(Exception):
                 await provider.register_bot_commands(commands)
 
     def is_configured(self) -> bool:
-        """Return True if at least one provider is configured."""
         return any(p.is_configured() for p in self._providers.values())
 
     def get_provider(self, name: str) -> BaseMessagingProvider:
-        """Retrieve a loaded provider by name."""
         name_lower = name.lower()
         if name_lower not in self._providers:
             raise ValueError(f"Provider '{name}' not loaded. Loaded providers: {', '.join(self._providers.keys())}")
         return self._providers[name_lower]
 
     def get_info(self) -> dict[str, Any]:
-        """Return status info for all loaded providers."""
         return {
             "providers": {name: p.get_info() for name, p in self._providers.items()},
             "configured_count": sum(1 for p in self._providers.values() if p.is_configured()),
@@ -98,7 +81,6 @@ class MessagingClient:
 
     @staticmethod
     def list_available_providers() -> list[str]:
-        """List all registered provider names."""
         return MessagingProviderRegistry.list_providers()
 
     def _resolve_provider(self, provider: str | None) -> BaseMessagingProvider:

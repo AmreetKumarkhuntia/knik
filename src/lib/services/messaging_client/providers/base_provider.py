@@ -1,7 +1,9 @@
 """Abstract base class for messaging providers."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any
 
 from ..models import CommandDefinition, IncomingMessage, MessageResult
@@ -33,6 +35,16 @@ class BaseMessagingProvider(ABC):
 
     @abstractmethod
     def get_info(self) -> dict[str, Any]: ...
+
+    async def send_stream(self, chat_id: str, text_stream: AsyncIterator[str], **kwargs) -> MessageResult:
+        full_text = ""
+        async for chunk in text_stream:
+            full_text += chunk
+
+        if not full_text:
+            return MessageResult(success=True)
+
+        return await self.send_message(chat_id, full_text, **kwargs)
 
     def supports_message_edit(self) -> bool:
         """Whether this provider supports editing sent messages. Override in providers that support editing."""
