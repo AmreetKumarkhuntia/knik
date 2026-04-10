@@ -66,7 +66,7 @@ class ConsoleApp:
         if tools_registered > 0:
             printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
-        self.mcp_registry.set_consent_gate(ConsoleConsentGate(registry=self.mcp_registry))
+        self.mcp_registry.set_consent_gate(ConsoleConsentGate())
 
         self.ai_client = AIClient(
             provider=self.config.ai_provider,
