@@ -1,5 +1,6 @@
 """MCP tool registry"""
 
+import threading
 from collections.abc import Callable
 from typing import Any
 
@@ -32,7 +33,7 @@ class MCPServerRegistry:
         self._tool_instances: list[BaseTool] = []
         self._consent_gate: ConsentGate | None = None
         self._allowed_tools: set[str] = set()
-        self._all_approved: bool = False
+        self._consent_lock = threading.Lock()
 
     def set_consent_gate(self, gate: ConsentGate) -> None:
         self._consent_gate = gate
@@ -52,15 +53,22 @@ class MCPServerRegistry:
         return self._implementations.get(tool_name)
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
-        if self._consent_gate and not self._all_approved and tool_name not in self._allowed_tools:
-            printer.info(f"Consent required for {tool_name}, requesting approval...")
-            req = ConsentRequest(tool_name=tool_name, kwargs=kwargs)
-            allowed = self._consent_gate.request_sync(req)
-            if not allowed:
-                printer.warning(f"Consent denied for {tool_name}")
-                return {"error": f"Permission denied for {tool_name}"}
-            self._allowed_tools.add(tool_name)
-            printer.info(f"Consent granted for {tool_name} (now auto-approved for this conversation)")
+        if self._consent_gate:
+            with self._consent_lock:
+                needs_consent = tool_name not in self._allowed_tools
+            if needs_consent:
+                printer.info(f"Consent required for {tool_name}, requesting approval...")
+                req = ConsentRequest(tool_name=tool_name, kwargs=kwargs)
+                response = self._consent_gate.request_sync(req)
+                if response == "yes_all":
+                    with self._consent_lock:
+                        self._allowed_tools.add(tool_name)
+                    printer.info(f"Consent granted for all future {tool_name} calls")
+                elif response == "yes":
+                    printer.info(f"Consent granted for {tool_name} (this call only)")
+                else:
+                    printer.warning(f"Consent denied for {tool_name}")
+                    return {"error": f"Permission denied for {tool_name}"}
         impl = self.get_implementation(tool_name)
         if impl is None:
             raise ValueError(f"No implementation found for tool: {tool_name}")
@@ -70,21 +78,17 @@ class MCPServerRegistry:
         self._tools = []
         self._implementations = {}
         self._tool_instances = []
-        self._allowed_tools = set()
-        self._all_approved = False
+        with self._consent_lock:
+            self._allowed_tools = set()
 
     def add_tool_instance(self, tool: BaseTool) -> None:
         self._tool_instances.append(tool)
 
     def revoke_allowed_tools(self) -> None:
-        cleared = self._allowed_tools.copy()
-        self._allowed_tools.clear()
-        self._all_approved = False
+        with self._consent_lock:
+            cleared = self._allowed_tools.copy()
+            self._allowed_tools.clear()
         printer.info(f"Revoked tool approvals: {cleared}")
-
-    def approve_all_tools(self) -> None:
-        self._all_approved = True
-        printer.info("All tools approved for this conversation")
 
     def get_tool_instances(self) -> list[BaseTool]:
         return list(self._tool_instances)

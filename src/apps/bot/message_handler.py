@@ -81,9 +81,16 @@ class BotMessageHandler:
                 response = "no"
             logger.info("Consent reply from %s: %r -> %s", incoming.chat_id, text, response)
             PendingConsents.resolve(incoming.chat_id, response)
-            if response == "yes_all" and self._user_client_manager is not None:
-                identity = self._user_identity.resolve(incoming, provider)
-                self._user_client_manager.approve_all_tools(identity.user_id)
+            confirm = {"yes": "Approved.", "yes_all": "Approved all.", "no": "Denied."}
+            try:
+                await self._messaging_client.send_message(
+                    chat_id=incoming.chat_id,
+                    text=confirm.get(response, "Denied."),
+                    provider=provider,
+                    reply_to_message_id=incoming.message_id,
+                )
+            except Exception:
+                logger.warning("Failed to send consent confirmation to %s", incoming.chat_id)
             return
 
         chat_key = ChatKey(provider=provider, chat_id=incoming.chat_id)

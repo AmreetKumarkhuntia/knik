@@ -50,12 +50,6 @@ class UserClientManager:
             client._mcp_registry.revoke_allowed_tools()
             printer.info(f"Revoked tool approvals for user {user_id}")
 
-    def approve_all_tools(self, user_id: str) -> None:
-        client = self._clients.get(user_id)
-        if client is not None:
-            client._mcp_registry.approve_all_tools()
-            printer.info(f"Approved all tools for user {user_id}")
-
     async def get_or_create(self, user_id: str) -> AIClient:
         client = self._clients.get(user_id)
         if client is not None:
