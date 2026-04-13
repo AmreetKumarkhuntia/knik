@@ -387,7 +387,7 @@ class AIClient:
             summary, _ = await self._conversation_db().get_summary(conversation_id)
             history = self._conversation_summarizer().inject_summary(summary, history or [])
 
-        queue: asyncio.Queue[str | None] = asyncio.Queue()
+        queue: asyncio.Queue[str | dict | None] = asyncio.Queue()
         loop = asyncio.get_running_loop()
 
         def _produce():
@@ -401,7 +401,7 @@ class AIClient:
                 ):
                     loop.call_soon_threadsafe(queue.put_nowait, chunk)
             finally:
-                loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+                loop.call_soon_threadsafe(queue.put_nowait, None)
 
         producer = loop.run_in_executor(None, _produce)
 
@@ -410,8 +410,11 @@ class AIClient:
             chunk = await queue.get()
             if chunk is None:
                 break
-            yield chunk
-            full_response += chunk
+            if isinstance(chunk, dict):
+                yield chunk
+            else:
+                yield chunk
+                full_response += chunk
 
         await producer
 
