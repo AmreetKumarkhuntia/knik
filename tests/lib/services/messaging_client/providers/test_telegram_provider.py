@@ -156,22 +156,23 @@ class TestTelegramProviderSendStream:
             yield p
 
     @pytest.mark.asyncio
-    async def test_send_stream_sends_drafts_and_finalizes(self, provider):
-        provider._bot.send_message_draft = AsyncMock(return_value=True)
+    async def test_send_stream_sends_first_chunk_then_edits(self, provider):
         mock_msg = MagicMock()
         mock_msg.message_id = 42
         provider._bot.send_message = AsyncMock(return_value=mock_msg)
+        provider._bot.edit_message_text = AsyncMock(return_value=mock_msg)
 
         async def chunks():
             yield "Hello"
             yield " world"
+            yield "!"
 
         result = await provider.send_stream("123", chunks())
 
         assert result.success is True
         assert result.message_id == "42"
-        provider._bot.send_message_draft.assert_called()
         provider._bot.send_message.assert_called_once()
+        provider._bot.edit_message_text.assert_called()
 
     @pytest.mark.asyncio
     async def test_send_stream_empty_stream(self, provider):
@@ -183,6 +184,7 @@ class TestTelegramProviderSendStream:
 
         assert result.success is True
         provider._bot.send_message.assert_not_called()
+        provider._bot.edit_message_text.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_send_stream_not_configured(self):
@@ -199,11 +201,11 @@ class TestTelegramProviderSendStream:
             assert result.success is False
 
     @pytest.mark.asyncio
-    async def test_send_stream_draft_failure_silently_ignored(self, provider):
-        provider._bot.send_message_draft = AsyncMock(side_effect=Exception("draft fail"))
+    async def test_send_stream_edit_not_modified_ignored(self, provider):
         mock_msg = MagicMock()
-        mock_msg.message_id = 99
+        mock_msg.message_id = 42
         provider._bot.send_message = AsyncMock(return_value=mock_msg)
+        provider._bot.edit_message_text = AsyncMock(side_effect=Exception("message is not modified"))
 
         async def chunks():
             yield "text"
@@ -211,17 +213,17 @@ class TestTelegramProviderSendStream:
         result = await provider.send_stream("123", chunks())
 
         assert result.success is True
-        assert result.message_id == "99"
+        assert result.message_id == "42"
 
     @pytest.mark.asyncio
     async def test_send_stream_chunks_long_final_text(self, provider):
-        provider._bot.send_message_draft = AsyncMock(return_value=True)
         provider.max_message_length = 10
         mock_msg1 = MagicMock()
         mock_msg1.message_id = 1
         mock_msg2 = MagicMock()
         mock_msg2.message_id = 2
         provider._bot.send_message = AsyncMock(side_effect=[mock_msg1, mock_msg2])
+        provider._bot.edit_message_text = AsyncMock(return_value=mock_msg1)
 
         async def chunks():
             yield "A" * 15
@@ -230,6 +232,23 @@ class TestTelegramProviderSendStream:
 
         assert result.success is True
         assert provider._bot.send_message.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_send_stream_single_chunk_no_edit(self, provider):
+        mock_msg = MagicMock()
+        mock_msg.message_id = 7
+        provider._bot.send_message = AsyncMock(return_value=mock_msg)
+        provider._bot.edit_message_text = AsyncMock(return_value=mock_msg)
+
+        async def chunks():
+            yield "single"
+
+        result = await provider.send_stream("123", chunks())
+
+        assert result.success is True
+        assert result.message_id == "7"
+        provider._bot.send_message.assert_called_once()
+        provider._bot.edit_message_text.assert_called_once()
 
 
 class TestTelegramProviderProviderName:

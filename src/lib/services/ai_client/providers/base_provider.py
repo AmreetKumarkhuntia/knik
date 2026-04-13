@@ -273,11 +273,17 @@ class LangChainProvider(BaseAIProvider):
         content = self._extract_text_from_content(output) if output else ""
         return ChatResult(content=content, usage=self.last_usage)
 
-    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
-        """
-        Stream chat with AI. Uses agent with tools if available, otherwise direct LLM call.
-        After iteration, self.last_usage contains usage data from the final chunk.
-        """
+    def _yield_content(self, content):
+        if isinstance(content, str) and content:
+            yield content
+        elif isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    text = item.get("text", "")
+                    if text:
+                        yield text
+
+    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str | dict, None, None]:
         agent_messages = self._build_agent_messages(history, prompt)
         self.last_usage = None
 
@@ -285,15 +291,7 @@ class LangChainProvider(BaseAIProvider):
             last_chunk = None
             for chunk in self.llm.stream(agent_messages, **kwargs):
                 last_chunk = chunk
-                content = chunk.content
-                if isinstance(content, str) and content:
-                    yield content
-                elif isinstance(content, list):
-                    for item in content:
-                        if isinstance(item, dict) and item.get("type") == "text":
-                            text = item.get("text", "")
-                            if text:
-                                yield text
+                yield from self._yield_content(chunk.content)
 
             if last_chunk is not None:
                 self.last_usage = self._extract_usage(last_chunk)
@@ -301,24 +299,33 @@ class LangChainProvider(BaseAIProvider):
 
         last_ai_message = None
         for event in self.agent.stream({"messages": agent_messages}, stream_mode="messages", **kwargs):
-            if isinstance(event, tuple) and len(event) >= 1:
-                message = event[0]
-                message_class = message.__class__.__name__
+            if not (isinstance(event, tuple) and len(event) >= 1):
+                continue
+            message = event[0]
+            message_class = message.__class__.__name__
 
-                if "Tool" in message_class:
+            if "Tool" in message_class:
+                yield {
+                    "__tool_call_end__": True,
+                    "tool_name": getattr(message, "name", "unknown"),
+                    "tool_result_preview": str(getattr(message, "content", ""))[:200],
+                }
+                continue
+
+            if "AIMessage" in message_class:
+                last_ai_message = message
+
+                if hasattr(message, "tool_calls") and message.tool_calls:
+                    yield from self._yield_content(message.content)
+                    for tc in message.tool_calls:
+                        yield {
+                            "__tool_call_start__": True,
+                            "tool_name": tc.get("name", "unknown"),
+                            "tool_args": tc.get("args", {}),
+                        }
                     continue
 
-                if "AIMessage" in message_class and hasattr(message, "content"):
-                    last_ai_message = message
-                    content = message.content
-                    if isinstance(content, str) and content:
-                        yield content
-                    elif isinstance(content, list):
-                        for item in content:
-                            if isinstance(item, dict) and item.get("type") == "text":
-                                text = item.get("text", "")
-                                if text:
-                                    yield text
+                yield from self._yield_content(message.content)
 
         if last_ai_message is not None:
             self.last_usage = self._extract_usage(last_ai_message)

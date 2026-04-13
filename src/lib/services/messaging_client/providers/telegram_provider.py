@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import random
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -17,7 +16,7 @@ from ..registry import MessagingProviderRegistry
 from .base_provider import BaseMessagingProvider, MessageCallback
 
 
-_DRAFT_DEBOUNCE: float = 0.2
+_EDIT_DEBOUNCE: float = 1.0
 
 
 class TelegramProvider(BaseMessagingProvider):
@@ -69,46 +68,62 @@ class TelegramProvider(BaseMessagingProvider):
 
         bot = self._app.bot if self._app else self._bot
         chat_id_int = int(chat_id)
-        draft_id = random.randint(1, 2**31 - 1)
         accumulated = ""
-        last_draft_time: float = 0.0
+        message_id: int | None = None
+        last_edit_time: float = 0.0
 
         try:
             async for chunk in text_stream:
                 accumulated += chunk
-                now = asyncio.get_event_loop().time()
-                if now - last_draft_time >= _DRAFT_DEBOUNCE:
-                    display = (
-                        accumulated[-self.max_message_length :]
-                        if len(accumulated) > self.max_message_length
-                        else accumulated
-                    )
-                    try:
-                        await bot.send_message_draft(chat_id=chat_id_int, draft_id=draft_id, text=display)
-                        last_draft_time = now
-                    except Exception:
-                        pass
+
+                if message_id is None:
+                    display = accumulated[: self.max_message_length]
+                    msg = await bot.send_message(chat_id=chat_id_int, text=display, **kwargs)
+                    message_id = msg.message_id
+                    last_edit_time = asyncio.get_event_loop().time()
+                else:
+                    now = asyncio.get_event_loop().time()
+                    if now - last_edit_time >= _EDIT_DEBOUNCE:
+                        display = accumulated[: self.max_message_length]
+                        try:
+                            await bot.edit_message_text(
+                                chat_id=chat_id_int,
+                                message_id=message_id,
+                                text=display,
+                            )
+                            last_edit_time = now
+                        except Exception as e:
+                            if "message is not modified" not in str(e):
+                                pass
 
             if not accumulated:
                 return MessageResult(success=True)
 
             chunks = self.chunk_text(accumulated)
-            last_msg_id = None
-            for c in chunks:
-                msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
-                last_msg_id = str(msg.message_id)
+            if message_id is not None:
+                try:
+                    await bot.edit_message_text(
+                        chat_id=chat_id_int,
+                        message_id=message_id,
+                        text=chunks[0],
+                        **kwargs,
+                    )
+                except Exception as e:
+                    if "message is not modified" not in str(e):
+                        printer.warning(f"Final edit failed: {e}")
+                for c in chunks[1:]:
+                    msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
+                    message_id = msg.message_id
+            else:
+                for c in chunks:
+                    msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
+                    message_id = msg.message_id
 
-            return MessageResult(success=True, message_id=last_msg_id)
+            return MessageResult(success=True, message_id=str(message_id))
         except Exception as e:
             printer.error(f"Telegram send_stream failed: {e}")
-            if accumulated:
-                try:
-                    msg = await bot.send_message(
-                        chat_id=chat_id_int, text="\u274c An error occurred while generating the response."
-                    )
-                    return MessageResult(success=False, message_id=str(msg.message_id), error=str(e))
-                except Exception:
-                    pass
+            if message_id:
+                return MessageResult(success=False, message_id=str(message_id), error=str(e))
             return MessageResult(success=False, error=str(e))
 
     def supports_message_edit(self) -> bool:
