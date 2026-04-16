@@ -5,6 +5,7 @@ from typing import Any, ClassVar
 
 class BaseTool(ABC):
     _instances: ClassVar[list["BaseTool"]] = []
+    consent_required_for: ClassVar[frozenset[str]] = frozenset()
 
     @property
     @abstractmethod

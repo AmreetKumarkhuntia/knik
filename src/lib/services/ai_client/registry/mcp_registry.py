@@ -52,10 +52,11 @@ class MCPServerRegistry:
     def get_implementation(self, tool_name: str) -> Callable | None:
         return self._implementations.get(tool_name)
 
+    def _requires_consent(self, tool_name: str) -> bool:
+        return any(tool_name in type(inst).consent_required_for for inst in self._tool_instances)
+
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
-        if not self._consent_gate:
-            printer.debug(f"No consent gate attached — executing {tool_name} without approval check")
-        else:
+        if self._consent_gate and self._requires_consent(tool_name):
             with self._consent_lock:
                 needs_consent = tool_name not in self._allowed_tools
             if needs_consent:
@@ -101,6 +102,7 @@ class MCPServerRegistry:
                 tool.cleanup()
             except Exception as e:
                 printer.warning(f"[MCPServerRegistry] cleanup error for {tool.name}: {e}")
+        self.revoke_allowed_tools()
 
     def create_langchain_tools(self) -> list:
         if not LANGCHAIN_AVAILABLE:

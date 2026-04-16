@@ -154,7 +154,20 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
                 yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
                 continue
 
-            assert isinstance(chunk, str)
+            if isinstance(chunk, dict) and chunk.get("__tool_call_start__"):
+                yield f"event: tool_start\ndata: {json.dumps({'tool_name': chunk.get('tool_name', 'unknown'), 'tool_args': chunk.get('tool_args', {})})}\n\n"
+                continue
+
+            if isinstance(chunk, dict) and chunk.get("__tool_call_end__"):
+                yield f"event: tool_end\ndata: {json.dumps({'tool_name': chunk.get('tool_name', 'unknown'), 'tool_result_preview': chunk.get('tool_result_preview', '')})}\n\n"
+                continue
+
+            if isinstance(chunk, dict):
+                continue
+
+            if not isinstance(chunk, str):
+                continue
+
             yield f"event: text\ndata: {json.dumps({'text': chunk})}\n\n"
 
             full_response += chunk

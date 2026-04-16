@@ -29,6 +29,8 @@ from lib.utils.printer import printer
 
 
 class ShellTool(BaseTool):
+    consent_required_for = frozenset({"run_shell_command"})
+
     @property
     def name(self) -> str:
         return "shell"

@@ -206,6 +206,17 @@ class BrowserTool(BaseTool):
     never a cross-thread access violation.
     """
 
+    consent_required_for = frozenset(
+        {
+            "browser_navigate",
+            "browser_get_text",
+            "browser_get_links",
+            "browser_click",
+            "browser_type",
+            "browser_screenshot",
+        }
+    )
+
     @property
     def name(self) -> str:
         return "browser"

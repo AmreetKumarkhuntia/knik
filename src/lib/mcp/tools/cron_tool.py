@@ -57,6 +57,14 @@ from lib.utils.printer import printer
 
 
 class CronTool(BaseTool):
+    consent_required_for = frozenset(
+        {
+            "list_cron_schedules",
+            "add_cron_schedule",
+            "remove_cron_schedule",
+        }
+    )
+
     @property
     def name(self) -> str:
         return "cron"

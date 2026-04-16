@@ -70,6 +70,15 @@ from lib.utils.printer import printer
 
 
 class WorkflowTool(BaseTool):
+    consent_required_for = frozenset(
+        {
+            "create_workflow",
+            "remove_workflow",
+            "list_workflows",
+            "get_workflow_templates",
+        }
+    )
+
     @property
     def name(self) -> str:
         return "workflow"

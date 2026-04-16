@@ -183,6 +183,19 @@ from lib.utils.printer import printer
 
 
 class FileTool(BaseTool):
+    consent_required_for = frozenset(
+        {
+            "read_file",
+            "list_directory",
+            "search_in_files",
+            "file_info",
+            "write_file",
+            "append_to_file",
+            "find_in_file",
+            "count_in_file",
+        }
+    )
+
     @property
     def name(self) -> str:
         return "file"
