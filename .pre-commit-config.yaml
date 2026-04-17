@@ -36,3 +36,10 @@ repos:
         language: system
         files: ^src/apps/web/frontend/src/.*\.(ts|tsx|css|json)$
         pass_filenames: true
+
+      - id: pytest
+        name: pytest
+        entry: bash -c 'source .venv/bin/activate && PYTHONPATH=src pytest tests/ -v'
+        language: system
+        types: [python]
+        pass_filenames: false
