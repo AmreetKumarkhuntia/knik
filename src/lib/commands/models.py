@@ -29,6 +29,9 @@ class StatusInfo:
     model: str
     conversation_id: str | None = None
     user_id: str | None = None
+    total_tokens: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 @dataclass

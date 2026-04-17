@@ -152,11 +152,23 @@ class CommandService:
     async def get_status(self, user_id: str) -> StatusInfo:
         conv_id = self._user_identity.get_conversation_id(user_id)
         info = self._ai_client.get_info()
+        total_tokens = 0
+        input_tokens = 0
+        output_tokens = 0
+        if conv_id:
+            ConversationDB = await self._get_db()
+            usage = await ConversationDB.get_conversation_token_usage(conv_id)
+            total_tokens = usage["total"]
+            input_tokens = usage["total_input"]
+            output_tokens = usage["total_output"]
         return StatusInfo(
             provider=self._ai_client.provider_name,
             model=info.get("model", "unknown"),
             conversation_id=conv_id,
             user_id=user_id,
+            total_tokens=total_tokens,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
         )
 
     async def _resolve_conversation_id(self, ref: str) -> str | None:
