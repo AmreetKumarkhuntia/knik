@@ -116,6 +116,7 @@ class CustomProvider(LangChainProvider):
             base_url=self.api_base,
             temperature=temperature,
             max_tokens=max_tokens,  # type: ignore[reportCallIssue]
+            stream_usage=True,
             **filtered_kwargs,
         )
 

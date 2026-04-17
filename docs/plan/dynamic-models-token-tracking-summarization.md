@@ -1,67 +1,93 @@
 # Dynamic Model Discovery, Token Tracking & Context Summarization
 
-**Status:** Planning
-**Last Updated:** March 2026
+**Status:** Implemented (Core Complete, Deferred Items Pending)
+**Last Updated:** April 2026
 
-This document describes the design and implementation plan for three interconnected features: dynamic model discovery from provider APIs, per-call token usage tracking, and automatic context summarization when conversations approach model context limits.
+This document describes the design and implementation of three interconnected features: dynamic model discovery from provider APIs, per-call token usage tracking, and automatic context summarization when conversations approach model context limits.
 
 ---
 
 ## Current State
 
-### Model Discovery -- Static
+### Model Discovery -- Dynamic with Static Fallback
 
-Models are defined in a hardcoded dictionary in `src/lib/core/config.py` (`Config.AI_MODELS`, lines 96-109). This dict maps 12 model IDs to display names. The admin API endpoint `GET /models` returns this static dict directly.
+Models are discovered dynamically from provider APIs via `get_models()` methods on each provider. The static `Config.AI_MODELS` dict (in `src/lib/core/config.py`, lines 86-99) maps 12 model IDs to descriptions and serves as the fallback when API calls fail.
 
-No provider has a `list_models()` or `get_models()` method. The active model is set via the `KNIK_AI_MODEL` environment variable or switched at runtime through the console `/model` command or web settings panel -- but the available options always come from the static dict.
+Each provider implements `get_models()` which queries its respective API. The base class provides `get_models_with_fallback()` (`base_provider.py:89-124`) that tries the API first, then falls back to filtering `Config.AI_MODELS` by provider prefix via `_PROVIDER_MODEL_PREFIXES`.
 
-### Token Tracking -- None
+`AIClient` exposes:
+- `list_models_for_provider(provider_name)` (`client.py:565-589`) -- lists models for a specific provider
+- `list_all_models()` (`client.py:591-602`) -- aggregates across all registered providers via `ProviderRegistry`
 
-There is zero token counting anywhere in the codebase. No imports of `tiktoken`, no references to `usage_metadata`, `response_metadata`, `get_num_tokens`, or `count_tokens`.
+The admin API endpoint `GET /models` still returns the static dict (deferred item).
 
-LangChain response objects already contain token usage data:
-- **Non-streaming:** `AIMessage.usage_metadata` returns `{input_tokens, output_tokens, total_tokens}`
-- **Streaming:** The final `AIMessageChunk` contains `usage_metadata`
+### Token Tracking -- Implemented
 
-This data is discarded in `base_provider.py`. The `chat()` method does `result = self.llm.invoke(messages)` then immediately returns `result.content`, throwing away all metadata. The `chat_stream()` method yields `chunk.content` strings and never inspects the final chunk's metadata.
+Token usage is captured from LangChain's response metadata on every LLM call:
 
-`ConversationMessage.metadata` is a dict that currently stores `{provider, model, audio_chunks}`. It lives in a JSONB column in PostgreSQL -- no migration is needed to extend it with usage data.
+- **Non-streaming:** `AIMessage.usage_metadata` is extracted via `_extract_usage()` (`base_provider.py:196-219`) and stored in `ChatResult.usage`
+- **Streaming:** The final chunk's `usage_metadata` is captured after stream iteration (`base_provider.py:296-297`)
 
-### Context Management -- Fixed Sliding Window
+`ChatResult` dataclass (`base_provider.py:17-23`) returns `{content, usage}` from all `chat()` code paths. Usage is stored in `ConversationMessage.metadata` as `{input_tokens, output_tokens, total_tokens}` inside the JSONB messages array.
 
-The conversation history system uses a fixed sliding window of the last 5 turns (`history_context_size=5`), sent verbatim to the LLM. There is:
+Integration points:
+- `chat_stream.py:145-151` -- emits `usage` SSE event
+- `chat.py:62-63` -- includes usage in HTTP response
+- `console/app.py:189-194` -- displays `[tokens: X in / Y out / Z total]`
+- `db_client.py:229-261` -- `get_conversation_token_usage()` sums usage across messages
 
-- No awareness of model context window sizes
-- No token counting of outgoing context
-- No summarization or compression
-- No use of LangChain memory classes
+### Context Management -- Summarization with Sliding Window
 
-The `ConversationHistory` class (in-memory) and `ConversationDB` (PostgreSQL with JSONB messages) store full conversation data, but the context sent to the LLM is always just the last N turns regardless of their token size.
+The conversation history uses a configurable sliding window (`history_context_size`, default 5, via `KNIK_HISTORY_CONTEXT_SIZE` env var).
 
-The database schema has no `summary` column -- a migration is needed for Part 3.
+`ConversationSummarizer` (`src/lib/services/conversation/summarizer.py`) automatically compresses older messages when token count reaches 75% of the model's context window. It uses cumulative summaries and keeps the last 2 turn pairs unsummarized.
+
+The `conversations` table (after migration 008) includes `summary`, `summary_through_index`, and `total_tokens` columns.
 
 ---
 
-## Part 1: Dynamic Model Discovery
+## Known Gaps & Bugs
 
-### Goal
+### HIGH Priority
 
-Each provider exposes a `get_models()` method that queries its API for available models. If the API call fails, fall back to `Config.AI_MODELS`. This is "dynamic with static fallback."
+| # | Gap | Location | Description |
+|---|-----|----------|-------------|
+| 1 | `MODEL_DISCOVERY_TIMEOUT` unused | All 6 providers' `requests.get()` | Config value defined at `config.py:80,177-181` but every provider hardcodes `timeout=5` instead of reading from config |
+| 2 | `through_index` discarded | `client.py:305,387` | `summary_through_index` from `get_summary()` is thrown away (`_`). Messages between the summary's coverage end and the loaded recent window can be entirely lost from LLM context |
+| 3 | Streaming usage missing for OpenAI-compatible providers | `base_provider.py:292` | `self.llm.stream()` is called without `stream_usage=True`. ZAI, ZAICoding, ZhipuAI, and Custom providers will always report `None` usage on streaming calls |
 
-For now, only the core `get_models()` method is implemented. Admin API, console commands, and frontend selectors are updated in a later phase.
+### MEDIUM Priority
 
-### Design
+| # | Gap | Location | Description |
+|---|-----|----------|-------------|
+| 4 | `_keep_recent` ignores env var | `summarizer.py:89` | Reads `Config.DEFAULT_SUMMARIZATION_KEEP_RECENT` (ClassVar) instead of `Config().summarization_keep_recent` (env-aware). `KNIK_SUMMARIZATION_KEEP_RECENT` has no effect |
+| 5 | Agent usage not cumulative | `base_provider.py:259,316` | Multi-step agent calls only capture usage from the last AIMessage, not the sum across all intermediate LLM calls |
+| 6 | `ModelInfo` dataclass unused | `base_provider.py:26-40` | Defined but never used by any `get_models()` implementation -- dead code |
+
+### LOW Priority
+
+| # | Gap | Location | Description |
+|---|-----|----------|-------------|
+| 7 | No dedup between summary and history | `client.py:301-306` | If recent window overlaps with summary coverage, messages appear in both compressed and full form, wasting tokens |
+| 8 | `_PROVIDER_MODEL_PREFIXES` missing "custom" | `base_provider.py:81-87` | Fallback for custom provider returns ALL models from `Config.AI_MODELS` instead of being filtered |
+
+---
+
+## Part 1: Dynamic Model Discovery (Implemented)
+
+### Architecture
 
 #### Abstract Method on BaseAIProvider
 
-Add to `src/lib/services/ai_client/providers/base_provider.py`:
+`src/lib/services/ai_client/providers/base_provider.py`:
 
-- `get_models() -> list[dict]` -- abstract method, each provider implements
-- `get_models_with_fallback() -> list[dict]` -- concrete method that tries `get_models()`, catches exceptions, falls back to filtering `Config.AI_MODELS` for that provider
+- `get_models() -> list[dict[str, Any]]` -- abstract method (`line 70`), each provider implements
+- `get_models_with_fallback() -> list[dict[str, Any]]` -- concrete method (`lines 89-124`), tries `get_models()`, catches exceptions, falls back to filtering `Config.AI_MODELS` by provider prefix
+- `ModelInfo` dataclass (`lines 26-40`) -- defined but currently unused by implementations
 
 Each model dict follows this schema:
 
-```
+```python
 {
     "id": "gemini-2.0-flash",
     "name": "Gemini 2.0 Flash",
@@ -72,216 +98,161 @@ Each model dict follows this schema:
 
 ### Per-Provider Implementation
 
-| Provider | File | API Source | Auth |
-|----------|------|-----------|------|
-| Vertex | `vertex_provider.py` | Google Cloud `aiplatform` SDK or REST `GET /v1/models` | Service account (already configured) |
-| Gemini | `gemini_provider.py` | REST `GET https://generativelanguage.googleapis.com/v1beta/models?key={key}` | API key from env |
-| ZAI | `zai_provider.py` | OpenAI-compatible `GET {base_url}/models` | Bearer token from env |
-| ZAI Coding | `zai_coding_provider.py` | Same as ZAI, different base URL | Bearer token from env |
-| Custom | `custom_provider.py` | OpenAI-compatible `GET {base_url}/models` | Bearer token from env |
-| ZhipuAI | `zhipuai_provider.py` | REST `GET https://open.bigmodel.cn/api/paas/v4/models` | API key from env |
-| Mock | `mock_provider.py` | Returns static hardcoded list | None |
+| Provider | File | API Source | Auth | Line |
+|----------|------|-----------|------|------|
+| Vertex | `vertex_provider.py` | Google Cloud REST `GET /v1/publishers/google/models` | Service account (ADC) | 100-135 |
+| Gemini | `gemini_provider.py` | REST `GET /v1beta/models` | API key from env | 124-156 |
+| ZAI | `zai_provider.py` | OpenAI-compatible `GET {base_url}/models` | Bearer token from env | 124-149 |
+| ZAI Coding | `zai_coding_provider.py` | OpenAI-compatible `GET {base_url}/models` | Bearer token from env | 134-159 |
+| Custom | `custom_provider.py` | OpenAI-compatible `GET {base_url}/models` | Bearer token (optional) | 134-161 |
+| ZhipuAI | `zhipuai_provider.py` | REST `GET /api/paas/v4/models` | API key from env | 127-152 |
+| Mock | `mock_provider.py` | Returns static hardcoded list | None | 54-62 |
 
 All implementations:
-- Use `httpx` or `requests` with a short timeout (5 seconds, configurable via `Config.MODEL_DISCOVERY_TIMEOUT`)
+- Use `requests` with a hardcoded `timeout=5` (should use `Config().model_discovery_timeout`)
 - Wrap the API call in try/except, returning `[]` on failure
-- The fallback layer in `get_models_with_fallback()` handles the empty-list case
+- Call `get_context_window()` as fallback for context window size when the API doesn't provide it
 
 ### AIClient Integration
 
-Add to `src/lib/services/ai_client/client.py`:
+`src/lib/services/ai_client/client.py`:
 
-- `list_models_for_provider(provider_name: str) -> list[dict]` -- instantiates the provider, calls `get_models_with_fallback()`
-- `list_all_models() -> dict[str, list[dict]]` -- iterates all registered providers, aggregates results
+- `list_models_for_provider(provider_name) -> list[dict]` (`line 565`) -- instantiates the provider, calls `get_models_with_fallback()`
+- `list_all_models() -> dict[str, list[dict]]` (`line 591`) -- iterates all registered providers via `ProviderRegistry.list_providers()`, aggregates results
 
-### Config Changes
+### Config
 
-In `src/lib/core/config.py`:
-- `Config.AI_MODELS` stays as-is -- becomes the fallback source
-- Add `Config.MODEL_DISCOVERY_TIMEOUT = 5` (seconds)
+`src/lib/core/config.py`:
 
-### Deferred (Later Phase)
+- `Config.AI_MODELS` (`lines 86-99`) -- static fallback, 12 entries
+- `Config.AI_MODELS_CONTEXT_WINDOWS` (`lines 104-132`) -- static context window mapping, 21 entries
+- `Config.DEFAULT_MODEL_DISCOVERY_TIMEOUT = 5` (`line 80`)
+- `Config.model_discovery_timeout` (`lines 177-181`) -- reads `KNIK_MODEL_DISCOVERY_TIMEOUT` env var
 
-- Admin API `GET /models` endpoint -- switch from static dict to `AIClient.list_all_models()`
-- Console `/model` command -- show dynamically discovered models
-- Frontend model selector -- populate from API instead of hardcoded list
-- GUI settings panel model picker
+### Provider Registry
+
+`src/lib/services/ai_client/registry/provider_registry.py`:
+
+All 7 providers self-register at module load time via `ProviderRegistry.register()`.
 
 ---
 
-## Part 2: Token Tracking
+## Part 2: Token Tracking (Implemented)
 
-### Goal
+### ChatResult Dataclass
 
-Capture input/output/total tokens for every LLM call from LangChain's already-returned `usage_metadata`. Store in `ConversationMessage.metadata`. Expose for consumption by console, web, and (later) frontend.
+`src/lib/services/ai_client/providers/base_provider.py` (`lines 17-23`):
 
-### Design
-
-#### ChatResult Dataclass
-
-Add to `base_provider.py` (or a new `types.py` in the providers package):
-
-```
-ChatResult:
+```python
+@dataclass
+class ChatResult:
     content: str
-    usage: dict | None    # {input_tokens, output_tokens, total_tokens}
+    usage: dict[str, int] | None = None  # {input_tokens, output_tokens, total_tokens}
 ```
 
-#### Non-Streaming (chat)
+All `chat()` code paths return `ChatResult` (regular, agent-based, and mock).
 
-Current flow in `base_provider.py`:
-```
-result = self.llm.invoke(messages)
-return result.content              # metadata discarded
-```
+### Usage Extraction
 
-New flow:
-```
-result = self.llm.invoke(messages)
-self.last_usage = result.usage_metadata
-return ChatResult(content=result.content, usage=result.usage_metadata)
-```
+`_extract_usage()` (`base_provider.py:196-219`):
 
-#### Streaming (chat_stream)
+- Path 1: `result.usage_metadata` -> `{input_tokens, output_tokens, total_tokens}`
+- Path 2: `result.response_metadata.token_usage` or `.usage` -> maps `prompt_tokens`/`completion_tokens` to standardized keys
+- Returns `None` if neither is available
 
-Current flow:
-```
-for chunk in self.llm.stream(messages):
-    yield chunk.content             # final chunk metadata discarded
-```
+### Streaming
 
-New flow:
-```
-for chunk in self.llm.stream(messages):
-    yield chunk.content
-    last_chunk = chunk
-self.last_usage = last_chunk.usage_metadata
-```
+`chat_stream()` (`base_provider.py:286-331`):
 
-The caller accesses `provider.last_usage` after stream iteration completes. This is stored as an instance attribute because Python generators cannot return values to the caller through the iteration protocol in a way that's ergonomic for SSE streaming.
+- Regular streaming: captures `last_chunk`, extracts usage after iteration (`line 297`)
+- Agent streaming: tracks `last_ai_message`, extracts usage after iteration (`line 331`)
+- `last_usage` reset to `None` at start of each stream (`line 288`)
 
 ### Storage
 
-Extend `ConversationMessage.metadata` with a `usage` key. No migration needed -- metadata is already a JSONB column.
+Usage is merged into `ConversationMessage.metadata` via `_post_chat()` in `client.py:513-514`:
 
-After each LLM call, the metadata dict becomes:
-
-```json
-{
-    "provider": "vertex",
-    "model": "gemini-2.0-flash",
-    "usage": {
-        "input_tokens": 1250,
-        "output_tokens": 340,
-        "total_tokens": 1590
-    }
-}
+```python
+if usage:
+    msg_metadata["usage"] = usage
 ```
 
-Add to `src/lib/services/conversation/db_client.py`:
-- `get_conversation_token_usage(conversation_id) -> dict` -- sums all `metadata.usage` across messages in a conversation, returns `{total_input, total_output, total}`
+Stored as part of the JSONB messages array in the `conversations` table.
+
+### DB Methods
+
+`src/lib/services/conversation/db_client.py`:
+
+- `get_conversation_token_usage(conversation_id)` (`line 229`) -- sums all `metadata.usage` across messages
+- `increment_total_tokens(conversation_id, tokens)` (`line 275`) -- atomic cumulative counter
+- `get_total_tokens(conversation_id)` (`line 263`) -- reads cumulative counter
+- `reset_total_tokens(conversation_id, tokens)` (`line 295`) -- resets counter after summarization
 
 ### Integration Points
 
-**`src/apps/web/backend/routes/chat_stream.py`:**
-- After the stream completes, read `provider.last_usage`
-- Store in the assistant message's metadata
-- Optionally emit a `usage` SSE event (for frontend consumption in later phase)
-
-**`src/apps/web/backend/routes/chat.py`:**
-- After `AIClient.chat()`, read usage from `ChatResult`
-- Store in the assistant message's metadata
-
-**`src/apps/console/app.py`:**
-- After each response, if usage data is available, display:
-  `[tokens: 1250 in / 340 out / 1590 total]`
+| Integration | File | Behavior |
+|---|---|---|
+| Web streaming SSE | `chat_stream.py:145-151` | Emits `event: usage` SSE event |
+| Web non-streaming | `chat.py:62-63` | Includes `usage` in JSON response |
+| Console | `app.py:189-194` | Displays `[tokens: X in / Y out / Z total]` |
+| DB persistence | `client.py:513-516` | Stores usage in message metadata |
+| Cumulative tracking | `client.py:524` | Increments `total_tokens` column after each call |
 
 ### Dependencies
 
-- `tiktoken` added to `requirements.txt` -- used in Part 3 for pre-call token estimation, not for post-call counting (LangChain handles that via provider APIs)
+- `tiktoken>=0.7.0` in `requirements.txt` (line 39) -- used for pre-call token estimation in summarization
 
 ---
 
-## Part 3: Context Summarization
+## Part 3: Context Summarization (Implemented)
 
-### Goal
+### ConversationSummarizer Class
 
-When a conversation's token count approaches the model's context window limit (70-80%), automatically summarize earlier messages to compress context. The summarizer lives at the `AIClient` level, making it model-agnostic and reusable across all providers.
-
-### Design
-
-#### ConversationSummarizer Class
-
-New file: `src/lib/services/conversation/summarizer.py`
-
-This is the core orchestrator. It does NOT live in any provider -- it uses `AIClient` to call whatever provider/model is currently active.
+`src/lib/services/conversation/summarizer.py` (209 lines)
 
 #### Flow
 
 ```
-New user message arrives
+New user message arrives -> LLM call completes -> _post_chat()
         |
         v
-Gather context:
-  [existing summary (if any)] + [messages after summary_through_index] + [new message]
+increment_total_tokens() -> get new cumulative count
         |
         v
-Count tokens of full context (tiktoken)
+should_summarize(total_tokens, model)
+  - Checks SUMMARIZATION_ENABLED
+  - total_tokens >= (context_window * threshold)?
         |
-        v
-Get model's context window size (from provider)
+        +-- No --> Done
         |
-        +------ token_count < (context_window * 0.70) ------> No action, proceed normally
-        |
-        +------ token_count >= (context_window * 0.70) -----> Trigger summarization
-                    |
-                    v
-              Select messages to summarize:
-              From (summary_through_index + 1) to (current - 2)
-              Keep last 2 turn pairs unsummarized for coherence
-                    |
-                    v
-              Build summarization prompt:
-              "Summarize this conversation concisely, preserving
-               key facts, decisions, user preferences, and any
-               code/technical details. Previous summary: {existing}"
-                    |
-                    v
-              Call AIClient.chat() with summarization prompt
-              (uses same provider's LLM)
-                    |
-                    v
-              Store new summary + updated through_index in DB
-                    |
-                    v
-              Rebuild context:
-              [summary as system message] + [recent messages] + [new message]
-                    |
-                    v
-              Proceed with condensed context
+        +-- Yes --> Schedule summarizer.run() as background task
+                        |
+                        v
+                  Load all messages from DB
+                  Fetch existing summary (cumulative)
+                  Split: messages_to_summarize | last N turn pairs kept
+                  Call LLM with summarization prompt
+                  Store new summary + through_index in DB
+                  Reset total_tokens counter
 ```
 
-### Trigger Logic
+### Token Counting
 
-- Threshold: configurable, default 75% of model's context window (`SUMMARIZATION_THRESHOLD = 0.75`)
-- Token counting: `tiktoken` for pre-call estimation
-- Tool call tokens: included in the count -- tool call messages (`ToolMessage`, `AIMessage` with `tool_calls`) are counted like any other message
-- For models without a tiktoken encoding (e.g., Gemini), fall back to `cl100k_base` encoding (reasonable approximation)
+`src/lib/services/ai_client/token_utils.py` (176 lines):
 
-Token counting utilities live in a new file: `src/lib/services/ai_client/token_utils.py`
-
-- `count_tokens(text: str, model: str) -> int` -- count tokens for a string
-- `count_message_tokens(messages: list[dict], model: str) -> int` -- count tokens for a message list, accounting for message formatting overhead and tool call content
+- `count_tokens(text, model)` (`line 53`) -- uses tiktoken with `cl100k_base` fallback for unsupported models
+- `count_message_tokens(messages, model)` (`line 73`) -- accounts for message formatting overhead (+4 per message, +3 reply priming)
+- `register_context_window(model_id, context_window)` (`line 145`) -- runtime cache for discovered context windows
+- `get_context_window(model)` (`line 156`) -- three-tier resolution: runtime cache -> `Config.AI_MODELS_CONTEXT_WINDOWS` -> default 8192
 
 ### Summarization Strategy
 
-**Same provider's LLM:** Summarization calls use the same provider and model that the conversation is using. No separate lightweight model.
+- **Same provider's LLM** -- uses current provider/model with `max_tokens=1024`, `temperature=0.3`
+- **Cumulative summaries** -- each new summary incorporates the previous one via the prompt
+- **Keep recent turns** -- last 2 turn pairs (configurable) kept verbatim
+- **Guard against concurrent runs** -- `_in_progress` set prevents duplicate summarization
 
-**Cumulative summaries:** Each new summary incorporates the previous one. The summarization prompt includes the existing summary so context is never lost, only compressed.
-
-**Keep recent turns:** The last 2 turn pairs (user + assistant) are always kept verbatim and never summarized. This preserves conversational coherence and immediate context.
-
-**Prompt template:**
+### Summarization Prompt
 
 ```
 You are summarizing a conversation between a user and an AI assistant.
@@ -292,10 +263,7 @@ Produce a concise summary that preserves:
 - The current topic and direction of conversation
 - Any outstanding questions or tasks
 
-{if existing_summary}
-Previous summary of earlier conversation:
-{existing_summary}
-{end}
+{previous_summary_section}
 
 Conversation to summarize:
 {messages}
@@ -303,134 +271,142 @@ Conversation to summarize:
 Summary:
 ```
 
-### Context Window Registry
+### Database Schema
 
-Add `get_context_window(model: str) -> int` to `base_provider.py`:
-- Each provider knows its model's context window from the `get_models()` response (Part 1) or a static mapping
-- Fallback: conservative default of 8,192 tokens if the model is unknown
-
-### Database Migration
-
-New file: `db/migrations/008_add_conversation_summary.sql`
+Migration `db/migrations/008_add_conversation_summary.sql`:
 
 ```sql
-ALTER TABLE conversations ADD COLUMN summary TEXT;
-ALTER TABLE conversations ADD COLUMN summary_through_index INTEGER;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS summary_through_index INTEGER;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS total_tokens INTEGER DEFAULT 0;
 ```
 
-- `summary` -- the compressed summary text (null if no summarization has occurred)
-- `summary_through_index` -- the message index up to which the summary covers, so we know which messages are already summarized (null if no summarization)
+### DB Client Methods
 
-### DB Client Updates
+`src/lib/services/conversation/db_client.py`:
 
-Add to `src/lib/services/conversation/db_client.py`:
-- `get_summary(conversation_id) -> tuple[str | None, int | None]` -- returns (summary, through_index)
-- `update_summary(conversation_id, summary: str, through_index: int)` -- upserts the summary columns
+- `get_summary(conversation_id)` (`line 314`) -- returns `(summary, through_index)`
+- `update_summary(conversation_id, summary, through_index)` (`line 331`) -- updates summary columns
 
 ### AIClient Integration
 
-In `src/lib/services/ai_client/client.py`, before every `chat()` / `chat_stream()` call:
+In `src/lib/services/ai_client/client.py`:
 
-1. Instantiate `ConversationSummarizer`
-2. Call `summarizer.prepare_context(conversation_id, new_message, provider, model)`
-3. This returns the optimized message list (with summary injected as a system message if needed)
-4. Pass this to the provider instead of raw history
+1. Before every call: `_load_history()` loads last N messages, `inject_summary()` prepends summary as `SystemMessage` (`lines 301-306`, `383-388`)
+2. After every call: `_post_chat()` increments tokens, checks threshold, triggers summarizer as background task (`lines 523-532`)
 
-### Config Additions
+### Config
 
-In `src/lib/core/config.py`:
-- `SUMMARIZATION_THRESHOLD = 0.75` -- trigger at 75% of context window
-- `SUMMARIZATION_KEEP_RECENT = 2` -- number of recent turn pairs to keep unsummarized
-- `SUMMARIZATION_ENABLED = True` -- feature flag to disable summarization
+`src/lib/core/config.py`:
+
+| Setting | ClassVar Default | Env Var | Lines |
+|---|---|---|---|
+| `summarization_enabled` | `True` | `KNIK_SUMMARIZATION_ENABLED` | 84, 186-190 |
+| `summarization_threshold` | `0.75` | `KNIK_SUMMARIZATION_THRESHOLD` | 82, 191-195 |
+| `summarization_keep_recent` | `2` | `KNIK_SUMMARIZATION_KEEP_RECENT` | 83, 196-200 |
 
 ---
 
-## File Change Manifest
+## File Change Manifest (Implemented)
 
-### Files to Modify
+### Files Modified
 
 | File | Changes | Part |
 |------|---------|------|
-| `src/lib/services/ai_client/providers/base_provider.py` | Add `get_models()` abstract, `get_models_with_fallback()`, `get_context_window()`, `ChatResult` dataclass, capture `usage_metadata` in `chat()`/`chat_stream()`, add `last_usage` attribute | 1, 2, 3 |
-| `src/lib/services/ai_client/providers/vertex_provider.py` | Implement `get_models()` | 1 |
-| `src/lib/services/ai_client/providers/gemini_provider.py` | Implement `get_models()` | 1 |
-| `src/lib/services/ai_client/providers/zai_provider.py` | Implement `get_models()` | 1 |
-| `src/lib/services/ai_client/providers/zai_coding_provider.py` | Implement `get_models()` | 1 |
-| `src/lib/services/ai_client/providers/zhipuai_provider.py` | Implement `get_models()` | 1 |
-| `src/lib/services/ai_client/providers/custom_provider.py` | Implement `get_models()` | 1 |
-| `src/lib/services/ai_client/providers/mock_provider.py` | Implement `get_models()` with static mock data | 1 |
-| `src/lib/services/ai_client/client.py` | Add `list_models_for_provider()`, `list_all_models()`, `get_last_usage()`, integrate summarizer before calls | 1, 2, 3 |
-| `src/lib/services/conversation/db_client.py` | Add `get_conversation_token_usage()`, `get_summary()`, `update_summary()` | 2, 3 |
-| `src/lib/core/config.py` | Add `MODEL_DISCOVERY_TIMEOUT`, `SUMMARIZATION_THRESHOLD`, `SUMMARIZATION_KEEP_RECENT`, `SUMMARIZATION_ENABLED` | 1, 3 |
-| `src/apps/web/backend/routes/chat_stream.py` | Capture and store token usage after stream, integrate summarizer | 2, 3 |
-| `src/apps/web/backend/routes/chat.py` | Capture and store token usage | 2 |
+| `src/lib/services/ai_client/providers/base_provider.py` | `ChatResult`, `ModelInfo`, `get_models()` abstract, `get_models_with_fallback()`, `get_context_window()`, `_extract_usage()`, `last_usage`, capture in `chat()`/`chat_stream()` | 1, 2, 3 |
+| `src/lib/services/ai_client/providers/vertex_provider.py` | `get_models()` with Vertex AI REST API | 1 |
+| `src/lib/services/ai_client/providers/gemini_provider.py` | `get_models()` with Gemini API | 1 |
+| `src/lib/services/ai_client/providers/zai_provider.py` | `get_models()` with OpenAI-compatible API | 1 |
+| `src/lib/services/ai_client/providers/zai_coding_provider.py` | `get_models()` with OpenAI-compatible API | 1 |
+| `src/lib/services/ai_client/providers/custom_provider.py` | `get_models()` with OpenAI-compatible API | 1 |
+| `src/lib/services/ai_client/providers/zhipuai_provider.py` | `get_models()` with ZhipuAI API | 1 |
+| `src/lib/services/ai_client/providers/mock_provider.py` | `get_models()` with static data | 1 |
+| `src/lib/services/ai_client/client.py` | `list_models_for_provider()`, `list_all_models()`, `get_last_usage()`, summarizer integration, `_post_chat()` with token tracking | 1, 2, 3 |
+| `src/lib/services/conversation/db_client.py` | `get_conversation_token_usage()`, `increment_total_tokens()`, `get_total_tokens()`, `reset_total_tokens()`, `get_summary()`, `update_summary()` | 2, 3 |
+| `src/lib/core/config.py` | `MODEL_DISCOVERY_TIMEOUT`, `SUMMARIZATION_THRESHOLD`, `KEEP_RECENT`, `ENABLED`, `AI_MODELS_CONTEXT_WINDOWS` | 1, 3 |
+| `src/apps/web/backend/routes/chat_stream.py` | Capture and emit token usage via SSE | 2 |
+| `src/apps/web/backend/routes/chat.py` | Return token usage in response | 2 |
 | `src/apps/console/app.py` | Display token usage after responses | 2 |
-| `requirements.txt` | Add `tiktoken` | 2, 3 |
+| `requirements.txt` | Added `tiktoken>=0.7.0` | 2, 3 |
 
-### Files to Create
+### Files Created
 
 | File | Purpose | Part |
 |------|---------|------|
-| `src/lib/services/ai_client/token_utils.py` | `count_tokens()`, `count_message_tokens()` using tiktoken | 3 |
-| `src/lib/services/conversation/summarizer.py` | `ConversationSummarizer` class -- context preparation and summarization orchestration | 3 |
-| `db/migrations/008_add_conversation_summary.sql` | Add `summary` and `summary_through_index` columns to conversations table | 3 |
+| `src/lib/services/ai_client/token_utils.py` | `count_tokens()`, `count_message_tokens()`, `register_context_window()`, `get_context_window()` | 3 |
+| `src/lib/services/conversation/summarizer.py` | `ConversationSummarizer` -- context preparation and summarization | 3 |
+| `db/migrations/008_add_conversation_summary.sql` | Add `summary`, `summary_through_index`, `total_tokens` columns | 3 |
+| `src/lib/services/ai_client/registry/provider_registry.py` | `ProviderRegistry` -- provider class registration | 1 |
+| `src/lib/commands/service.py` | `list_models()`, `switch_model()` for console commands | 1 |
 
 ---
 
-## Execution Order
+## Deferred Work (Not Yet Implemented)
 
-| Step | Task | Depends On | Part |
-|------|------|-----------|------|
-| 1 | Add `tiktoken` to `requirements.txt` | -- | 2, 3 |
-| 2 | Create `token_utils.py` with token counting functions | Step 1 | 3 |
-| 3 | Add `ChatResult` dataclass to `base_provider.py` | -- | 2 |
-| 4 | Modify `base_provider.py` -- add `get_models()` abstract, `get_models_with_fallback()`, `get_context_window()`, capture `usage_metadata`, add `last_usage` | Step 3 | 1, 2, 3 |
-| 5 | Implement `get_models()` in all 7 providers | Step 4 | 1 |
-| 6 | Update `AIClient` -- `list_models_for_provider()`, `list_all_models()`, usage propagation | Steps 4, 5 | 1, 2 |
-| 7 | Update `db_client.py` -- store usage in metadata, add `get_conversation_token_usage()` | Step 4 | 2 |
-| 8 | Update `chat_stream.py` and `chat.py` -- integrate token tracking | Steps 6, 7 | 2 |
-| 9 | Update console `app.py` -- display token usage | Step 6 | 2 |
-| 10 | Run migration `008_add_conversation_summary.sql` | -- | 3 |
-| 11 | Update `db_client.py` -- add `get_summary()`, `update_summary()` | Step 10 | 3 |
-| 12 | Create `summarizer.py` -- `ConversationSummarizer` class | Steps 2, 11 | 3 |
-| 13 | Integrate summarizer into `AIClient` before `chat()`/`chat_stream()` | Step 12 | 3 |
-| 14 | Add summarization config values to `config.py` | -- | 3 |
-| 15 | End-to-end testing | All above | -- |
+### API & Backend
 
----
+| # | Item | Details |
+|---|------|---------|
+| 1 | Admin API `GET /models` dynamic | `admin.py:87-89` still returns static `Config.AI_MODELS`. Should call `AIClient.list_all_models()` |
+| 2 | Usage analytics endpoint | No `GET /api/conversations/{id}/usage`. `db_client.get_conversation_token_usage()` exists but has no route |
+| 3 | Conversation responses with usage | `Conversation.to_dict()` and `ConversationMessage.to_dict()` include no usage fields |
 
-## Testing Strategy
+### Frontend
 
-### Unit Tests
+| # | Item | Details |
+|---|------|---------|
+| 4 | Frontend model selector | No component fetches models from API or renders a picker dropdown |
+| 5 | Frontend token display | `ChatPanel` renders messages without token info. `Message` type has no usage fields |
+| 6 | Frontend SSE `usage` event | Backend emits `usage` SSE event but `streaming.ts` has no `onUsage` callback |
+| 7 | Zustand store for usage | `chatSlice.ts` does not track token usage data |
 
-- **Token counting:** Verify `count_tokens()` and `count_message_tokens()` produce accurate counts against known inputs
-- **Summarizer logic:** Mock the provider and verify summarization triggers at the correct threshold, keeps the right number of recent turns, and produces cumulative summaries
-- **get_models():** Mock HTTP responses for each provider, verify parsing and fallback behavior
-- **ChatResult:** Verify usage metadata is correctly extracted from LangChain response objects
+### GUI
 
-### Integration Tests
-
-- **Full chat flow with token tracking:** Send a message through `AIClient`, verify usage data appears in `ConversationMessage.metadata`
-- **Summarization trigger:** Build a conversation that exceeds the threshold, verify the summarizer fires and the summary is stored in DB
-- **Model discovery with fallback:** Test with a provider whose API is unreachable, verify fallback to `Config.AI_MODELS`
-
-### Manual Testing
-
-- **Console app:** Have a multi-turn conversation, verify token counts display after each response
-- **Context limit:** Have a long conversation that approaches the context window, verify summarization kicks in and the conversation continues coherently
-- **Web app:** Verify token tracking data flows through SSE events (once frontend integration is done)
+| # | Item | Details |
+|---|------|---------|
+| 8 | GUI settings panel model picker | `settings_panel.py:54-58` uses hardcoded 3-model list. Should populate dynamically |
 
 ---
 
-## Deferred Work (Later Phase)
+## Bug Fix Plan
 
-These items depend on the core infrastructure above but are not part of this implementation phase:
+### Fix 1: Use configurable discovery timeout (HIGH)
 
-- **Admin API:** Update `GET /models` to use `AIClient.list_all_models()` instead of static `Config.AI_MODELS`
-- **Console `/model` command:** Show dynamically discovered models instead of static list
-- **Frontend model selector:** Populate from dynamic API response
-- **GUI settings panel:** Update model picker to use dynamic models
-- **Frontend token display:** Show token usage per message in the web chat UI
-- **Frontend SSE `usage` event:** Handle the new event type in `streaming.ts` and store in Zustand state
-- **Usage analytics endpoint:** `GET /api/conversations/{id}/usage` returning aggregated token counts
-- **Web conversations route:** Add usage data to conversation list/detail responses
+Replace `timeout=5` with `timeout=Config().model_discovery_timeout` in all 6 providers:
+- `vertex_provider.py:113`
+- `gemini_provider.py:130`
+- `zai_provider.py:131`
+- `zai_coding_provider.py:141`
+- `custom_provider.py:143`
+- `zhipuai_provider.py:134`
+
+### Fix 2: Respect through_index in history loading (HIGH)
+
+In `client.py` (`_load_history` and `achat`/`achat_stream`):
+- Don't discard `through_index` from `get_summary()`
+- Ensure loaded history window starts from `max(0, through_index + 1)` or overlaps with summary coverage
+- Add `start_index` parameter to `get_recent_messages()` in `db_client.py`
+
+### Fix 3: Enable streaming usage for OpenAI-compatible providers (HIGH)
+
+In `base_provider.py:292`, pass `stream_usage=True` to `self.llm.stream()` (or set it on the LLM constructor for OpenAI-compatible providers).
+
+### Fix 4: Wire keep_recent env var (MEDIUM)
+
+In `summarizer.py:89`, change from `Config.DEFAULT_SUMMARIZATION_KEEP_RECENT` to `Config().summarization_keep_recent`.
+
+### Fix 5: Cumulative agent usage (MEDIUM)
+
+In `base_provider.py`, accumulate usage across all AIMessages in agent flow instead of only capturing the last one.
+
+### Fix 6: Remove dead ModelInfo dataclass (MEDIUM)
+
+Either use `ModelInfo` in `get_models()` implementations or remove it.
+
+### Fix 7: Dedup summary/history overlap (LOW)
+
+In `client.py`, filter out messages from the loaded window that are already covered by the summary (based on `through_index`).
+
+### Fix 8: Add "custom" to provider prefixes (LOW)
+
+Add `"custom": []` or appropriate prefixes to `_PROVIDER_MODEL_PREFIXES` in `base_provider.py:81-87`.

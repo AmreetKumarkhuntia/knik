@@ -322,6 +322,7 @@ class AIClient:
                 usage=usage,
                 meta=meta,
                 disable_summarization=disable_summarization,
+                history=history,
             )
 
         return response_text, conversation_id, usage
@@ -428,6 +429,7 @@ class AIClient:
                 usage=usage,
                 meta=meta,
                 disable_summarization=disable_summarization,
+                history=history,
             )
 
         yield {
@@ -490,6 +492,32 @@ class AIClient:
                 history.append(AIMessage(content=msg.content))
         return history
 
+    @staticmethod
+    def _estimate_usage(
+        prompt: str,
+        response_text: str,
+        model: str,
+        history: list | None = None,
+    ) -> dict[str, int]:
+        from .token_utils import count_message_tokens
+
+        history_messages = []
+        if history:
+            for msg in history:
+                if hasattr(msg, "type"):
+                    history_messages.append({"role": msg.type, "content": msg.content})
+        history_messages.append({"role": "user", "content": prompt})
+
+        input_tokens = count_message_tokens(history_messages, model=model)
+        output_tokens = count_message_tokens([{"role": "assistant", "content": response_text}], model=model)
+        total_tokens = input_tokens + output_tokens
+        return {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens,
+            "estimated": True,
+        }
+
     async def _post_chat(
         self,
         *,
@@ -499,9 +527,14 @@ class AIClient:
         usage: dict[str, int] | None,
         meta: dict[str, str],
         disable_summarization: bool,
+        history: list | None = None,
     ) -> None:
         """Handle post-call persistence: save response, track tokens,
         trigger summarisation, and auto-generate title.
+
+        When the provider did not report usage (common for streaming and
+        agent paths), a tiktoken-based estimate is used so that
+        ``total_tokens`` always advances.
 
         All operations are DB-resilient (ConversationDB methods no-op
         on failure), so this method never raises.
@@ -509,9 +542,12 @@ class AIClient:
         db = self._conversation_db()
         Summarizer = self._conversation_summarizer()
 
+        model_name = self.get_model_name()
+        if usage is None:
+            usage = self._estimate_usage(prompt, response_text, model_name, history=history)
+
         msg_metadata: dict[str, Any] = dict(meta)
-        if usage:
-            msg_metadata["usage"] = usage
+        msg_metadata["usage"] = usage
 
         await db.append_message(
             conversation_id=conversation_id,
@@ -520,21 +556,21 @@ class AIClient:
             metadata=msg_metadata,
         )
 
-        if usage and usage.get("total_tokens") and not disable_summarization:
-            new_total = await db.increment_total_tokens(
-                conversation_id,
-                usage["total_tokens"],
-            )
-            model_name = self.get_model_name()
-            if Summarizer.should_summarize(new_total, model_name):
-                printer.info(f"Token threshold crossed ({new_total} tokens). Triggering background summarization.")
-                summarizer = Summarizer(self, model_name)
-                self._schedule_background(summarizer.run(conversation_id))
-        elif usage and usage.get("total_tokens"):
-            await db.increment_total_tokens(
-                conversation_id,
-                usage["total_tokens"],
-            )
+        if usage.get("total_tokens"):
+            if not disable_summarization:
+                new_total = await db.increment_total_tokens(
+                    conversation_id,
+                    usage["total_tokens"],
+                )
+                if Summarizer.should_summarize(new_total, model_name):
+                    printer.info(f"Token threshold crossed ({new_total} tokens). Triggering background summarization.")
+                    summarizer = Summarizer(self, model_name)
+                    self._schedule_background(summarizer.run(conversation_id))
+            else:
+                await db.increment_total_tokens(
+                    conversation_id,
+                    usage["total_tokens"],
+                )
 
         # Auto-generate title after the first exchange (2 messages = 1 user + 1 assistant)
         msg_count = await db.get_message_count(conversation_id)

@@ -85,15 +85,19 @@ def handle_status(command_service: CommandService, args: str, user_id: str) -> C
     status = asyncio.run(command_service.get_status(user_id))
     conv_display = status.conversation_id if status.conversation_id else "None (new session)"
     message = f"Status:\n  Provider: {status.provider}\n  Model: {status.model}\n  Session: {conv_display}"
-    return CommandResult(
-        success=True,
-        message=message,
-        data={
-            "provider": status.provider,
-            "model": status.model,
-            "conversation_id": status.conversation_id,
-        },
-    )
+    if status.total_tokens > 0:
+        message += (
+            f"\n  Tokens: {status.total_tokens:,} total ({status.input_tokens:,} in / {status.output_tokens:,} out)"
+        )
+    data = {
+        "provider": status.provider,
+        "model": status.model,
+        "conversation_id": status.conversation_id,
+        "total_tokens": status.total_tokens,
+        "input_tokens": status.input_tokens,
+        "output_tokens": status.output_tokens,
+    }
+    return CommandResult(success=True, message=message, data=data)
 
 
 def handle_help(command_service: CommandService, args: str, user_id: str) -> CommandResult:
