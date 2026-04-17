@@ -53,6 +53,8 @@ class MCPServerRegistry:
         return self._implementations.get(tool_name)
 
     def _requires_consent(self, tool_name: str) -> bool:
+        if not self._tool_instances:
+            return True
         return any(tool_name in type(inst).consent_required_for for inst in self._tool_instances)
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
