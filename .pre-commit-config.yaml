@@ -39,7 +39,7 @@ repos:
 
       - id: pytest
         name: pytest
-        entry: bash -c 'source .venv/bin/activate && PYTHONPATH=src pytest tests/ -v'
+        entry: bash -c 'PYTHONPATH=src arch -arm64 .venv/bin/python -m pytest tests/ -v'
         language: system
         types: [python]
         pass_filenames: false

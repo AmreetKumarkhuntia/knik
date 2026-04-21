@@ -79,72 +79,6 @@ class TestBaseProviderChunking:
         assert pos == 100
 
 
-class TestTelegramProviderEditMessage:
-    @pytest.fixture
-    def provider(self):
-        with patch.object(TelegramProvider, "__init__", lambda self, **kwargs: None):
-            provider = TelegramProvider.__new__(TelegramProvider)
-            provider._token = "test_token"
-            provider._bot = MagicMock()
-            provider._app = None
-            yield provider
-
-    def test_supports_message_edit(self, provider):
-        assert provider.supports_message_edit() is True
-
-    @pytest.mark.asyncio
-    async def test_edit_message_success(self, provider):
-        mock_msg = MagicMock()
-        mock_msg.message_id = 123
-        provider._bot.edit_message_text = AsyncMock(return_value=mock_msg)
-        provider._bot.send_message = AsyncMock()
-
-        result = await provider.edit_message("456", "789", "New text")
-
-        assert result.success is True
-        assert result.message_id == "123"
-        provider._bot.edit_message_text.assert_called_once_with(
-            chat_id=456,
-            message_id=789,
-            text="New text",
-        )
-
-    @pytest.mark.asyncio
-    async def test_edit_message_with_chunks(self, provider):
-        mock_msg = MagicMock()
-        mock_msg.message_id = 123
-        provider._bot.edit_message_text = AsyncMock(return_value=mock_msg)
-        provider._bot.send_message = AsyncMock()
-
-        long_text = "x" * 5000
-        result = await provider.edit_message("456", "789", long_text)
-
-        assert result.success is True
-        provider._bot.edit_message_text.assert_called_once()
-        provider._bot.send_message.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_edit_message_not_modified_returns_success(self, provider):
-        provider._bot.edit_message_text = AsyncMock(side_effect=Exception("message is not modified"))
-
-        result = await provider.edit_message("456", "789", "Same text")
-
-        assert result.success is True
-        assert result.message_id == "789"
-
-    @pytest.mark.asyncio
-    async def test_edit_message_not_configured(self):
-        with patch.object(TelegramProvider, "__init__", lambda self, **kwargs: None):
-            provider = TelegramProvider.__new__(TelegramProvider)
-            provider._token = None
-            provider._bot = None
-            provider._app = None
-
-            result = await provider.edit_message("456", "789", "text")
-            assert result.success is False
-            assert "not configured" in result.error.lower()
-
-
 class TestTelegramProviderSendStream:
     @pytest.fixture
     def provider(self):
@@ -156,9 +90,11 @@ class TestTelegramProviderSendStream:
             yield p
 
     @pytest.mark.asyncio
-    async def test_send_stream_sends_first_chunk_then_edits(self, provider):
+    async def test_send_stream_draft_path(self, provider):
+        """Private-chat path: send_message_draft used during streaming, send_message for final."""
         mock_msg = MagicMock()
         mock_msg.message_id = 42
+        provider._bot.send_message_draft = AsyncMock()
         provider._bot.send_message = AsyncMock(return_value=mock_msg)
         provider._bot.edit_message_text = AsyncMock(return_value=mock_msg)
 
@@ -171,8 +107,9 @@ class TestTelegramProviderSendStream:
 
         assert result.success is True
         assert result.message_id == "42"
-        provider._bot.send_message.assert_called_once()
-        provider._bot.edit_message_text.assert_called()
+        provider._bot.send_message_draft.assert_called()
+        provider._bot.send_message.assert_called_once()  # final permanent message only
+        provider._bot.edit_message_text.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_send_stream_empty_stream(self, provider):
@@ -201,29 +138,16 @@ class TestTelegramProviderSendStream:
             assert result.success is False
 
     @pytest.mark.asyncio
-    async def test_send_stream_edit_not_modified_ignored(self, provider):
-        mock_msg = MagicMock()
-        mock_msg.message_id = 42
-        provider._bot.send_message = AsyncMock(return_value=mock_msg)
-        provider._bot.edit_message_text = AsyncMock(side_effect=Exception("message is not modified"))
-
-        async def chunks():
-            yield "text"
-
-        result = await provider.send_stream("123", chunks())
-
-        assert result.success is True
-        assert result.message_id == "42"
-
-    @pytest.mark.asyncio
-    async def test_send_stream_chunks_long_final_text(self, provider):
+    async def test_send_stream_long_text_draft_path(self, provider):
+        """Draft path: long final text is split into multiple send_message calls."""
         provider.max_message_length = 10
         mock_msg1 = MagicMock()
         mock_msg1.message_id = 1
         mock_msg2 = MagicMock()
         mock_msg2.message_id = 2
+        provider._bot.send_message_draft = AsyncMock()
         provider._bot.send_message = AsyncMock(side_effect=[mock_msg1, mock_msg2])
-        provider._bot.edit_message_text = AsyncMock(return_value=mock_msg1)
+        provider._bot.edit_message_text = AsyncMock()
 
         async def chunks():
             yield "A" * 15
@@ -232,11 +156,14 @@ class TestTelegramProviderSendStream:
 
         assert result.success is True
         assert provider._bot.send_message.call_count == 2
+        provider._bot.edit_message_text.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_send_stream_single_chunk_no_edit(self, provider):
+        """Draft path with a single chunk: no edit_message_text called."""
         mock_msg = MagicMock()
         mock_msg.message_id = 7
+        provider._bot.send_message_draft = AsyncMock()
         provider._bot.send_message = AsyncMock(return_value=mock_msg)
         provider._bot.edit_message_text = AsyncMock(return_value=mock_msg)
 
@@ -248,7 +175,7 @@ class TestTelegramProviderSendStream:
         assert result.success is True
         assert result.message_id == "7"
         provider._bot.send_message.assert_called_once()
-        provider._bot.edit_message_text.assert_called_once()
+        provider._bot.edit_message_text.assert_not_called()
 
 
 class TestTelegramProviderProviderName:
