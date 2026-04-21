@@ -42,4 +42,4 @@ tiktoken>=0.7.0
 playwright>=1.40.0       # Headless Chromium/Firefox/Webkit automation
 
 # Messaging (Telegram bot integration)
-python-telegram-bot>=22.0
+python-telegram-bot[rate-limiter]>=22.0

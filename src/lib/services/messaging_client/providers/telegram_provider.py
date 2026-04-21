@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from collections.abc import AsyncIterator
 from typing import Any
 
 from telegram import Bot, Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import AIORateLimiter, Application, CommandHandler, MessageHandler, filters
 
 from ....core.config import Config
 from ....utils import printer
@@ -16,7 +17,7 @@ from ..registry import MessagingProviderRegistry
 from .base_provider import BaseMessagingProvider, MessageCallback
 
 
-_EDIT_DEBOUNCE: float = 1.0
+_DRAFT_DEBOUNCE: float = 0.5
 
 
 class TelegramProvider(BaseMessagingProvider):
@@ -69,99 +70,36 @@ class TelegramProvider(BaseMessagingProvider):
         bot = self._app.bot if self._app else self._bot
         chat_id_int = int(chat_id)
         accumulated = ""
-        message_id: int | None = None
-        last_edit_time: float = 0.0
+        last_update_time: float = 0.0
+        draft_id: int = random.randint(1, 2**31 - 1)
 
         try:
             async for chunk in text_stream:
                 accumulated += chunk
-
-                if message_id is None:
-                    display = accumulated[: self.max_message_length]
-                    msg = await bot.send_message(chat_id=chat_id_int, text=display, **kwargs)
-                    message_id = msg.message_id
-                    last_edit_time = asyncio.get_event_loop().time()
-                else:
-                    now = asyncio.get_event_loop().time()
-                    if now - last_edit_time >= _EDIT_DEBOUNCE:
-                        display = accumulated[: self.max_message_length]
-                        try:
-                            await bot.edit_message_text(
-                                chat_id=chat_id_int,
-                                message_id=message_id,
-                                text=display,
-                            )
-                            last_edit_time = now
-                        except Exception as e:
-                            if "message is not modified" not in str(e):
-                                pass
+                now = asyncio.get_event_loop().time()
+                if now - last_update_time >= _DRAFT_DEBOUNCE:
+                    try:
+                        await bot.send_message_draft(
+                            chat_id=chat_id_int,
+                            draft_id=draft_id,
+                            text=accumulated,
+                        )
+                        last_update_time = now
+                    except Exception:
+                        pass  # silently skip — group chats, transient errors, etc.
 
             if not accumulated:
                 return MessageResult(success=True)
 
-            chunks = self.chunk_text(accumulated)
-            if message_id is not None:
-                try:
-                    await bot.edit_message_text(
-                        chat_id=chat_id_int,
-                        message_id=message_id,
-                        text=chunks[0],
-                        **kwargs,
-                    )
-                except Exception as e:
-                    if "message is not modified" not in str(e):
-                        printer.warning(f"Final edit failed: {e}")
-                for c in chunks[1:]:
-                    msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
-                    message_id = msg.message_id
-            else:
-                for c in chunks:
-                    msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
-                    message_id = msg.message_id
+            message_id: int | None = None
+            for c in self.chunk_text(accumulated):
+                msg = await bot.send_message(chat_id=chat_id_int, text=c, **kwargs)
+                message_id = msg.message_id
 
-            return MessageResult(success=True, message_id=str(message_id))
+            return MessageResult(success=True, message_id=str(message_id) if message_id else None)
         except Exception as e:
             printer.error(f"Telegram send_stream failed: {e}")
-            if message_id:
-                return MessageResult(success=False, message_id=str(message_id), error=str(e))
             return MessageResult(success=False, error=str(e))
-
-    def supports_message_edit(self) -> bool:
-        return True
-
-    async def edit_message(self, chat_id: str, message_id: str, text: str, **kwargs) -> MessageResult:
-        if not self.is_configured():
-            return MessageResult(success=False, error="TelegramProvider is not configured")
-
-        bot = self._app.bot if self._app else self._bot
-
-        try:
-            chunks = self.chunk_text(text)
-
-            msg = await bot.edit_message_text(
-                chat_id=int(chat_id),
-                message_id=int(message_id),
-                text=chunks[0],
-                **kwargs,
-            )
-
-            for chunk in chunks[1:]:
-                await bot.send_message(
-                    chat_id=int(chat_id),
-                    text=chunk,
-                    **kwargs,
-                )
-
-            return MessageResult(
-                success=True,
-                message_id=str(msg.message_id),
-            )
-        except Exception as e:
-            error_str = str(e)
-            if "message is not modified" in error_str:
-                return MessageResult(success=True, message_id=message_id)
-            printer.error(f"Telegram edit_message failed: {error_str}")
-            return MessageResult(success=False, error=error_str)
 
     async def start(self, on_message: MessageCallback) -> None:
         if not self.is_configured():
@@ -171,6 +109,7 @@ class TelegramProvider(BaseMessagingProvider):
         self._app = (
             Application.builder()
             .token(self._token)
+            .rate_limiter(AIORateLimiter())
             .read_timeout(10.0)
             .write_timeout(10.0)
             .connect_timeout(10.0)
