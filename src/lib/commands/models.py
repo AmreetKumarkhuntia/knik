@@ -32,6 +32,10 @@ class StatusInfo:
     total_tokens: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
+    has_estimates: bool = False
+    has_partial_data: bool = False
+    had_summarization: bool = False
+    estimated_cost_usd: float | None = None
 
 
 @dataclass

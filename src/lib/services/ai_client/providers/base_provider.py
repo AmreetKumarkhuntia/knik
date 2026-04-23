@@ -1,5 +1,6 @@
 """Base AI provider interface and LangChain provider mixin."""
 
+import json
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from dataclasses import dataclass
@@ -7,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ....core.config import Config
 from ....utils import printer
-from ..token_utils import get_context_window, register_context_window
+from ..token_utils import count_tokens, get_context_window, register_context_window
 
 
 if TYPE_CHECKING:
@@ -148,6 +149,8 @@ class LangChainProvider(BaseAIProvider):
         self.system_instruction = system_instruction
         self.tool_callback = tool_callback
         self.last_usage: dict[str, int] | None = None
+        self.last_tool_tokens: dict | None = None
+        self.last_tool_interactions: list | None = None
 
         self.agent = agent
         self.mcp_registry = mcp_registry
@@ -245,18 +248,88 @@ class LangChainProvider(BaseAIProvider):
         agent_messages = self._build_agent_messages(history, prompt)
 
         if not self.agent:
+            self.last_tool_tokens = None
+            self.last_tool_interactions = None
             result = self.llm.invoke(agent_messages, **kwargs)
             self.last_usage = self._extract_usage(result)
             content = self._extract_text_from_content(result.content)
             return ChatResult(content=content, usage=self.last_usage)
 
-        result = self.agent.invoke({"messages": agent_messages}, **kwargs)
+        agent_result = self.agent.invoke({"messages": agent_messages}, **kwargs)
 
-        if isinstance(result, dict):
-            messages = result.get("messages", [])
+        if isinstance(agent_result, dict):
+            messages = agent_result.get("messages", [])
             if messages:
+                accumulated_usage: dict[str, int] | None = None
+                tool_interactions: list[dict] = []
+                pending_tool_calls: dict[str, dict] = {}
+
+                for msg in messages:
+                    msg_class = msg.__class__.__name__
+
+                    if "AIMessage" in msg_class:
+                        u = self._extract_usage(msg)
+                        if u:
+                            if accumulated_usage is None:
+                                accumulated_usage = dict.fromkeys(u, 0)
+                            for k in u:
+                                accumulated_usage[k] = accumulated_usage.get(k, 0) + u[k]
+
+                        if hasattr(msg, "tool_calls") and msg.tool_calls:
+                            for tc in msg.tool_calls:
+                                tc_id = tc.get("id") or tc.get("name", "unknown")
+                                args_json = json.dumps(tc.get("args", {}))
+                                arg_tokens = count_tokens(args_json)
+                                pending_tool_calls[tc_id] = {
+                                    "tool_name": tc.get("name", "unknown"),
+                                    "tool_args": tc.get("args", {}),
+                                    "arg_tokens": arg_tokens,
+                                }
+
+                    elif "ToolMessage" in msg_class:
+                        tool_call_id = getattr(msg, "tool_call_id", None)
+                        content = getattr(msg, "content", "")
+                        result_tokens = count_tokens(str(content) if content else "")
+
+                        if tool_call_id and tool_call_id in pending_tool_calls:
+                            tc_info = pending_tool_calls.pop(tool_call_id)
+                            tool_interactions.append(
+                                {
+                                    "tool_name": tc_info["tool_name"],
+                                    "tool_args": tc_info["tool_args"],
+                                    "tool_result": content,
+                                    "tokens": {
+                                        "output_tokens": tc_info["arg_tokens"],
+                                        "input_tokens": result_tokens,
+                                    },
+                                }
+                            )
+                        else:
+                            tool_name = getattr(msg, "name", "unknown")
+                            tool_interactions.append(
+                                {
+                                    "tool_name": tool_name,
+                                    "tool_args": {},
+                                    "tool_result": content,
+                                    "tokens": {
+                                        "output_tokens": 0,
+                                        "input_tokens": result_tokens,
+                                    },
+                                }
+                            )
+
+                self.last_usage = accumulated_usage
+                self.last_tool_interactions = tool_interactions if tool_interactions else None
+                self.last_tool_tokens = (
+                    {
+                        "tool_output_tokens": sum(t["tokens"]["output_tokens"] for t in tool_interactions),
+                        "tool_input_tokens": sum(t["tokens"]["input_tokens"] for t in tool_interactions),
+                    }
+                    if tool_interactions
+                    else None
+                )
+
                 last_message = messages[-1]
-                self.last_usage = self._extract_usage(last_message)
                 if hasattr(last_message, "content"):
                     output = last_message.content
                 elif isinstance(last_message, dict):
@@ -264,11 +337,15 @@ class LangChainProvider(BaseAIProvider):
                 else:
                     output = str(last_message)
             else:
-                output = result.get("output", result.get("result", ""))
+                output = agent_result.get("output", agent_result.get("result", ""))
                 self.last_usage = None
+                self.last_tool_tokens = None
+                self.last_tool_interactions = None
         else:
-            output = str(result)
+            output = str(agent_result)
             self.last_usage = None
+            self.last_tool_tokens = None
+            self.last_tool_interactions = None
 
         content = self._extract_text_from_content(output) if output else ""
         return ChatResult(content=content, usage=self.last_usage)
@@ -286,6 +363,8 @@ class LangChainProvider(BaseAIProvider):
     def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str | dict, None, None]:
         agent_messages = self._build_agent_messages(history, prompt)
         self.last_usage = None
+        self.last_tool_tokens = None
+        self.last_tool_interactions = None
 
         if not self.agent:
             last_chunk = None
@@ -297,7 +376,10 @@ class LangChainProvider(BaseAIProvider):
                 self.last_usage = self._extract_usage(last_chunk)
             return
 
-        last_ai_message = None
+        accumulated_usage: dict[str, int] | None = None
+        tool_interactions: list[dict] = []
+        pending_tool_calls: dict[str, dict] = {}
+
         for event in self.agent.stream({"messages": agent_messages}, stream_mode="messages", **kwargs):
             if not (isinstance(event, tuple) and len(event) >= 1):
                 continue
@@ -305,30 +387,81 @@ class LangChainProvider(BaseAIProvider):
             message_class = message.__class__.__name__
 
             if "Tool" in message_class:
+                tool_call_id = getattr(message, "tool_call_id", None)
+                tool_name = getattr(message, "name", "unknown")
+                content = getattr(message, "content", "")
+                result_tokens = count_tokens(str(content) if content else "")
+
+                if tool_call_id and tool_call_id in pending_tool_calls:
+                    tc_info = pending_tool_calls.pop(tool_call_id)
+                    tool_interactions.append(
+                        {
+                            "tool_name": tc_info["tool_name"],
+                            "tool_args": tc_info["tool_args"],
+                            "tool_result": content,
+                            "tokens": {
+                                "output_tokens": tc_info["arg_tokens"],
+                                "input_tokens": result_tokens,
+                            },
+                        }
+                    )
+                else:
+                    tool_interactions.append(
+                        {
+                            "tool_name": tool_name,
+                            "tool_args": {},
+                            "tool_result": content,
+                            "tokens": {
+                                "output_tokens": 0,
+                                "input_tokens": result_tokens,
+                            },
+                        }
+                    )
+
                 yield {
                     "__tool_call_end__": True,
-                    "tool_name": getattr(message, "name", "unknown"),
-                    "tool_result_preview": str(getattr(message, "content", ""))[:200],
+                    "tool_name": tool_name,
+                    "tool_call_id": tool_call_id,
+                    "tool_result_preview": str(content)[:200],
                 }
                 continue
 
             if "AIMessage" in message_class:
-                last_ai_message = message
+                u = self._extract_usage(message)
+                if u:
+                    if accumulated_usage is None:
+                        accumulated_usage = dict.fromkeys(u, 0)
+                    for k in u:
+                        accumulated_usage[k] = accumulated_usage.get(k, 0) + u[k]
 
                 if hasattr(message, "tool_calls") and message.tool_calls:
                     yield from self._yield_content(message.content)
                     for tc in message.tool_calls:
+                        tc_id = tc.get("id") or tc.get("name", "unknown")
+                        args_json = json.dumps(tc.get("args", {}))
+                        arg_tokens = count_tokens(args_json)
+                        pending_tool_calls[tc_id] = {
+                            "tool_name": tc.get("name", "unknown"),
+                            "tool_args": tc.get("args", {}),
+                            "arg_tokens": arg_tokens,
+                        }
                         yield {
                             "__tool_call_start__": True,
                             "tool_name": tc.get("name", "unknown"),
+                            "tool_call_id": tc_id,
                             "tool_args": tc.get("args", {}),
                         }
                     continue
 
                 yield from self._yield_content(message.content)
 
-        if last_ai_message is not None:
-            self.last_usage = self._extract_usage(last_ai_message)
+        self.last_usage = accumulated_usage
+        if tool_interactions:
+            self.last_tool_interactions = tool_interactions
+            self.last_tool_tokens = {
+                "tool_output_tokens": sum(t["tokens"]["output_tokens"] for t in tool_interactions),
+                "tool_input_tokens": sum(t["tokens"]["input_tokens"] for t in tool_interactions),
+            }
 
     def get_models(self) -> list[dict[str, Any]]:
         """Default implementation returns empty list.
