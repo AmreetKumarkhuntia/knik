@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ....core.config import Config
 from ....utils import printer
-from ..token_utils import count_tokens, get_context_window, register_context_window
+from ..token_utils import count_message_tokens, count_tokens, get_context_window, register_context_window
 
 
 if TYPE_CHECKING:
@@ -151,6 +151,7 @@ class LangChainProvider(BaseAIProvider):
         self.last_usage: dict[str, int] | None = None
         self.last_tool_tokens: dict | None = None
         self.last_tool_interactions: list | None = None
+        self.last_context_tokens: int = 0
 
         self.agent = agent
         self.mcp_registry = mcp_registry
@@ -180,6 +181,21 @@ class LangChainProvider(BaseAIProvider):
                     printer.success(f"✓ {provider_name} initialized with agent (no tools available)")
             else:
                 printer.success(f"✓ {provider_name} initialized (no tools)")
+
+    @staticmethod
+    def _count_history_tokens(history) -> int:
+        if not history:
+            return 0
+        dicts = []
+        for m in history:
+            mtype = getattr(m, "type", "")
+            if mtype in ("human", "ai"):
+                role = "user" if mtype == "human" else "assistant"
+                content = getattr(m, "content", "")
+                if not isinstance(content, str):
+                    content = ""
+                dicts.append({"role": role, "content": content})
+        return count_message_tokens(dicts) if dicts else 0
 
     def _extract_text_from_content(self, content) -> str:
         if isinstance(content, str):
@@ -245,6 +261,7 @@ class LangChainProvider(BaseAIProvider):
         Chat with AI. Uses agent with tools if available, otherwise direct LLM call.
         Returns ChatResult with content and usage metadata.
         """
+        self.last_context_tokens = self._count_history_tokens(history)
         agent_messages = self._build_agent_messages(history, prompt)
 
         if not self.agent:
@@ -361,6 +378,7 @@ class LangChainProvider(BaseAIProvider):
                         yield text
 
     def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str | dict, None, None]:
+        self.last_context_tokens = self._count_history_tokens(history)
         agent_messages = self._build_agent_messages(history, prompt)
         self.last_usage = None
         self.last_tool_tokens = None

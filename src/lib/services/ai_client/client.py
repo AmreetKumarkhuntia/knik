@@ -72,6 +72,7 @@ class AIClient:
         self.last_usage: dict[str, int] | None = None
         self.last_tool_tokens: dict | None = None
         self.last_tool_interactions: list | None = None
+        self.last_context_tokens: int = 0
         self._system_instruction = system_instruction
         self._provider_kwargs = dict(provider_kwargs)
 
@@ -188,11 +189,13 @@ class AIClient:
                 self.last_usage = result.usage
                 self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
                 self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
+                self.last_context_tokens = getattr(self._provider, "last_context_tokens", 0)
                 return result.content
             else:
                 self.last_usage = getattr(self._provider, "last_usage", None)
                 self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
                 self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
+                self.last_context_tokens = getattr(self._provider, "last_context_tokens", 0)
                 return result
         except Exception as e:
             error_msg = f"Chat error: {e}"
@@ -200,6 +203,7 @@ class AIClient:
             self.last_usage = None
             self.last_tool_tokens = None
             self.last_tool_interactions = None
+            self.last_context_tokens = 0
             return error_msg
 
     def chat_stream(
@@ -232,6 +236,7 @@ class AIClient:
             self.last_usage = None
             self.last_tool_tokens = None
             self.last_tool_interactions = None
+            self.last_context_tokens = 0
             yield from self._provider.chat_stream(
                 prompt=prompt,
                 max_tokens=max_tokens,
@@ -242,12 +247,14 @@ class AIClient:
             self.last_usage = getattr(self._provider, "last_usage", None)
             self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
             self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
+            self.last_context_tokens = getattr(self._provider, "last_context_tokens", 0)
         except Exception as e:
             error_msg = f"Chat streaming error: {e}"
             printer.error(error_msg)
             self.last_usage = None
             self.last_tool_tokens = None
             self.last_tool_interactions = None
+            self.last_context_tokens = 0
             yield error_msg
 
     async def achat(
@@ -580,6 +587,8 @@ class AIClient:
             # Provider already included tool tokens in input/output; mark as zero
             # so downstream code can distinguish "not tracked" from "counted above".
             usage = {**usage, "tool_input_tokens": 0, "tool_output_tokens": 0}
+
+        usage["context_tokens"] = self.last_context_tokens or 0
 
         msg_metadata: dict[str, Any] = dict(meta)
         msg_metadata["usage"] = usage

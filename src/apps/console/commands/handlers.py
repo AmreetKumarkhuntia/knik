@@ -84,7 +84,7 @@ def handle_provider(command_service: CommandService, args: str, user_id: str) ->
 def handle_status(command_service: CommandService, args: str, user_id: str) -> CommandResult:
     status = asyncio.run(command_service.get_status(user_id))
     conv_display = status.conversation_id if status.conversation_id else "None (new session)"
-    message = f"Status:\n  Provider: {status.provider}\n  Model: {status.model}\n  Session: {conv_display}"
+    message = f"Status:\n  Provider: {status.provider}\n  Model:    {status.model}\n  Session:  {conv_display}"
 
     if status.has_partial_data:
         breakdown_note = " (partial)"
@@ -98,12 +98,22 @@ def handle_status(command_service: CommandService, args: str, user_id: str) -> C
         total_note += ", estimated" if status.had_summarization else " (estimated)"
 
     message += (
-        f"\n  Tokens:  {status.input_tokens:,} in / {status.output_tokens:,} out{breakdown_note}"
+        f"\n  Tokens:   {status.input_tokens:,} in / {status.output_tokens:,} out{breakdown_note}"
         f" / {status.total_tokens:,} total{total_note}"
     )
 
+    if status.last_input_tokens and status.context_window_size:
+        pct = status.last_input_tokens / status.context_window_size * 100
+        ctx_note = f" ({pct:.1f}%)"
+        if pct >= 80:
+            ctx_note += "  ⚠ approaching limit"
+        message += f"\n  Context:  {status.last_input_tokens:,} / {status.context_window_size:,}{ctx_note}"
+
+    if status.context_tokens:
+        message += f"\n  History:  ~{status.context_tokens:,} ctx tokens"
+
     if status.estimated_cost_usd is not None:
-        message += f"\n  Cost:    ~${status.estimated_cost_usd:.6f}"
+        message += f"\n  Cost:     ~${status.estimated_cost_usd:.6f}"
 
     data = {
         "provider": status.provider,
@@ -116,6 +126,9 @@ def handle_status(command_service: CommandService, args: str, user_id: str) -> C
         "has_partial_data": status.has_partial_data,
         "had_summarization": status.had_summarization,
         "estimated_cost_usd": status.estimated_cost_usd,
+        "context_tokens": status.context_tokens,
+        "last_input_tokens": status.last_input_tokens,
+        "context_window_size": status.context_window_size,
     }
     return CommandResult(success=True, message=message, data=data)
 

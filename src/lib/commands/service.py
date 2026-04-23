@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from lib.services.ai_client.pricing import get_cost
 from lib.services.ai_client.registry import ProviderRegistry
+from lib.services.ai_client.token_utils import get_context_window
 from lib.utils.printer import printer
 
 from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
@@ -159,6 +161,8 @@ class CommandService:
         has_estimates = False
         has_partial_data = False
         had_summarization = False
+        total_context_tokens = 0
+        last_input_tokens = 0
         if conv_id:
             ConversationDB = await self._get_db()
             usage = await ConversationDB.get_conversation_token_usage(conv_id)
@@ -168,10 +172,11 @@ class CommandService:
             has_estimates = usage["has_estimates"]
             has_partial_data = usage["partial_data"]
             had_summarization = usage["had_summarization"]
-
-        from lib.services.ai_client.pricing import get_cost
+            total_context_tokens = usage["total_context_tokens"]
+            last_input_tokens = usage["last_input_tokens"]
 
         estimated_cost_usd = get_cost(model, input_tokens, output_tokens)
+        context_window_size = get_context_window(model)
 
         return StatusInfo(
             provider=self._ai_client.provider_name,
@@ -185,6 +190,9 @@ class CommandService:
             has_partial_data=has_partial_data,
             had_summarization=had_summarization,
             estimated_cost_usd=estimated_cost_usd,
+            context_tokens=total_context_tokens,
+            last_input_tokens=last_input_tokens,
+            context_window_size=context_window_size,
         )
 
     async def _resolve_conversation_id(self, ref: str) -> str | None:

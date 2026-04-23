@@ -36,6 +36,9 @@ class StatusInfo:
     has_partial_data: bool = False
     had_summarization: bool = False
     estimated_cost_usd: float | None = None
+    context_tokens: int = 0
+    last_input_tokens: int = 0
+    context_window_size: int = 0
 
 
 @dataclass
