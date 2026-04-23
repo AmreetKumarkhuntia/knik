@@ -85,10 +85,26 @@ def handle_status(command_service: CommandService, args: str, user_id: str) -> C
     status = asyncio.run(command_service.get_status(user_id))
     conv_display = status.conversation_id if status.conversation_id else "None (new session)"
     message = f"Status:\n  Provider: {status.provider}\n  Model: {status.model}\n  Session: {conv_display}"
-    if status.total_tokens > 0:
-        message += (
-            f"\n  Tokens: {status.total_tokens:,} total ({status.input_tokens:,} in / {status.output_tokens:,} out)"
-        )
+
+    if status.has_partial_data:
+        breakdown_note = " (partial)"
+    elif status.has_estimates:
+        breakdown_note = " (estimated)"
+    else:
+        breakdown_note = ""
+
+    total_note = " (since last summary)" if status.had_summarization else ""
+    if status.has_estimates or status.has_partial_data:
+        total_note += ", estimated" if status.had_summarization else " (estimated)"
+
+    message += (
+        f"\n  Tokens:  {status.input_tokens:,} in / {status.output_tokens:,} out{breakdown_note}"
+        f" / {status.total_tokens:,} total{total_note}"
+    )
+
+    if status.estimated_cost_usd is not None:
+        message += f"\n  Cost:    ~${status.estimated_cost_usd:.6f}"
+
     data = {
         "provider": status.provider,
         "model": status.model,
@@ -96,6 +112,10 @@ def handle_status(command_service: CommandService, args: str, user_id: str) -> C
         "total_tokens": status.total_tokens,
         "input_tokens": status.input_tokens,
         "output_tokens": status.output_tokens,
+        "has_estimates": status.has_estimates,
+        "has_partial_data": status.has_partial_data,
+        "had_summarization": status.had_summarization,
+        "estimated_cost_usd": status.estimated_cost_usd,
     }
     return CommandResult(success=True, message=message, data=data)
 

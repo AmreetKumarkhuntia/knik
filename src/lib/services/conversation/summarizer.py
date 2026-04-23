@@ -136,7 +136,8 @@ class ConversationSummarizer:
 
         Only call this after should_summarize() returned True. Loads the
         full message history from DB, summarizes older messages, stores the
-        summary, and resets the token counter to reflect the compressed context.
+        summary, and resets the token counter to reflect the compressed context
+        plus the token cost of the summarization call itself.
 
         Prevents duplicate runs for the same conversation via a class-level guard.
         """
@@ -160,7 +161,7 @@ class ConversationSummarizer:
             msgs_to_summarize = message_dicts[: len(message_dicts) - keep_count]
             msgs_to_keep = message_dicts[len(message_dicts) - keep_count :]
 
-            new_summary = await self._run_summarization(existing_summary, msgs_to_summarize)
+            new_summary, summarization_usage = await self._run_summarization(existing_summary, msgs_to_summarize)
             if not new_summary:
                 return
 
@@ -169,12 +170,21 @@ class ConversationSummarizer:
 
             remaining_tokens = count_message_tokens(msgs_to_keep, model=self._model)
             summary_tokens = count_message_tokens([{"role": "system", "content": new_summary}], model=self._model)
-            await ConversationDB.reset_total_tokens(conversation_id, remaining_tokens + summary_tokens)
 
+            # Include the token cost of the summarization LLM call itself so that
+            # the total_tokens counter is a complete record of spending, not just
+            # the compressed context window size.
+            summarization_call_tokens = summarization_usage.get("total_tokens", 0) if summarization_usage else 0
+            new_total = remaining_tokens + summary_tokens + summarization_call_tokens
+
+            await ConversationDB.reset_total_tokens(conversation_id, new_total)
+
+            estimated_note = " (estimated)" if summarization_usage and summarization_usage.get("estimated") else ""
             printer.info(
                 f"Summarization complete for {conversation_id}: "
-                f"compressed to {remaining_tokens + summary_tokens} tokens "
-                f"(through index {new_through_index})"
+                f"compressed to {remaining_tokens + summary_tokens} context tokens "
+                f"+ {summarization_call_tokens} summarization call tokens{estimated_note} "
+                f"= {new_total} total (through index {new_through_index})"
             )
 
         except Exception as e:
@@ -186,8 +196,14 @@ class ConversationSummarizer:
         self,
         existing_summary: str | None,
         messages_to_summarize: list[dict[str, Any]],
-    ) -> str | None:
-        """Call the LLM to produce a summary."""
+    ) -> tuple[str | None, dict[str, int] | None]:
+        """Call the LLM to produce a summary.
+
+        Returns:
+            (summary_text, usage_dict) — usage_dict may have ``"estimated": True``
+            when the provider did not report token counts.  Returns ``(None, None)``
+            on failure.
+        """
         prompt = _SUMMARIZE_PROMPT.format(
             previous_summary_section=_format_previous_summary(existing_summary),
             messages=_format_messages_for_prompt(messages_to_summarize),
@@ -201,9 +217,24 @@ class ConversationSummarizer:
                 temperature=0.3,
             )
             summary = summary.strip() if summary else None
-            if summary:
-                printer.info(f"Generated summary ({len(summary)} chars)")
-            return summary
+            if not summary:
+                return None, None
+
+            printer.info(f"Generated summary ({len(summary)} chars)")
+
+            # Capture provider-reported usage; fall back to tiktoken estimate.
+            usage = self._ai_client.last_usage
+            if usage is None:
+                input_tokens = count_message_tokens([{"role": "user", "content": prompt}], model=self._model)
+                output_tokens = count_message_tokens([{"role": "assistant", "content": summary}], model=self._model)
+                usage = {
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "total_tokens": input_tokens + output_tokens,
+                    "estimated": True,
+                }
+
+            return summary, usage
         except Exception as e:
             printer.error(f"Summarization LLM call failed: {e}")
-            return None
+            return None, None

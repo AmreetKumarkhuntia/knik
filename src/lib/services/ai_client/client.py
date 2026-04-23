@@ -70,6 +70,8 @@ class AIClient:
         self._mcp_registry = mcp_registry
         self.tool_callback = tool_callback
         self.last_usage: dict[str, int] | None = None
+        self.last_tool_tokens: dict | None = None
+        self.last_tool_interactions: list | None = None
         self._system_instruction = system_instruction
         self._provider_kwargs = dict(provider_kwargs)
 
@@ -160,7 +162,8 @@ class AIClient:
         Tool usage is automatic - if mcp_registry was provided during initialization,
         the AI can use registered tools. Otherwise, it's just a direct LLM call.
 
-        Token usage from the call is stored in self.last_usage after completion.
+        Token usage from the call is stored in ``self.last_usage``,
+        ``self.last_tool_tokens``, and ``self.last_tool_interactions`` after completion.
 
         Args:
             prompt: The user's message
@@ -183,14 +186,20 @@ class AIClient:
 
             if isinstance(result, ChatResult):
                 self.last_usage = result.usage
+                self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
+                self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
                 return result.content
             else:
                 self.last_usage = getattr(self._provider, "last_usage", None)
+                self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
+                self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
                 return result
         except Exception as e:
             error_msg = f"Chat error: {e}"
             printer.error(error_msg)
             self.last_usage = None
+            self.last_tool_tokens = None
+            self.last_tool_interactions = None
             return error_msg
 
     def chat_stream(
@@ -221,6 +230,8 @@ class AIClient:
         """
         try:
             self.last_usage = None
+            self.last_tool_tokens = None
+            self.last_tool_interactions = None
             yield from self._provider.chat_stream(
                 prompt=prompt,
                 max_tokens=max_tokens,
@@ -229,10 +240,14 @@ class AIClient:
                 **kwargs,
             )
             self.last_usage = getattr(self._provider, "last_usage", None)
+            self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
+            self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
         except Exception as e:
             error_msg = f"Chat streaming error: {e}"
             printer.error(error_msg)
             self.last_usage = None
+            self.last_tool_tokens = None
+            self.last_tool_interactions = None
             yield error_msg
 
     async def achat(
@@ -305,7 +320,7 @@ class AIClient:
             summary, _ = await self._conversation_db().get_summary(conversation_id)
             history = self._conversation_summarizer().inject_summary(summary, history or [])
 
-        response_text, usage = await asyncio.to_thread(
+        response_text, usage, tool_interactions = await asyncio.to_thread(
             self._chat_with_usage,
             prompt,
             history,
@@ -323,6 +338,7 @@ class AIClient:
                 meta=meta,
                 disable_summarization=disable_summarization,
                 history=history,
+                tool_interactions=tool_interactions,
             )
 
         return response_text, conversation_id, usage
@@ -420,6 +436,7 @@ class AIClient:
         await producer
 
         usage = self.last_usage
+        tool_interactions = self.last_tool_interactions
 
         if conversation_id and full_response.strip():
             await self._post_chat(
@@ -430,6 +447,7 @@ class AIClient:
                 meta=meta,
                 disable_summarization=disable_summarization,
                 history=history,
+                tool_interactions=tool_interactions,
             )
 
         yield {
@@ -446,10 +464,10 @@ class AIClient:
         max_tokens: int,
         temperature: float,
         **kwargs,
-    ) -> tuple[str, dict[str, int] | None]:
+    ) -> tuple[str, dict[str, int] | None, list | None]:
         """Call :meth:`chat` and atomically capture usage on the same thread.
 
-        Returns ``(response_text, usage_dict_or_none)``.
+        Returns ``(response_text, usage_dict_or_none, tool_interactions_or_none)``.
         """
         text = self.chat(
             prompt=prompt,
@@ -458,7 +476,7 @@ class AIClient:
             history=history,
             **kwargs,
         )
-        return text, self.last_usage
+        return text, self.last_usage, self.last_tool_interactions
 
     @classmethod
     async def _ensure_conversation(cls, conversation_id: str | None) -> str | None:
@@ -528,13 +546,17 @@ class AIClient:
         meta: dict[str, str],
         disable_summarization: bool,
         history: list | None = None,
+        tool_interactions: list | None = None,
     ) -> None:
         """Handle post-call persistence: save response, track tokens,
         trigger summarisation, and auto-generate title.
 
         When the provider did not report usage (common for streaming and
         agent paths), a tiktoken-based estimate is used so that
-        ``total_tokens`` always advances.
+        ``total_tokens`` always advances.  Tool token counts (from
+        ``self.last_tool_tokens``) are folded into the estimate when
+        available; for provider-reported usage they are stored as zeros
+        (the provider already included them in input/output counts).
 
         All operations are DB-resilient (ConversationDB methods no-op
         on failure), so this method never raises.
@@ -544,10 +566,25 @@ class AIClient:
 
         model_name = self.get_model_name()
         if usage is None:
-            usage = self._estimate_usage(prompt, response_text, model_name, history=history)
+            base_usage = self._estimate_usage(prompt, response_text, model_name, history=history)
+            tool_tokens = self.last_tool_tokens or {}
+            tool_input = tool_tokens.get("tool_input_tokens", 0)
+            tool_output = tool_tokens.get("tool_output_tokens", 0)
+            usage = {
+                **base_usage,
+                "tool_input_tokens": tool_input,
+                "tool_output_tokens": tool_output,
+                "total_tokens": base_usage["total_tokens"] + tool_input + tool_output,
+            }
+        else:
+            # Provider already included tool tokens in input/output; mark as zero
+            # so downstream code can distinguish "not tracked" from "counted above".
+            usage = {**usage, "tool_input_tokens": 0, "tool_output_tokens": 0}
 
         msg_metadata: dict[str, Any] = dict(meta)
         msg_metadata["usage"] = usage
+        if tool_interactions:
+            msg_metadata["tool_calls"] = tool_interactions
 
         await db.append_message(
             conversation_id=conversation_id,
@@ -572,7 +609,6 @@ class AIClient:
                     usage["total_tokens"],
                 )
 
-        # Auto-generate title after the first exchange (2 messages = 1 user + 1 assistant)
         msg_count = await db.get_message_count(conversation_id)
         if msg_count == 2:
             self._schedule_background(

@@ -226,36 +226,79 @@ class ConversationDB:
             return []
 
     @staticmethod
-    async def get_conversation_token_usage(conversation_id: str) -> dict[str, int]:
+    async def get_conversation_token_usage(conversation_id: str) -> dict:
         """Get aggregated token usage for a conversation.
 
-        Sums up input_tokens, output_tokens, and total_tokens from all
-        messages that have usage data in their metadata.
+        Fetches messages, total_tokens (DB column), and summary_through_index
+        in a single query so callers don't need extra round-trips.
 
-        Returns zeroed dict if DB is unavailable.
+        Returns:
+            total_input      – sum of input_tokens across messages with usage metadata
+            total_output     – sum of output_tokens across messages with usage metadata
+            total            – sum of total_tokens across messages with usage metadata
+            db_total         – authoritative running total from the conversations.total_tokens
+                               column (incremented every turn, reset after summarization to
+                               compressed_context + summarization_call_cost)
+            has_estimates    – True if any message usage was tiktoken-estimated
+            partial_data     – True if some assistant messages are missing usage metadata
+                               (typical for sessions started before token tracking was added)
+            had_summarization – True if the conversation has been summarized at least once
         """
-        _zero = {"total_input": 0, "total_output": 0, "total": 0}
+        _zero = {
+            "total_input": 0,
+            "total_output": 0,
+            "total": 0,
+            "db_total": 0,
+            "has_estimates": False,
+            "partial_data": False,
+            "had_summarization": False,
+        }
         try:
             await ConversationDB._ensure_initialized()
-            query = "SELECT messages FROM conversations WHERE id = %s"
+            query = """
+                SELECT messages, total_tokens, summary_through_index
+                FROM conversations
+                WHERE id = %s
+            """
             row = await PostgresDB.fetch_one(query, (conversation_id,))
             if not row:
                 return _zero
 
             raw_messages = row.get("messages", [])
+            db_total = row.get("total_tokens") or 0
+            had_summarization = row.get("summary_through_index") is not None
+
             total_input = 0
             total_output = 0
             total = 0
+            has_estimates = False
+            assistant_msgs = 0
+            assistant_msgs_with_usage = 0
 
             for msg in raw_messages:
-                metadata = msg.get("metadata", {})
-                usage = metadata.get("usage")
-                if usage and isinstance(usage, dict):
-                    total_input += usage.get("input_tokens", 0)
-                    total_output += usage.get("output_tokens", 0)
-                    total += usage.get("total_tokens", 0)
+                if msg.get("role") == "assistant":
+                    assistant_msgs += 1
+                    metadata = msg.get("metadata", {})
+                    usage = metadata.get("usage")
+                    if usage and isinstance(usage, dict):
+                        assistant_msgs_with_usage += 1
+                        total_input += usage.get("input_tokens", 0) + usage.get("tool_input_tokens", 0)
+                        total_output += usage.get("output_tokens", 0) + usage.get("tool_output_tokens", 0)
+                        total += usage.get("total_tokens", 0)
+                        if usage.get("estimated"):
+                            has_estimates = True
 
-            return {"total_input": total_input, "total_output": total_output, "total": total}
+            partial_data = assistant_msgs > 0 and assistant_msgs_with_usage < assistant_msgs
+
+            return {
+                "total_input": total_input,
+                "total_output": total_output,
+                "total": total,
+                "db_total": db_total,
+                "has_estimates": has_estimates,
+                "partial_data": partial_data,
+                "had_summarization": had_summarization,
+            }
         except Exception as e:
             printer.debug(f"DB unavailable for get_conversation_token_usage: {e}")
             return _zero

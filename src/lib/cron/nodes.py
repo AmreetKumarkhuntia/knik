@@ -189,7 +189,7 @@ class AIExecutionNode(BaseNode):
             # Offload the entire client construction + synchronous LangChain
             # .invoke() call to a worker thread so nothing blocks the asyncio
             # event loop (matches the web backend _build_ai + to_thread pattern).
-            def _build_and_chat() -> str:
+            def _build_and_chat() -> tuple[str, dict | None]:
                 if self.use_tools:
                     mcp_registry = MCPServerRegistry()
                     register_all_tools(mcp_registry)
@@ -202,10 +202,31 @@ class AIExecutionNode(BaseNode):
                     temperature=self.temperature,
                     mcp_registry=mcp_registry,
                 )
-                return ai_client.chat(prompt=resolved_prompt)
+                chat_response = ai_client.chat(prompt=resolved_prompt)
+                usage = ai_client.last_usage
+                if usage is None:
+                    usage = AIClient._estimate_usage(resolved_prompt, chat_response, self.model)
+                return chat_response, usage
 
-            response = await asyncio.to_thread(_build_and_chat)
-            return {"status": "success", "output": response}
+            response, usage = await asyncio.to_thread(_build_and_chat)
+
+            if usage:
+                in_tok = usage.get("input_tokens", 0)
+                out_tok = usage.get("output_tokens", 0)
+                total_tok = usage.get("total_tokens", 0)
+                estimated = " (estimated)" if usage.get("estimated") else ""
+                logger.info(f"[{self.node_id}] Token usage: {in_tok} in / {out_tok} out / {total_tok} total{estimated}")
+
+            return {
+                "status": "success",
+                "output": response,
+                "tokens": {
+                    "input_tokens": usage.get("input_tokens", 0) if usage else 0,
+                    "output_tokens": usage.get("output_tokens", 0) if usage else 0,
+                    "total_tokens": usage.get("total_tokens", 0) if usage else 0,
+                    "estimated": usage.get("estimated", False) if usage else False,
+                },
+            }
         except Exception as e:
             logger.error(f"[{self.node_id}] AI execution failed: {e}")
             raise RuntimeError(f"AI execution failed: {e}") from e
