@@ -252,6 +252,8 @@ class ConversationDB:
             "has_estimates": False,
             "partial_data": False,
             "had_summarization": False,
+            "total_context_tokens": 0,
+            "last_input_tokens": 0,
         }
         try:
             await ConversationDB._ensure_initialized()
@@ -274,6 +276,8 @@ class ConversationDB:
             has_estimates = False
             assistant_msgs = 0
             assistant_msgs_with_usage = 0
+            total_context_tokens = 0
+            last_input_tokens = 0
 
             for msg in raw_messages:
                 if msg.get("role") == "assistant":
@@ -287,6 +291,8 @@ class ConversationDB:
                         total += usage.get("total_tokens", 0)
                         if usage.get("estimated"):
                             has_estimates = True
+                        total_context_tokens += usage.get("context_tokens", 0)
+                        last_input_tokens = usage.get("input_tokens", 0)
 
             partial_data = assistant_msgs > 0 and assistant_msgs_with_usage < assistant_msgs
 
@@ -298,6 +304,8 @@ class ConversationDB:
                 "has_estimates": has_estimates,
                 "partial_data": partial_data,
                 "had_summarization": had_summarization,
+                "total_context_tokens": total_context_tokens,
+                "last_input_tokens": last_input_tokens,
             }
         except Exception as e:
             printer.debug(f"DB unavailable for get_conversation_token_usage: {e}")
