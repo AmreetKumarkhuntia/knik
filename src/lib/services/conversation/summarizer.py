@@ -256,4 +256,4 @@ class ConversationCompactor:
         if not messages_to_include:
             return None
 
-        return f"{_COMPACT_SYSTEM_PROMPT}\n\n" f"Conversation to summarize:\n{formatted}\n\n" f"{_COMPACT_USER_PROMPT}"
+        return f"{_COMPACT_SYSTEM_PROMPT}\n\nConversation to summarize:\n{formatted}\n\n{_COMPACT_USER_PROMPT}"
