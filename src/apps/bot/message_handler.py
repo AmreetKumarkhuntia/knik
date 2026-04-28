@@ -121,6 +121,7 @@ class BotMessageHandler:
                     return
             except Exception as e:
                 printer.error(f"Command dispatch error: {e}")
+                await self._send_error_message(incoming, provider, str(e))
 
         async with self._lock:
             if chat_key in self._active_tasks:

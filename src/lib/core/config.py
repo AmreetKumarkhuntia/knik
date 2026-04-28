@@ -79,9 +79,10 @@ Be reliable, efficient, and action focused like Jarvis."""
 
     DEFAULT_MODEL_DISCOVERY_TIMEOUT: ClassVar[int] = 5  # seconds
 
-    DEFAULT_SUMMARIZATION_THRESHOLD: ClassVar[float] = 0.75  # trigger at 75% of context window
-    DEFAULT_SUMMARIZATION_KEEP_RECENT: ClassVar[int] = 2  # keep last N turn pairs unsummarized
-    DEFAULT_SUMMARIZATION_ENABLED: ClassVar[bool] = True
+    DEFAULT_COMPACTION_THRESHOLD: ClassVar[float] = 0.95  # trigger at 95% of context window
+    DEFAULT_COMPACTION_ENABLED: ClassVar[bool] = True
+    DEFAULT_COMPACTION_CIRCUIT_BREAKER: ClassVar[int] = 3  # stop after N consecutive failures
+    DEFAULT_COMPACTION_PROMPT_BUFFER: ClassVar[int] = 1024  # tokens reserved for summary output
 
     AI_MODELS: ClassVar[dict[str, str]] = {
         "gemini-2.0-flash-exp": "Latest experimental flash model (December 2024+)",
@@ -183,19 +184,20 @@ Be reliable, efficient, and action focused like Jarvis."""
     # Conversation history context size (number of turn-pairs sent to LLM)
     history_context_size: int = field(default_factory=lambda: Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int))
 
-    summarization_enabled: bool = field(
+    compaction_enabled: bool = field(
+        default_factory=lambda: Config.from_env("KNIK_COMPACTION_ENABLED", Config.DEFAULT_COMPACTION_ENABLED, bool)
+    )
+    compaction_threshold: float = field(
+        default_factory=lambda: Config.from_env("KNIK_COMPACTION_THRESHOLD", Config.DEFAULT_COMPACTION_THRESHOLD, float)
+    )
+    compaction_circuit_breaker: int = field(
         default_factory=lambda: Config.from_env(
-            "KNIK_SUMMARIZATION_ENABLED", Config.DEFAULT_SUMMARIZATION_ENABLED, bool
+            "KNIK_COMPACTION_CIRCUIT_BREAKER", Config.DEFAULT_COMPACTION_CIRCUIT_BREAKER, int
         )
     )
-    summarization_threshold: float = field(
+    compaction_prompt_buffer: int = field(
         default_factory=lambda: Config.from_env(
-            "KNIK_SUMMARIZATION_THRESHOLD", Config.DEFAULT_SUMMARIZATION_THRESHOLD, float
-        )
-    )
-    summarization_keep_recent: int = field(
-        default_factory=lambda: Config.from_env(
-            "KNIK_SUMMARIZATION_KEEP_RECENT", Config.DEFAULT_SUMMARIZATION_KEEP_RECENT, int
+            "KNIK_COMPACTION_PROMPT_BUFFER", Config.DEFAULT_COMPACTION_PROMPT_BUFFER, int
         )
     )
 

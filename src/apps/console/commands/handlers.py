@@ -93,7 +93,7 @@ def handle_status(command_service: CommandService, args: str, user_id: str) -> C
     else:
         breakdown_note = ""
 
-    total_note = " (since last summary)" if status.had_summarization else ""
+    total_note = " (since last compaction)" if status.had_summarization else ""
     if status.has_estimates or status.has_partial_data:
         total_note += ", estimated" if status.had_summarization else " (estimated)"
 

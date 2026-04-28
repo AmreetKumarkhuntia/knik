@@ -48,7 +48,6 @@ class BaseAIProvider(ABC):
 
     @abstractmethod
     def __init__(self, **kwargs):
-        """Initialize the provider with the given configuration."""
         pass
 
     @abstractmethod
@@ -125,7 +124,6 @@ class BaseAIProvider(ABC):
             return []
 
     def _get_context_window_for_model(self, model: str) -> int:
-        """Look up the context window size for a model."""
         return get_context_window(model)
 
 
@@ -238,7 +236,6 @@ class LangChainProvider(BaseAIProvider):
         return None
 
     def _build_agent_messages(self, history: list | None, prompt: str) -> list[dict]:
-        """Build message list for agent with conversation history."""
         messages = []
 
         if history:
@@ -289,8 +286,13 @@ class LangChainProvider(BaseAIProvider):
                         if u:
                             if accumulated_usage is None:
                                 accumulated_usage = dict.fromkeys(u, 0)
-                            for k in u:
-                                accumulated_usage[k] = accumulated_usage.get(k, 0) + u[k]
+                            accumulated_usage["input_tokens"] = u.get("input_tokens", 0)
+                            accumulated_usage["output_tokens"] = accumulated_usage.get("output_tokens", 0) + u.get(
+                                "output_tokens", 0
+                            )
+                            accumulated_usage["total_tokens"] = (
+                                accumulated_usage["input_tokens"] + accumulated_usage["output_tokens"]
+                            )
 
                         if hasattr(msg, "tool_calls") and msg.tool_calls:
                             for tc in msg.tool_calls:
@@ -449,8 +451,13 @@ class LangChainProvider(BaseAIProvider):
                 if u:
                     if accumulated_usage is None:
                         accumulated_usage = dict.fromkeys(u, 0)
-                    for k in u:
-                        accumulated_usage[k] = accumulated_usage.get(k, 0) + u[k]
+                    accumulated_usage["input_tokens"] = u.get("input_tokens", 0)
+                    accumulated_usage["output_tokens"] = accumulated_usage.get("output_tokens", 0) + u.get(
+                        "output_tokens", 0
+                    )
+                    accumulated_usage["total_tokens"] = (
+                        accumulated_usage["input_tokens"] + accumulated_usage["output_tokens"]
+                    )
 
                 if hasattr(message, "tool_calls") and message.tool_calls:
                     yield from self._yield_content(message.content)

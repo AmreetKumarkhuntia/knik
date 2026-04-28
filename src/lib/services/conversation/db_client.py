@@ -179,13 +179,13 @@ class ConversationDB:
 
             query = """
                 UPDATE conversations
-                SET messages = messages || %s::jsonb,
+                SET messages = COALESCE(messages, '[]'::jsonb) || %s::jsonb,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             """
-            await PostgresDB.execute(query, (json.dumps([message]), conversation_id))
+            await PostgresDB.execute(query, (json.dumps([message], default=str), conversation_id))
         except Exception as e:
-            printer.debug(f"DB unavailable for append_message: {e}")
+            printer.error(f"append_message failed for {conversation_id}: {e}")
 
     @staticmethod
     async def get_messages(
@@ -258,7 +258,7 @@ class ConversationDB:
         try:
             await ConversationDB._ensure_initialized()
             query = """
-                SELECT messages, total_tokens, summary_through_index
+                SELECT messages, total_tokens, summary_message_id
                 FROM conversations
                 WHERE id = %s
             """
@@ -268,7 +268,7 @@ class ConversationDB:
 
             raw_messages = row.get("messages", [])
             db_total = row.get("total_tokens") or 0
-            had_summarization = row.get("summary_through_index") is not None
+            had_summarization = row.get("summary_message_id") is not None
 
             total_input = 0
             total_output = 0
@@ -324,85 +324,135 @@ class ConversationDB:
             return 0
 
     @staticmethod
-    async def increment_total_tokens(conversation_id: str, tokens: int) -> int:
-        """Atomically add to the conversation's cumulative token count.
+    async def get_compaction_state(conversation_id: str) -> tuple[str | None, int]:
+        """Get the compaction state for a conversation.
 
-        Returns the new total, or 0 if DB is unavailable.
+        Returns ``(summary_message_id, compacted_count)``.
+        ``(None, 0)`` if no compaction has occurred or DB is unavailable.
         """
         try:
             await ConversationDB._ensure_initialized()
-            query = """
-                UPDATE conversations
-                SET total_tokens = COALESCE(total_tokens, 0) + %s
-                WHERE id = %s
-                RETURNING total_tokens
-            """
-            val = await PostgresDB.fetch_val(query, (tokens, conversation_id))
-            return val or 0
-        except Exception as e:
-            printer.debug(f"DB unavailable for increment_total_tokens: {e}")
-            return 0
-
-    @staticmethod
-    async def reset_total_tokens(conversation_id: str, tokens: int) -> None:
-        """Set the conversation's cumulative token count to a specific value.
-
-        Called after summarization compresses the context.
-        No-ops if DB is unavailable.
-        """
-        try:
-            await ConversationDB._ensure_initialized()
-            query = """
-                UPDATE conversations
-                SET total_tokens = %s
-                WHERE id = %s
-            """
-            await PostgresDB.execute(query, (tokens, conversation_id))
-        except Exception as e:
-            printer.debug(f"DB unavailable for reset_total_tokens: {e}")
-
-    @staticmethod
-    async def get_summary(conversation_id: str) -> tuple[str | None, int | None]:
-        """Get the conversation summary and the message index it covers.
-
-        Returns ``(None, None)`` if no summary exists or DB is unavailable.
-        """
-        try:
-            await ConversationDB._ensure_initialized()
-            query = "SELECT summary, summary_through_index FROM conversations WHERE id = %s"
+            query = "SELECT summary_message_id, compacted_count FROM conversations WHERE id = %s"
             row = await PostgresDB.fetch_one(query, (conversation_id,))
             if not row:
-                return None, None
-            return row.get("summary"), row.get("summary_through_index")
+                return None, 0
+            return row.get("summary_message_id"), row.get("compacted_count") or 0
         except Exception as e:
-            printer.debug(f"DB unavailable for get_summary: {e}")
-            return None, None
+            printer.debug(f"DB unavailable for get_compaction_state: {e}")
+            return None, 0
 
     @staticmethod
-    async def update_summary(conversation_id: str, summary: str, through_index: int) -> None:
-        """Store or update the conversation summary.
+    async def set_compaction_state(
+        conversation_id: str,
+        summary_message_id: str,
+        compacted_count: int,
+    ) -> None:
+        """Set the compaction pointer and failure counter.
 
         No-ops if DB is unavailable.
-
-        Args:
-            conversation_id: The conversation to update.
-            summary: The compressed summary text.
-            through_index: The message index up to which the summary covers
-                           (0-based, inclusive).
         """
         try:
             await ConversationDB._ensure_initialized()
             query = """
                 UPDATE conversations
-                SET summary = %s,
-                    summary_through_index = %s,
+                SET summary_message_id = %s,
+                    compacted_count = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             """
-            await PostgresDB.execute(query, (summary, through_index, conversation_id))
-            printer.info(f"Updated summary for conversation {conversation_id} (through index {through_index})")
+            await PostgresDB.execute(query, (summary_message_id, compacted_count, conversation_id))
+            printer.info(
+                f"Compaction state updated for {conversation_id} (summary_msg={summary_message_id}, count={compacted_count})"
+            )
         except Exception as e:
-            printer.debug(f"DB unavailable for update_summary: {e}")
+            printer.debug(f"DB unavailable for set_compaction_state: {e}")
+
+    @staticmethod
+    async def increment_compacted_count(conversation_id: str) -> int:
+        """Atomically increment the compacted_count (circuit breaker tracker).
+
+        Returns the new count, or 0 if DB is unavailable.
+        """
+        try:
+            await ConversationDB._ensure_initialized()
+            query = """
+                UPDATE conversations
+                SET compacted_count = COALESCE(compacted_count, 0) + 1
+                WHERE id = %s
+                RETURNING compacted_count
+            """
+            val = await PostgresDB.fetch_val(query, (conversation_id,))
+            return val or 0
+        except Exception as e:
+            printer.debug(f"DB unavailable for increment_compacted_count: {e}")
+            return 0
+
+    @staticmethod
+    async def get_messages_from(conversation_id: str, from_message_id: str) -> list[ConversationMessage]:
+        """Get messages starting from (and including) a specific message.
+
+        Finds the message with the given ID in the JSONB array and returns
+        it and all subsequent messages.  Returns ``[]`` if DB is unavailable
+        or the message is not found.
+        """
+        try:
+            await ConversationDB._ensure_initialized()
+            query = "SELECT messages FROM conversations WHERE id = %s"
+            row = await PostgresDB.fetch_one(query, (conversation_id,))
+            if not row:
+                return []
+
+            raw_messages = row.get("messages", [])
+            start_idx = None
+            for i, m in enumerate(raw_messages):
+                msg_meta = m.get("metadata", {})
+                if msg_meta.get("message_id") == from_message_id:
+                    start_idx = i
+                    break
+
+            if start_idx is None:
+                return [ConversationMessage.from_dict(m) for m in raw_messages]
+
+            return [ConversationMessage.from_dict(m) for m in raw_messages[start_idx:]]
+        except Exception as e:
+            printer.debug(f"DB unavailable for get_messages_from: {e}")
+            return []
+
+    @staticmethod
+    async def get_context_usage(conversation_id: str, from_message_id: str | None = None) -> int:
+        """Calculate context token usage from API-reported input_tokens.
+
+        Sums ``metadata.usage.input_tokens`` across messages in the active
+        window (from ``from_message_id`` onwards, or all if None).
+        Falls back to 0 if no API usage data is available.
+        """
+        try:
+            await ConversationDB._ensure_initialized()
+            query = "SELECT messages FROM conversations WHERE id = %s"
+            row = await PostgresDB.fetch_one(query, (conversation_id,))
+            if not row:
+                return 0
+
+            raw_messages = row.get("messages", [])
+            if from_message_id:
+                start_idx = None
+                for i, m in enumerate(raw_messages):
+                    if m.get("metadata", {}).get("message_id") == from_message_id:
+                        start_idx = i
+                        break
+                if start_idx is not None:
+                    raw_messages = raw_messages[start_idx:]
+
+            total = 0
+            for m in raw_messages:
+                usage = m.get("metadata", {}).get("usage", {})
+                input_tokens = usage.get("input_tokens", 0)
+                if input_tokens:
+                    total += input_tokens
+            return total
+        except Exception as e:
+            printer.debug(f"DB unavailable for get_context_usage: {e}")
+            return 0
 
     @staticmethod
     async def generate_and_set_title(
