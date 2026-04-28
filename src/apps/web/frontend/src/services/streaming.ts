@@ -4,6 +4,7 @@ interface StreamCallbacks {
   onComplete?: (audioChunkCount: number) => void
   onError?: (error: string) => void
   onConversationId?: (conversationId: string) => void
+  onCompaction?: (summaryMessageId: string) => void
 }
 
 interface StreamOptions {
@@ -98,6 +99,12 @@ export async function streamChat(
               parsed.conversation_id
             ) {
               callbacks.onConversationId(parsed.conversation_id)
+            } else if (
+              currentEvent === 'compaction' &&
+              callbacks.onCompaction &&
+              parsed.summary_message_id
+            ) {
+              callbacks.onCompaction(parsed.summary_message_id)
             } else if (currentEvent === 'text' && callbacks.onText && parsed.text) {
               callbacks.onText(parsed.text)
             } else if (currentEvent === 'audio' && callbacks.onAudio && parsed.audio) {

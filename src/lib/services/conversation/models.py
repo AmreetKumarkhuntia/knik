@@ -41,6 +41,9 @@ class Conversation:
     messages: list[ConversationMessage]
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    summary_message_id: str | None = None
+    compacted_count: int = 0
+    total_tokens: int = 0
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Conversation":
@@ -54,6 +57,9 @@ class Conversation:
             messages=messages,
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
+            summary_message_id=row.get("summary_message_id"),
+            compacted_count=row.get("compacted_count") or 0,
+            total_tokens=row.get("total_tokens") or 0,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -63,4 +69,7 @@ class Conversation:
             "messages": [m.to_dict() for m in self.messages],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "summary_message_id": self.summary_message_id,
+            "compacted_count": self.compacted_count,
+            "total_tokens": self.total_tokens,
         }

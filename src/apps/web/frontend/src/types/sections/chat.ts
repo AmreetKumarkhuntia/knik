@@ -11,6 +11,7 @@ export interface Message {
 export interface ChatPanelProps {
   messages: Message[]
   isLoading?: boolean
+  summaryMessageId?: string | null
 }
 
 /** Props for the chat input panel. */

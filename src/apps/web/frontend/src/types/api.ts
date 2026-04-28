@@ -28,6 +28,9 @@ export interface Conversation {
   messages: ConversationMessage[]
   created_at: string | null
   updated_at: string | null
+  summary_message_id: string | null
+  compacted_count: number
+  total_tokens: number
 }
 
 /** Paginated API response listing conversations. */

@@ -6,7 +6,7 @@ import { WelcomePrompt, SuggestionCards, WelcomeContainer, KeyboardShortcuts } f
 import type { HomeProps } from '$types/pages'
 import { useKeyboardShortcuts } from '$hooks/index'
 import { useStore } from '$store/index'
-import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS, LAYOUT } from '$lib/constants'
+import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS } from '$lib/constants'
 
 /** Home page with chat, audio controls, and welcome state. */
 export default function Home({ inputRef }: HomeProps) {
@@ -23,6 +23,7 @@ export default function Home({ inputRef }: HomeProps) {
   const audioPaused = useStore(s => s.audioPaused)
   const handleStopAudio = useStore(s => s.handleStopAudio)
   const handleTogglePause = useStore(s => s.handleTogglePause)
+  const summaryMessageId = useStore(s => s.summaryMessageId)
 
   useEffect(() => {
     const chatContainer = chatScrollRef.current
@@ -105,23 +106,24 @@ export default function Home({ inputRef }: HomeProps) {
     <div className="relative z-10 flex flex-col h-full p-6 pb-24">
       <div className="flex-1 flex flex-col items-center min-h-0">
         {messages.length === 0 ? (
-          <div
-            className="flex-1 flex flex-col justify-center w-full"
-            style={{ maxWidth: LAYOUT.maxWidthPercentage }}
-          >
+          <div className="flex-1 flex flex-col justify-center w-full" style={{ maxWidth: '90%' }}>
             <WelcomeContainer isVisible={true}>
               <WelcomePrompt />
               <SuggestionCards onSelectPrompt={handleSelectPrompt} />
             </WelcomeContainer>
           </div>
         ) : (
-          <div className="flex-1 w-full h-full" style={{ maxWidth: LAYOUT.maxWidthPercentage }}>
+          <div className="flex-1 w-full h-full" style={{ maxWidth: '90%' }}>
             <div
               ref={chatScrollRef}
               className="flex-1 overflow-y-auto py-6 scroll-smooth scrollbar-hide"
               style={{ height: '100%', contain: 'content' }}
             >
-              <ChatPanel messages={messages} isLoading={loading} />
+              <ChatPanel
+                messages={messages}
+                isLoading={loading}
+                summaryMessageId={summaryMessageId}
+              />
             </div>
           </div>
         )}
@@ -129,7 +131,7 @@ export default function Home({ inputRef }: HomeProps) {
 
       <div
         className="fixed bottom-6 left-1/2 transform -translate-x-1/2 mx-auto"
-        style={{ maxWidth: LAYOUT.maxWidthPercentage, width: '50vw' }}
+        style={{ maxWidth: '90%', width: '42vw' }}
       >
         <AudioControls
           isPlayingOrLoading={audioPlaying || loading}

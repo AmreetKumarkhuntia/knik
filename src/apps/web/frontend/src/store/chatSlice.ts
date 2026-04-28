@@ -16,11 +16,13 @@ export interface ChatSlice {
   inputText: string
   loading: boolean
   conversationId: string | null
+  summaryMessageId: string | null
 
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void
   setInputText: (text: string) => void
   setLoading: (loading: boolean) => void
   setConversationId: (id: string | null) => void
+  setSummaryMessageId: (id: string | null) => void
   handleNewChat: () => void
   handleClearHistory: () => Promise<void>
   loadConversation: (id: string) => Promise<void>
@@ -38,6 +40,7 @@ export const createChatSlice: StateCreator<
   inputText: '',
   loading: false,
   conversationId: null,
+  summaryMessageId: null,
 
   setMessages: messagesOrUpdater => {
     if (typeof messagesOrUpdater === 'function') {
@@ -50,13 +53,14 @@ export const createChatSlice: StateCreator<
   setInputText: (text: string) => set({ inputText: text }),
   setLoading: (loading: boolean) => set({ loading }),
   setConversationId: (id: string | null) => set({ conversationId: id }),
+  setSummaryMessageId: (id: string | null) => set({ summaryMessageId: id }),
 
   handleNewChat: () => {
-    set({ messages: [], inputText: '', conversationId: null })
+    set({ messages: [], inputText: '', conversationId: null, summaryMessageId: null })
   },
 
   handleClearHistory: async () => {
-    set({ messages: [], inputText: '', conversationId: null })
+    set({ messages: [], inputText: '', conversationId: null, summaryMessageId: null })
     try {
       await ApiClient.chat.clearHistory()
       get().success('History cleared!')
@@ -76,7 +80,12 @@ export const createChatSlice: StateCreator<
         timestamp: m.timestamp,
         metadata: m.metadata,
       }))
-      set({ messages: loadedMessages, conversationId: id, inputText: '' })
+      set({
+        messages: loadedMessages,
+        conversationId: id,
+        inputText: '',
+        summaryMessageId: conversation.summary_message_id ?? null,
+      })
     } catch (err) {
       console.error('Failed to load conversation:', err)
       get().error('Failed to load conversation')
@@ -109,6 +118,9 @@ export const createChatSlice: StateCreator<
         {
           onConversationId: (id: string) => {
             set({ conversationId: id })
+          },
+          onCompaction: (summaryMessageId: string) => {
+            set({ summaryMessageId })
           },
           onText: (textChunk: string) => {
             set(state => {

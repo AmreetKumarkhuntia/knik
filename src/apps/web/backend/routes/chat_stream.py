@@ -26,6 +26,7 @@ sys.path.insert(0, str(src_path))
 from apps.web.backend import state
 from apps.web.backend.config import WebBackendConfig
 from imports import printer
+from lib.services.conversation import ConversationDB
 from lib.services.tts.utils import is_speakable
 
 
@@ -99,6 +100,9 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
         sentence_endings = [".", "!", "?", "\n"]
         audio_count = 0
         active_conversation_id = conversation_id
+        pre_compaction_state, _ = (
+            await ConversationDB.get_compaction_state(conversation_id) if conversation_id else (None, 0)
+        )
 
         async for chunk in ai_client.achat_stream(
             prompt=prompt,
@@ -149,6 +153,11 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
                         f"{usage.get('total_tokens', 0)} total"
                     )
                     yield f"event: usage\ndata: {json.dumps({'usage': usage})}\n\n"
+
+                if active_conversation_id:
+                    post_compaction_state, _ = await ConversationDB.get_compaction_state(active_conversation_id)
+                    if post_compaction_state and post_compaction_state != pre_compaction_state:
+                        yield f"event: compaction\ndata: {json.dumps({'summary_message_id': post_compaction_state})}\n\n"
 
                 printer.info(f"Stream complete: sent {audio_count} audio chunks")
                 yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
