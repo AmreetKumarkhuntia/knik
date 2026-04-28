@@ -10,6 +10,7 @@
 The Sidebar has a `<Settings />` icon button with no `onClick` handler and no route — clicking it does nothing. There is no settings page in the frontend. The admin API (`GET/POST /api/admin/settings`) handles provider, model, voice, api_base, and api_key — but has no browser-related settings. Browser config is only settable via `.env` variables (`KNIK_BROWSER_HEADLESS`, `KNIK_BROWSER_PROFILE_DIR`).
 
 Users currently cannot:
+
 - View or change the active AI model or provider from the UI (except via `.env`)
 - Configure browser headless mode or profile directory at runtime
 - See any of the current settings in one place
@@ -27,15 +28,15 @@ Users currently cannot:
 
 ## Key Files
 
-| File | Change |
-|------|--------|
-| `src/apps/web/frontend/src/lib/sections/layout/Sidebar.tsx` | Add `onClick` to settings icon — open settings modal or navigate to `/settings` |
-| `src/apps/web/frontend/src/lib/pages/Settings.tsx` | **New** — settings page component |
-| `src/apps/web/frontend/src/lib/sections/settings/` | **New** — settings sections (general, browser, etc.) |
-| `src/apps/web/frontend/src/services/api.ts` | Add `settingsApi` methods for GET/POST settings |
-| `src/apps/web/frontend/src/App.tsx` | Add `/settings` route if using a page (not a modal) |
-| `src/apps/web/backend/routes/admin.py` | Extend `SettingsUpdate` model and `POST /api/admin/settings` to include browser fields |
-| `src/lib/core/config.py` | Expose browser config fields as mutable at runtime (similar to model/api_key) |
+| File                                                        | Change                                                                                 |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/apps/web/frontend/src/lib/sections/layout/Sidebar.tsx` | Add `onClick` to settings icon — open settings modal or navigate to `/settings`        |
+| `src/apps/web/frontend/src/lib/pages/Settings.tsx`          | **New** — settings page component                                                      |
+| `src/apps/web/frontend/src/lib/sections/settings/`          | **New** — settings sections (general, browser, etc.)                                   |
+| `src/apps/web/frontend/src/services/api.ts`                 | Add `settingsApi` methods for GET/POST settings                                        |
+| `src/apps/web/frontend/src/App.tsx`                         | Add `/settings` route if using a page (not a modal)                                    |
+| `src/apps/web/backend/routes/admin.py`                      | Extend `SettingsUpdate` model and `POST /api/admin/settings` to include browser fields |
+| `src/lib/core/config.py`                                    | Expose browser config fields as mutable at runtime (similar to model/api_key)          |
 
 ---
 

@@ -14,13 +14,13 @@ Do not put shared/reusable code in `src/apps/`. Do not put app-specific code in 
 
 `src/lib/` has five independent domains. Do not create cross-dependencies between them unless absolutely necessary.
 
-| Domain | Purpose | Structure |
-|---|---|---|
-| `core/` | App-level configuration | Flat - `config.py` |
-| `services/` | Independent service modules (AI, TTS, messaging, DB, etc.) | Each service gets its own subdirectory |
-| `utils/` | Stateless helper functions (`printer`, `async_utils`, `graph_utils`, etc.) | Flat files, no subdirectories, no state |
-| `mcp/` | MCP tool definitions and implementations | Mirrored: `definitions/*_defs.py` + `implementations/*_impl.py` + `index.py` registry |
-| `cron/` | Workflow engine and scheduler | Flat files - models, nodes, engine, scheduler, parser |
+| Domain      | Purpose                                                                    | Structure                                                                             |
+| ----------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `core/`     | App-level configuration                                                    | Flat - `config.py`                                                                    |
+| `services/` | Independent service modules (AI, TTS, messaging, DB, etc.)                 | Each service gets its own subdirectory                                                |
+| `utils/`    | Stateless helper functions (`printer`, `async_utils`, `graph_utils`, etc.) | Flat files, no subdirectories, no state                                               |
+| `mcp/`      | MCP tool definitions and implementations                                   | Mirrored: `definitions/*_defs.py` + `implementations/*_impl.py` + `index.py` registry |
+| `cron/`     | Workflow engine and scheduler                                              | Flat files - models, nodes, engine, scheduler, parser                                 |
 
 ## Service Independence (`src/lib/services/`)
 
@@ -28,30 +28,30 @@ Each service in `src/lib/services/` is a **self-contained module**. Services mus
 
 **Complex services** follow the provider pattern:
 
-| Service | Structure |
-|---|---|
-| `ai_client/` | `client.py` + `providers/` (base + 6 implementations) + `registry/` (provider + MCP registries) + `token_utils.py` |
-| `tts/` | `processor.py` + `providers/` (base + kokoro) + `audio/` (playback) + `utils.py` |
-| `messaging_client/` | `client.py` + `models.py` + `providers/` (base + telegram + mock) + `registry.py` |
+| Service             | Structure                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `ai_client/`        | `client.py` + `providers/` (base + 6 implementations) + `registry/` (provider + MCP registries) + `token_utils.py` |
+| `tts/`              | `processor.py` + `providers/` (base + kokoro) + `audio/` (playback) + `utils.py`                                   |
+| `messaging_client/` | `client.py` + `models.py` + `providers/` (base + telegram + mock) + `registry.py`                                  |
 
 When adding a new complex service that supports multiple backends, follow this same pattern: a client module, a `providers/` subdirectory with a base class and implementations, and a registry.
 
 **Medium services** have a few related files:
 
-| Service | Structure |
-|---|---|
+| Service         | Structure                                      |
+| --------------- | ---------------------------------------------- |
 | `conversation/` | `db_client.py` + `models.py` + `summarizer.py` |
 
 **Simple services** are single-file modules:
 
-| Service | Structure |
-|---|---|
-| `postgres/` | `db.py` |
-| `scheduler/` | `db_client.py` |
-| `shell/` | `executor.py` |
-| `text/` | `operations.py` |
-| `time/` | `operations.py` |
-| `encoding/` | `operations.py` |
+| Service      | Structure       |
+| ------------ | --------------- |
+| `postgres/`  | `db.py`         |
+| `scheduler/` | `db_client.py`  |
+| `shell/`     | `executor.py`   |
+| `text/`      | `operations.py` |
+| `time/`      | `operations.py` |
+| `encoding/`  | `operations.py` |
 
 When adding a new simple service, create a subdirectory with `__init__.py` and a single implementation file. Promote to the provider pattern only when multiple backends are needed.
 
@@ -72,13 +72,13 @@ When adding a new tool category, create both a `*_defs.py` and a matching `*_imp
 
 Each app is a standalone entry point. Apps must **never** import from each other - only from `src/lib/` (via `src/imports.py`).
 
-| App | Purpose | Structure |
-|---|---|---|
-| `console/` | Interactive CLI chat | `app.py` + `config.py` + `history.py` + `identity.py` + `commands/` (shared command system) + `tools/` (console-only handlers) |
-| `gui/` | Desktop GUI (CustomTkinter) | `app.py` + `config.py` + `theme.py` + `components/` |
-| `web/` | Web interface | `backend/` (FastAPI) + `frontend/` (React + TypeScript + Vite) |
-| `bot/` | Messaging bot | `app.py` + `config.py` + `message_handler.py` + `streaming.py` + `user_identity.py` + `commands/` (shared command system) |
-| `cron_job/` | Scheduled workflow runner | `app.py` |
+| App         | Purpose                     | Structure                                                                                                                      |
+| ----------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `console/`  | Interactive CLI chat        | `app.py` + `config.py` + `history.py` + `identity.py` + `commands/` (shared command system) + `tools/` (console-only handlers) |
+| `gui/`      | Desktop GUI (CustomTkinter) | `app.py` + `config.py` + `theme.py` + `components/`                                                                            |
+| `web/`      | Web interface               | `backend/` (FastAPI) + `frontend/` (React + TypeScript + Vite)                                                                 |
+| `bot/`      | Messaging bot               | `app.py` + `config.py` + `message_handler.py` + `streaming.py` + `user_identity.py` + `commands/` (shared command system)      |
+| `cron_job/` | Scheduled workflow runner   | `app.py`                                                                                                                       |
 
 When adding a new app, create a subdirectory under `src/apps/` with at least `__init__.py` and `app.py`. Add a corresponding mode to `src/main.py`.
 

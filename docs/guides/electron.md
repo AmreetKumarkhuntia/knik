@@ -17,8 +17,7 @@ Knik can run as a standalone desktop application on macOS, Windows, and Linux. T
 ```mermaid
 flowchart TD
     A[Electron Main Process electron-main.js] --> B[Branch]
-    B -->|HTTP Requests| C[Renderer React Port 12414]
-    B -->|Direct Process| D[Python Backend FastAPI Port 8000]
+    B -->|HTTP Requests| C[Renderer React Port 12414]    B -->|Direct Process| D[Python Backend FastAPI Port 8000]
 
     style A fill:#4a90e2
     style B fill:#f5a623
@@ -72,7 +71,7 @@ This script:
 1. Loads `.env` file
 2. Activates Python virtual environment
 3. Starts FastAPI backend (port 8000)
-4. Starts Vite dev server (port 5173)
+4. Starts Vite dev server (port 12414)
 5. Launches Electron window
 
 **Option 2: Manual steps**

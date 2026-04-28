@@ -9,14 +9,15 @@
 ```
 src/apps/web/backend/
 ├── __init__.py
-├── main.py              # FastAPI app setup, CORS, route mounting
+├── main.py              # FastAPI app setup, CORS, lifespan, route mounting
 ├── config.py            # WebBackendConfig (extends core Config)
+├── state.py             # Shared mutable state (AIClient, MCPServerRegistry, TTS)
 ├── requirements.txt     # Backend-specific Python deps
 ├── models/
-│   └── __init__.py      # (placeholder)
+│   └── __init__.py      # (placeholder — Pydantic models remain inline in routes)
 ├── routes/
 │   ├── __init__.py
-│   ├── admin.py         # GET /api/admin/settings
+│   ├── admin.py         # GET/POST /api/admin/settings
 │   ├── analytics.py     # GET /api/analytics/* (dashboard, metrics, activity)
 │   ├── chat.py          # POST /api/chat (non-streaming)
 │   ├── chat_stream.py   # POST /api/chat/stream (SSE streaming)
@@ -189,27 +190,27 @@ from lib.services.ai_client.registry import MCPServerRegistry
 
 ## Frontend Routes
 
-| Path | Page | Description |
-| --- | --- | --- |
-| `/` | `Home` | Chat interface with audio streaming |
-| `/workflows` | `Workflows` | Workflow listing and management |
-| `/workflows/create` | `WorkflowBuilder` | Create a new workflow |
-| `/workflows/:id/edit` | `WorkflowBuilder` | Edit existing workflow |
-| `/workflows/executions` | `AllExecutions` | All execution history |
-| `/executions/:id` | `ExecutionDetail` | Single execution detail |
+| Path                    | Page              | Description                         |
+| ----------------------- | ----------------- | ----------------------------------- |
+| `/`                     | `Home`            | Chat interface with audio streaming |
+| `/workflows`            | `Workflows`       | Workflow listing and management     |
+| `/workflows/create`     | `WorkflowBuilder` | Create a new workflow               |
+| `/workflows/:id/edit`   | `WorkflowBuilder` | Edit existing workflow              |
+| `/workflows/executions` | `AllExecutions`   | All execution history               |
+| `/executions/:id`       | `ExecutionDetail` | Single execution detail             |
 
 ## Frontend-to-Backend API Mapping
 
-| Frontend Service | Backend Route | Purpose |
-| --- | --- | --- |
-| `ChatAPI.stream()` | `chat_stream.py` `/api/chat/stream` | SSE streaming chat + audio |
-| `ChatAPI.getHistory()` | `history.py` `/api/history` | Get conversation history |
-| `ChatAPI.clearHistory()` | `history.py` `/api/history/clear` | Clear history |
-| `ConversationAPI.*` | `conversations.py` `/api/conversations` | CRUD for persisted conversation history |
-| `AdminAPI.getSettings()` | `admin.py` `/api/admin/settings` | Get server settings |
-| `WorkflowAPI.*` | `workflow.py` `/api/workflows` | Workflow CRUD + execution |
-| `ScheduleAPI.*` | `cron.py` `/api/cron` | Cron schedule management |
-| `AnalyticsAPI.*` | `analytics.py` `/api/analytics` | Dashboard, metrics, activity |
+| Frontend Service         | Backend Route                           | Purpose                                 |
+| ------------------------ | --------------------------------------- | --------------------------------------- |
+| `ChatAPI.stream()`       | `chat_stream.py` `/api/chat/stream`     | SSE streaming chat + audio              |
+| `ChatAPI.getHistory()`   | `history.py` `/api/history`             | Get conversation history                |
+| `ChatAPI.clearHistory()` | `history.py` `/api/history/clear`       | Clear history                           |
+| `ConversationAPI.*`      | `conversations.py` `/api/conversations` | CRUD for persisted conversation history |
+| `AdminAPI.getSettings()` | `admin.py` `/api/admin/settings`        | Get server settings                     |
+| `WorkflowAPI.*`          | `workflow.py` `/api/workflows`          | Workflow CRUD + execution               |
+| `ScheduleAPI.*`          | `cron.py` `/api/cron`                   | Cron schedule management                |
+| `AnalyticsAPI.*`         | `analytics.py` `/api/analytics`         | Dashboard, metrics, activity            |
 
 > The non-streaming `chat.py` endpoint (`POST /api/chat`) exists in the backend but is not consumed by the frontend.
 
@@ -257,11 +258,11 @@ npm run electron:dev
 
 Backend defaults are in `src/apps/web/backend/config.py`:
 
-| Setting | Env Variable | Default |
-| --- | --- | --- |
-| Host | `KNIK_WEB_HOST` | `0.0.0.0` |
-| Port | `KNIK_WEB_PORT` | `8000` |
-| Hot Reload | `KNIK_WEB_RELOAD` | `True` |
-| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5` |
+| Setting         | Env Variable                | Default   |
+| --------------- | --------------------------- | --------- |
+| Host            | `KNIK_WEB_HOST`             | `0.0.0.0` |
+| Port            | `KNIK_WEB_PORT`             | `8000`    |
+| Hot Reload      | `KNIK_WEB_RELOAD`           | `True`    |
+| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5`       |
 
 See [environment-variables.md](../reference/environment-variables.md) for the full reference.

@@ -20,11 +20,12 @@ This document tracks what has been built and what's planned for Knik -- a JARVIS
 
 #### AI Integration
 
-- Unified `AIClient` with 6 providers via registry pattern:
+- Unified `AIClient` with 7 providers via registry pattern:
   - `vertex` -- Google Vertex AI (default)
   - `gemini` -- Google AI Studio
-  - `glm` -- ZhipuAI (GLM models)
+  - `zhipuai` -- ZhipuAI (GLM models)
   - `zai` -- ZAI
+  - `zai_coding` -- ZAI Coding Plan
   - `custom` -- Any OpenAI-compatible API (Ollama, LM Studio, Groq, etc.)
   - `mock` -- Testing/fallback
 - Streaming responses with `chat_stream()`
@@ -36,30 +37,33 @@ This document tracks what has been built and what's planned for Knik -- a JARVIS
 
 #### MCP Tools System (31 Tools, 7 Categories)
 
-| Category | Count | Tools |
-| --- | --- | --- |
-| Utils | 4 | calculate, get_current_time, get_current_date, reverse_string |
-| Text | 5 | word_count, find_and_replace, extract_emails, extract_urls, text_case_convert |
-| Shell | 1 | run_shell_command |
-| File | 8 | read_file, list_directory, search_in_files, file_info, write_file, append_to_file, find_in_file, count_in_file |
-| Browser | 6 | browser_navigate, browser_get_text, browser_get_links, browser_click, browser_type, browser_screenshot |
-| Cron | 3 | add_cron_schedule, list_cron_schedules, remove_cron_schedule |
-| Workflow | 4 | create_workflow, remove_workflow, list_workflows, get_workflow_templates |
+| Category | Count | Tools                                                                                                          |
+| -------- | ----- | -------------------------------------------------------------------------------------------------------------- |
+| Utils    | 4     | calculate, get_current_time, get_current_date, reverse_string                                                  |
+| Text     | 5     | word_count, find_and_replace, extract_emails, extract_urls, text_case_convert                                  |
+| Shell    | 1     | run_shell_command                                                                                              |
+| File     | 8     | read_file, list_directory, search_in_files, file_info, write_file, append_to_file, find_in_file, count_in_file |
+| Browser  | 6     | browser_navigate, browser_get_text, browser_get_links, browser_click, browser_type, browser_screenshot         |
+| Cron     | 3     | add_cron_schedule, list_cron_schedules, remove_cron_schedule                                                   |
+| Workflow | 4     | create_workflow, remove_workflow, list_workflows, get_workflow_templates                                       |
 
 #### Four Application Interfaces
 
 **Console App:**
+
 - 14 built-in commands: `/help`, `/exit`, `/quit`, `/clear`, `/history`, `/voice`, `/info`, `/toggle-voice`, `/tools`, `/agent`, `/provider`, `/model`, `/debug`, `/workflow`
 - Conversation history with configurable context size
 - Command registry pattern for extensibility
 
 **GUI App (CustomTkinter):**
+
 - Animated gradient background with smooth color transitions
 - Dynamic theme system (Dark, Light, System modes)
 - Real-time AI streaming with messenger-style chat bubbles
 - Settings panel: AI provider, model, temperature, voice, theme
 
 **Web App (React + FastAPI):**
+
 - Ultra-glassmorphism UI with 60fps animations
 - 5 pages: Home (chat), Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions
 - 29 reusable React components
@@ -68,9 +72,32 @@ This document tracks what has been built and what's planned for Knik -- a JARVIS
 - Workflow engine with visual graph builder
 
 **Electron Desktop:**
+
 - Packages web app as native desktop application
 - macOS (dmg + zip), Windows (NSIS + portable), Linux (AppImage + deb)
 - Hardened runtime and code signing support
+
+**Bot App (Telegram):**
+
+- Long-running async daemon (`python src/main.py --mode bot`)
+- Per-chat concurrency guard with "Still thinking..." busy indicator
+- Provider-adaptive streaming (Telegram: edit message in-place)
+- Cross-platform user identity via `UserIdentityManager`
+- Tool execution consent gate for dangerous operations (shell, file write)
+- Unified conversation persistence with other app modes
+
+#### Context Management
+
+- Dynamic model discovery from provider APIs with static fallback
+- Per-call token usage tracking (input, output, total)
+- Automatic conversation summarization when approaching context limits (75% threshold)
+- Cumulative summaries with configurable keep-recent window
+
+#### Tool Consent Gate
+
+- Consent gate protocol in `MCPServerRegistry` — tools declare `consent_required_for`
+- Bot sends Telegram message and awaits user reply before executing dangerous tools
+- Console uses `input()` for synchronous consent
 
 #### Workflow & Scheduler Engine
 
@@ -134,11 +161,11 @@ This document tracks what has been built and what's planned for Knik -- a JARVIS
 
 ## Priority Matrix
 
-| Priority | Items |
-| --- | --- |
-| High | STT integration, system monitoring tools, web search |
-| Medium | Productivity tools, vision/OCR, proactive assistance, memory system |
-| Low | Smart home integration, cloud sync, multi-user support |
+| Priority | Items                                                               |
+| -------- | ------------------------------------------------------------------- |
+| High     | STT integration, system monitoring tools, web search                |
+| Medium   | Productivity tools, vision/OCR, proactive assistance, memory system |
+| Low      | Smart home integration, cloud sync, multi-user support              |
 
 ---
 

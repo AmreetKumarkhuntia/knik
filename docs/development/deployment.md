@@ -395,6 +395,7 @@ npm install --save-dev electron electron-builder
 **Code signing failed (macOS):**
 
 Skip code signing for local testing:
+
 ```bash
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run electron:build:mac
 ```

@@ -1,6 +1,10 @@
 # Conversation History
 
-The AI assistant remembers previous conversations. Console, GUI, and Web apps all maintain context throughout a conversation.
+The AI assistant remembers previous conversations through two complementary systems: an in-memory `ConversationHistory` for simple session tracking and a PostgreSQL-backed `ConversationDB` for persistent storage with compaction.
+
+## In-Memory History (ConversationHistory)
+
+Used by Console and GUI apps for session-level context.
 
 ## How It Works
 
@@ -53,13 +57,13 @@ Works identically across Console, GUI, and Web interfaces. Use `/debug` in Conso
 
 **ConversationHistory** (`src/apps/console/history.py`)
 
-| Method | Signature | Description |
-| --- | --- | --- |
-| `add_entry` | `add_entry(user_input, ai_response)` | Store a conversation turn |
-| `get_context` | `get_context(last_n=5) -> str` | Get as formatted text string |
-| `get_messages` | `get_messages(last_n=5) -> list` | Get as LangChain message objects |
-| `get_all_entries` | `get_all_entries() -> list[dict]` | Get all stored entries |
-| `clear` | `clear()` | Clear all history |
+| Method            | Signature                            | Description                      |
+| ----------------- | ------------------------------------ | -------------------------------- |
+| `add_entry`       | `add_entry(user_input, ai_response)` | Store a conversation turn        |
+| `get_context`     | `get_context(last_n=5) -> str`       | Get as formatted text string     |
+| `get_messages`    | `get_messages(last_n=5) -> list`     | Get as LangChain message objects |
+| `get_all_entries` | `get_all_entries() -> list[dict]`    | Get all stored entries           |
+| `clear`           | `clear()`                            | Clear all history                |
 
 ### Message Flow
 
@@ -91,3 +95,53 @@ The web API also exposes history endpoints:
 
 - `GET /api/history` -- retrieve conversation history
 - `POST /api/history/clear` -- clear history
+
+---
+
+## Persistent History (ConversationDB)
+
+Used by Web, Bot, and any app mode with PostgreSQL configured. Conversations and messages are stored in the `conversations` table with full CRUD via `src/lib/services/conversation/db_client.py`.
+
+### Key Features
+
+- **PostgreSQL-backed** -- conversations survive app restarts
+- **Token tracking** -- per-message usage stored in `metadata.usage` (input_tokens, output_tokens, total_tokens)
+- **Automatic compaction** -- when token usage exceeds `KNIK_COMPACTION_THRESHOLD` (default 0.95), older messages are summarized and replaced with a cumulative summary
+- **Cumulative summaries** -- stored in `summary` and `summary_through_index` columns; each new summary incorporates the previous one
+- **Conversation API** -- full CRUD at `/api/conversations` with listing, creation, deletion, and message retrieval
+
+### Compaction Flow
+
+```
+New message → LLM call → _post_chat()
+    → increment_total_tokens()
+    → should_compact(total_tokens, model)?
+        → YES: ConversationSummarizer.run() as background task
+            → Load all messages from DB
+            → Fetch existing summary (cumulative)
+            → Split: messages_to_compact | last N turns kept
+            → Call LLM with compaction prompt
+            → Store new summary + through_index
+            → Reset total_tokens counter
+        → NO: Done
+```
+
+### Web API Endpoints
+
+| Method | Path                               | Description                                     |
+| ------ | ---------------------------------- | ----------------------------------------------- |
+| GET    | `/api/conversations/`              | List conversations (supports `limit`, `offset`) |
+| POST   | `/api/conversations/`              | Create a new conversation                       |
+| GET    | `/api/conversations/{id}`          | Get conversation with messages                  |
+| DELETE | `/api/conversations/{id}`          | Delete a conversation                           |
+| PATCH  | `/api/conversations/{id}`          | Update conversation title                       |
+| GET    | `/api/conversations/{id}/messages` | Get messages (optional `last_n`)                |
+
+### Compaction Configuration
+
+| Variable                          | Default | Description                                      |
+| --------------------------------- | ------- | ------------------------------------------------ |
+| `KNIK_COMPACTION_ENABLED`         | `true`  | Enable automatic compaction                      |
+| `KNIK_COMPACTION_THRESHOLD`       | `0.95`  | Fraction of context window to trigger compaction |
+| `KNIK_COMPACTION_CIRCUIT_BREAKER` | `3`     | Max consecutive failures before disabling        |
+| `KNIK_COMPACTION_PROMPT_BUFFER`   | `1024`  | Tokens reserved for compaction prompt            |

@@ -86,14 +86,14 @@ npm run format        # Format all code
 
 ## AI Providers
 
-| Provider | Env Variable | Notes |
-| --- | --- | --- |
-| `vertex` | `GOOGLE_CLOUD_PROJECT` | Default provider |
-| `gemini` | `GOOGLE_API_KEY` | Google AI Studio |
-| `glm` | `ZHIPUAI_API_KEY` | ZhipuAI (GLM models) |
-| `zai` | `ZAI_API_KEY` | ZAI |
+| Provider | Env Variable           | Notes                                                     |
+| -------- | ---------------------- | --------------------------------------------------------- |
+| `vertex` | `GOOGLE_CLOUD_PROJECT` | Default provider                                          |
+| `gemini` | `GOOGLE_API_KEY`       | Google AI Studio                                          |
+| `glm`    | `ZHIPUAI_API_KEY`      | ZhipuAI (GLM models)                                      |
+| `zai`    | `ZAI_API_KEY`          | ZAI                                                       |
 | `custom` | `KNIK_CUSTOM_API_BASE` | Any OpenAI-compatible API (Ollama, LM Studio, Groq, etc.) |
-| `mock` | (none) | Auto-fallback when provider fails |
+| `mock`   | (none)                 | Auto-fallback when provider fails                         |
 
 Set provider: `export KNIK_AI_PROVIDER="vertex"`
 
@@ -101,35 +101,35 @@ Set provider: `export KNIK_AI_PROVIDER="vertex"`
 
 ## MCP Tools (31 total)
 
-| Category | Count | Tools |
-| --- | --- | --- |
-| Utils | 4 | calculator, timer, random_number, uuid_generator |
-| Text | 5 | word_count, text_transform, regex_search, summarize, translate |
-| Shell | 1 | execute_command |
-| File | 8 | read_file, write_file, list_directory, create_directory, delete_file, move_file, file_info, search_files |
-| Browser | 6 | open_url, search_web, scrape_page, screenshot, click_element, type_text |
-| Cron | 3 | schedule_task, list_schedules, delete_schedule |
-| Workflow | 4 | create_workflow, execute_workflow, list_workflows, get_workflow |
+| Category | Count | Tools                                                                                                    |
+| -------- | ----- | -------------------------------------------------------------------------------------------------------- |
+| Utils    | 4     | calculator, timer, random_number, uuid_generator                                                         |
+| Text     | 5     | word_count, text_transform, regex_search, summarize, translate                                           |
+| Shell    | 1     | execute_command                                                                                          |
+| File     | 8     | read_file, write_file, list_directory, create_directory, delete_file, move_file, file_info, search_files |
+| Browser  | 6     | open_url, search_web, scrape_page, screenshot, click_element, type_text                                  |
+| Cron     | 3     | schedule_task, list_schedules, delete_schedule                                                           |
+| Workflow | 4     | create_workflow, execute_workflow, list_workflows, get_workflow                                          |
 
 ---
 
 ## Console Commands (14)
 
-| Command | Description |
-| --- | --- |
-| `/help` | Show help |
-| `/exit`, `/quit` | Exit app |
-| `/clear` | Clear screen |
-| `/history` | Show conversation history |
-| `/voice` | Change TTS voice |
-| `/info` | Show system info |
-| `/toggle-voice` | Toggle TTS on/off |
-| `/tools` | List MCP tools |
-| `/agent` | Agent mode |
-| `/provider` | Change AI provider |
-| `/model` | Change AI model |
-| `/debug` | Toggle debug mode |
-| `/workflow` | Workflow operations |
+| Command          | Description               |
+| ---------------- | ------------------------- |
+| `/help`          | Show help                 |
+| `/exit`, `/quit` | Exit app                  |
+| `/clear`         | Clear screen              |
+| `/history`       | Show conversation history |
+| `/voice`         | Change TTS voice          |
+| `/info`          | Show system info          |
+| `/toggle-voice`  | Toggle TTS on/off         |
+| `/tools`         | List MCP tools            |
+| `/agent`         | Agent mode                |
+| `/provider`      | Change AI provider        |
+| `/model`         | Change AI model           |
+| `/debug`         | Toggle debug mode         |
+| `/workflow`      | Workflow operations       |
 
 ---
 

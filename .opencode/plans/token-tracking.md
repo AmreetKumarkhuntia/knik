@@ -100,22 +100,24 @@ Token usage data from LLM calls is partially captured in the backend but is **no
 
 - **File:** `src/apps/web/frontend/src/services/streaming.ts`
 - **Changes:**
+
   ```typescript
   export interface TokenUsage {
-    input_tokens: number
-    output_tokens: number
-    total_tokens: number
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
   }
 
   interface StreamCallbacks {
-    onText?: (chunk: string) => void
-    onAudio?: (audioBase64: string) => void
-    onComplete?: (audioChunkCount: number) => void
-    onError?: (error: string) => void
-    onConversationId?: (conversationId: string) => void
-    onUsage?: (usage: TokenUsage) => void    // NEW
+    onText?: (chunk: string) => void;
+    onAudio?: (audioBase64: string) => void;
+    onComplete?: (audioChunkCount: number) => void;
+    onError?: (error: string) => void;
+    onConversationId?: (conversationId: string) => void;
+    onUsage?: (usage: TokenUsage) => void; // NEW
   }
   ```
+
 - Handle `event: usage` in the SSE parsing loop (around line 93):
   ```typescript
   else if (currentEvent === 'usage' && callbacks.onUsage && parsed.usage) {
@@ -129,20 +131,20 @@ Token usage data from LLM calls is partially captured in the backend but is **no
 - **Changes:**
   ```typescript
   export interface ChatSlice {
-    messages: Message[]
-    inputText: string
-    loading: boolean
-    conversationId: string | null
-    lastUsage: TokenUsage | null          // NEW
-    setLastUsage: (usage: TokenUsage | null) => void  // NEW
+    messages: Message[];
+    inputText: string;
+    loading: boolean;
+    conversationId: string | null;
+    lastUsage: TokenUsage | null; // NEW
+    setLastUsage: (usage: TokenUsage | null) => void; // NEW
     // ...existing methods
   }
   ```
 - Wire `onUsage` callback in `handleSend()`:
   ```typescript
   onUsage: (usage) => {
-    set({ lastUsage: usage })
-  }
+    set({ lastUsage: usage });
+  };
   ```
 - Reset `lastUsage` in `handleNewChat()`.
 
@@ -158,13 +160,13 @@ Token usage data from LLM calls is partially captured in the backend but is **no
 - **Changes:**
   ```typescript
   export interface Conversation {
-    id: string
-    title: string | null
-    messages: ConversationMessage[]
-    created_at: string | null
-    updated_at: string | null
-    total_tokens?: number           // NEW
-    summary?: string | null         // NEW
+    id: string;
+    title: string | null;
+    messages: ConversationMessage[];
+    created_at: string | null;
+    updated_at: string | null;
+    total_tokens?: number; // NEW
+    summary?: string | null; // NEW
   }
   ```
 
@@ -173,11 +175,13 @@ Token usage data from LLM calls is partially captured in the backend but is **no
 - **File:** `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx`
 - **Change:** After each assistant message completes, show a subtle token count badge:
   ```tsx
-  {msg.role === 'assistant' && msg.metadata?.usage && (
-    <span className="text-xs text-textSecondary">
-      {msg.metadata.usage.total_tokens} tokens
-    </span>
-  )}
+  {
+    msg.role === "assistant" && msg.metadata?.usage && (
+      <span className="text-xs text-textSecondary">
+        {msg.metadata.usage.total_tokens} tokens
+      </span>
+    );
+  }
   ```
 - This reads from the message metadata that's already stored (once the model serializes it).
 
@@ -228,38 +232,38 @@ Token usage data from LLM calls is partially captured in the backend but is **no
 
 ## Execution Order
 
-| Step | Files Changed | Depends On | Risk |
-|------|--------------|------------|------|
-| 1.1 | `scripts/migrate.sh` | None | Low |
-| 1.2 | `src/lib/services/postgres/db.py`, `src/apps/web/backend/state.py` | 1.1 | Medium (startup time) |
-| 2.1 | `src/lib/services/conversation/models.py` | 1.1 | Low |
-| 2.2 | `src/apps/web/backend/routes/conversations.py` | 2.1 | Low |
-| 2.3 | `src/lib/services/conversation/db_client.py` | 2.1 | Low |
-| 3.1 | `src/apps/web/frontend/src/services/streaming.ts` | None | Low |
-| 3.2 | `src/apps/web/frontend/src/store/chatSlice.ts` | 3.1 | Low |
-| 4.1 | `src/apps/web/frontend/src/types/api.ts` | 2.1 | Low |
-| 4.2 | `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx` | 3.2, 4.1 | Low |
-| 5.1 | `src/apps/bot/message_handler.py` | None | Low |
-| 6.1 | `src/lib/services/ai_client/client.py` | None | Low |
+| Step | Files Changed                                                      | Depends On | Risk                  |
+| ---- | ------------------------------------------------------------------ | ---------- | --------------------- |
+| 1.1  | `scripts/migrate.sh`                                               | None       | Low                   |
+| 1.2  | `src/lib/services/postgres/db.py`, `src/apps/web/backend/state.py` | 1.1        | Medium (startup time) |
+| 2.1  | `src/lib/services/conversation/models.py`                          | 1.1        | Low                   |
+| 2.2  | `src/apps/web/backend/routes/conversations.py`                     | 2.1        | Low                   |
+| 2.3  | `src/lib/services/conversation/db_client.py`                       | 2.1        | Low                   |
+| 3.1  | `src/apps/web/frontend/src/services/streaming.ts`                  | None       | Low                   |
+| 3.2  | `src/apps/web/frontend/src/store/chatSlice.ts`                     | 3.1        | Low                   |
+| 4.1  | `src/apps/web/frontend/src/types/api.ts`                           | 2.1        | Low                   |
+| 4.2  | `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx`        | 3.2, 4.1   | Low                   |
+| 5.1  | `src/apps/bot/message_handler.py`                                  | None       | Low                   |
+| 6.1  | `src/lib/services/ai_client/client.py`                             | None       | Low                   |
 
 ---
 
 ## Files Changed (Summary)
 
-| File | Change Type |
-|------|-------------|
-| `scripts/migrate.sh` | Rewrite to run all migrations |
-| `src/lib/services/postgres/db.py` | Add `run_pending_migrations()` |
-| `src/apps/web/backend/state.py` | Call `run_pending_migrations()` on startup |
-| `src/lib/services/conversation/models.py` | Add `total_tokens`, `summary`, `summary_through_index` fields |
-| `src/lib/services/conversation/db_client.py` | Update `list_conversations` query to include `total_tokens` |
-| `src/apps/web/backend/routes/conversations.py` | Add `GET /{id}/token-usage` endpoint |
-| `src/apps/web/frontend/src/services/streaming.ts` | Add `onUsage` callback, handle `event: usage` |
-| `src/apps/web/frontend/src/store/chatSlice.ts` | Add `lastUsage` state, wire `onUsage` |
-| `src/apps/web/frontend/src/types/api.ts` | Add `total_tokens` to `Conversation` |
-| `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx` | Display token badge per message |
-| `src/apps/bot/message_handler.py` | Log usage from `DeliveryResult` |
-| `src/lib/services/ai_client/client.py` | (Optional) Estimate input tokens for user messages |
+| File                                                        | Change Type                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------- |
+| `scripts/migrate.sh`                                        | Rewrite to run all migrations                                 |
+| `src/lib/services/postgres/db.py`                           | Add `run_pending_migrations()`                                |
+| `src/apps/web/backend/state.py`                             | Call `run_pending_migrations()` on startup                    |
+| `src/lib/services/conversation/models.py`                   | Add `total_tokens`, `summary`, `summary_through_index` fields |
+| `src/lib/services/conversation/db_client.py`                | Update `list_conversations` query to include `total_tokens`   |
+| `src/apps/web/backend/routes/conversations.py`              | Add `GET /{id}/token-usage` endpoint                          |
+| `src/apps/web/frontend/src/services/streaming.ts`           | Add `onUsage` callback, handle `event: usage`                 |
+| `src/apps/web/frontend/src/store/chatSlice.ts`              | Add `lastUsage` state, wire `onUsage`                         |
+| `src/apps/web/frontend/src/types/api.ts`                    | Add `total_tokens` to `Conversation`                          |
+| `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx` | Display token badge per message                               |
+| `src/apps/bot/message_handler.py`                           | Log usage from `DeliveryResult`                               |
+| `src/lib/services/ai_client/client.py`                      | (Optional) Estimate input tokens for user messages            |
 
 ---
 

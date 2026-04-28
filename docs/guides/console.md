@@ -16,22 +16,22 @@ python src/main.py --mode console
 
 ## Commands (14)
 
-| Command | Description |
-| --- | --- |
-| `/help` | Show commands |
-| `/exit` | Quit |
-| `/quit` | Alias for exit |
-| `/clear` | Clear screen |
-| `/history` | Show conversation history |
-| `/voice <name>` | Change voice |
-| `/info` | Show system configuration |
-| `/toggle-voice` | Enable/disable voice output |
-| `/tools` | Show available MCP tools |
-| `/agent` | Agent mode settings |
-| `/provider [name]` | Switch AI provider or list available |
-| `/model [name]` | Switch AI model or show current |
-| `/debug [on/off/toggle]` | Toggle debug mode |
-| `/workflow` | Workflow management |
+| Command                  | Description                          |
+| ------------------------ | ------------------------------------ |
+| `/help`                  | Show commands                        |
+| `/exit`                  | Quit                                 |
+| `/quit`                  | Alias for exit                       |
+| `/clear`                 | Clear screen                         |
+| `/history`               | Show conversation history            |
+| `/voice <name>`          | Change voice                         |
+| `/info`                  | Show system configuration            |
+| `/toggle-voice`          | Enable/disable voice output          |
+| `/tools`                 | Show available MCP tools             |
+| `/agent`                 | Agent mode settings                  |
+| `/provider [name]`       | Switch AI provider or list available |
+| `/model [name]`          | Switch AI model or show current      |
+| `/debug [on/off/toggle]` | Toggle debug mode                    |
+| `/workflow`              | Workflow management                  |
 
 ## Usage
 

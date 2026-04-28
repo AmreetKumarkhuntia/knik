@@ -114,15 +114,15 @@ result = client.execute_tool("calculate", expression="2 + 2")
 
 ### Provider Support
 
-| Provider | Registry Key | Backend | Description |
-| --- | --- | --- | --- |
-| Vertex AI | `vertex` | ChatVertexAI (LangChain) | Google Cloud Vertex AI |
-| Gemini | `gemini` | ChatGoogleGenerativeAI (LangChain) | Google AI Studio API |
-| ZhipuAI | `zhipuai` | ChatZhipuAI (LangChain) | ZhipuAI GLM models |
-| Z.AI | `zai` | ChatOpenAI (LangChain) | Z.AI Platform (OpenAI-compatible) |
-| Z.AI Coding | `zai_coding` | ChatOpenAI (LangChain) | Z.AI Coding Plan (coding-optimized endpoint) |
-| Custom | `custom` | ChatOpenAI (LangChain) | Any OpenAI-compatible endpoint |
-| Mock | `mock` | Built-in | Testing/development (canned responses) |
+| Provider    | Registry Key | Backend                            | Description                                  |
+| ----------- | ------------ | ---------------------------------- | -------------------------------------------- |
+| Vertex AI   | `vertex`     | ChatVertexAI (LangChain)           | Google Cloud Vertex AI                       |
+| Gemini      | `gemini`     | ChatGoogleGenerativeAI (LangChain) | Google AI Studio API                         |
+| ZhipuAI     | `zhipuai`    | ChatZhipuAI (LangChain)            | ZhipuAI GLM models                           |
+| Z.AI        | `zai`        | ChatOpenAI (LangChain)             | Z.AI Platform (OpenAI-compatible)            |
+| Z.AI Coding | `zai_coding` | ChatOpenAI (LangChain)             | Z.AI Coding Plan (coding-optimized endpoint) |
+| Custom      | `custom`     | ChatOpenAI (LangChain)             | Any OpenAI-compatible endpoint               |
+| Mock        | `mock`       | Built-in                           | Testing/development (canned responses)       |
 
 All LangChain-based providers inherit from `LangChainProvider`, which extends `BaseAIProvider`. The mock provider extends `BaseAIProvider` directly.
 
@@ -227,22 +227,22 @@ app.run()
 
 ### Console Commands (14)
 
-| Command | Description |
-| --- | --- |
-| `/help` | Show available commands |
-| `/exit` | Exit the application |
-| `/quit` | Alias for exit |
-| `/clear` | Clear the screen |
-| `/history` | Show conversation history |
-| `/voice` | Change voice settings |
-| `/info` | Show system information |
+| Command         | Description               |
+| --------------- | ------------------------- |
+| `/help`         | Show available commands   |
+| `/exit`         | Exit the application      |
+| `/quit`         | Alias for exit            |
+| `/clear`        | Clear the screen          |
+| `/history`      | Show conversation history |
+| `/voice`        | Change voice settings     |
+| `/info`         | Show system information   |
 | `/toggle-voice` | Enable/disable TTS output |
-| `/tools` | List registered MCP tools |
-| `/agent` | Agent mode settings |
-| `/provider` | Switch AI provider |
-| `/model` | Switch AI model |
-| `/debug` | Toggle debug mode |
-| `/workflow` | Workflow management |
+| `/tools`        | List registered MCP tools |
+| `/agent`        | Agent mode settings       |
+| `/provider`     | Switch AI provider        |
+| `/model`        | Switch AI model           |
+| `/debug`        | Toggle debug mode         |
+| `/workflow`     | Workflow management       |
 
 ### ConversationHistory
 
@@ -266,75 +266,75 @@ history.clear()                           # Clear history
 
 ### Chat (`/api/chat`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| POST | `/api/chat/` | Send a chat message and get a response |
+| Method | Path         | Description                            |
+| ------ | ------------ | -------------------------------------- |
+| POST   | `/api/chat/` | Send a chat message and get a response |
 
 ### Chat Stream (`/api/chat/stream`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| POST | `/api/chat/stream/` | Stream a chat response via SSE |
+| Method | Path                | Description                    |
+| ------ | ------------------- | ------------------------------ |
+| POST   | `/api/chat/stream/` | Stream a chat response via SSE |
 
 ### Admin (`/api/admin`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/admin/settings` | Get current settings |
-| POST | `/api/admin/settings` | Update settings |
-| GET | `/api/admin/providers` | List available AI providers |
-| GET | `/api/admin/models` | List available AI models |
-| GET | `/api/admin/voices` | List available voices |
+| Method | Path                   | Description                 |
+| ------ | ---------------------- | --------------------------- |
+| GET    | `/api/admin/settings`  | Get current settings        |
+| POST   | `/api/admin/settings`  | Update settings             |
+| GET    | `/api/admin/providers` | List available AI providers |
+| GET    | `/api/admin/models`    | List available AI models    |
+| GET    | `/api/admin/voices`    | List available voices       |
 
 ### History (`/api/history`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/history/` | Get conversation history |
-| POST | `/api/history/add` | Add a message to history |
-| POST | `/api/history/clear` | Clear conversation history |
+| Method | Path                 | Description                |
+| ------ | -------------------- | -------------------------- |
+| GET    | `/api/history/`      | Get conversation history   |
+| POST   | `/api/history/add`   | Add a message to history   |
+| POST   | `/api/history/clear` | Clear conversation history |
 
 ### Workflows (`/api/workflows`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/workflows/` | List all workflows |
-| GET | `/api/workflows/{id}` | Get a specific workflow |
-| DELETE | `/api/workflows/{id}` | Delete a workflow |
-| POST | `/api/workflows/{id}/execute` | Execute a workflow |
-| GET | `/api/workflows/{id}/history` | Get workflow execution history |
-| GET | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details |
+| Method | Path                                         | Description                    |
+| ------ | -------------------------------------------- | ------------------------------ |
+| GET    | `/api/workflows/`                            | List all workflows             |
+| GET    | `/api/workflows/{id}`                        | Get a specific workflow        |
+| DELETE | `/api/workflows/{id}`                        | Delete a workflow              |
+| POST   | `/api/workflows/{id}/execute`                | Execute a workflow             |
+| GET    | `/api/workflows/{id}/history`                | Get workflow execution history |
+| GET    | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details     |
 
 ### Cron (`/api/cron`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/cron/` | List all schedules |
-| POST | `/api/cron/` | Add a new schedule |
-| DELETE | `/api/cron/{id}` | Remove a schedule |
-| PATCH | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
+| Method | Path                    | Description                      |
+| ------ | ----------------------- | -------------------------------- |
+| GET    | `/api/cron/`            | List all schedules               |
+| POST   | `/api/cron/`            | Add a new schedule               |
+| DELETE | `/api/cron/{id}`        | Remove a schedule                |
+| PATCH  | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
 
 ### Analytics (`/api/analytics`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/analytics/dashboard` | Get dashboard summary |
-| GET | `/api/analytics/metrics` | Get system metrics |
-| GET | `/api/analytics/top-workflows` | Get top workflows by execution count |
-| GET | `/api/analytics/executions` | Get paginated execution records |
-| GET | `/api/analytics/workflows/list` | Get workflows list for analytics |
-| GET | `/api/analytics/activity` | Get activity timeline |
+| Method | Path                            | Description                          |
+| ------ | ------------------------------- | ------------------------------------ |
+| GET    | `/api/analytics/dashboard`      | Get dashboard summary                |
+| GET    | `/api/analytics/metrics`        | Get system metrics                   |
+| GET    | `/api/analytics/top-workflows`  | Get top workflows by execution count |
+| GET    | `/api/analytics/executions`     | Get paginated execution records      |
+| GET    | `/api/analytics/workflows/list` | Get workflows list for analytics     |
+| GET    | `/api/analytics/activity`       | Get activity timeline                |
 
 ### Conversations (`/api/conversations`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/conversations/` | List conversations (supports `limit` and `offset` query params) |
-| POST | `/api/conversations/` | Create a new empty conversation (optional `title` in body) |
-| GET | `/api/conversations/{id}` | Get a conversation with all its messages |
-| DELETE | `/api/conversations/{id}` | Delete a conversation |
-| PATCH | `/api/conversations/{id}` | Update a conversation's title |
-| GET | `/api/conversations/{id}/messages` | Get messages for a conversation (optional `last_n` query param) |
+| Method | Path                               | Description                                                     |
+| ------ | ---------------------------------- | --------------------------------------------------------------- |
+| GET    | `/api/conversations/`              | List conversations (supports `limit` and `offset` query params) |
+| POST   | `/api/conversations/`              | Create a new empty conversation (optional `title` in body)      |
+| GET    | `/api/conversations/{id}`          | Get a conversation with all its messages                        |
+| DELETE | `/api/conversations/{id}`          | Delete a conversation                                           |
+| PATCH  | `/api/conversations/{id}`          | Update a conversation's title                                   |
+| GET    | `/api/conversations/{id}/messages` | Get messages for a conversation (optional `last_n` query param) |
 
 ## File System Tools
 

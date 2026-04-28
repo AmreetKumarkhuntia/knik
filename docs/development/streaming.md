@@ -76,14 +76,14 @@ The streaming endpoint uses an **asynchronous worker pattern with bounded queues
 
 **SSE Event Types:**
 
-| Event | Data Format | Description |
-| --- | --- | --- |
-| `text` | `{"text": "chunk"}` | AI text chunk |
-| `audio` | `{"audio": "base64...", "sample_rate": 24000}` | Base64-encoded WAV audio chunk |
-| `conversation_id` | `{"conversation_id": "uuid"}` | Unique conversation identifier |
-| `usage` | `{"total_tokens": N, "input_tokens": M, "output_tokens": L}` | Token usage stats |
-| `done` | `{"audio_count": N}` | Stream complete |
-| `error` | `{"error": "message"}` | Error message |
+| Event             | Data Format                                                  | Description                    |
+| ----------------- | ------------------------------------------------------------ | ------------------------------ |
+| `text`            | `{"text": "chunk"}`                                          | AI text chunk                  |
+| `audio`           | `{"audio": "base64...", "sample_rate": 24000}`               | Base64-encoded WAV audio chunk |
+| `conversation_id` | `{"conversation_id": "uuid"}`                                | Unique conversation identifier |
+| `usage`           | `{"total_tokens": N, "input_tokens": M, "output_tokens": L}` | Token usage stats              |
+| `done`            | `{"audio_count": N}`                                         | Stream complete                |
+| `error`           | `{"error": "message"}`                                       | Error message                  |
 
 **Response Headers:**
 
@@ -155,12 +155,12 @@ Uses `VITE_API_URL` env var or falls back to `http://localhost:8000`.
 
 **Directory:** `src/apps/web/frontend/src/services/audio/`
 
-| File | Responsibility |
-| --- | --- |
-| `queue.ts` | Receives chunks via `queueAudio()`, plays them sequentially |
-| `playback.ts` | Decodes base64 WAV, drives `HTMLAudioElement`, emits state |
-| `mediaSession.ts` | Keeps browser Media Session API in sync |
-| `index.ts` | Barrel exports |
+| File              | Responsibility                                              |
+| ----------------- | ----------------------------------------------------------- |
+| `queue.ts`        | Receives chunks via `queueAudio()`, plays them sequentially |
+| `playback.ts`     | Decodes base64 WAV, drives `HTMLAudioElement`, emits state  |
+| `mediaSession.ts` | Keeps browser Media Session API in sync                     |
+| `index.ts`        | Barrel exports                                              |
 
 **Playback Control API:**
 
@@ -179,10 +179,10 @@ setAudioStateCallback((isPaused, isPlaying) => {
   setAudioPlaying(isPlaying);
 });
 
-pauseAudio();       // Pause current chunk
-resumeAudio();      // Resume
-stopAudio();        // Stop current + clear queue
-clearAudioQueue();  // Clear pending chunks only
+pauseAudio(); // Pause current chunk
+resumeAudio(); // Resume
+stopAudio(); // Stop current + clear queue
+clearAudioQueue(); // Clear pending chunks only
 ```
 
 ### 4. React Integration
@@ -274,13 +274,13 @@ The streaming endpoint maintains a global `ConversationHistory(max_size=50)` ins
 
 **Backend defaults** (from `src/apps/web/backend/config.py`):
 
-| Setting | Env Variable | Default |
-| --- | --- | --- |
-| Voice | `KNIK_VOICE` | `af_heart` |
-| Sample Rate | `KNIK_SAMPLE_RATE` | `24000` |
-| AI Provider | `KNIK_AI_PROVIDER` | `vertex` |
-| AI Model | `KNIK_AI_MODEL` | `gemini-1.5-flash` |
-| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5` |
+| Setting         | Env Variable                | Default            |
+| --------------- | --------------------------- | ------------------ |
+| Voice           | `KNIK_VOICE`                | `af_heart`         |
+| Sample Rate     | `KNIK_SAMPLE_RATE`          | `24000`            |
+| AI Provider     | `KNIK_AI_PROVIDER`          | `vertex`           |
+| AI Model        | `KNIK_AI_MODEL`             | `gemini-1.5-flash` |
+| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5`                |
 
 ## Testing
 
@@ -307,15 +307,15 @@ npm run start:web:frontend
 
 ## Stream vs Non-Stream Comparison
 
-| Aspect | `/api/chat` (non-stream) | `/api/chat/stream` (SSE) |
-| --- | --- | --- |
-| Response type | Single JSON | SSE event stream |
-| Text delivery | After full generation | Token by token |
-| Audio delivery | Full audio in response | Per-sentence chunks |
-| Perceived latency | Higher (wait for all) | Lower (instant text) |
-| Memory | Higher (full audio in RAM) | Lower (streaming chunks) |
-| Complexity | Simpler | More complex |
-| Frontend usage | Not used currently | Primary chat interface |
+| Aspect            | `/api/chat` (non-stream)   | `/api/chat/stream` (SSE) |
+| ----------------- | -------------------------- | ------------------------ |
+| Response type     | Single JSON                | SSE event stream         |
+| Text delivery     | After full generation      | Token by token           |
+| Audio delivery    | Full audio in response     | Per-sentence chunks      |
+| Perceived latency | Higher (wait for all)      | Lower (instant text)     |
+| Memory            | Higher (full audio in RAM) | Lower (streaming chunks) |
+| Complexity        | Simpler                    | More complex             |
+| Frontend usage    | Not used currently         | Primary chat interface   |
 
 ## TTSAsyncProcessor Reference
 
@@ -336,14 +336,14 @@ tts.play_async("Hello world")  # Non-blocking, callback fires when ready
 
 Constructor parameters:
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `sample_rate` | `int` | - | Audio sample rate |
-| `voice_model` | `str` | `Config.DEFAULT_TTS` | TTS voice name |
-| `save_dir` | `str \| None` | `None` | Directory to save audio files |
-| `play_voice` | `bool` | `True` | Play audio locally |
-| `sleep_duration` | `float` | `0.3` | Sleep between processing cycles |
-| `audio_ready_callback` | `Callable[[bytes, int], None] \| None` | `None` | Callback when audio is ready |
+| Parameter              | Type                                   | Default              | Description                     |
+| ---------------------- | -------------------------------------- | -------------------- | ------------------------------- |
+| `sample_rate`          | `int`                                  | -                    | Audio sample rate               |
+| `voice_model`          | `str`                                  | `Config.DEFAULT_TTS` | TTS voice name                  |
+| `save_dir`             | `str \| None`                          | `None`               | Directory to save audio files   |
+| `play_voice`           | `bool`                                 | `True`               | Play audio locally              |
+| `sleep_duration`       | `float`                                | `0.3`                | Sleep between processing cycles |
+| `audio_ready_callback` | `Callable[[bytes, int], None] \| None` | `None`               | Callback when audio is ready    |
 
 ## Best Practices
 
@@ -355,7 +355,7 @@ Constructor parameters:
 
 ## Bot Streaming (StreamingResponseManager)
 
-The bot streaming system (`src/lib/services/response/streaming.py`) provides real-time streaming for Discord and bot interfaces, with different design considerations compared to the web SSE streaming.
+The bot streaming system (`src/apps/bot/streaming.py`) provides real-time streaming for Telegram and bot interfaces, with different design considerations compared to the web SSE streaming.
 
 ### Architecture Comparison
 
@@ -391,11 +391,11 @@ POST /api/chat/stream/                  StreamingResponseManager.stream()
 
 ### Configuration
 
-| Setting | Env Variable | Default | Description |
-| --- | --- | --- | --- |
-| Edit Interval | `STREAMING_EDIT_INTERVAL` | `1.0` | Seconds between message edits (debounce) |
-| Placeholder Text | `STREAMING_PLACEHOLDER` | `Thinking...` | Initial message before streaming starts |
-| Max Message Length | `STREAMING_MAX_MESSAGE_LENGTH` | `1900` | Maximum characters per Discord message (allowing room for truncation) |
+| Setting            | Env Variable                   | Default       | Description                                                           |
+| ------------------ | ------------------------------ | ------------- | --------------------------------------------------------------------- |
+| Edit Interval      | `STREAMING_EDIT_INTERVAL`      | `1.0`         | Seconds between message edits (debounce)                              |
+| Placeholder Text   | `STREAMING_PLACEHOLDER`        | `Thinking...` | Initial message before streaming starts                               |
+| Max Message Length | `STREAMING_MAX_MESSAGE_LENGTH` | `1900`        | Maximum characters per Discord message (allowing room for truncation) |
 
 ### DeliveryResult Dataclass
 
@@ -410,14 +410,14 @@ class DeliveryResult:
 
 ### Differences from Web SSE Streaming
 
-| Aspect | Web SSE Streaming | Bot Streaming |
-| --- | --- | --- |
-| Transport | HTTP SSE | Discord API / Bot framework |
-| Text Delivery | Token-by-token events | Debounced message edits |
-| Audio Delivery | Base64 WAV to frontend | Optional audio file upload |
-| Rate Limiting | Not applicable | Must respect Discord rate limits |
-| Message Length | Not limited | 2000 character limit |
-| Update Strategy | Append to DOM | Edit original message |
+| Aspect          | Web SSE Streaming      | Bot Streaming                    |
+| --------------- | ---------------------- | -------------------------------- |
+| Transport       | HTTP SSE               | Discord API / Bot framework      |
+| Text Delivery   | Token-by-token events  | Debounced message edits          |
+| Audio Delivery  | Base64 WAV to frontend | Optional audio file upload       |
+| Rate Limiting   | Not applicable         | Must respect Discord rate limits |
+| Message Length  | Not limited            | 2000 character limit             |
+| Update Strategy | Append to DOM          | Edit original message            |
 
 ## Related Documentation
 

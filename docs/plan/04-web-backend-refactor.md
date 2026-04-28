@@ -1,6 +1,6 @@
 # Plan 04: Web Backend Refactor
 
-**Status:** Planning
+**Status:** Mostly Complete
 **Last Updated:** April 2026
 
 ---
@@ -18,7 +18,24 @@ The web backend has several structural issues that make it fragile and hard to e
 
 ---
 
-## Proposed Approach
+## What Was Done
+
+- `state.py` created with shared mutable state (`AppState`), `init()`, `get_or_create_ai_client()`, `set_client()`, `update_factory_config()`
+- `lifespan` context manager added to `main.py` — initialises PostgresDB on startup, shuts down on teardown
+- `_init_clients()` removed from `chat.py` and `chat_stream.py` — both now use `state.py`
+- `admin.py` updated to mutate state via `state.py` instead of cross-importing `chat_module`
+- `sys.path.insert(0, ...)` hacks removed from all route files
+- Cross-app import in `history.py` fixed
+
+## What Remains
+
+- `deps.py` (FastAPI dependency injection via `Depends()`) was skipped — routes import from `state.py` directly instead
+- Pydantic models have not been centralised into `models/` — they remain inline in route files
+- `models/__init__.py` and `websocket/__init__.py` are still empty stubs
+
+---
+
+## Original Proposed Approach
 
 Introduce a shared **app state** object (FastAPI `lifespan` pattern) that initialises `AIClient`, `MCPServerRegistry`, and other shared services once, and injects them into routes via FastAPI dependency injection.
 
@@ -50,17 +67,17 @@ Route files then use `Depends(get_ai_client)` instead of module-level globals.
 
 ## Key Files
 
-| File | Change |
-|------|--------|
-| `src/apps/web/backend/main.py` | Add `lifespan` context manager; initialise shared state once here |
-| `src/apps/web/backend/state.py` | **New** — `AppState` dataclass holding shared service instances |
-| `src/apps/web/backend/deps.py` | **New** — FastAPI dependency functions (`get_ai_client`, `get_mcp_registry`, etc.) |
-| `src/apps/web/backend/routes/chat.py` | Remove `_init_clients()`, remove `sys.path` hack, use `Depends()` |
-| `src/apps/web/backend/routes/chat_stream.py` | Same as above |
-| `src/apps/web/backend/routes/admin.py` | Update settings mutation to go through `app.state` instead of importing `chat_module` |
-| `src/apps/web/backend/routes/conversations.py` | Remove `sys.path` hack |
-| `src/apps/web/backend/routes/history.py` | Remove `sys.path` hack; replace cross-app `apps.console.history` import with the proper `lib.services` layer |
-| `src/apps/web/backend/models/` | Move all Pydantic request/response models here, one file per domain |
+| File                                           | Change                                                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/apps/web/backend/main.py`                 | Add `lifespan` context manager; initialise shared state once here                                            |
+| `src/apps/web/backend/state.py`                | **New** — `AppState` dataclass holding shared service instances                                              |
+| `src/apps/web/backend/deps.py`                 | **New** — FastAPI dependency functions (`get_ai_client`, `get_mcp_registry`, etc.)                           |
+| `src/apps/web/backend/routes/chat.py`          | Remove `_init_clients()`, remove `sys.path` hack, use `Depends()`                                            |
+| `src/apps/web/backend/routes/chat_stream.py`   | Same as above                                                                                                |
+| `src/apps/web/backend/routes/admin.py`         | Update settings mutation to go through `app.state` instead of importing `chat_module`                        |
+| `src/apps/web/backend/routes/conversations.py` | Remove `sys.path` hack                                                                                       |
+| `src/apps/web/backend/routes/history.py`       | Remove `sys.path` hack; replace cross-app `apps.console.history` import with the proper `lib.services` layer |
+| `src/apps/web/backend/models/`                 | Move all Pydantic request/response models here, one file per domain                                          |
 
 ---
 

@@ -4,20 +4,20 @@ This document describes the path aliases configured for the Knik frontend to sim
 
 ## Available Aliases
 
-| Alias | Maps to | Description | Usage |
-| -------------- | ---------------------- | --------------------------------------- | --------- |
-| `$types` | `src/types/*` | TypeScript type definitions | ~97 files |
-| `$lib` | `src/lib/*` | Library utilities, components, hooks | ~42 files |
-| `$components` | `src/lib/components/*` | Reusable UI components | ~36 files |
-| `$sections` | `src/lib/sections/*` | App-specific section components | ~13 files |
-| `$services` | `src/services/*` | API services and clients | ~7 files |
-| `$hooks` | `src/lib/hooks/*` | Custom React hooks | ~4 files |
-| `$store` | `src/store/*` | Zustand state management (audio, chat, toast slices) | ~4 files |
-| `$pages` | `src/lib/pages/*` | Top-level page components | ~1 file |
-| `$common` | `src/lib/components/*` | Alias for components (same as above) | unused |
-| `$utils` | `src/lib/utils/*` | Utility functions | unused |
-| `$constants` | `src/lib/constants/*` | Constants and config values | unused |
-| `$assets` | `src/assets/*` | Static assets (images, fonts, etc.) | unused |
+| Alias         | Maps to                | Description                                          | Usage     |
+| ------------- | ---------------------- | ---------------------------------------------------- | --------- |
+| `$types`      | `src/types/*`          | TypeScript type definitions                          | ~97 files |
+| `$lib`        | `src/lib/*`            | Library utilities, components, hooks                 | ~42 files |
+| `$components` | `src/lib/components/*` | Reusable UI components                               | ~36 files |
+| `$sections`   | `src/lib/sections/*`   | App-specific section components                      | ~13 files |
+| `$services`   | `src/services/*`       | API services and clients                             | ~7 files  |
+| `$hooks`      | `src/lib/hooks/*`      | Custom React hooks                                   | ~4 files  |
+| `$store`      | `src/store/*`          | Zustand state management (audio, chat, toast slices) | ~4 files  |
+| `$pages`      | `src/lib/pages/*`      | Top-level page components                            | ~1 file   |
+| `$common`     | `src/lib/components/*` | Alias for components (same as above)                 | unused    |
+| `$utils`      | `src/lib/utils/*`      | Utility functions                                    | unused    |
+| `$constants`  | `src/lib/constants/*`  | Constants and config values                          | unused    |
+| `$assets`     | `src/assets/*`         | Static assets (images, fonts, etc.)                  | unused    |
 
 > **Note:** `$common`, `$utils`, `$constants`, and `$assets` are configured but currently unused in the codebase. `$utils` and `$constants` are redundant with `$lib/utils` and `$lib/constants` which are used instead.
 

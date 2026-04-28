@@ -10,6 +10,7 @@
 The backend fully implements conversation summarization (`ConversationSummarizer` in `src/lib/services/conversation/summarizer.py`). When a conversation's token count crosses a threshold (default 75% of the model's context window), the backend automatically summarizes earlier messages and stores the summary in the `conversations` table (`summary`, `summary_through_index`, `total_tokens` columns).
 
 The frontend has **no awareness of this**:
+
 - There is no compaction indicator in the chat UI
 - The user cannot see that older messages have been summarized away
 - No summary text is ever displayed
@@ -29,14 +30,14 @@ The frontend has **no awareness of this**:
 
 ## Key Files
 
-| File | Change |
-|------|--------|
-| `src/apps/web/backend/routes/conversations.py` | Include `summary`, `summary_through_index`, `total_tokens` in conversation responses |
-| `src/apps/web/backend/routes/chat_stream.py` | Emit a `compaction` SSE event when summarization occurs during a stream |
-| `src/apps/web/frontend/src/services/streaming.ts` | Handle new `compaction` event type |
-| `src/apps/web/frontend/src/store/chatSlice.ts` | Add `summary`, `summaryThroughIndex`, `totalTokens` to conversation state |
-| `src/apps/web/frontend/src/types/api.ts` | Add compaction fields to `Conversation` type |
-| `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx` | Render compaction divider between summarized and live messages |
+| File                                                                | Change                                                                                         |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `src/apps/web/backend/routes/conversations.py`                      | Include `summary`, `summary_through_index`, `total_tokens` in conversation responses           |
+| `src/apps/web/backend/routes/chat_stream.py`                        | Emit a `compaction` SSE event when summarization occurs during a stream                        |
+| `src/apps/web/frontend/src/services/streaming.ts`                   | Handle new `compaction` event type                                                             |
+| `src/apps/web/frontend/src/store/chatSlice.ts`                      | Add `summary`, `summaryThroughIndex`, `totalTokens` to conversation state                      |
+| `src/apps/web/frontend/src/types/api.ts`                            | Add compaction fields to `Conversation` type                                                   |
+| `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx`         | Render compaction divider between summarized and live messages                                 |
 | `src/apps/web/frontend/src/lib/sections/chat/CompactionDivider.tsx` | **New** — component showing "Earlier messages summarized" with optional expand-to-view-summary |
 
 ---

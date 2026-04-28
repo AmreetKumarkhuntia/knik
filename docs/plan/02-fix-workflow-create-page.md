@@ -10,6 +10,7 @@
 The `/workflows/create` route renders `WorkflowBuilder.tsx` which uses `workflowApi.workflows.create()` to persist new workflows. The backend `workflow.py` route file has no `POST /api/workflows` create endpoint — only list, get, delete, execute, history, and node-executions endpoints exist. As a result, creating a workflow from the UI fails silently or with an unhandled error.
 
 Secondary issues to audit:
+
 - The `Canvas` component in `WorkflowBuilder` may have broken wiring for node/edge state
 - No navigation back to `/workflows` after a successful save
 - Error states are likely not surfaced to the user
@@ -27,13 +28,13 @@ Secondary issues to audit:
 
 ## Key Files
 
-| File | Change |
-|------|--------|
-| `src/apps/web/backend/routes/workflow.py` | Add `POST /api/workflows` create endpoint |
-| `src/apps/web/backend/models/` | Add `WorkflowCreate` Pydantic request model if not present |
-| `src/apps/web/frontend/src/services/workflowApi.ts` | Verify `create()` method shape matches new endpoint |
-| `src/apps/web/frontend/src/lib/pages/WorkflowBuilder.tsx` | Add save handler, loading state, error display, redirect on success |
-| `src/apps/web/frontend/src/lib/sections/workflows/WorkflowBuilder/Canvas.tsx` | Audit node/edge state wiring |
+| File                                                                          | Change                                                              |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `src/apps/web/backend/routes/workflow.py`                                     | Add `POST /api/workflows` create endpoint                           |
+| `src/apps/web/backend/models/`                                                | Add `WorkflowCreate` Pydantic request model if not present          |
+| `src/apps/web/frontend/src/services/workflowApi.ts`                           | Verify `create()` method shape matches new endpoint                 |
+| `src/apps/web/frontend/src/lib/pages/WorkflowBuilder.tsx`                     | Add save handler, loading state, error display, redirect on success |
+| `src/apps/web/frontend/src/lib/sections/workflows/WorkflowBuilder/Canvas.tsx` | Audit node/edge state wiring                                        |
 
 ---
 

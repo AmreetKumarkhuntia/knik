@@ -1,6 +1,5 @@
 # Conventions & Pitfalls
 
-
 ## Commenting on Code
 
 1. Comments should only be allowed if it explains why we are doing some specific thing

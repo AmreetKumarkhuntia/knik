@@ -267,34 +267,34 @@ flowchart TD
 
 ### Workflow Endpoints (`/api/workflows`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/workflows/` | List all workflows |
-| GET | `/api/workflows/{id}` | Get a specific workflow |
-| DELETE | `/api/workflows/{id}` | Delete a workflow |
-| POST | `/api/workflows/{id}/execute` | Execute a workflow |
-| GET | `/api/workflows/{id}/history` | Get execution history |
-| GET | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details |
+| Method | Path                                         | Description                |
+| ------ | -------------------------------------------- | -------------------------- |
+| GET    | `/api/workflows/`                            | List all workflows         |
+| GET    | `/api/workflows/{id}`                        | Get a specific workflow    |
+| DELETE | `/api/workflows/{id}`                        | Delete a workflow          |
+| POST   | `/api/workflows/{id}/execute`                | Execute a workflow         |
+| GET    | `/api/workflows/{id}/history`                | Get execution history      |
+| GET    | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details |
 
 ### Schedule Endpoints (`/api/cron`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/cron/` | List all schedules |
-| POST | `/api/cron/` | Add a new schedule |
-| DELETE | `/api/cron/{id}` | Remove a schedule |
-| PATCH | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
+| Method | Path                    | Description                      |
+| ------ | ----------------------- | -------------------------------- |
+| GET    | `/api/cron/`            | List all schedules               |
+| POST   | `/api/cron/`            | Add a new schedule               |
+| DELETE | `/api/cron/{id}`        | Remove a schedule                |
+| PATCH  | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
 
 ### Analytics Endpoints (`/api/analytics`)
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/analytics/dashboard` | Dashboard summary |
-| GET | `/api/analytics/metrics` | System metrics |
-| GET | `/api/analytics/top-workflows` | Top workflows by execution count |
-| GET | `/api/analytics/executions` | Paginated execution records |
-| GET | `/api/analytics/workflows/list` | Workflows list for analytics |
-| GET | `/api/analytics/activity` | Activity timeline |
+| Method | Path                            | Description                      |
+| ------ | ------------------------------- | -------------------------------- |
+| GET    | `/api/analytics/dashboard`      | Dashboard summary                |
+| GET    | `/api/analytics/metrics`        | System metrics                   |
+| GET    | `/api/analytics/top-workflows`  | Top workflows by execution count |
+| GET    | `/api/analytics/executions`     | Paginated execution records      |
+| GET    | `/api/analytics/workflows/list` | Workflows list for analytics     |
+| GET    | `/api/analytics/activity`       | Activity timeline                |
 
 ## Persistence (PostgreSQL)
 

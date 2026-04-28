@@ -35,17 +35,20 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 ### Technical Reference
 
- - [API Reference](reference/api.md) - AIClient, TTS, Web endpoints, Bot app
-- [Environment Variables](reference/environment-variables.md) - All configuration options
-- [Conversation History](reference/conversation-history.md) - AI memory and context system
-- [Path Aliases](reference/path-aliases.md) - Import path configuration
-- [MCP LangChain Pattern](reference/mcp-langchain-pattern.md) - Tool binding pattern- [API Reference](reference/api.md) - AIClient, TTS, Web endpoints
+- [API Reference](reference/api.md) - AIClient, TTS, Web endpoints, Bot app
 - [Environment Variables](reference/environment-variables.md) - All configuration options
 - [Conversation History](reference/conversation-history.md) - AI memory and context system
 - [Path Aliases](reference/path-aliases.md) - Import path configuration
 - [MCP LangChain Pattern](reference/mcp-langchain-pattern.md) - Tool binding pattern
 
 ### Architecture Plans
+
+- [Web Backend Refactor](plan/04-web-backend-refactor.md) - Backend state management refactor (mostly complete)
+- [Fix Workflow Create Page](plan/02-fix-workflow-create-page.md) - Backend workflow create endpoint
+- [Settings Page](plan/03-settings-page-browser.md) - Browser and app settings UI
+- [Conversation Compaction Frontend](plan/05-conversation-compaction-frontend.md) - Summarization UI in chat
+- [Tool Calls Frontend UI](plan/06-tool-calls-frontend-ui.md) - Tool call/result display in chat
+- [Discord Bot Integration](plan/DISCORD_BOT_INTEGRATION.md) - Discord bot reference
 
 ### Components
 
@@ -62,12 +65,9 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 - [Design](design.md) - UI/screen designs from Stitch project
 
-### Architecture Plans
+### Design
 
-- [Bot Architecture Overview](plan/bot/00-overview.md) - Bot design and phases
-- [Dynamic Models & Token Tracking](plan/dynamic-models-token-tracking-summarization.md) - Model discovery and summarization plan
-
-## Project Structure
+- [Design](design.md) - UI/screen designs from Stitch project
 
 ```mermaid
 flowchart LR

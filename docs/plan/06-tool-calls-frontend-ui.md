@@ -27,15 +27,15 @@ The frontend chat UI only renders `user` and `assistant` messages. Tool calls an
 
 ## Key Files
 
-| File | Change |
-|------|--------|
-| `src/lib/services/ai_client/registry/mcp_registry.py` | In `_wrap_with_logging()`, after executing a tool, emit tool call/result to a callback or queue |
-| `src/apps/web/backend/routes/chat_stream.py` | Pass a tool event callback into `achat_stream`; emit `tool_call` and `tool_result` SSE events |
-| `src/apps/web/frontend/src/services/streaming.ts` | Handle `tool_call` and `tool_result` event types |
-| `src/apps/web/frontend/src/store/chatSlice.ts` | Add `role: 'tool_call' \| 'tool_result'` to `Message` type; add actions for tool events |
-| `src/apps/web/frontend/src/types/api.ts` | Extend `ConversationMessage` tool role with `tool_name`, `tool_input`, `tool_output` fields |
-| `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx` | Render `ToolCallBlock` for tool messages |
-| `src/apps/web/frontend/src/lib/sections/chat/ToolCallBlock.tsx` | **New** — collapsible block showing tool name, input, output |
+| File                                                            | Change                                                                                          |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `src/lib/services/ai_client/registry/mcp_registry.py`           | In `_wrap_with_logging()`, after executing a tool, emit tool call/result to a callback or queue |
+| `src/apps/web/backend/routes/chat_stream.py`                    | Pass a tool event callback into `achat_stream`; emit `tool_call` and `tool_result` SSE events   |
+| `src/apps/web/frontend/src/services/streaming.ts`               | Handle `tool_call` and `tool_result` event types                                                |
+| `src/apps/web/frontend/src/store/chatSlice.ts`                  | Add `role: 'tool_call' \| 'tool_result'` to `Message` type; add actions for tool events         |
+| `src/apps/web/frontend/src/types/api.ts`                        | Extend `ConversationMessage` tool role with `tool_name`, `tool_input`, `tool_output` fields     |
+| `src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx`     | Render `ToolCallBlock` for tool messages                                                        |
+| `src/apps/web/frontend/src/lib/sections/chat/ToolCallBlock.tsx` | **New** — collapsible block showing tool name, input, output                                    |
 
 ---
 

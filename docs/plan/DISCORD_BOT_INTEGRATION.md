@@ -1,6 +1,7 @@
 # Discord Bot Integration Documentation
 
 ## Table of Contents
+
 1. [Introduction](#introduction)
 2. [Prerequisites](#prerequisites)
 3. [Setting Up a Discord Bot](#setting-up-a-discord-bot)
@@ -21,7 +22,9 @@
 This guide provides comprehensive documentation for integrating and developing Discord bots. Discord bots are automated programs that perform various tasks within Discord servers, from moderation to entertainment and utility functions.
 
 ### What is a Discord Bot?
+
 A Discord bot is a user account controlled by code that can interact with Discord servers, channels, and users. Bots can:
+
 - Send and receive messages
 - Manage server roles and permissions
 - Play music
@@ -46,23 +49,28 @@ Before you start creating a Discord bot, ensure you have:
 ## Setting Up a Discord Bot
 
 ### 1. Create Discord Developer Account
+
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
 2. Log in with your Discord account
 3. Click "New Application"
 4. Give your application a name and click "Create"
 
 ### 2. Create Bot User
+
 1. In your application, click on the "Bot" tab
 2. Click "Add Bot"
 3. Confirm by clicking "Yes, do it!"
 
 ### 3. Get Bot Token
+
 1. Under the bot section, click "Reset Token" (or "Copy Token" if already generated)
 2. **IMPORTANT**: Save this token securely. It's like your bot's password
 3. Never share this token publicly or commit it to version control
 
 ### 4. Enable Privileged Gateway Intents
+
 Depending on your bot's functionality, you may need to enable privileged intents:
+
 1. Scroll down to "Privileged Gateway Intents"
 2. Enable:
    - **Message Content Intent** - For reading message content
@@ -78,11 +86,13 @@ Depending on your bot's functionality, you may need to enable privileged intents
 This is the most popular library for Discord bot development in Python.
 
 #### Installation
+
 ```bash
 pip install discord.py
 ```
 
 #### Basic Bot Structure
+
 ```python
 import discord
 import os
@@ -116,24 +126,29 @@ bot.run(BOT_TOKEN)
 ## Installation and Setup
 
 ### Environment Setup
+
 1. **Create a virtual environment** (recommended):
+
 ```bash
 python -m venv discord_bot_env
 source discord_bot_env/bin/activate  # On Windows: discord_bot_env\Scripts\activate
 ```
 
 2. **Install required packages**:
+
 ```bash
 pip install discord.py python-dotenv
 ```
 
 3. **Create environment file**:
-Create a `.env` file in your project root:
+   Create a `.env` file in your project root:
+
 ```
 DISCORD_TOKEN=your_bot_token_here
 ```
 
 ### Project Structure
+
 ```
 discord_bot/
 ├── .env                    # Environment variables
@@ -152,6 +167,7 @@ discord_bot/
 ## Basic Bot Code
 
 ### Complete Basic Example
+
 ```python
 import discord
 import os
@@ -196,6 +212,7 @@ client.run(os.getenv('DISCORD_TOKEN'))
 ## Common Bot Features
 
 ### 1. Command Handling
+
 Using the commands extension for better command management:
 
 ```python
@@ -225,6 +242,7 @@ async def server_info(ctx):
 ```
 
 ### 2. Moderation Commands
+
 ```python
 @bot.command()
 @commands.has_permissions(kick_members=True)
@@ -242,6 +260,7 @@ async def ban(ctx, member: discord.Member, *, reason="No reason provided"):
 ```
 
 ### 3. Fun Commands
+
 ```python
 @bot.command()
 async def avatar(ctx, member: discord.Member = None):
@@ -262,6 +281,7 @@ async def roll(ctx, sides: int = 6):
 ```
 
 ### 4. Utility Commands
+
 ```python
 @bot.command()
 async def poll(ctx, *, question):
@@ -282,6 +302,7 @@ async def poll(ctx, *, question):
 ## Commands and Events
 
 ### Common Events
+
 ```python
 # User joins server
 @bot.event
@@ -325,6 +346,7 @@ async def on_message_delete(message):
 ```
 
 ### Command Groups
+
 ```python
 @bot.group()
 async def config(ctx):
@@ -347,19 +369,25 @@ async def prefix(ctx, new_prefix: str):
 ## Deployment
 
 ### Local Development
+
 1. **Run the bot**:
+
 ```bash
 python main.py
 ```
 
 2. **Keep the bot running**:
+
 - Use `screen` or `tmux` for persistent sessions
 - Or run as a system service
 
 ### Cloud Deployment
+
 #### Using Heroku (Free Option)
+
 1. **Create Heroku account** and install Heroku CLI
 2. **Initialize Git repository**:
+
 ```bash
 git init
 git add .
@@ -367,29 +395,35 @@ git commit -m "Initial bot commit"
 ```
 
 3. **Create Heroku app**:
+
 ```bash
 heroku create your-bot-name
 ```
 
 4. **Set environment variables**:
+
 ```bash
 heroku config:set DISCORD_TOKEN=your_token_here
 ```
 
 5. **Create Procfile** (no extension):
+
 ```
 worker: python main.py
 ```
 
 6. **Deploy**:
+
 ```bash
 git push heroku main
 heroku ps:scale worker=1
 ```
 
 #### Using VPS/Dedicated Server
+
 1. **Set up a systemd service**:
-Create `/etc/systemd/system/discord-bot.service`:
+   Create `/etc/systemd/system/discord-bot.service`:
+
 ```ini
 [Unit]
 Description=Discord Bot
@@ -407,6 +441,7 @@ WantedBy=multi-user.target
 ```
 
 2. **Enable and start the service**:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable discord-bot
@@ -418,9 +453,11 @@ sudo systemctl start discord-bot
 ## Best Practices
 
 ### 1. Security
+
 - **Never hardcode tokens** - Use environment variables
 - **Use `.env` files** for local development
 - **Add `.env` to `.gitignore`**:
+
 ```
 # Environment variables
 .env
@@ -432,6 +469,7 @@ sudo systemctl start discord-bot
 ```
 
 ### 2. Error Handling
+
 ```python
 @bot.event
 async def on_command_error(ctx, error):
@@ -444,9 +482,11 @@ async def on_command_error(ctx, error):
 ```
 
 ### 3. Performance
+
 - **Use caching** for frequently accessed data
 - **Avoid blocking operations** - use `asyncio` for async tasks
 - **Implement cooldowns** for frequently used commands:
+
 ```python
 @bot.command()
 @commands.cooldown(1, 5, commands.BucketType.user)  # 1 use per 5 seconds per user
@@ -455,6 +495,7 @@ async def spam(ctx):
 ```
 
 ### 4. User Experience
+
 - **Provide help messages** - use `!help` command
 - **Use embeds** for better message formatting
 - **Add loading indicators** for long-running operations
@@ -466,16 +507,20 @@ async def spam(ctx):
 ### Common Issues
 
 #### 1. "Privileged intent" errors
+
 **Problem**: Bot can't read message content or access member information
 **Solution**: Enable privileged intents in the Discord Developer Portal:
+
 1. Go to your application → Bot tab
 2. Scroll down to "Privileged Gateway Intents"
 3. Enable required intents
 4. Restart your bot
 
 #### 2. "Missing Permissions" errors
+
 **Problem**: Bot can't perform actions like kick/ban
 **Solution**:
+
 1. Invite bot with proper permissions:
    ```
    https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_ID&permissions=8&scope=bot%20applications.commands
@@ -483,23 +528,29 @@ async def spam(ctx):
 2. Change permissions number (8 = Administrator, specific permissions available)
 
 #### 3. Connection issues
+
 **Problem**: Bot won't connect or keeps disconnecting
 **Solution**:
+
 - Check internet connection
 - Verify bot token is correct
 - Check Discord API status
 - Review error messages in console
 
 #### 4. Commands not working
+
 **Problem**: Commands don't respond
 **Solution**:
+
 - Check command prefix
 - Verify bot has message content intent
 - Check for syntax errors in code
 - Ensure bot has proper channel permissions
 
 ### Debugging Tips
+
 1. **Add logging**:
+
 ```python
 import logging
 
@@ -507,6 +558,7 @@ logging.basicConfig(level=logging.DEBUG)
 ```
 
 2. **Use try-catch blocks**:
+
 ```python
 try:
     # Your code here
@@ -521,26 +573,31 @@ except Exception as e:
 ## Resources
 
 ### Official Documentation
+
 - [Discord API Documentation](https://discord.com/developers/docs/intro)
 - [discord.py Documentation](https://discordpy.readthedocs.io/)
 - [Discord.js Documentation](https://discord.js.org/) (JavaScript alternative)
 
 ### Learning Resources
+
 - [Discord.py Tutorial Series](https://discordpy.readthedocs.io/en/stable/quickstart.html)
 - [Discord Developer Portal](https://discord.com/developers/applications)
 - [Discord Bots Community](https://discord.gg/discord-developers)
 
 ### Tools and Libraries
+
 - **discord.py** - Python library for Discord
 - **Discord.js** - JavaScript library for Discord
 - **Discordgo** - Go library for Discord
 - **JDA** - Java Discord API wrapper
 
 ### Hosting Options
+
 - **Free**: Heroku, Replit, Glitch
 - **Paid**: DigitalOcean, AWS, Google Cloud, VPS
 
 ### Community Support
+
 - [Discord Developer Server](https://discord.gg/discord-developers)
 - [Discord.py Server](https://discord.gg/r3sSKJJ)
 - Stack Overflow (tag: discord.py)

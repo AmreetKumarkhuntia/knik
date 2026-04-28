@@ -8,7 +8,7 @@ Modern web interface with React + FastAPI for AI chat, workflow management, and 
 
 ```mermaid
 flowchart TD
-    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 5173]
+    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 12414]
     B -->|REST API| C[FastAPI Backend AI TTS MCP Tools Port 8000]
     C -->|Direct imports| D[Python Services AIClient TTSProcessor MCP Tools]
 
@@ -60,10 +60,12 @@ src/apps/web/frontend/src/
 ### Key Sections
 
 **Chat** (`lib/sections/chat/`)
+
 - ChatPanel: Scrollable message display with glassmorphic effects and animated bubbles
 - InputPanel: Text input with Enter key support, Send button, voice toggle
 
 **Workflows** (`lib/sections/workflows/`)
+
 - WorkflowHub: Workflow dashboard
 - WorkflowsTable: Workflow listing
 - WorkflowBuilder/: Visual node graph editor with Canvas, FloatingControls, NodePropertiesPanel, ConfigurationForm.tsx, WorkflowNavbar
@@ -71,6 +73,7 @@ src/apps/web/frontend/src/
 - ExecutionHistory/: HistoryTable, ExecutionDetail
 
 **Layout** (`lib/sections/layout/`)
+
 - MainLayout: Page wrapper
 - TopBar: Navigation and actions
 - Sidebar: History integration with backend API
@@ -80,24 +83,25 @@ src/apps/web/frontend/src/
 **API Client** (`lib/services/api.ts`)
 
 ```typescript
-const API_BASE_URL = 'http://localhost:8000/api'
+const API_BASE_URL = "http://localhost:8000/api";
 
-await api.chat(message)          // Text + audio response
-await api.getHistory()           // Conversation history
-await api.clearHistory()         // Clear history
-await api.getSettings()          // Current settings
+await api.chat(message); // Text + audio response
+await api.getHistory(); // Conversation history
+await api.clearHistory(); // Clear history
+await api.getSettings(); // Current settings
 ```
 
 **Audio Service** (`lib/services/audio/`)
 
 ```typescript
-queueAudio(base64Audio, sampleRate)  // Queue WAV chunk for playback
-pauseAudio() / resumeAudio() / stopAudio()
+queueAudio(base64Audio, sampleRate); // Queue WAV chunk for playback
+pauseAudio() / resumeAudio() / stopAudio();
 ```
 
 ### Animations
 
 All animations use GPU-accelerated properties (transform, opacity) for 60fps:
+
 - `gradient-shift` (8s ease infinite)
 - `slide-in-right` / `slide-in-left` (300ms bounce)
 - `fade-in` (500ms ease-out)
@@ -108,15 +112,15 @@ All animations use GPU-accelerated properties (transform, opacity) for 60fps:
 
 **Base URL:** `http://localhost:8000`
 
-| Route File | Prefix | Endpoints |
-| --- | --- | --- |
-| `chat.py` | `/api/chat` | POST `/` |
-| `chat_stream.py` | `/api/chat/stream` | POST `/` |
-| `admin.py` | `/api/admin` | GET/POST `/settings`, GET `/providers`, `/models`, `/voices` |
-| `history.py` | `/api/history` | GET `/`, POST `/add`, POST `/clear` |
-| `workflow.py` | `/api/workflows` | GET `/`, GET/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes` |
-| `cron.py` | `/api/cron` | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle` |
-| `analytics.py` | `/api/analytics` | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity` |
+| Route File         | Prefix               | Endpoints                                                                                                                               |
+| ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `chat.py`          | `/api/chat`          | POST `/`                                                                                                                                |
+| `chat_stream.py`   | `/api/chat/stream`   | POST `/`                                                                                                                                |
+| `admin.py`         | `/api/admin`         | GET/POST `/settings`, GET `/providers`, `/models`, `/voices`                                                                            |
+| `history.py`       | `/api/history`       | GET `/`, POST `/add`, POST `/clear`                                                                                                     |
+| `workflow.py`      | `/api/workflows`     | GET `/`, GET/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes`                              |
+| `cron.py`          | `/api/cron`          | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle`                                                                                 |
+| `analytics.py`     | `/api/analytics`     | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity`                                           |
 | `conversations.py` | `/api/conversations` | GET `/`, POST `/`, GET `/{conversation_id}`, DELETE `/{conversation_id}`, PATCH `/{conversation_id}`, GET `/{conversation_id}/messages` |
 
 See [API Reference](../reference/api.md) for detailed endpoint documentation.
@@ -166,7 +170,7 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 ```bash
 # Start backend and frontend separately (two terminals)
 npm run start:web:backend    # Backend on :8000
-npm run start:web:frontend   # Frontend on :5173 (Vite dev port)
+npm run start:web:frontend   # Frontend on :12414 (Vite dev port)
 
 # Or use shell scripts
 ./scripts/start_web_backend.sh
@@ -213,6 +217,7 @@ npm install
 ### CORS Errors
 
 Backend allows `http://localhost:12414` by default. If using a different port, update `main.py`:
+
 ```python
 allow_origins=["http://localhost:YOUR_PORT"]
 ```
