@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- @dsCard group="Spacing" name="Shadows & glow" subtitle="3 elevation steps + primary/teal glow" viewport="700x180" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 30px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: flex;
+        gap: 22px;
+        justify-content: space-between;
+      }
+      .item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .tile {
+        width: 80px;
+        height: 60px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+      }
+      .tile.s1 {
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.04) inset,
+          0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+      .tile.s2 {
+        box-shadow:
+          0 4px 14px -2px rgba(0, 0, 0, 0.4),
+          0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+      .tile.s3 {
+        box-shadow:
+          0 20px 50px -12px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      }
+      .tile.glow {
+        box-shadow:
+          0 0 0 1px rgba(0, 217, 244, 0.35),
+          0 10px 30px -10px rgba(0, 217, 244, 0.55);
+        border-color: rgba(0, 217, 244, 0.5);
+      }
+      .tile.tealglow {
+        box-shadow: 0 0 30px -8px rgba(20, 184, 166, 0.45);
+        border-color: rgba(20, 184, 166, 0.4);
+      }
+      .name {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-2);
+      }
+      .val {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="item">
+        <div class="tile s1"></div>
+        <span class="name">shadow-1</span
+        ><span class="val">subtle / sticky</span>
+      </div>
+      <div class="item">
+        <div class="tile s2"></div>
+        <span class="name">shadow-2</span><span class="val">popovers</span>
+      </div>
+      <div class="item">
+        <div class="tile s3"></div>
+        <span class="name">shadow-3</span><span class="val">modals</span>
+      </div>
+      <div class="item">
+        <div class="tile glow"></div>
+        <span class="name">glow-primary</span
+        ><span class="val">cyan accent</span>
+      </div>
+      <div class="item">
+        <div class="tile tealglow"></div>
+        <span class="name">glow-teal</span><span class="val">success</span>
+      </div>
+    </div>
+  </body>
+</html>

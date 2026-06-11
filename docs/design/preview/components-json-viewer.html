@@ -1,0 +1,126 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="JSON viewer" subtitle="Inputs / outputs tabs with copy + line numbers" viewport="700x360" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .viewer {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-2);
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: var(--bg-surface-2);
+        border-bottom: 1px solid var(--border-2);
+      }
+      .tabs {
+        display: flex;
+        gap: 2px;
+      }
+      .tab {
+        font-size: 12px;
+        color: var(--fg-3);
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+      .copy {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        color: var(--fg-3);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+      }
+      pre {
+        margin: 0;
+        background: var(--bg-code);
+        padding: 14px 16px;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--fg-2);
+        letter-spacing: -0.01em;
+        max-height: 240px;
+        overflow: auto;
+      }
+      .ln {
+        color: var(--fg-5);
+        user-select: none;
+        display: inline-block;
+        width: 28px;
+      }
+      .k {
+        color: var(--aurora-300);
+      }
+      .s {
+        color: var(--teal-300);
+      }
+      .n {
+        color: #f59e0b;
+      }
+      .c {
+        color: var(--fg-4);
+        font-style: italic;
+      }
+      .b {
+        color: var(--fg-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="viewer">
+      <div class="head">
+        <div class="tabs">
+          <span class="tab active">Outputs</span>
+          <span class="tab">Inputs</span>
+        </div>
+        <button class="copy">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >content_copy</span
+          >Copy
+        </button>
+      </div>
+      <pre><span class="ln"> 1</span>{
+<span class="ln"> 2</span>  <span class="k">"id"</span>: <span class="s">"ex-9210"</span>,
+<span class="ln"> 3</span>  <span class="k">"workflow"</span>: <span class="s">"daily-digest"</span>,
+<span class="ln"> 4</span>  <span class="k">"status"</span>: <span class="s">"success"</span>,
+<span class="ln"> 5</span>  <span class="k">"duration_ms"</span>: <span class="n">12483</span>,
+<span class="ln"> 6</span>  <span class="k">"steps"</span>: [
+<span class="ln"> 7</span>    {
+<span class="ln"> 8</span>      <span class="k">"node"</span>: <span class="s">"fetch_sources"</span>,
+<span class="ln"> 9</span>      <span class="k">"status"</span>: <span class="s">"success"</span>,
+<span class="ln">10</span>      <span class="k">"items"</span>: <span class="n">42</span>
+<span class="ln">11</span>    },
+<span class="ln">12</span>    {
+<span class="ln">13</span>      <span class="k">"node"</span>: <span class="s">"summarise"</span>,
+<span class="ln">14</span>      <span class="k">"model"</span>: <span class="s">"gemini-1.5-flash"</span>,
+<span class="ln">15</span>      <span class="k">"tokens"</span>: { <span class="k">"in"</span>: <span class="n">3812</span>, <span class="k">"out"</span>: <span class="n">412</span> }
+<span class="ln">16</span>    } <span class="c">// + 2 more</span>
+<span class="ln">17</span>  ]
+<span class="ln">18</span>}</pre>
+    </div>
+  </body>
+</html>

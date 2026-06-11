@@ -1,0 +1,173 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Metric cards" subtitle="Default, elevated, and glass variants" viewport="700x200" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      .card {
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .card.elevated {
+        box-shadow:
+          0 4px 14px -2px rgba(0, 0, 0, 0.4),
+          0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+      .card.glass {
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border-color: rgba(0, 217, 244, 0.2);
+        box-shadow: 0 10px 40px -12px rgba(0, 217, 244, 0.2);
+      }
+      .ico-wrap {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 217, 244, 0.14);
+        color: var(--aurora-300);
+      }
+      .ico-wrap.teal {
+        background: rgba(20, 184, 166, 0.14);
+        color: var(--teal-400);
+      }
+      .title {
+        font-size: 13px;
+        color: var(--fg-3);
+        font-weight: 500;
+      }
+      .value {
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.025em;
+        font-variant-numeric: tabular-nums;
+      }
+      .trend {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--success);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <div class="card">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+          "
+        >
+          <div class="ico-wrap">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="6" cy="6" r="2" />
+              <circle cx="18" cy="6" r="2" />
+              <circle cx="12" cy="18" r="2" />
+              <path
+                d="M6 8v3a2 2 0 002 2h8a2 2 0 002-2V8M12 13v3"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <span class="trend">↑ +12%</span>
+        </div>
+        <div>
+          <div class="title">Total workflows</div>
+          <div class="value">128</div>
+        </div>
+      </div>
+
+      <div class="card elevated">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+          "
+        >
+          <div class="ico-wrap teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 2L3 14h8l-1 8 10-12h-8z" />
+            </svg>
+          </div>
+          <span class="trend">↑ +5.2%</span>
+        </div>
+        <div>
+          <div class="title">Executions today</div>
+          <div class="value">12,847</div>
+        </div>
+      </div>
+
+      <div class="card glass">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+          "
+        >
+          <div
+            class="ico-wrap"
+            style="background: rgba(16, 185, 129, 0.16); color: #10b981"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path
+                d="M8 12l3 3 5-6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <span class="trend" style="color: var(--fg-4)">Steady</span>
+        </div>
+        <div>
+          <div class="title">Success rate</div>
+          <div class="value">98.4%</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

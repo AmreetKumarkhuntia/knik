@@ -1,0 +1,116 @@
+<!doctype html>
+<!-- @dsCard group="Brand" name="Background patterns" subtitle="Glass, dot-grid, line-grid, mesh" viewport="700x170" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 110px 1fr 1fr 1fr;
+        gap: 14px;
+        align-items: center;
+        padding: 6px 0;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .swatch {
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-2);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        color: var(--fg-2);
+        font-size: 12px;
+        font-family: var(--font-mono);
+      }
+      .glass {
+        background: rgba(15, 20, 28, 0.66);
+        backdrop-filter: blur(20px) saturate(140%);
+        background-image:
+          radial-gradient(
+            at 0% 50%,
+            rgba(0, 217, 244, 0.18) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 50%,
+            rgba(20, 184, 166, 0.14) 0px,
+            transparent 50%
+          );
+      }
+      .dotgrid {
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.1) 1px,
+          transparent 1px
+        );
+        background-size: 12px 12px;
+        background-color: var(--bg-canvas);
+      }
+      .linegrid {
+        background-color: var(--bg-canvas);
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.08) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.08) 1px,
+            transparent 1px
+          );
+        background-size: 20px 20px;
+      }
+      .gradient-brand {
+        background: linear-gradient(135deg, var(--aurora-400), var(--teal-500));
+        color: var(--on-primary);
+        font-weight: 600;
+      }
+      .gradient-mesh {
+        background-color: var(--bg-base);
+        background-image:
+          radial-gradient(
+            at 8% 0%,
+            rgba(0, 217, 244, 0.3) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 95% 100%,
+            rgba(20, 184, 166, 0.2) 0px,
+            transparent 50%
+          );
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">surface</span>
+      <div class="swatch">bg-surface-2</div>
+      <div class="swatch glass">glass</div>
+      <div class="swatch gradient-brand">gradient-brand</div>
+    </div>
+    <div class="row">
+      <span class="label">pattern</span>
+      <div class="swatch dotgrid">dot-grid 12</div>
+      <div class="swatch linegrid">line-grid 20</div>
+      <div class="swatch gradient-mesh">gradient-mesh</div>
+    </div>
+  </body>
+</html>

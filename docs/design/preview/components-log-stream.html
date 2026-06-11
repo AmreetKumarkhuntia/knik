@@ -1,0 +1,179 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Live log stream" subtitle="Terminal-style tail -f with level-coloured lines" viewport="700x340" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .head h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+      }
+      .terminal {
+        background: var(--bg-base);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        overflow: hidden;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .terminal .line {
+        display: flex;
+        gap: 12px;
+        padding: 3px 14px;
+      }
+      .terminal .line.h {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .ts {
+        color: var(--fg-5);
+        flex-shrink: 0;
+      }
+      .lvl {
+        flex-shrink: 0;
+        width: 50px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .lvl.info {
+        color: var(--aurora-300);
+      }
+      .lvl.warn {
+        color: #f59e0b;
+      }
+      .lvl.error {
+        color: #ef4444;
+      }
+      .lvl.ok {
+        color: #10b981;
+      }
+      .lvl.debug {
+        color: var(--fg-4);
+      }
+      .src {
+        color: var(--violet-400);
+        flex-shrink: 0;
+      }
+      .msg {
+        color: var(--fg-2);
+        flex: 1;
+        min-width: 0;
+      }
+      .msg b {
+        color: var(--fg-1);
+        font-weight: 600;
+      }
+      .msg code {
+        color: var(--aurora-300);
+      }
+      .pad {
+        padding: 6px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="head">
+      <h3>
+        Live logs
+        <span style="color: var(--aurora-300); margin-left: 6px">●</span>
+      </h3>
+      <span class="meta"
+        >tail -f &middot; 128 lines &middot; auto-scroll on</span
+      >
+    </div>
+    <div class="terminal pad">
+      <div class="line">
+        <span class="ts">12:41:08</span><span class="lvl info">info</span
+        ><span class="src">workflow</span
+        ><span class="msg"
+          >Starting <b>daily-digest</b> (ex-9210) &middot; cron(0 9 * * *)</span
+        >
+      </div>
+      <div class="line">
+        <span class="ts">12:41:08</span><span class="lvl debug">debug</span
+        ><span class="src">node</span
+        ><span class="msg"
+          >▶ fetch_sources &middot; <code>rss · github · gmail</code></span
+        >
+      </div>
+      <div class="line h">
+        <span class="ts">12:41:08</span><span class="lvl ok">ok</span
+        ><span class="src">node</span
+        ><span class="msg"
+          >✓ fetch_sources &middot; <code>42 items</code> &middot; 142 ms</span
+        >
+      </div>
+      <div class="line">
+        <span class="ts">12:41:08</span><span class="lvl debug">debug</span
+        ><span class="src">node</span
+        ><span class="msg"
+          >▶ summarise &middot; model=<code>gemini-1.5-flash</code></span
+        >
+      </div>
+      <div class="line">
+        <span class="ts">12:41:14</span><span class="lvl ok">ok</span
+        ><span class="src">node</span
+        ><span class="msg"
+          >✓ summarise &middot; <code>3,812 in / 412 out</code> tokens &middot;
+          6.2 s</span
+        >
+      </div>
+      <div class="line">
+        <span class="ts">12:41:14</span><span class="lvl warn">warn</span
+        ><span class="src">smtp</span
+        ><span class="msg"
+          >Connection reused after 2s idle &middot;
+          <code>relay.knik.ai</code></span
+        >
+      </div>
+      <div class="line h">
+        <span class="ts">12:41:18</span><span class="lvl error">error</span
+        ><span class="src">node</span
+        ><span class="msg"
+          >✗ email_digest &middot;
+          <code>SMTPError: 550 5.7.1 Relay denied</code></span
+        >
+      </div>
+      <div class="line">
+        <span class="ts">12:41:18</span><span class="lvl info">info</span
+        ><span class="src">retry</span
+        ><span class="msg"
+          >Scheduled retry in <code>2m 00s</code> (attempt 1/3)</span
+        >
+      </div>
+      <div class="line">
+        <span class="ts">12:43:20</span><span class="lvl ok">ok</span
+        ><span class="src">node</span
+        ><span class="msg"
+          >✓ email_digest &middot; <code>sent to 4 recipients</code></span
+        >
+      </div>
+    </div>
+  </body>
+</html>

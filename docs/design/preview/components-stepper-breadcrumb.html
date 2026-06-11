@@ -1,0 +1,203 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Stepper + deep breadcrumb" subtitle="Multi-step wizard + deep nav breadcrumb" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        gap: 16px;
+        align-items: stretch;
+      }
+      .stepper {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 16px;
+      }
+      .step {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        position: relative;
+      }
+      .step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 13px;
+        top: 28px;
+        bottom: -16px;
+        width: 2px;
+        background: var(--border-2);
+      }
+      .step.done:not(:last-child)::after {
+        background: var(--aurora-400);
+      }
+      .num {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid var(--border-2);
+        background: var(--bg-surface-2);
+        color: var(--fg-3);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .step.done .num {
+        background: var(--aurora-400);
+        border-color: var(--aurora-400);
+        color: var(--on-primary);
+      }
+      .step.active .num {
+        border-color: var(--aurora-400);
+        color: var(--aurora-300);
+        box-shadow: 0 0 0 4px rgba(0, 217, 244, 0.2);
+      }
+      .body {
+        flex: 1;
+        min-width: 0;
+      }
+      .ttl {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .step:not(.done):not(.active) .ttl {
+        color: var(--fg-3);
+        font-weight: 500;
+      }
+      .desc {
+        font-size: 12px;
+        color: var(--fg-3);
+        margin-top: 2px;
+        line-height: 1.5;
+      }
+      .step:not(.done):not(.active) .desc {
+        color: var(--fg-5);
+      }
+
+      /* Breadcrumb trail */
+      .bread {
+        flex: 1;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+      }
+      .crumb-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+      .crumb {
+        color: var(--fg-4);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .crumb.last {
+        color: var(--fg-1);
+        font-weight: 600;
+        letter-spacing: -0.012em;
+      }
+      .crumb.last .ms {
+        color: var(--aurora-300);
+      }
+      .sep {
+        color: var(--fg-5);
+        font-family: var(--font-mono);
+      }
+      .lbl {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stepper">
+      <div class="step done">
+        <span class="num"
+          ><span class="material-symbols-outlined" style="font-size: 14px"
+            >check</span
+          ></span
+        >
+        <div class="body">
+          <div class="ttl">Choose a trigger</div>
+          <div class="desc">Cron · every day at 09:00 UTC</div>
+        </div>
+      </div>
+      <div class="step done">
+        <span class="num"
+          ><span class="material-symbols-outlined" style="font-size: 14px"
+            >check</span
+          ></span
+        >
+        <div class="body">
+          <div class="ttl">Add nodes</div>
+          <div class="desc">4 nodes · fetch → summarise → tts → email</div>
+        </div>
+      </div>
+      <div class="step active">
+        <span class="num">3</span>
+        <div class="body">
+          <div class="ttl">Configure outputs</div>
+          <div class="desc">Where should the digest go?</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="num">4</span>
+        <div class="body">
+          <div class="ttl">Review &amp; deploy</div>
+          <div class="desc">Final check, then activate the cron.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bread">
+      <div class="lbl">Breadcrumb · deep</div>
+      <div class="crumb-row">
+        <span class="crumb"
+          ><span class="material-symbols-outlined ms" style="font-size: 14px"
+            >workspaces</span
+          >Workspace</span
+        >
+        <span class="sep">/</span>
+        <span class="crumb">Workflows</span>
+        <span class="sep">/</span>
+        <span class="crumb">Daily digest</span>
+        <span class="sep">/</span>
+        <span class="crumb">Executions</span>
+        <span class="sep">/</span>
+        <span class="crumb last"
+          ><span class="material-symbols-outlined ms" style="font-size: 14px"
+            >tag</span
+          >ex-9210</span
+        >
+      </div>
+    </div>
+  </body>
+</html>

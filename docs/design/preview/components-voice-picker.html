@@ -1,0 +1,195 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Voice picker" subtitle="9 Kokoro voices in a selectable grid" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .voice {
+        position: relative;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .voice:hover {
+        border-color: var(--border-3);
+      }
+      .voice.selected {
+        border-color: rgba(0, 217, 244, 0.55);
+        background: rgba(0, 217, 244, 0.06);
+        box-shadow: 0 0 0 3px rgba(0, 217, 244, 0.1);
+      }
+      .voice .av {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      .voice .name {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--fg-1);
+        font-weight: 600;
+        letter-spacing: -0.005em;
+      }
+      .voice .lang {
+        font-size: 10.5px;
+        color: var(--fg-4);
+        margin-top: 1px;
+      }
+      .voice.selected .name {
+        color: var(--aurora-200);
+      }
+      .voice .check {
+        margin-left: auto;
+        color: var(--aurora-300);
+        display: none;
+      }
+      .voice.selected .check {
+        display: inline-flex;
+      }
+      /* Avatar gradients */
+      .g-rose {
+        background: linear-gradient(135deg, #ec4899, #db2777);
+      }
+      .g-amber {
+        background: linear-gradient(135deg, #f59e0b, #b45309);
+      }
+      .g-aurora {
+        background: linear-gradient(135deg, #00d9f4, #14b8a6);
+      }
+      .g-violet {
+        background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      }
+      .g-emerald {
+        background: linear-gradient(135deg, #34d399, #059669);
+      }
+      .g-sky {
+        background: linear-gradient(135deg, #38bdf8, #0284c7);
+      }
+      .g-slate {
+        background: linear-gradient(135deg, #94a3b8, #475569);
+      }
+      .g-zinc {
+        background: linear-gradient(135deg, #d4d4d8, #71717a);
+      }
+      .g-stone {
+        background: linear-gradient(135deg, #d6d3d1, #78716c);
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .label span {
+        float: right;
+        color: var(--aurora-300);
+        text-transform: none;
+        letter-spacing: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="label">
+      Kokoro voices <span>9 total · 5 female · 4 male</span>
+    </div>
+    <div class="grid">
+      <div class="voice selected">
+        <span class="av g-rose">af</span>
+        <div>
+          <div class="name">af_heart</div>
+          <div class="lang">en · warm</div>
+        </div>
+        <span class="check material-symbols-outlined" style="font-size: 18px"
+          >check_circle</span
+        >
+      </div>
+      <div class="voice">
+        <span class="av g-amber">af</span>
+        <div>
+          <div class="name">af_bella</div>
+          <div class="lang">en · bright</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-aurora">af</span>
+        <div>
+          <div class="name">af_sarah</div>
+          <div class="lang">en · clear</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-violet">af</span>
+        <div>
+          <div class="name">af_nicole</div>
+          <div class="lang">en · soft</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-emerald">af</span>
+        <div>
+          <div class="name">af_sky</div>
+          <div class="lang">en · airy</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-sky">am</span>
+        <div>
+          <div class="name">am_adam</div>
+          <div class="lang">en · deep</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-slate">am</span>
+        <div>
+          <div class="name">am_michael</div>
+          <div class="lang">en · steady</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-zinc">am</span>
+        <div>
+          <div class="name">am_leo</div>
+          <div class="lang">en · rich</div>
+        </div>
+      </div>
+      <div class="voice">
+        <span class="av g-stone">am</span>
+        <div>
+          <div class="name">am_ryan</div>
+          <div class="lang">en · casual</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

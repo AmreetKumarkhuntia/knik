@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Form inputs" subtitle="Text inputs, search, focus ring" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 26px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .lbl {
+        font-size: 13px;
+        color: var(--fg-3);
+      }
+      .input {
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        color: var(--fg-1);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        padding: 10px 14px;
+        outline: none;
+        transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .input:focus,
+      .focus {
+        border-color: var(--aurora-400);
+        box-shadow: 0 0 0 3px rgba(0, 217, 244, 0.18);
+      }
+      .input::placeholder {
+        color: var(--fg-5);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .search {
+        position: relative;
+      }
+      .search .svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--fg-4);
+        width: 16px;
+        height: 16px;
+      }
+      .search input {
+        padding-left: 38px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="field">
+        <span class="lbl">Workflow name</span>
+        <input class="input" placeholder="Daily digest" />
+      </div>
+      <div class="field">
+        <span class="lbl">Trigger · focused</span>
+        <input
+          class="input focus"
+          value="cron(0 9 * * *)"
+          style="font-family: var(--font-mono); font-size: 13px"
+        />
+      </div>
+    </div>
+    <div class="field search">
+      <span class="lbl">Search</span>
+      <span class="svg" style="top: auto; bottom: 11px; transform: none">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4.3-4.3" />
+        </svg>
+      </span>
+      <input class="input" placeholder="Search workflows…" />
+    </div>
+  </body>
+</html>

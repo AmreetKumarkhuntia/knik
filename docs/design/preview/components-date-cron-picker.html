@@ -1,0 +1,263 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Date + cron picker" subtitle="Calendar with run-dots + cron schedule field" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .picker {
+        width: 280px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 14px 36px -10px rgba(0, 0, 0, 0.6);
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .head .month {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .nav {
+        display: flex;
+        gap: 2px;
+      }
+      .nav .btn {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        color: var(--fg-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .nav .btn:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        padding: 8px;
+        gap: 2px;
+      }
+      .dow {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        color: var(--fg-5);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 6px 0;
+        text-align: center;
+      }
+      .day {
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12.5px;
+        color: var(--fg-2);
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+      }
+      .day:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .day.muted {
+        color: var(--fg-5);
+      }
+      .day.today {
+        color: var(--aurora-300);
+        font-weight: 600;
+      }
+      .day.today::after {
+        content: "";
+        position: absolute;
+        bottom: 3px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--aurora-300);
+      }
+      .day.selected {
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        font-weight: 600;
+        box-shadow: 0 4px 14px -4px rgba(0, 217, 244, 0.55);
+      }
+      .day.has-run::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--teal-400);
+      }
+      .foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-top: 1px solid var(--border-2);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-3);
+      }
+      .foot button {
+        background: transparent;
+        border: none;
+        color: var(--aurora-300);
+        font-family: var(--font-sans);
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .body {
+        display: flex;
+        gap: 22px;
+        align-items: flex-start;
+      }
+      .info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .field {
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .field .l {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .field .v {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        color: var(--fg-1);
+        margin-top: 2px;
+      }
+      .field .v b {
+        color: var(--aurora-300);
+        font-weight: 400;
+      }
+      .field .help {
+        font-size: 11.5px;
+        color: var(--fg-4);
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="body">
+      <div class="picker">
+        <div class="head">
+          <div class="month">May 2026</div>
+          <div class="nav">
+            <span class="btn"
+              ><span class="material-symbols-outlined" style="font-size: 18px"
+                >chevron_left</span
+              ></span
+            >
+            <span class="btn"
+              ><span class="material-symbols-outlined" style="font-size: 18px"
+                >chevron_right</span
+              ></span
+            >
+          </div>
+        </div>
+        <div class="grid">
+          <div class="dow">M</div>
+          <div class="dow">T</div>
+          <div class="dow">W</div>
+          <div class="dow">T</div>
+          <div class="dow">F</div>
+          <div class="dow">S</div>
+          <div class="dow">S</div>
+          <div class="day muted">27</div>
+          <div class="day muted">28</div>
+          <div class="day muted">29</div>
+          <div class="day muted">30</div>
+          <div class="day">1</div>
+          <div class="day">2</div>
+          <div class="day">3</div>
+          <div class="day has-run">4</div>
+          <div class="day has-run">5</div>
+          <div class="day has-run">6</div>
+          <div class="day has-run">7</div>
+          <div class="day has-run">8</div>
+          <div class="day">9</div>
+          <div class="day">10</div>
+          <div class="day has-run">11</div>
+          <div class="day has-run">12</div>
+          <div class="day has-run">13</div>
+          <div class="day has-run">14</div>
+          <div class="day has-run">15</div>
+          <div class="day">16</div>
+          <div class="day">17</div>
+          <div class="day has-run">18</div>
+          <div class="day has-run">19</div>
+          <div class="day has-run">20</div>
+          <div class="day today has-run">21</div>
+          <div class="day selected">22</div>
+          <div class="day">23</div>
+          <div class="day">24</div>
+          <div class="day">25</div>
+          <div class="day">26</div>
+          <div class="day">27</div>
+          <div class="day">28</div>
+          <div class="day">29</div>
+          <div class="day">30</div>
+          <div class="day">31</div>
+        </div>
+        <div class="foot">
+          <span>9 runs this week</span>
+          <button>Today</button>
+        </div>
+      </div>
+
+      <div class="info">
+        <div class="field">
+          <div class="l">Cron schedule</div>
+          <div class="v"><b>0 9 * * *</b></div>
+          <div class="help">Every day at 09:00 UTC.</div>
+        </div>
+        <div class="field">
+          <div class="l">Next run</div>
+          <div class="v">Fri 22 May · 09:00</div>
+          <div class="help">
+            In <b style="color: var(--aurora-300)">14h 23m</b>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

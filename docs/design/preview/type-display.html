@@ -1,0 +1,91 @@
+<!doctype html>
+<!-- @dsCard group="Type" name="Display type" subtitle="Inter Variable · display sizes with tight tracking" viewport="700x200" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-2);
+        border-radius: 0;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .row {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        min-width: 96px;
+        flex-shrink: 0;
+      }
+      .specimen {
+        color: var(--fg-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stack">
+      <div class="row">
+        <span class="label">display 2xl · 600</span>
+        <span
+          class="specimen"
+          style="
+            font-family: var(--font-display);
+            font-size: 64px;
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            font-weight: 600;
+          "
+          >Knik AI</span
+        >
+      </div>
+      <div class="row">
+        <span class="label">display xl · 600</span>
+        <span
+          class="specimen"
+          style="
+            font-family: var(--font-display);
+            font-size: 44px;
+            line-height: 1.05;
+            letter-spacing: -0.025em;
+            font-weight: 600;
+          "
+          >Run any workflow</span
+        >
+      </div>
+      <div class="row">
+        <span class="label">tracking</span>
+        <span
+          class="specimen mono"
+          style="
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: 12px;
+            color: var(--fg-3);
+          "
+          >Inter Variable · letter-spacing &minus;0.04em → &minus;0.012em</span
+        >
+      </div>
+    </div>
+  </body>
+</html>

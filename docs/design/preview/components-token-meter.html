@@ -1,0 +1,176 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Token + cost meter" subtitle="Stacked-segment usage + budget tracker" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .row {
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .label {
+        font-size: 13px;
+        color: var(--fg-3);
+      }
+      .label .ico {
+        display: inline-flex;
+        vertical-align: -2px;
+        color: var(--aurora-300);
+        margin-right: 4px;
+      }
+      .val {
+        font-family: var(--font-mono);
+        font-size: 13.5px;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .val b {
+        color: var(--aurora-300);
+        font-weight: 400;
+      }
+      .val small {
+        color: var(--fg-4);
+        font-size: 11px;
+        margin-left: 4px;
+      }
+      .seg {
+        display: flex;
+        height: 8px;
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+      .seg .s {
+        height: 100%;
+        transition: width 200ms var(--ease-out);
+      }
+      .seg .in {
+        background: linear-gradient(90deg, var(--aurora-400), var(--teal-400));
+      }
+      .seg .out {
+        background: linear-gradient(90deg, #a78bfa, var(--violet-500));
+        margin-left: 1px;
+      }
+      .seg .cache {
+        background: rgba(16, 185, 129, 0.45);
+        margin-left: 1px;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        margin-top: 8px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--fg-4);
+      }
+      .legend span b {
+        color: var(--fg-1);
+        font-weight: 500;
+      }
+      .legend .d {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        vertical-align: -1px;
+        margin-right: 4px;
+      }
+      .warn {
+        color: #fcd34d;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Tokens -->
+    <div class="row">
+      <div class="top">
+        <span class="label">
+          <span class="ico material-symbols-outlined" style="font-size: 16px"
+            >token</span
+          >
+          Tokens this month
+        </span>
+        <span class="val">1,114,802 <small>/ 1,250,000</small></span>
+      </div>
+      <div class="seg">
+        <div class="s in" style="width: 54%"></div>
+        <div class="s out" style="width: 23%"></div>
+        <div class="s cache" style="width: 12%"></div>
+      </div>
+      <div class="legend">
+        <span
+          ><span class="d" style="background: var(--aurora-400)"></span>Input
+          <b>675K</b></span
+        >
+        <span
+          ><span class="d" style="background: #a78bfa"></span>Output
+          <b>287K</b></span
+        >
+        <span
+          ><span class="d" style="background: #10b981"></span>Cache
+          <b>153K</b></span
+        >
+        <span style="margin-left: auto" class="warn"
+          >89% used &middot; 8 days left</span
+        >
+      </div>
+    </div>
+
+    <!-- Cost -->
+    <div class="row">
+      <div class="top">
+        <span class="label">
+          <span class="ico material-symbols-outlined" style="font-size: 16px"
+            >payments</span
+          >
+          Estimated cost
+        </span>
+        <span class="val"><b>$24.18</b><small>/ $40.00 budget</small></span>
+      </div>
+      <div class="seg">
+        <div
+          class="s"
+          style="
+            width: 60.5%;
+            background: linear-gradient(
+              90deg,
+              var(--aurora-400),
+              var(--teal-400)
+            );
+          "
+        ></div>
+      </div>
+      <div class="legend">
+        <span
+          >Projected end-of-month <b style="color: var(--fg-1)">$31.40</b></span
+        >
+        <span style="margin-left: auto"
+          >↓ <b style="color: #10b981">−12%</b> vs. April</span
+        >
+      </div>
+    </div>
+  </body>
+</html>

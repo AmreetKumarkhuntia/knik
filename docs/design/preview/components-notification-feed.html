@@ -1,0 +1,183 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Notification feed" subtitle="Glass popover with unread dots + mark-all-read" viewport="700x360" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 16px 20px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .feed {
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        overflow: hidden;
+        width: 380px;
+        margin-left: auto;
+        box-shadow: 0 18px 38px -14px rgba(0, 0, 0, 0.55);
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .head h3 {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .head a {
+        font-size: 11.5px;
+        color: var(--aurora-300);
+        text-decoration: none;
+      }
+      .item {
+        display: flex;
+        gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border-1);
+        position: relative;
+      }
+      .item:last-child {
+        border-bottom: none;
+      }
+      .item.unread::before {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 18px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--aurora-400);
+        box-shadow: 0 0 6px var(--aurora-400);
+      }
+      .ico {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .ico.success {
+        background: rgba(16, 185, 129, 0.18);
+        color: #10b981;
+      }
+      .ico.fail {
+        background: rgba(239, 68, 68, 0.18);
+        color: #ef4444;
+      }
+      .ico.info {
+        background: rgba(0, 217, 244, 0.18);
+        color: var(--aurora-300);
+      }
+      .ico.user {
+        background: rgba(139, 92, 246, 0.18);
+        color: #a78bfa;
+      }
+      .body {
+        flex: 1;
+        min-width: 0;
+      }
+      .ttl {
+        font-size: 13px;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .ttl b {
+        font-weight: 600;
+      }
+      .ttl code {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        background: var(--bg-code);
+        color: var(--aurora-300);
+        padding: 1px 5px;
+        border-radius: 3px;
+        border: 1px solid var(--border-1);
+      }
+      .when {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--fg-5);
+        margin-top: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="feed">
+      <div class="head">
+        <h3>Notifications · 3 new</h3>
+        <a href="#">Mark all read</a>
+      </div>
+
+      <div class="item unread">
+        <div class="ico success">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >check</span
+          >
+        </div>
+        <div class="body">
+          <div class="ttl">
+            <b>Daily digest</b> finished in <code>12.4s</code>
+          </div>
+          <div class="when">2 min ago · ex-9210</div>
+        </div>
+      </div>
+
+      <div class="item unread">
+        <div class="ico fail">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >priority_high</span
+          >
+        </div>
+        <div class="body">
+          <div class="ttl"><b>GitHub digest</b> failed · SMTP relay denied</div>
+          <div class="when">11 min ago · ex-9207</div>
+        </div>
+      </div>
+
+      <div class="item unread">
+        <div class="ico info">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >campaign</span
+          >
+        </div>
+        <div class="body">
+          <div class="ttl">New voice <code>am_ryan</code> is available</div>
+          <div class="when">1 h ago · system</div>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="ico user">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >person</span
+          >
+        </div>
+        <div class="body">
+          <div class="ttl">
+            <b>Jay K.</b> shared <b>"Voice notes → tasks"</b> with you
+          </div>
+          <div class="when">Yesterday · 17:42</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Agent thinking blocks" subtitle="Compaction divider, tool-call rows, diff block" viewport="700x360" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      /* Compaction divider */
+      .compact {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--fg-4);
+      }
+      .compact .line {
+        flex: 1;
+        height: 1px;
+        background: var(--border-2);
+      }
+      .compact .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border: 1px dashed var(--border-2);
+        border-radius: 999px;
+        background: var(--bg-surface-2);
+        color: var(--fg-3);
+        font-family: var(--font-sans);
+      }
+      /* Inline status row */
+      .status-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        font-size: 13px;
+        color: var(--fg-2);
+      }
+      .status-row .ico {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .status-row.success .ico {
+        background: rgba(16, 185, 129, 0.16);
+        color: #10b981;
+      }
+      .status-row.running .ico {
+        background: rgba(0, 217, 244, 0.16);
+        color: var(--aurora-300);
+      }
+      .status-row .meta {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+      }
+      .status-row .tool {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--aurora-300);
+        background: var(--bg-code);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--border-1);
+      }
+      /* Diff block */
+      .diff {
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        overflow: hidden;
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      .diff .h {
+        padding: 5px 12px;
+        background: var(--bg-surface-2);
+        color: var(--fg-3);
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid var(--border-1);
+      }
+      .diff .l {
+        padding: 2px 12px;
+      }
+      .diff .l.add {
+        background: rgba(16, 185, 129, 0.08);
+        color: #34d399;
+      }
+      .diff .l.add::before {
+        content: "+ ";
+        color: #10b981;
+      }
+      .diff .l.rm {
+        background: rgba(239, 68, 68, 0.08);
+        color: #fca5a5;
+      }
+      .diff .l.rm::before {
+        content: "- ";
+        color: #ef4444;
+      }
+      .diff .l.ctx {
+        color: var(--fg-3);
+      }
+      .diff .l.ctx::before {
+        content: "  ";
+      }
+    </style>
+  </head>
+  <body>
+    <div class="compact">
+      <div class="line"></div>
+      <span class="pill">
+        <span class="material-symbols-outlined" style="font-size: 13px"
+          >compress</span
+        >
+        Earlier messages were summarised
+        <span class="material-symbols-outlined" style="font-size: 14px"
+          >expand_more</span
+        >
+      </span>
+      <div class="line"></div>
+    </div>
+
+    <div class="status-row success">
+      <span class="ico"
+        ><span class="material-symbols-outlined" style="font-size: 14px"
+          >check</span
+        ></span
+      >
+      <span
+        >Ran tool <span class="tool">shell.run</span> &middot; created
+        <span class="tool">orjson_loader.py</span></span
+      >
+      <span class="meta">142 ms</span>
+    </div>
+
+    <div class="status-row running">
+      <span class="ico"
+        ><span
+          style="
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid currentColor;
+            border-top-color: transparent;
+            display: inline-block;
+            animation: knik-spin 0.9s linear infinite;
+          "
+        ></span
+      ></span>
+      <span>Synthesising voice <span class="tool">af_heart</span>…</span>
+      <span class="meta">6.2 s</span>
+    </div>
+
+    <div class="diff">
+      <div class="h">orjson_loader.py</div>
+      <div class="l rm">
+        def load_rows(path): return json.loads(open(path).read())
+      </div>
+      <div class="l add">def stream_rows(path):</div>
+      <div class="l add">with open(path, "rb") as f:</div>
+      <div class="l add">for line in f:</div>
+      <div class="l add">yield orjson.loads(line)</div>
+      <div class="l ctx"></div>
+    </div>
+
+    <style>
+      @keyframes knik-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Chips & tags" subtitle="Tag, voice, lang, team, kbd, dashed input chips" viewport="700x180" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        border: 1px solid var(--border-2);
+        background: var(--bg-surface-2);
+        color: var(--fg-2);
+        letter-spacing: -0.005em;
+      }
+      .chip.tag {
+        color: var(--aurora-300);
+        border-color: rgba(0, 217, 244, 0.3);
+        background: rgba(0, 217, 244, 0.06);
+      }
+      .chip.tag .x {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(0, 217, 244, 0.18);
+        color: var(--aurora-300);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        cursor: pointer;
+      }
+      .chip.voice {
+        color: var(--teal-300);
+        border-color: rgba(20, 184, 166, 0.3);
+        background: rgba(20, 184, 166, 0.06);
+      }
+      .chip.lang {
+        color: var(--fg-2);
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .chip.team {
+        color: #a78bfa;
+        border-color: rgba(139, 92, 246, 0.3);
+        background: rgba(139, 92, 246, 0.06);
+      }
+      .avatar {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ec4899, #8b5cf6);
+        color: #fff;
+        font-size: 8.5px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chip.input {
+        color: var(--fg-1);
+        border-style: dashed;
+        border-color: var(--border-3);
+        background: transparent;
+      }
+      .chip.kbd {
+        background: var(--bg-base);
+        color: var(--fg-3);
+        border-color: var(--border-2);
+      }
+    </style>
+  </head>
+  <body>
+    <span class="chip tag">#daily-digest <span class="x">×</span></span>
+    <span class="chip tag">#cron <span class="x">×</span></span>
+    <span class="chip tag">#llm <span class="x">×</span></span>
+    <span class="chip voice"
+      ><span class="dot" style="background: var(--teal-300)"></span
+      >af_heart</span
+    >
+    <span class="chip voice"
+      ><span class="dot" style="background: var(--teal-300)"></span
+      >am_michael</span
+    >
+    <span class="chip lang"
+      ><span class="dot" style="background: #10b981"></span>en-US</span
+    >
+    <span class="chip lang"
+      ><span class="dot" style="background: #f59e0b"></span>ja-JP</span
+    >
+    <span class="chip team"><span class="avatar">AR</span>Alex R.</span>
+    <span class="chip team"
+      ><span
+        class="avatar"
+        style="background: linear-gradient(135deg, #06b6d4, #0ea5e9)"
+        >JK</span
+      >Jay K.</span
+    >
+    <span class="chip input">+ add tag</span>
+    <span class="chip kbd">⌘ K</span>
+    <span class="chip kbd">⇧ Enter</span>
+    <span class="chip kbd">Esc</span>
+  </body>
+</html>

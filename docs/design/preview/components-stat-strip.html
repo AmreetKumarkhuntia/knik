@@ -1,0 +1,175 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Stat strip + chip metrics" subtitle="5-column KPI bar + live mini-stat chips" viewport="700x200" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      /* Horizontal stat strip */
+      .strip {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .strip > div {
+        padding: 14px 16px;
+        border-right: 1px solid var(--border-1);
+      }
+      .strip > div:last-child {
+        border-right: none;
+      }
+      .strip .l {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .strip .v {
+        font-family: var(--font-mono);
+        font-size: 18px;
+        color: var(--fg-1);
+        letter-spacing: -0.025em;
+        margin-top: 4px;
+        font-variant-numeric: tabular-nums;
+      }
+      .strip .d {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        margin-top: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .d.up {
+        color: #10b981;
+      }
+      .d.dn {
+        color: #ef4444;
+      }
+      .d.flat {
+        color: var(--fg-4);
+      }
+      /* Compact KPIs (chip row) */
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 11px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 999px;
+        font-size: 12px;
+        color: var(--fg-2);
+      }
+      .chip b {
+        font-family: var(--font-mono);
+        color: var(--fg-1);
+        font-weight: 600;
+        letter-spacing: -0.012em;
+      }
+      .chip .ms {
+        color: var(--fg-3);
+      }
+      .chip.live .ms,
+      .chip.live b {
+        color: var(--aurora-300);
+      }
+      .chip.live {
+        border-color: rgba(0, 217, 244, 0.3);
+        background: rgba(0, 217, 244, 0.04);
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--aurora-300);
+        box-shadow: 0 0 6px var(--aurora-300);
+        animation: knik-pulse 1.4s infinite;
+      }
+      @keyframes knik-pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="strip">
+      <div>
+        <div class="l">Workflows</div>
+        <div class="v">128</div>
+        <div class="d up">↑ +12%</div>
+      </div>
+      <div>
+        <div class="l">Today's runs</div>
+        <div class="v">12,847</div>
+        <div class="d up">↑ +5.2%</div>
+      </div>
+      <div>
+        <div class="l">Success</div>
+        <div class="v">98.4%</div>
+        <div class="d flat">— Steady</div>
+      </div>
+      <div>
+        <div class="l">Avg duration</div>
+        <div class="v">8.3s</div>
+        <div class="d dn">↓ −0.4s</div>
+      </div>
+      <div>
+        <div class="l">Tokens</div>
+        <div class="v">2.1M</div>
+        <div class="d up">↑ +18%</div>
+      </div>
+    </div>
+
+    <div class="chips">
+      <span class="chip live"><span class="dot"></span><b>3</b> running</span>
+      <span class="chip"
+        ><span class="material-symbols-outlined ms" style="font-size: 14px"
+          >schedule</span
+        ><b>14m</b> until next</span
+      >
+      <span class="chip"
+        ><span class="material-symbols-outlined ms" style="font-size: 14px"
+          >account_tree</span
+        ><b>5</b> active workflows</span
+      >
+      <span class="chip"
+        ><span class="material-symbols-outlined ms" style="font-size: 14px"
+          >smart_toy</span
+        ><b>gemini-1.5-flash</b></span
+      >
+      <span class="chip"
+        ><span class="material-symbols-outlined ms" style="font-size: 14px"
+          >campaign</span
+        ><b>af_heart</b></span
+      >
+    </div>
+  </body>
+</html>

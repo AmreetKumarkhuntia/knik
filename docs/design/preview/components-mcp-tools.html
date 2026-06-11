@@ -1,0 +1,203 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="MCP tool catalog" subtitle="Searchable grid of 31 MCP tools by category" viewport="700x320" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .head .t {
+        font-size: 13px;
+        color: var(--fg-3);
+      }
+      .head .t b {
+        color: var(--fg-1);
+        font-weight: 600;
+      }
+      .search {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 7px;
+        width: 200px;
+        color: var(--fg-4);
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .tool {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+      }
+      .ico {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(0, 217, 244, 0.1);
+        color: var(--aurora-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .tool.cat-shell .ico {
+        background: rgba(20, 184, 166, 0.14);
+        color: var(--teal-300);
+      }
+      .tool.cat-file .ico {
+        background: rgba(139, 92, 246, 0.14);
+        color: #a78bfa;
+      }
+      .tool.cat-web .ico {
+        background: rgba(245, 158, 11, 0.14);
+        color: #f59e0b;
+      }
+      .tool.cat-cron .ico {
+        background: rgba(0, 217, 244, 0.14);
+        color: var(--aurora-300);
+      }
+      .tool.cat-text .ico {
+        background: rgba(236, 72, 153, 0.14);
+        color: #ec4899;
+      }
+      .name {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.005em;
+      }
+      .desc {
+        font-size: 11.5px;
+        color: var(--fg-3);
+        line-height: 1.4;
+        margin-top: 2px;
+      }
+      .cat {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-4);
+        padding: 2px 6px;
+        border: 1px solid var(--border-2);
+        border-radius: 4px;
+        margin-top: 6px;
+        display: inline-flex;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="head">
+      <div class="t"><b>31 MCP tools</b> across 7 categories</div>
+      <div class="search">
+        <span class="material-symbols-outlined" style="font-size: 14px"
+          >search</span
+        >
+        Search tools…
+      </div>
+    </div>
+    <div class="grid">
+      <div class="tool cat-shell">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >terminal</span
+          >
+        </div>
+        <div>
+          <div class="name">shell.run</div>
+          <div class="desc">
+            Run a shell command and capture stdout / stderr.
+          </div>
+          <div class="cat">shell</div>
+        </div>
+      </div>
+      <div class="tool cat-file">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >draft</span
+          >
+        </div>
+        <div>
+          <div class="name">file.read</div>
+          <div class="desc">Read a file from the local sandbox.</div>
+          <div class="cat">file</div>
+        </div>
+      </div>
+      <div class="tool cat-file">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >edit_document</span
+          >
+        </div>
+        <div>
+          <div class="name">file.write</div>
+          <div class="desc">Create or overwrite a file with new content.</div>
+          <div class="cat">file</div>
+        </div>
+      </div>
+      <div class="tool cat-web">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >language</span
+          >
+        </div>
+        <div>
+          <div class="name">browser.fetch</div>
+          <div class="desc">Fetch a URL and return rendered HTML.</div>
+          <div class="cat">browser</div>
+        </div>
+      </div>
+      <div class="tool cat-cron">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >schedule</span
+          >
+        </div>
+        <div>
+          <div class="name">cron.schedule</div>
+          <div class="desc">Schedule a workflow with a cron expression.</div>
+          <div class="cat">cron</div>
+        </div>
+      </div>
+      <div class="tool cat-text">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >format_align_left</span
+          >
+        </div>
+        <div>
+          <div class="name">text.summarise</div>
+          <div class="desc">Compress a long passage to N sentences.</div>
+          <div class="cat">text</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

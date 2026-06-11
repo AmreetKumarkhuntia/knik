@@ -1,0 +1,215 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Theme selector" subtitle="Mode toggle + accent palette with selected swatch" viewport="700x380" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-base);
+        background-image: radial-gradient(
+          at 0% 0%,
+          rgba(0, 217, 244, 0.1) 0px,
+          transparent 50%
+        );
+        box-sizing: border-box;
+        height: 380px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(7, 9, 13, 0.55);
+        backdrop-filter: blur(6px);
+      }
+      .modal {
+        position: relative;
+        width: 460px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(28px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        box-shadow:
+          0 30px 60px -20px rgba(0, 0, 0, 0.65),
+          0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .head h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .body {
+        padding: 16px 18px;
+      }
+      /* Mode toggle */
+      .mode {
+        display: flex;
+        gap: 4px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 9px;
+        padding: 3px;
+        margin-bottom: 18px;
+      }
+      .mode .opt {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--fg-3);
+        cursor: pointer;
+      }
+      .mode .opt.active {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .sw {
+        position: relative;
+        padding: 12px 10px;
+        background: var(--bg-surface-2);
+        border: 1.5px solid var(--border-2);
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+      }
+      .sw.on {
+        border-color: var(--aurora-400);
+        box-shadow: 0 0 0 3px rgba(0, 217, 244, 0.2);
+      }
+      .chip {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        margin: 0 auto 8px;
+        box-shadow: 0 8px 18px -6px rgba(0, 0, 0, 0.5);
+      }
+      .sw .nm {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-1);
+        letter-spacing: -0.005em;
+      }
+      .sw .hx {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--fg-4);
+        margin-top: 2px;
+      }
+      .sw .check {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .sw.on .check {
+        display: inline-flex;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scrim"></div>
+    <div class="modal">
+      <div class="head">
+        <h3>Theme</h3>
+        <span
+          class="material-symbols-outlined"
+          style="font-size: 18px; color: var(--fg-3)"
+          >close</span
+        >
+      </div>
+      <div class="body">
+        <div class="mode">
+          <span class="opt"
+            ><span class="material-symbols-outlined" style="font-size: 16px"
+              >light_mode</span
+            >Light</span
+          >
+          <span class="opt active"
+            ><span class="material-symbols-outlined" style="font-size: 16px"
+              >dark_mode</span
+            >Dark</span
+          >
+          <span class="opt"
+            ><span class="material-symbols-outlined" style="font-size: 16px"
+              >computer</span
+            >System</span
+          >
+        </div>
+        <div class="swatches">
+          <div class="sw on">
+            <span class="check"
+              ><span class="material-symbols-outlined" style="font-size: 12px"
+                >check</span
+              ></span
+            >
+            <div
+              class="chip"
+              style="background: linear-gradient(135deg, #00d9f4, #14b8a6)"
+            ></div>
+            <div class="nm">Aurora</div>
+            <div class="hx">#00D9F4</div>
+          </div>
+          <div class="sw">
+            <div
+              class="chip"
+              style="background: linear-gradient(135deg, #8b5cf6, #6366f1)"
+            ></div>
+            <div class="nm">Violet</div>
+            <div class="hx">#8B5CF6</div>
+          </div>
+          <div class="sw">
+            <div
+              class="chip"
+              style="background: linear-gradient(135deg, #3b82f6, #06b6d4)"
+            ></div>
+            <div class="nm">Blue</div>
+            <div class="hx">#3B82F6</div>
+          </div>
+          <div class="sw">
+            <div
+              class="chip"
+              style="background: linear-gradient(135deg, #2dd4bf, #059669)"
+            ></div>
+            <div class="nm">Teal</div>
+            <div class="hx">#14B8A6</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

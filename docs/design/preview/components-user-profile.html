@@ -1,0 +1,128 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="User profile" subtitle="Avatar + name + badges + notification bell" viewport="700x120" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00d9f4, #14b8a6);
+        color: #04141a;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow:
+          0 0 0 2px var(--bg-surface),
+          0 0 0 3px rgba(0, 217, 244, 0.5);
+      }
+      .name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .meta {
+        font-size: 12px;
+        color: var(--fg-3);
+      }
+      .badges {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+        align-items: center;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid;
+      }
+      .badge.pro {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 217, 244, 0.18),
+          rgba(20, 184, 166, 0.18)
+        );
+        color: var(--aurora-200);
+        border-color: rgba(0, 217, 244, 0.3);
+      }
+      .badge.admin {
+        background: rgba(139, 92, 246, 0.14);
+        color: #a78bfa;
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+      .notif {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        color: var(--fg-2);
+      }
+      .notif .dot {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 600;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--bg-surface);
+        line-height: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="avatar">AR</div>
+    <div>
+      <div class="name">Alex Rivera</div>
+      <div class="meta">alex@knik.ai · Pro account</div>
+    </div>
+    <div class="badges">
+      <span class="badge pro">Pro</span>
+      <span class="badge admin">Admin</span>
+      <span class="notif">
+        <span class="material-symbols-outlined" style="font-size: 18px"
+          >notifications</span
+        >
+        <span class="dot">3</span>
+      </span>
+    </div>
+  </body>
+</html>

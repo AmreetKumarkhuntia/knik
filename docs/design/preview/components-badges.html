@@ -1,0 +1,137 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Badges" subtitle="Execution status + account-tier pills" viewport="700x140" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 26px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .row:last-child {
+        margin-bottom: 0;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        width: 90px;
+        flex-shrink: 0;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: -0.005em;
+      }
+      .b-pending {
+        background: rgba(245, 158, 11, 0.16);
+        color: #f59e0b;
+      }
+      .b-running {
+        background: rgba(59, 130, 246, 0.16);
+        color: #3b82f6;
+      }
+      .b-success {
+        background: rgba(16, 185, 129, 0.16);
+        color: #10b981;
+      }
+      .b-failed {
+        background: rgba(239, 68, 68, 0.16);
+        color: #ef4444;
+      }
+      .b-pro {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 217, 244, 0.16),
+          rgba(20, 184, 166, 0.16)
+        );
+        color: var(--aurora-200);
+        border: 1px solid rgba(0, 217, 244, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 9px;
+        font-family: var(--font-mono);
+      }
+      .b-admin {
+        background: rgba(139, 92, 246, 0.14);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 9px;
+        font-family: var(--font-mono);
+      }
+      .b-basic {
+        background: var(--bg-surface-3);
+        color: var(--fg-3);
+        border: 1px solid var(--border-2);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 9px;
+        font-family: var(--font-mono);
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .spin {
+        width: 10px;
+        height: 10px;
+        border: 1.5px solid currentColor;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">execution</span>
+      <span class="badge b-pending"><span class="dot"></span>Pending</span>
+      <span class="badge b-running"><span class="spin"></span>Running</span>
+      <span class="badge b-success"><span class="dot"></span>Success</span>
+      <span class="badge b-failed"><span class="dot"></span>Failed</span>
+    </div>
+    <div class="row">
+      <span class="label">account</span>
+      <span class="b-pro">Pro</span>
+      <span class="b-admin">Admin</span>
+      <span class="b-basic">Basic</span>
+    </div>
+  </body>
+</html>

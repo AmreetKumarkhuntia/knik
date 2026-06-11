@@ -1,0 +1,213 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Team roster + avatar stack" subtitle="Overflow avatar stack + member rows with roles" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      /* Avatar stack */
+      .stack {
+        display: flex;
+        align-items: center;
+      }
+      .av {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--aurora-400), var(--teal-500));
+        color: var(--on-primary);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--bg-surface);
+      }
+      .av + .av {
+        margin-left: -10px;
+      }
+      .av.r {
+        background: linear-gradient(135deg, #ec4899, #db2777);
+      }
+      .av.a {
+        background: linear-gradient(135deg, #f59e0b, #b45309);
+      }
+      .av.v {
+        background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      }
+      .av.g {
+        background: linear-gradient(135deg, #34d399, #059669);
+      }
+      .av.b {
+        background: linear-gradient(135deg, #38bdf8, #0284c7);
+      }
+      .av.more {
+        background: var(--bg-surface-3);
+        color: var(--fg-3);
+      }
+      .label {
+        margin-left: 10px;
+        font-size: 13px;
+        color: var(--fg-2);
+      }
+      .label b {
+        color: var(--fg-1);
+        font-weight: 600;
+        letter-spacing: -0.012em;
+      }
+      /* Member rows */
+      .member {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+      }
+      .m-av {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--on-primary);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 600;
+        position: relative;
+      }
+      .m-av.status::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 2px solid var(--bg-surface-2);
+      }
+      .m-av.away::after {
+        background: #f59e0b;
+      }
+      .m-av.off::after {
+        background: var(--fg-5);
+      }
+      .m-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .m-meta {
+        font-size: 11.5px;
+        color: var(--fg-4);
+        margin-top: 1px;
+      }
+      .role {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid;
+      }
+      .role.owner {
+        background: rgba(0, 217, 244, 0.1);
+        color: var(--aurora-200);
+        border-color: rgba(0, 217, 244, 0.3);
+      }
+      .role.admin {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+      .role.member {
+        background: var(--bg-surface-3);
+        color: var(--fg-3);
+        border-color: var(--border-2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stack">
+      <span class="av">AR</span>
+      <span class="av r">JK</span>
+      <span class="av a">MN</span>
+      <span class="av v">TR</span>
+      <span class="av g">SP</span>
+      <span class="av b">LV</span>
+      <span class="av more">+4</span>
+      <span class="label"><b>10 collaborators</b> on this workflow</span>
+    </div>
+
+    <div class="member">
+      <div
+        class="m-av status"
+        style="
+          background: linear-gradient(
+            135deg,
+            var(--aurora-400),
+            var(--teal-500)
+          );
+        "
+      >
+        AR
+      </div>
+      <div class="m-info">
+        <div class="m-name">Alex Rivera</div>
+        <div class="m-meta">alex@knik.ai · last active just now</div>
+      </div>
+      <span class="role owner">Owner</span>
+    </div>
+
+    <div class="member">
+      <div
+        class="m-av away"
+        style="background: linear-gradient(135deg, #ec4899, #db2777)"
+      >
+        JK
+      </div>
+      <div class="m-info">
+        <div class="m-name">Jay Khanna</div>
+        <div class="m-meta">jay@knik.ai · idle 12 min</div>
+      </div>
+      <span class="role admin">Admin</span>
+    </div>
+
+    <div class="member">
+      <div
+        class="m-av off"
+        style="background: linear-gradient(135deg, #94a3b8, #475569)"
+      >
+        MN
+      </div>
+      <div class="m-info">
+        <div class="m-name">Mira Nakamura</div>
+        <div class="m-meta">mira@knik.ai · last seen Mar 14</div>
+      </div>
+      <span class="role member">Member</span>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,150 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Toasts" subtitle="Success, error, info · left accent + close" viewport="700x300" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .toast {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        width: 360px;
+        box-shadow: 0 14px 40px -14px rgba(0, 0, 0, 0.6);
+      }
+      .toast .ico {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .toast.success .ico {
+        background: rgba(16, 185, 129, 0.16);
+        color: #10b981;
+      }
+      .toast.error .ico {
+        background: rgba(239, 68, 68, 0.16);
+        color: #ef4444;
+      }
+      .toast.info .ico {
+        background: rgba(0, 217, 244, 0.16);
+        color: var(--aurora-300);
+      }
+      .toast .body {
+        flex: 1;
+        min-width: 0;
+      }
+      .toast .ttl {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .toast .msg {
+        font-size: 12.5px;
+        color: var(--fg-3);
+        margin-top: 2px;
+        line-height: 1.4;
+      }
+      .toast .close {
+        color: var(--fg-4);
+        cursor: pointer;
+      }
+      .toast.success {
+        border-left: 2px solid #10b981;
+      }
+      .toast.error {
+        border-left: 2px solid #ef4444;
+      }
+      .toast.info {
+        border-left: 2px solid var(--aurora-400);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toast success">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >check_circle</span
+        >
+      </div>
+      <div class="body">
+        <div class="ttl">Workflow saved</div>
+        <div class="msg">&ldquo;Daily digest&rdquo; will run at 09:00 UTC.</div>
+      </div>
+      <span class="close"
+        ><span class="material-symbols-outlined" style="font-size: 16px"
+          >close</span
+        ></span
+      >
+    </div>
+
+    <div class="toast error">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >error</span
+        >
+      </div>
+      <div class="body">
+        <div class="ttl">Run failed</div>
+        <div class="msg">ex-9207 · SMTPError: 550 5.7.1 Relay denied.</div>
+      </div>
+      <span class="close"
+        ><span class="material-symbols-outlined" style="font-size: 16px"
+          >close</span
+        ></span
+      >
+    </div>
+
+    <div class="toast info">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >info</span
+        >
+      </div>
+      <div class="body">
+        <div class="ttl">New voice available</div>
+        <div class="msg">
+          <span
+            class="mono"
+            style="
+              font-family: var(--font-mono);
+              background: transparent;
+              border: none;
+              padding: 0;
+              color: var(--aurora-300);
+            "
+            >am_ryan</span
+          >
+          is now available in the TTS picker.
+        </div>
+      </div>
+      <span class="close"
+        ><span class="material-symbols-outlined" style="font-size: 16px"
+          >close</span
+        ></span
+      >
+    </div>
+  </body>
+</html>

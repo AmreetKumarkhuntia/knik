@@ -1,0 +1,215 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="TTS player" subtitle="Kokoro TTS scrubber with live waveform" viewport="700x140" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .player {
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid var(--border-2);
+        border-radius: 14px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 14px 32px -14px rgba(0, 217, 244, 0.2);
+      }
+      .play {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow:
+          0 6px 22px -6px rgba(0, 217, 244, 0.65),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+        cursor: pointer;
+      }
+      .meta {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+        gap: 6px;
+      }
+      .row1 {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .voice {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--aurora-300);
+        background: rgba(0, 217, 244, 0.1);
+        border: 1px solid rgba(0, 217, 244, 0.25);
+        padding: 2px 8px;
+        border-radius: 5px;
+      }
+      .label {
+        font-size: 12.5px;
+        color: var(--fg-2);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .time {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+      }
+      /* Waveform */
+      .wave {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 28px;
+        --played: 56%;
+      }
+      .bar {
+        width: 2.5px;
+        background: var(--bg-surface-3);
+        border-radius: 1.5px;
+      }
+      .bar.played {
+        background: linear-gradient(180deg, var(--aurora-300), var(--teal-400));
+      }
+      .bar.cursor {
+        background: var(--fg-1);
+        box-shadow: 0 0 6px var(--aurora-300);
+        width: 3px;
+      }
+      .actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: transparent;
+        border: none;
+        color: var(--fg-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="player">
+      <button class="play">
+        <span class="material-symbols-outlined" style="font-size: 22px"
+          >pause</span
+        >
+      </button>
+      <div class="meta">
+        <div class="row1">
+          <span class="voice">af_heart</span>
+          <span class="label">"How can I help you today?"</span>
+          <span class="time">00:08 / 00:14</span>
+        </div>
+        <div class="wave">
+          <!-- 64 bars, first 36 'played' -->
+          <span class="bar played" style="height: 8px"></span>
+          <span class="bar played" style="height: 14px"></span>
+          <span class="bar played" style="height: 18px"></span>
+          <span class="bar played" style="height: 22px"></span>
+          <span class="bar played" style="height: 20px"></span>
+          <span class="bar played" style="height: 24px"></span>
+          <span class="bar played" style="height: 18px"></span>
+          <span class="bar played" style="height: 12px"></span>
+          <span class="bar played" style="height: 20px"></span>
+          <span class="bar played" style="height: 26px"></span>
+          <span class="bar played" style="height: 22px"></span>
+          <span class="bar played" style="height: 16px"></span>
+          <span class="bar played" style="height: 10px"></span>
+          <span class="bar played" style="height: 14px"></span>
+          <span class="bar played" style="height: 22px"></span>
+          <span class="bar played" style="height: 28px"></span>
+          <span class="bar played" style="height: 24px"></span>
+          <span class="bar played" style="height: 20px"></span>
+          <span class="bar played" style="height: 14px"></span>
+          <span class="bar played" style="height: 10px"></span>
+          <span class="bar played" style="height: 16px"></span>
+          <span class="bar played" style="height: 22px"></span>
+          <span class="bar played" style="height: 26px"></span>
+          <span class="bar played" style="height: 20px"></span>
+          <span class="bar played" style="height: 18px"></span>
+          <span class="bar played" style="height: 14px"></span>
+          <span class="bar played" style="height: 24px"></span>
+          <span class="bar played" style="height: 20px"></span>
+          <span class="bar played" style="height: 12px"></span>
+          <span class="bar played" style="height: 16px"></span>
+          <span class="bar played" style="height: 22px"></span>
+          <span class="bar played" style="height: 18px"></span>
+          <span class="bar played" style="height: 14px"></span>
+          <span class="bar played" style="height: 20px"></span>
+          <span class="bar played" style="height: 24px"></span>
+          <span class="bar cursor" style="height: 28px"></span>
+          <span class="bar" style="height: 14px"></span>
+          <span class="bar" style="height: 18px"></span>
+          <span class="bar" style="height: 22px"></span>
+          <span class="bar" style="height: 16px"></span>
+          <span class="bar" style="height: 12px"></span>
+          <span class="bar" style="height: 20px"></span>
+          <span class="bar" style="height: 24px"></span>
+          <span class="bar" style="height: 18px"></span>
+          <span class="bar" style="height: 14px"></span>
+          <span class="bar" style="height: 10px"></span>
+          <span class="bar" style="height: 8px"></span>
+          <span class="bar" style="height: 14px"></span>
+          <span class="bar" style="height: 18px"></span>
+          <span class="bar" style="height: 22px"></span>
+          <span class="bar" style="height: 14px"></span>
+          <span class="bar" style="height: 10px"></span>
+          <span class="bar" style="height: 16px"></span>
+          <span class="bar" style="height: 20px"></span>
+          <span class="bar" style="height: 14px"></span>
+          <span class="bar" style="height: 8px"></span>
+          <span class="bar" style="height: 6px"></span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="icon-btn" title="Restart">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >replay</span
+          >
+        </button>
+        <button class="icon-btn" title="Stop">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >stop</span
+          >
+        </button>
+        <button class="icon-btn" title="Download">
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >download</span
+          >
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

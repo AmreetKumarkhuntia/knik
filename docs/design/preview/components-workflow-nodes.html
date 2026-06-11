@@ -1,0 +1,151 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Workflow nodes" subtitle="Start / LLM / End on a workflow grid" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 26px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.06) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.06) 1px,
+            transparent 1px
+          );
+        background-size: 24px 24px;
+      }
+      .canvas {
+        display: flex;
+        gap: 32px;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        height: 130px;
+      }
+      .node {
+        width: 150px;
+        background: rgba(11, 16, 24, 0.85);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        position: relative;
+      }
+      .node .type {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-4);
+      }
+      .node .name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .node .meta {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-3);
+        margin-top: 2px;
+      }
+      .node.start {
+        border-color: rgba(20, 184, 166, 0.5);
+        box-shadow:
+          0 0 0 1px rgba(20, 184, 166, 0.2),
+          0 0 24px -6px rgba(20, 184, 166, 0.45);
+      }
+      .node.start .type,
+      .node.start .name {
+        color: var(--teal-300);
+      }
+      .node.active {
+        border-color: var(--aurora-400);
+        box-shadow:
+          0 0 0 1px rgba(0, 217, 244, 0.25),
+          0 0 24px -4px rgba(0, 217, 244, 0.55);
+      }
+      .node.end {
+        border-color: rgba(139, 92, 246, 0.5);
+        box-shadow: 0 0 24px -8px rgba(139, 92, 246, 0.45);
+      }
+      .handle {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--aurora-400);
+        border: 2px solid #0d111a;
+      }
+      .h-l {
+        left: -6px;
+      }
+      .h-r {
+        right: -6px;
+      }
+      .edge {
+        flex: 1;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--aurora-400) 0%,
+          var(--aurora-400) 50%,
+          transparent 50%,
+          transparent 100%
+        );
+        background-size: 16px 2px;
+        animation: dash 1.4s linear infinite;
+        position: relative;
+      }
+      @keyframes dash {
+        to {
+          background-position: 32px 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="canvas">
+      <div class="node start">
+        <span class="type">Start</span>
+        <span class="name">Trigger</span>
+        <span class="meta">cron · 09:00</span>
+        <span class="handle h-r" style="background: #5eead4"></span>
+      </div>
+      <div class="edge"></div>
+      <div class="node active">
+        <span class="type">LLM</span>
+        <span class="name">Summarise</span>
+        <span class="meta">gemini-1.5-flash</span>
+        <span class="handle h-l"></span>
+        <span class="handle h-r"></span>
+      </div>
+      <div class="edge"></div>
+      <div class="node end">
+        <span class="type">End</span>
+        <span class="name">Email</span>
+        <span class="meta">→ team</span>
+        <span class="handle h-l" style="background: #a78bfa"></span>
+      </div>
+    </div>
+  </body>
+</html>

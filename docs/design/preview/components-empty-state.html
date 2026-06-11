@@ -1,0 +1,86 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Empty state" subtitle="Glyph + title + description + primary CTA" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .empty {
+        text-align: center;
+        padding: 36px 24px;
+        border: 1px dashed var(--border-2);
+        border-radius: 14px;
+        background: var(--bg-surface-2);
+      }
+      .glyph {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        margin: 0 auto 14px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 217, 244, 0.1),
+          rgba(20, 184, 166, 0.1)
+        );
+        border: 1px solid rgba(0, 217, 244, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--aurora-300);
+      }
+      h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--fg-3);
+      }
+      .btn {
+        margin-top: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 14px -4px rgba(0, 217, 244, 0.55);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="empty">
+      <div class="glyph">
+        <span class="material-symbols-outlined" style="font-size: 28px"
+          >account_tree</span
+        >
+      </div>
+      <h3>No workflows found</h3>
+      <p>Create your first workflow to get started.</p>
+      <button class="btn">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >add</span
+        >Create workflow
+      </button>
+    </div>
+  </body>
+</html>

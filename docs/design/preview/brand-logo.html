@@ -1,0 +1,111 @@
+<!doctype html>
+<!-- @dsCard group="Brand" name="Logo / wordmark" subtitle="KNIK glyph + Inter wordmark on mesh" viewport="700x200" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 28px;
+        background: var(--bg-base);
+        background-image:
+          radial-gradient(
+            at 8% 0%,
+            rgba(0, 217, 244, 0.18) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 95% 100%,
+            rgba(20, 184, 166, 0.12) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 50% 50%,
+            rgba(139, 92, 246, 0.06) 0px,
+            transparent 60%
+          );
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        min-height: 160px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .mark {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        background: rgba(11, 18, 26, 0.7);
+        border: 1.5px solid rgba(0, 217, 244, 0.45);
+        box-shadow: 0 0 40px -8px rgba(0, 217, 244, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .wordmark {
+        font-family: var(--font-display);
+        font-size: 44px;
+        font-weight: 600;
+        letter-spacing: -0.06em;
+        color: var(--fg-1);
+      }
+      .meta {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-align: right;
+        line-height: 1.8;
+      }
+      .meta b {
+        color: var(--aurora-200);
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="logo">
+      <div class="mark">
+        <svg
+          width="38"
+          height="38"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="url(#g)"
+          stroke-width="2.4"
+          stroke-linecap="round"
+        >
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="24" y2="24">
+              <stop offset="0%" stop-color="#79E6F9" />
+              <stop offset="55%" stop-color="#00D9F4" />
+              <stop offset="100%" stop-color="#14B8A6" />
+            </linearGradient>
+          </defs>
+          <line x1="5" y1="12" x2="5" y2="12" />
+          <line x1="8.5" y1="9" x2="8.5" y2="15" />
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="15.5" y1="8" x2="15.5" y2="16" />
+          <line x1="19" y1="10" x2="19" y2="14" />
+        </svg>
+      </div>
+      <span class="wordmark">KNIK</span>
+    </div>
+    <div class="meta">
+      <div><b>Mark</b> · soundwave glyph</div>
+      <div><b>Wordmark</b> · Inter 600 · &minus;0.06em</div>
+      <div><b>Gradient</b> · aurora &rarr; teal</div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- @dsCard group="Type" name="Body & caption" subtitle="Body, small, caption, and eyebrow" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 110px 1fr auto;
+        align-items: baseline;
+        gap: 16px;
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border-1);
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">body lg</span>
+      <span style="font-size: 17px; line-height: 1.6; color: var(--fg-2)"
+        >Knik AI can assist with coding, content generation, and complex
+        workflows.</span
+      >
+      <span class="meta">17 / 1.6</span>
+    </div>
+    <div class="row">
+      <span class="label">body</span>
+      <span style="font-size: 15px; line-height: 1.5; color: var(--fg-2)"
+        >Start a conversation to see it here.</span
+      >
+      <span class="meta">15 / 1.5</span>
+    </div>
+    <div class="row">
+      <span class="label">body sm</span>
+      <span style="font-size: 13px; line-height: 1.5; color: var(--fg-3)"
+        >Refactor my Python script · Optimize performance and readability.</span
+      >
+      <span class="meta">13 / 1.5</span>
+    </div>
+    <div class="row">
+      <span class="label">caption</span>
+      <span style="font-size: 12px; letter-spacing: 0.02em; color: var(--fg-3)"
+        >Last executed · Yesterday</span
+      >
+      <span class="meta">12 / wide</span>
+    </div>
+    <div class="row">
+      <span class="label">eyebrow</span>
+      <span
+        style="
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          font-weight: 500;
+          color: var(--fg-3);
+        "
+        >Navigation</span
+      >
+      <span class="meta">11 / upper</span>
+    </div>
+  </body>
+</html>

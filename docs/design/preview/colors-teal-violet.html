@@ -1,0 +1,107 @@
+<!doctype html>
+<!-- @dsCard group="Colors" name="Teal & violet" subtitle="Secondary teal and legacy violet scales" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      .col-title {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 5fr 1fr 1fr 1fr 1fr 1fr;
+        gap: 4px;
+      }
+      .sw {
+        aspect-ratio: 1.4 / 1;
+        border-radius: 5px;
+        border: 1px solid var(--border-1);
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.85);
+        padding: 4px 5px;
+        display: flex;
+        align-items: flex-end;
+      }
+      .sw.dark {
+        color: rgba(0, 0, 0, 0.7);
+      }
+      .legend {
+        margin-top: 12px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-3);
+      }
+      .pair {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-1);
+        border-radius: 8px;
+      }
+      .pair .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <div>
+        <div class="col-title">teal · workflow / secondary</div>
+        <div class="row" style="grid-template-columns: repeat(5, 1fr)">
+          <div class="sw dark" style="background: #5eead4">300</div>
+          <div class="sw dark" style="background: #2dd4bf">400</div>
+          <div class="sw" style="background: #14b8a6">500</div>
+          <div class="sw" style="background: #0d9488">600</div>
+          <div class="sw" style="background: #0f766e">700</div>
+        </div>
+        <div class="legend" style="margin-top: 14px">
+          <div class="pair">
+            <div class="dot" style="background: #14b8a6"></div>
+            --teal-500 · success edges
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="col-title">violet · legacy accent</div>
+        <div class="row" style="grid-template-columns: repeat(3, 1fr)">
+          <div class="sw dark" style="background: #a78bfa">400</div>
+          <div class="sw" style="background: #8b5cf6">500</div>
+          <div class="sw" style="background: #7c3aed">600</div>
+        </div>
+        <div class="legend" style="margin-top: 14px">
+          <div class="pair">
+            <div class="dot" style="background: #8b5cf6"></div>
+            --violet-500 · theme preset only
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

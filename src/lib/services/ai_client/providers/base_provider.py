@@ -187,12 +187,29 @@ class LangChainProvider(BaseAIProvider):
         dicts = []
         for m in history:
             mtype = getattr(m, "type", "")
-            if mtype in ("human", "ai"):
-                role = "user" if mtype == "human" else "assistant"
+            if mtype == "human":
                 content = getattr(m, "content", "")
                 if not isinstance(content, str):
                     content = ""
-                dicts.append({"role": role, "content": content})
+                dicts.append({"role": "user", "content": content})
+            elif mtype == "ai":
+                content = getattr(m, "content", "")
+                if not isinstance(content, str):
+                    content = ""
+                d: dict[str, Any] = {"role": "assistant", "content": content}
+                if hasattr(m, "tool_calls") and m.tool_calls:
+                    d["tool_calls"] = m.tool_calls
+                dicts.append(d)
+            elif mtype == "tool":
+                content = getattr(m, "content", "")
+                if not isinstance(content, str):
+                    content = ""
+                d = {
+                    "role": "tool",
+                    "content": content,
+                    "name": getattr(m, "name", ""),
+                }
+                dicts.append(d)
         return count_message_tokens(dicts) if dicts else 0
 
     def _extract_text_from_content(self, content) -> str:
@@ -244,7 +261,19 @@ class LangChainProvider(BaseAIProvider):
                     if msg.type == "human":
                         messages.append({"role": "user", "content": msg.content})
                     elif msg.type == "ai":
-                        messages.append({"role": "assistant", "content": msg.content})
+                        d: dict[str, Any] = {"role": "assistant", "content": msg.content}
+                        if hasattr(msg, "tool_calls") and msg.tool_calls:
+                            d["tool_calls"] = msg.tool_calls
+                        messages.append(d)
+                    elif msg.type == "tool":
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "content": msg.content,
+                                "tool_call_id": getattr(msg, "tool_call_id", ""),
+                                "name": getattr(msg, "name", ""),
+                            }
+                        )
 
         messages.append({"role": "user", "content": prompt})
         return messages

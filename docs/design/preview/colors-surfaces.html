@@ -1,0 +1,75 @@
+<!doctype html>
+<!-- @dsCard group="Colors" name="Dark surfaces" subtitle="6 surface tokens from ink black to code" viewport="700x170" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+      }
+      .tile {
+        aspect-ratio: 1.6 / 1;
+        border-radius: 8px;
+        border: 1px solid var(--border-2);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 10px;
+      }
+      .tile .name {
+        color: var(--fg-1);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .tile .hex {
+        color: var(--fg-4);
+      }
+      .row-label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row-label">surfaces · dark</div>
+    <div class="grid">
+      <div class="tile" style="background: #07090d">
+        <span class="name">bg-base</span><span class="hex">#07090D</span>
+      </div>
+      <div class="tile" style="background: #0d1117">
+        <span class="name">bg-surface</span><span class="hex">#0D1117</span>
+      </div>
+      <div class="tile" style="background: #11161f">
+        <span class="name">surface-2</span><span class="hex">#11161F</span>
+      </div>
+      <div class="tile" style="background: #161c27">
+        <span class="name">surface-3</span><span class="hex">#161C27</span>
+      </div>
+      <div class="tile" style="background: #08101a">
+        <span class="name">canvas</span><span class="hex">#08101A</span>
+      </div>
+      <div class="tile" style="background: #0c1118">
+        <span class="name">code</span><span class="hex">#0C1118</span>
+      </div>
+    </div>
+  </body>
+</html>

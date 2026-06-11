@@ -1,0 +1,117 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Markdown rendering" subtitle="Headings, lists, code fence, quote, inline code" viewport="700x380" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--fg-2);
+      }
+      h2 {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.012em;
+        color: var(--fg-1);
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 10px;
+      }
+      ul {
+        margin: 0 0 10px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 2px;
+      }
+      a {
+        color: var(--aurora-300);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.92em;
+        background: var(--bg-surface-2);
+        color: var(--fg-1);
+        padding: 1px 5px;
+        border-radius: 4px;
+        border: 1px solid var(--border-1);
+      }
+      pre {
+        margin: 6px 0 12px;
+        overflow: hidden;
+        background: var(--bg-code);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+      }
+      pre .lang {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid var(--border-1);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      pre code {
+        display: block;
+        padding: 10px 14px;
+        background: transparent;
+        border: none;
+        font-size: 12.5px;
+        color: var(--fg-2);
+        line-height: 1.55;
+      }
+      pre .k {
+        color: var(--aurora-300);
+      }
+      pre .s {
+        color: var(--teal-300);
+      }
+      blockquote {
+        margin: 0 0 10px;
+        padding: 4px 14px;
+        border-left: 3px solid var(--border-3);
+        color: var(--fg-3);
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Three quick wins</h2>
+    <p>
+      You can squeeze a lot out of this loop. Start with <code>orjson</code> and
+      a generator, then we can profile.
+    </p>
+    <ul>
+      <li>Replace the inner <code>for</code> loop with a generator</li>
+      <li>Swap <code>json.loads</code> &rarr; <code>orjson.loads</code></li>
+      <li>Hoist the regex out of the hot path</li>
+    </ul>
+    <pre>
+    <div class="lang"><span>python</span><span>copy</span></div>
+    <code><span class="k">def</span> stream_rows(path):
+    <span class="k">with</span> open(path, <span class="s">"rb"</span>) <span class="k">as</span> f:
+        <span class="k">for</span> line <span class="k">in</span> f:
+            <span class="k">yield</span> orjson.loads(line)</code>
+  </pre>
+    <blockquote>
+      See <a href="#">docs/perf.md</a> for the benchmark methodology.
+    </blockquote>
+  </body>
+</html>

@@ -1,0 +1,211 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Accordion + vertical tabs" subtitle="FAQ accordion + vertical settings tabs" viewport="700x320" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        gap: 22px;
+        align-items: stretch;
+      }
+      /* Accordion */
+      .accordion {
+        flex: 1;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .acc-item {
+        border-bottom: 1px solid var(--border-1);
+      }
+      .acc-item:last-child {
+        border-bottom: none;
+      }
+      .acc-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        cursor: pointer;
+      }
+      .acc-head .ms {
+        color: var(--fg-3);
+        transition: transform 200ms var(--ease-out);
+      }
+      .acc-item.open .acc-head .ms {
+        transform: rotate(90deg);
+        color: var(--aurora-300);
+      }
+      .acc-q {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+        flex: 1;
+      }
+      .acc-meta {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--fg-4);
+      }
+      .acc-body {
+        padding: 0 14px 14px 38px;
+        font-size: 12.5px;
+        color: var(--fg-3);
+        line-height: 1.55;
+      }
+      .acc-body code {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        background: var(--bg-code);
+        color: var(--aurora-300);
+        padding: 1px 5px;
+        border-radius: 3px;
+        border: 1px solid var(--border-1);
+      }
+      /* Vertical tabs */
+      .vtabs {
+        width: 220px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border-left: 1px solid var(--border-2);
+        padding-left: 12px;
+      }
+      .vlabel {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-5);
+        padding: 4px 8px;
+        margin-bottom: 4px;
+      }
+      .vtab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 7px;
+        font-size: 12.5px;
+        color: var(--fg-3);
+        cursor: pointer;
+      }
+      .vtab:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .vtab.active {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+        box-shadow: inset 2px 0 0 var(--aurora-400);
+      }
+      .vtab .ms {
+        font-size: 16px;
+        color: var(--fg-4);
+      }
+      .vtab.active .ms {
+        color: var(--aurora-300);
+      }
+      .vtab .ct {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="accordion">
+      <div class="acc-item open">
+        <div class="acc-head">
+          <span class="material-symbols-outlined ms" style="font-size: 18px"
+            >chevron_right</span
+          >
+          <span class="acc-q">What models does KNIK support?</span>
+          <span class="acc-meta">7</span>
+        </div>
+        <div class="acc-body">
+          Vertex AI · Gemini · ZhipuAI · Z.AI · Z.AI Coding · OpenAI-compatible
+          (custom) · Mock. Configure your default in
+          <code>Settings → Preferences</code>.
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head">
+          <span class="material-symbols-outlined ms" style="font-size: 18px"
+            >chevron_right</span
+          >
+          <span class="acc-q">Can I use my own TTS voice?</span>
+          <span class="acc-meta">tts</span>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head">
+          <span class="material-symbols-outlined ms" style="font-size: 18px"
+            >chevron_right</span
+          >
+          <span class="acc-q">How do MCP tools work?</span>
+          <span class="acc-meta">mcp</span>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head">
+          <span class="material-symbols-outlined ms" style="font-size: 18px"
+            >chevron_right</span
+          >
+          <span class="acc-q">Where is my data stored?</span>
+          <span class="acc-meta">privacy</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vtabs">
+      <div class="vlabel">Properties</div>
+      <div class="vtab active">
+        <span class="material-symbols-outlined ms">tune</span>General<span
+          class="ct"
+          >5</span
+        >
+      </div>
+      <div class="vtab">
+        <span class="material-symbols-outlined ms">smart_toy</span>Model<span
+          class="ct"
+          >3</span
+        >
+      </div>
+      <div class="vtab">
+        <span class="material-symbols-outlined ms">input</span>Inputs<span
+          class="ct"
+          >2</span
+        >
+      </div>
+      <div class="vtab">
+        <span class="material-symbols-outlined ms">output</span>Outputs<span
+          class="ct"
+          >4</span
+        >
+      </div>
+      <div class="vtab">
+        <span class="material-symbols-outlined ms">replay</span>Retry<span
+          class="ct"
+          >—</span
+        >
+      </div>
+      <div class="vtab">
+        <span class="material-symbols-outlined ms">history</span>History
+      </div>
+    </div>
+  </body>
+</html>

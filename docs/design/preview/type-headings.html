@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- @dsCard group="Type" name="Heading scale" subtitle="H1–H4 sizes, weights, and tracking" viewport="700x240" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 110px 1fr auto;
+        align-items: baseline;
+        gap: 16px;
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border-1);
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">h1</span>
+      <span
+        style="
+          font-size: 32px;
+          letter-spacing: -0.025em;
+          font-weight: 600;
+          color: var(--fg-1);
+        "
+        >How can I help you today?</span
+      >
+      <span class="meta">32 / 1.2 / -0.025em</span>
+    </div>
+    <div class="row">
+      <span class="label">h2</span>
+      <span
+        style="
+          font-size: 24px;
+          letter-spacing: -0.012em;
+          font-weight: 600;
+          color: var(--fg-1);
+        "
+        >Workflow Hub</span
+      >
+      <span class="meta">24 / 1.2 / -0.012em</span>
+    </div>
+    <div class="row">
+      <span class="label">h3</span>
+      <span
+        style="
+          font-size: 18px;
+          letter-spacing: -0.012em;
+          font-weight: 600;
+          color: var(--fg-1);
+        "
+        >Recent conversations</span
+      >
+      <span class="meta">18 / 1.3</span>
+    </div>
+    <div class="row">
+      <span class="label">h4</span>
+      <span
+        style="
+          font-size: 16px;
+          letter-spacing: -0.012em;
+          font-weight: 600;
+          color: var(--fg-1);
+        "
+        >Refactor my Python script</span
+      >
+      <span class="meta">16 / 1.35</span>
+    </div>
+  </body>
+</html>

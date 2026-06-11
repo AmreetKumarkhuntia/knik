@@ -1,0 +1,209 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Graph · card node" subtitle="AI / TTS card nodes with type chip + I/O lines" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-canvas);
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.05) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.05) 1px,
+            transparent 1px
+          );
+        background-size: 28px 28px;
+        box-sizing: border-box;
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        justify-content: center;
+      }
+      .node {
+        position: relative;
+        width: 200px;
+        background: rgba(11, 16, 24, 0.94);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.7);
+      }
+      .node.ai {
+        border-color: rgba(0, 217, 244, 0.55);
+        box-shadow:
+          0 0 0 1px rgba(0, 217, 244, 0.2),
+          0 12px 30px -12px rgba(0, 217, 244, 0.45);
+      }
+      .node.action {
+        border-color: var(--border-3);
+      }
+      .stripe {
+        height: 3px;
+      }
+      .stripe.ai {
+        background: linear-gradient(90deg, var(--aurora-400), var(--teal-400));
+      }
+      .stripe.action {
+        background: linear-gradient(
+          90deg,
+          var(--violet-400),
+          var(--aurora-400)
+        );
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px 6px;
+      }
+      .ico {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--aurora-300);
+      }
+      .ai .ico {
+        background: rgba(0, 217, 244, 0.16);
+      }
+      .action .ico {
+        background: rgba(139, 92, 246, 0.16);
+        color: #a78bfa;
+      }
+      .name {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .typeChip {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid;
+      }
+      .ai .typeChip {
+        color: var(--aurora-300);
+        background: rgba(0, 217, 244, 0.1);
+        border-color: rgba(0, 217, 244, 0.3);
+      }
+      .action .typeChip {
+        color: #a78bfa;
+        background: rgba(139, 92, 246, 0.1);
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+      .body {
+        padding: 4px 12px 10px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--fg-3);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .body .row {
+        display: flex;
+        gap: 6px;
+      }
+      .body b {
+        color: var(--fg-4);
+        font-weight: 400;
+        min-width: 56px;
+      }
+      .body i {
+        color: var(--aurora-300);
+        font-style: normal;
+      }
+      .ioLine {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border-top: 1px dashed var(--border-1);
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--fg-5);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .handle {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--aurora-400);
+        border: 2px solid #0d111a;
+      }
+      .h-l {
+        left: -5px;
+      }
+      .h-r {
+        right: -5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="node ai">
+      <div class="stripe ai"></div>
+      <div class="header">
+        <span class="ico"
+          ><span class="material-symbols-outlined" style="font-size: 14px"
+            >smart_toy</span
+          ></span
+        >
+        <span class="name">Summarise</span>
+        <span class="typeChip">LLM</span>
+      </div>
+      <div class="body">
+        <div class="row"><b>model</b><i>gemini-1.5-flash</i></div>
+        <div class="row"><b>prompt</b><i>summarise</i></div>
+      </div>
+      <div class="ioLine"><span>Inputs</span><span>Outputs</span></div>
+      <span class="handle h-l"></span>
+      <span class="handle h-r"></span>
+    </div>
+
+    <div class="node action">
+      <div class="stripe action"></div>
+      <div class="header">
+        <span class="ico"
+          ><span class="material-symbols-outlined" style="font-size: 14px"
+            >campaign</span
+          ></span
+        >
+        <span class="name">Synthesise</span>
+        <span class="typeChip">TTS</span>
+      </div>
+      <div class="body">
+        <div class="row"><b>voice</b><i>af_heart</i></div>
+        <div class="row"><b>format</b><i>wav</i></div>
+      </div>
+      <div class="ioLine"><span>Inputs</span><span>Outputs</span></div>
+      <span class="handle h-l" style="background: #a78bfa"></span>
+      <span class="handle h-r" style="background: #a78bfa"></span>
+    </div>
+  </body>
+</html>

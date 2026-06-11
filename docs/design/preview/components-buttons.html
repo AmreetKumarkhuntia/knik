@@ -1,0 +1,164 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Buttons" subtitle="Primary, secondary, ghost, danger, icon" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .row:last-child {
+        margin-bottom: 0;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        width: 90px;
+        flex-shrink: 0;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-sans);
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .btn-primary {
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        border-color: rgba(0, 0, 0, 0.2);
+        box-shadow:
+          0 4px 14px -4px rgba(0, 217, 244, 0.55),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
+      .btn-secondary {
+        background: var(--bg-surface-2);
+        color: var(--fg-2);
+        border-color: var(--border-2);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--fg-3);
+      }
+      .btn-danger {
+        background: rgba(239, 68, 68, 0.16);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .btn-icon {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        justify-content: center;
+      }
+      .ico {
+        width: 16px;
+        height: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">primary</span>
+      <button class="btn btn-primary">
+        <svg
+          class="ico"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+        >
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        Create workflow
+      </button>
+      <button class="btn btn-primary">Send</button>
+    </div>
+    <div class="row">
+      <span class="label">secondary</span>
+      <button class="btn btn-secondary">View all</button>
+      <button class="btn btn-secondary">
+        <svg
+          class="ico"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round" />
+        </svg>
+        Filter
+      </button>
+    </div>
+    <div class="row">
+      <span class="label">ghost</span>
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-ghost">+ Add node</button>
+    </div>
+    <div class="row">
+      <span class="label">danger</span>
+      <button class="btn btn-danger">Delete</button>
+    </div>
+    <div class="row">
+      <span class="label">icon</span>
+      <button class="btn btn-secondary btn-icon">
+        <svg
+          class="ico"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 1v6m0 10v6m-9-9h6m10 0h6" />
+        </svg>
+      </button>
+      <button class="btn btn-secondary btn-icon">
+        <svg class="ico" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"
+          />
+        </svg>
+      </button>
+      <button class="btn btn-secondary btn-icon">
+        <svg
+          class="ico"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </div>
+  </body>
+</html>

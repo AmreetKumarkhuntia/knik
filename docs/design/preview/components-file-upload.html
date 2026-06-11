@@ -1,0 +1,240 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="File upload + drop zone" subtitle="Attachment chips, progress row, drop zone" viewport="700x320" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      /* File chip strip */
+      .strip {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .file {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--fg-1);
+      }
+      .file .ico {
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .file.py .ico {
+        background: rgba(245, 158, 11, 0.16);
+        color: #f59e0b;
+      }
+      .file.md .ico {
+        background: rgba(0, 217, 244, 0.16);
+        color: var(--aurora-300);
+      }
+      .file.img .ico {
+        background: rgba(139, 92, 246, 0.16);
+        color: #a78bfa;
+      }
+      .file.aud .ico {
+        background: rgba(16, 185, 129, 0.16);
+        color: #10b981;
+      }
+      .file .name {
+        font-weight: 500;
+        letter-spacing: -0.005em;
+      }
+      .file .size {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--fg-4);
+      }
+      .file .x {
+        color: var(--fg-4);
+        cursor: pointer;
+      }
+      .file:hover .x {
+        color: var(--fg-1);
+      }
+      /* Upload row */
+      .upload {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+      }
+      .upload .ico {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(0, 217, 244, 0.1);
+        color: var(--aurora-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .upload .body {
+        flex: 1;
+        min-width: 0;
+      }
+      .upload .top {
+        display: flex;
+        justify-content: space-between;
+      }
+      .upload .nm {
+        font-size: 13px;
+        color: var(--fg-1);
+        font-weight: 500;
+        letter-spacing: -0.005em;
+      }
+      .upload .meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-3);
+      }
+      .upload .meta b {
+        color: var(--aurora-300);
+        font-weight: 400;
+      }
+      .bar {
+        height: 4px;
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+      .bar .fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--aurora-400), var(--teal-400));
+        border-radius: 999px;
+      }
+      /* Drop zone */
+      .drop {
+        padding: 22px;
+        border: 1.5px dashed var(--border-3);
+        border-radius: 12px;
+        background: var(--bg-surface-2);
+        color: var(--fg-3);
+        font-size: 13px;
+        text-align: center;
+      }
+      .drop b {
+        color: var(--aurora-300);
+      }
+      .drop .glyph {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(0, 217, 244, 0.08);
+        color: var(--aurora-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+      }
+      .drop .hint {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--fg-5);
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="strip">
+      <div class="file py">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >code</span
+          >
+        </div>
+        <span class="name">pipeline.py</span><span class="size">8 KB</span
+        ><span class="x material-symbols-outlined" style="font-size: 14px"
+          >close</span
+        >
+      </div>
+      <div class="file md">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >description</span
+          >
+        </div>
+        <span class="name">notes.md</span><span class="size">2 KB</span
+        ><span class="x material-symbols-outlined" style="font-size: 14px"
+          >close</span
+        >
+      </div>
+      <div class="file img">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >image</span
+          >
+        </div>
+        <span class="name">chart.png</span><span class="size">241 KB</span
+        ><span class="x material-symbols-outlined" style="font-size: 14px"
+          >close</span
+        >
+      </div>
+      <div class="file aud">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 14px"
+            >graphic_eq</span
+          >
+        </div>
+        <span class="name">memo.wav</span><span class="size">1.4 MB</span
+        ><span class="x material-symbols-outlined" style="font-size: 14px"
+          >close</span
+        >
+      </div>
+    </div>
+
+    <div class="upload">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 18px"
+          >upload</span
+        >
+      </div>
+      <div class="body">
+        <div class="top">
+          <span class="nm">dataset.csv</span>
+          <span class="meta"><b>13.4</b> / 19.7 MB · 68%</span>
+        </div>
+        <div class="bar"><div class="fill" style="width: 68%"></div></div>
+      </div>
+    </div>
+
+    <div class="drop">
+      <div class="glyph">
+        <span class="material-symbols-outlined" style="font-size: 20px"
+          >cloud_upload</span
+        >
+      </div>
+      <div>Drag &amp; drop files here, or <b>click to upload</b></div>
+      <div class="hint">.py · .md · .json · .png · .wav · max 25 MB each</div>
+    </div>
+  </body>
+</html>

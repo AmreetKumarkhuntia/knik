@@ -1,0 +1,239 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Settings panel" subtitle="Two-pane settings with toggles + selects" viewport="700x360" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        min-height: 360px;
+      }
+      .nav {
+        background: var(--bg-surface-2);
+        border-right: 1px solid var(--border-2);
+        padding: 14px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .nav-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-5);
+        padding: 4px 10px;
+      }
+      .nav-label:not(:first-child) {
+        margin-top: 8px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--fg-3);
+        cursor: pointer;
+      }
+      .nav-item:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .nav-item.active {
+        background: rgba(0, 217, 244, 0.1);
+        color: var(--aurora-200);
+      }
+      .pane {
+        padding: 20px 22px;
+      }
+      .pane h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .pane .desc {
+        font-size: 12.5px;
+        color: var(--fg-3);
+        margin-bottom: 18px;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-1);
+      }
+      .field:last-child {
+        border-bottom: none;
+      }
+      .field .l {
+        font-size: 13.5px;
+        color: var(--fg-1);
+      }
+      .field .h {
+        font-size: 11.5px;
+        color: var(--fg-4);
+        margin-top: 2px;
+      }
+      /* Toggle */
+      .toggle {
+        position: relative;
+        width: 36px;
+        height: 20px;
+        background: var(--bg-surface-3);
+        border: 1px solid var(--border-2);
+        border-radius: 999px;
+      }
+      .toggle.on {
+        background: var(--aurora-400);
+        border-color: var(--aurora-400);
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        width: 16px;
+        height: 16px;
+        background: var(--fg-3);
+        border-radius: 50%;
+      }
+      .toggle.on::after {
+        left: 17px;
+        background: var(--on-primary);
+      }
+      /* Select */
+      .select {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 7px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--fg-1);
+      }
+      .select .ms {
+        color: var(--fg-3);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav-label">Account</div>
+      <div class="nav-item">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >person</span
+        >Profile
+      </div>
+      <div class="nav-item">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >credit_card</span
+        >Billing
+      </div>
+      <div class="nav-item">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >key</span
+        >API keys
+      </div>
+
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item active">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >tune</span
+        >Preferences
+      </div>
+      <div class="nav-item">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >palette</span
+        >Appearance
+      </div>
+      <div class="nav-item">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >extension</span
+        >Integrations
+      </div>
+      <div class="nav-item">
+        <span class="material-symbols-outlined" style="font-size: 17px"
+          >group</span
+        >Members
+      </div>
+    </nav>
+    <section class="pane">
+      <h2>Preferences</h2>
+      <div class="desc">
+        How KNIK behaves for you. These settings sync across devices.
+      </div>
+
+      <div class="field">
+        <div>
+          <div class="l">Stream responses</div>
+          <div class="h">
+            Render assistant text token-by-token instead of waiting for the full
+            reply.
+          </div>
+        </div>
+        <div class="toggle on"></div>
+      </div>
+
+      <div class="field">
+        <div>
+          <div class="l">Save conversation history</div>
+          <div class="h">
+            Keep chats so you can search and reload them later.
+          </div>
+        </div>
+        <div class="toggle on"></div>
+      </div>
+
+      <div class="field">
+        <div>
+          <div class="l">Default model</div>
+          <div class="h">Used when starting a new chat.</div>
+        </div>
+        <div class="select">
+          <span class="material-symbols-outlined ms" style="font-size: 14px"
+            >smart_toy</span
+          >
+          gemini-1.5-flash
+          <span class="material-symbols-outlined ms" style="font-size: 14px"
+            >expand_more</span
+          >
+        </div>
+      </div>
+
+      <div class="field">
+        <div>
+          <div class="l">Default voice</div>
+          <div class="h">Used for TTS playback unless overridden.</div>
+        </div>
+        <div class="select">
+          <span class="material-symbols-outlined ms" style="font-size: 14px"
+            >campaign</span
+          >
+          af_heart
+          <span class="material-symbols-outlined ms" style="font-size: 14px"
+            >expand_more</span
+          >
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

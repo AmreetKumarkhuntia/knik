@@ -1,0 +1,182 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Keyboard shortcuts" subtitle="Two-column shortcut reference with kbd keys" viewport="700x360" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px 36px;
+      }
+      .sec h4 {
+        margin: 0 0 10px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-4);
+        font-weight: 500;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 0;
+      }
+      .row .desc {
+        font-size: 13px;
+        color: var(--fg-2);
+      }
+      .keys {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .kbd {
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-bottom-color: var(--border-3);
+        color: var(--fg-2);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        min-width: 16px;
+        text-align: center;
+        box-shadow: 0 1px 0 var(--border-2);
+      }
+      .plus {
+        color: var(--fg-5);
+        font-family: var(--font-mono);
+        font-size: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <div class="sec">
+        <h4>Chat</h4>
+        <div class="row">
+          <span class="desc">Focus message input</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">K</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Send message</span
+          ><span class="keys"><span class="kbd">Enter</span></span>
+        </div>
+        <div class="row">
+          <span class="desc">New line</span
+          ><span class="keys"
+            ><span class="kbd">⇧</span><span class="plus">+</span
+            ><span class="kbd">Enter</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">New chat</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">J</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Stop generation</span
+          ><span class="keys"><span class="kbd">Esc</span></span>
+        </div>
+      </div>
+      <div class="sec">
+        <h4>Navigation</h4>
+        <div class="row">
+          <span class="desc">Command palette</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">P</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Open workflows</span
+          ><span class="keys"
+            ><span class="kbd">G</span><span class="plus">+</span
+            ><span class="kbd">W</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Toggle sidebar</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">\</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Show shortcuts</span
+          ><span class="keys"><span class="kbd">?</span></span>
+        </div>
+        <div class="row">
+          <span class="desc">Search</span
+          ><span class="keys"><span class="kbd">/</span></span>
+        </div>
+      </div>
+      <div class="sec">
+        <h4>Workflow builder</h4>
+        <div class="row">
+          <span class="desc">Run</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">R</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Save</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">S</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Add node</span
+          ><span class="keys"><span class="kbd">N</span></span>
+        </div>
+        <div class="row">
+          <span class="desc">Delete</span
+          ><span class="keys"><span class="kbd">⌫</span></span>
+        </div>
+        <div class="row">
+          <span class="desc">Fit to view</span
+          ><span class="keys"><span class="kbd">F</span></span>
+        </div>
+      </div>
+      <div class="sec">
+        <h4>Audio (TTS)</h4>
+        <div class="row">
+          <span class="desc">Play / pause</span
+          ><span class="keys"><span class="kbd">Space</span></span>
+        </div>
+        <div class="row">
+          <span class="desc">Stop</span
+          ><span class="keys"
+            ><span class="kbd">⌘</span><span class="plus">+</span
+            ><span class="kbd">.</span></span
+          >
+        </div>
+        <div class="row">
+          <span class="desc">Cycle voice</span
+          ><span class="keys"><span class="kbd">V</span></span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

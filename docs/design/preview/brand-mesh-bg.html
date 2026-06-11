@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- @dsCard group="Brand" name="Hero treatment" subtitle="Mesh gradient + blobs + gradient text" viewport="700x260" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-base);
+        background-image:
+          radial-gradient(
+            at 8% 0%,
+            rgba(0, 217, 244, 0.2) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 95% 100%,
+            rgba(20, 184, 166, 0.14) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 50% 60%,
+            rgba(139, 92, 246, 0.08) 0px,
+            transparent 60%
+          );
+        box-sizing: border-box;
+        overflow: hidden;
+        position: relative;
+      }
+      .stage {
+        padding: 28px;
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: relative;
+        z-index: 2;
+      }
+      .display {
+        font-family: var(--font-display);
+        font-size: 56px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        color: var(--fg-1);
+        max-width: 540px;
+      }
+      .grad {
+        background: linear-gradient(
+          95deg,
+          var(--aurora-200) 0%,
+          var(--aurora-400) 50%,
+          var(--teal-400) 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .sub {
+        font-size: 16px;
+        color: var(--fg-3);
+        max-width: 460px;
+      }
+      /* Blobs */
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        z-index: 0;
+        pointer-events: none;
+      }
+      .b1 {
+        width: 280px;
+        height: 280px;
+        background: rgba(0, 217, 244, 0.35);
+        top: -60px;
+        left: -40px;
+      }
+      .b2 {
+        width: 220px;
+        height: 220px;
+        background: rgba(20, 184, 166, 0.3);
+        bottom: -50px;
+        right: -30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="stage">
+      <div class="display">
+        Run any workflow <br />at the
+        <span class="grad">speed of thought</span>.
+      </div>
+      <div class="sub">
+        Mesh gradient on ink black + animated blobs is the canonical KNIK hero
+        treatment.
+      </div>
+    </div>
+  </body>
+</html>

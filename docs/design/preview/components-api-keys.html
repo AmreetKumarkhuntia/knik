@@ -1,0 +1,231 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="API keys + webhooks" subtitle="Active / revoked keys + webhook destination row" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      /* Key row */
+      .key {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+      }
+      .key .ico {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(0, 217, 244, 0.1);
+        color: var(--aurora-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .key .info {
+        flex: 1;
+        min-width: 0;
+      }
+      .key .nm {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .key .value {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--fg-3);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .key .value b {
+        color: var(--aurora-300);
+        font-weight: 400;
+      }
+      .key .badge {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 2px 7px;
+        border-radius: 4px;
+      }
+      .key .badge.active {
+        background: rgba(16, 185, 129, 0.16);
+        color: #10b981;
+      }
+      .key .badge.rev {
+        background: rgba(239, 68, 68, 0.16);
+        color: #ef4444;
+      }
+      .key .actions {
+        display: flex;
+        gap: 4px;
+      }
+      .icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        color: var(--fg-3);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon-btn:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      /* Webhook */
+      .hook {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+      }
+      .hook .url {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--aurora-300);
+        background: var(--bg-code);
+        padding: 4px 8px;
+        border-radius: 5px;
+        border: 1px solid var(--border-1);
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="key">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 18px"
+          >key</span
+        >
+      </div>
+      <div class="info">
+        <div class="nm">Production</div>
+        <div class="value">
+          <b>sk_live_</b>49a··········e7b2
+          <span class="badge active">Active</span>
+          <span style="margin-left: auto; color: var(--fg-4)"
+            >Created Mar 14 · last used 2 min ago</span
+          >
+        </div>
+      </div>
+      <div class="actions">
+        <span class="icon-btn"
+          ><span class="material-symbols-outlined" style="font-size: 16px"
+            >visibility</span
+          ></span
+        >
+        <span class="icon-btn"
+          ><span class="material-symbols-outlined" style="font-size: 16px"
+            >content_copy</span
+          ></span
+        >
+        <span class="icon-btn"
+          ><span class="material-symbols-outlined" style="font-size: 16px"
+            >delete</span
+          ></span
+        >
+      </div>
+    </div>
+
+    <div class="key">
+      <div
+        class="ico"
+        style="background: rgba(245, 158, 11, 0.14); color: #f59e0b"
+      >
+        <span class="material-symbols-outlined" style="font-size: 18px"
+          >key</span
+        >
+      </div>
+      <div class="info">
+        <div class="nm">Staging</div>
+        <div class="value">
+          <b>sk_test_</b>9d··········1f3a
+          <span class="badge rev">Revoked</span>
+          <span style="margin-left: auto; color: var(--fg-4)"
+            >Revoked Mar 18</span
+          >
+        </div>
+      </div>
+      <div class="actions">
+        <span class="icon-btn"
+          ><span class="material-symbols-outlined" style="font-size: 16px"
+            >refresh</span
+          ></span
+        >
+        <span class="icon-btn"
+          ><span class="material-symbols-outlined" style="font-size: 16px"
+            >delete</span
+          ></span
+        >
+      </div>
+    </div>
+
+    <div class="hook">
+      <div
+        class="ico"
+        style="
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: rgba(139, 92, 246, 0.14);
+          color: #a78bfa;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        "
+      >
+        <span class="material-symbols-outlined" style="font-size: 18px"
+          >webhook</span
+        >
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div
+          style="
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--fg-1);
+            letter-spacing: -0.012em;
+            margin-bottom: 4px;
+          "
+        >
+          Webhook · run completed
+        </div>
+        <div class="url">
+          https://example.com/knik/runs &middot; POST &middot; HMAC-SHA256
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

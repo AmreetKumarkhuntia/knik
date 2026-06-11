@@ -1,0 +1,166 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Chat bubbles" subtitle="User + assistant messages with actions" viewport="700x230" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .msg {
+        display: flex;
+        gap: 12px;
+        max-width: 84%;
+      }
+      .msg.user {
+        margin-left: auto;
+        flex-direction: row-reverse;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .avatar.ai {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 217, 244, 0.2),
+          rgba(20, 184, 166, 0.2)
+        );
+        color: var(--aurora-300);
+        border: 1px solid rgba(0, 217, 244, 0.35);
+      }
+      .avatar.user {
+        background: var(--bg-surface-3);
+        color: var(--fg-2);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .bubble {
+        font-size: 14.5px;
+        line-height: 1.55;
+        color: var(--fg-2);
+      }
+      .actions {
+        margin-top: 6px;
+        display: flex;
+        gap: 4px;
+      }
+      .iconbtn {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        color: var(--fg-4);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .iconbtn:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .iconbtn svg {
+        width: 14px;
+        height: 14px;
+      }
+      .code-inline {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        background: var(--bg-code);
+        padding: 1px 6px;
+        border-radius: 4px;
+        color: var(--aurora-300);
+        border: 1px solid var(--border-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="msg user">
+      <div class="avatar user">AR</div>
+      <div>
+        <div class="bubble">Refactor my Python script for performance.</div>
+      </div>
+    </div>
+
+    <div class="msg">
+      <div class="avatar ai">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+        >
+          <line x1="6" y1="12" x2="6" y2="12" />
+          <line x1="9" y1="9" x2="9" y2="15" />
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="15" y1="8" x2="15" y2="16" />
+          <line x1="18" y1="10" x2="18" y2="14" />
+        </svg>
+      </div>
+      <div>
+        <div class="bubble">
+          Here are three quick wins. First, replace the inner
+          <span class="code-inline">for</span> loop with a generator so we
+          don&rsquo;t materialise the full list. Then switch
+          <span class="code-inline">json.loads</span> to
+          <span class="code-inline">orjson</span>.
+        </div>
+        <div class="actions">
+          <span class="iconbtn"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 012-2h10" /></svg
+          ></span>
+          <span class="iconbtn"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M14 9V5a3 3 0 00-6 0v4M5 9h14l-1.5 11a2 2 0 01-2 2H8.5a2 2 0 01-2-2L5 9z"
+              /></svg
+          ></span>
+          <span class="iconbtn"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="23 4 23 10 17 10" />
+              <path
+                d="M20.49 15A9 9 0 1112 3a9.04 9.04 0 016.36 2.64L23 10"
+              /></svg
+          ></span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

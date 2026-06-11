@@ -1,0 +1,149 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Command palette" subtitle="⌘ K search with grouped results" viewport="700x320" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 20px 28px;
+        background: var(--bg-base);
+        background-image: radial-gradient(
+          at 0% 0%,
+          rgba(0, 217, 244, 0.1) 0px,
+          transparent 50%
+        );
+        box-sizing: border-box;
+      }
+      .palette {
+        width: 520px;
+        margin: 0 auto;
+        background: var(--bg-glass);
+        backdrop-filter: blur(24px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        box-shadow:
+          0 30px 60px -20px rgba(0, 0, 0, 0.65),
+          0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+        overflow: hidden;
+      }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .search .ms {
+        color: var(--fg-4);
+      }
+      .search input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--fg-1);
+        font-family: var(--font-sans);
+        font-size: 14px;
+      }
+      .kbd {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        background: var(--bg-surface-3);
+        color: var(--fg-3);
+        border: 1px solid var(--border-2);
+        border-radius: 4px;
+        padding: 2px 6px;
+      }
+      .group {
+        padding: 8px 6px;
+      }
+      .group-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 10px 6px;
+      }
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 7px;
+        font-size: 13.5px;
+        color: var(--fg-2);
+      }
+      .item.active {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+        box-shadow: 0 0 0 1px var(--border-2) inset;
+      }
+      .item .ms {
+        color: var(--fg-3);
+      }
+      .item.active .ms {
+        color: var(--aurora-300);
+      }
+      .item .kbd {
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="palette">
+      <div class="search">
+        <span class="material-symbols-outlined ms" style="font-size: 18px"
+          >search</span
+        >
+        <input value="run" placeholder="Type a command or search…" />
+        <span class="kbd">esc</span>
+      </div>
+      <div class="group">
+        <div class="group-label">Workflows</div>
+        <div class="item active">
+          <span class="material-symbols-outlined ms" style="font-size: 16px"
+            >play_arrow</span
+          >
+          Run workflow…
+          <span class="kbd">⌘ R</span>
+        </div>
+        <div class="item">
+          <span class="material-symbols-outlined ms" style="font-size: 16px"
+            >add</span
+          >
+          Create new workflow
+          <span class="kbd">⌘ N</span>
+        </div>
+        <div class="item">
+          <span class="material-symbols-outlined ms" style="font-size: 16px"
+            >history</span
+          >
+          View recent executions
+        </div>
+      </div>
+      <div class="group" style="border-top: 1px solid var(--border-1)">
+        <div class="group-label">Chat</div>
+        <div class="item">
+          <span class="material-symbols-outlined ms" style="font-size: 16px"
+            >add_comment</span
+          >
+          New chat
+          <span class="kbd">⌘ J</span>
+        </div>
+        <div class="item">
+          <span class="material-symbols-outlined ms" style="font-size: 16px"
+            >tune</span
+          >
+          Change model
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,313 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Activity heatmap" subtitle="Day × hour run-activity grid (GitHub-style)" viewport="700x240" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 20px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-4);
+        margin-bottom: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+      }
+      td {
+        padding: 0;
+        width: calc(100% / 24);
+        height: 18px;
+        position: relative;
+      }
+      .day {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        padding-right: 10px;
+        text-align: right;
+        width: 28px;
+        height: 18px;
+      }
+      .hr {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        color: var(--fg-5);
+        text-align: center;
+        padding-top: 4px;
+      }
+      .cell {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        margin: 2px auto;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-1);
+      }
+      .l1 {
+        background: rgba(0, 217, 244, 0.18);
+        border-color: rgba(0, 217, 244, 0.25);
+      }
+      .l2 {
+        background: rgba(0, 217, 244, 0.36);
+        border-color: rgba(0, 217, 244, 0.45);
+      }
+      .l3 {
+        background: rgba(0, 217, 244, 0.6);
+        border-color: rgba(0, 217, 244, 0.7);
+      }
+      .l4 {
+        background: var(--aurora-400);
+        border-color: var(--aurora-300);
+        box-shadow: 0 0 6px rgba(0, 217, 244, 0.6);
+      }
+      .legend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+      }
+      .legend span.swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="label">Run activity · last 7 days × hour</div>
+    <table>
+      <tr>
+        <td class="day"></td>
+        <td class="hr" colspan="3">00</td>
+        <td class="hr" colspan="3">03</td>
+        <td class="hr" colspan="3">06</td>
+        <td class="hr" colspan="3">09</td>
+        <td class="hr" colspan="3">12</td>
+        <td class="hr" colspan="3">15</td>
+        <td class="hr" colspan="3">18</td>
+        <td class="hr" colspan="2">21</td>
+      </tr>
+      <tr>
+        <td class="day">Mon</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+      <tr>
+        <td class="day">Tue</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+      <tr>
+        <td class="day">Wed</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+      <tr>
+        <td class="day">Thu</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+      <tr>
+        <td class="day">Fri</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l4"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l3"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+      <tr>
+        <td class="day">Sat</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l2"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+      <tr>
+        <td class="day">Sun</td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell l1"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+        <td><div class="cell"></div></td>
+      </tr>
+    </table>
+    <div class="legend">
+      Less
+      <span class="swatch"></span>
+      <span class="swatch l1"></span>
+      <span class="swatch l2"></span>
+      <span class="swatch l3"></span>
+      <span class="swatch l4"></span>
+      More
+      <span style="margin-left: auto; color: var(--fg-3)"
+        >1,247 runs &middot; peak 09:00 Fri</span
+      >
+    </div>
+  </body>
+</html>

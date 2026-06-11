@@ -1,24 +1,21 @@
-## Stitch Instructions
+## KNIK Design System
 
-Get the images and code for the following Stitch project's screens:
+The full design system is in `docs/design/`. Key files:
 
-## Project
+- `docs/design/README.md` — brand overview, visual foundations, content guidelines, component index
+- `docs/design/colors_and_type.css` — all CSS custom properties (colors, type scale, spacing, motion, shadows)
+- `docs/design/SKILL.md` — Claude skill entrypoint
+- `docs/design/assets/` — logo SVGs (knik-logo.svg, knik-mark.svg, knik-mark-mono.svg)
+- `docs/design/preview/` — 80+ HTML component preview cards (buttons, badges, graph nodes, charts, etc.)
+- `docs/design/ui_kits/web/` — interactive HTML/JSX recreation of the web frontend (chat, workflows, builder)
 
-Title: Knik AI - Chat View
-ID: 17831477964101770123
+### Quick reference
 
-## Screens
-
-1. Frameless AI Chat Interface
-   ID: c52731df165a48dda8c87882291438ff
-
-2. Screenshot 2026-04-28 at 1.47.00 PM.png
-   ID: 16994983536636870529
-
-3. Refined Workflow Builder
-   ID: 7e97a61f0d7c4faa81dbe0e4d99d89de
-
-4. Refined Workflow Builder (Retry)
-   ID: 1e7df8222ba54833be8903b0c8f6d7de
-
-Use a utility like `curl -L` to download the hosted URLs.
+| Token           | Value                             |
+| --------------- | --------------------------------- |
+| Primary accent  | `#00D9F4` (KNIK cyan)             |
+| Base background | `#07090D` (ink black)             |
+| Secondary       | `#14B8A6` teal · `#8B5CF6` violet |
+| Sans font       | Inter Variable                    |
+| Mono font       | JetBrains Mono                    |
+| Primary easing  | `cubic-bezier(0.16, 1, 0.3, 1)`   |

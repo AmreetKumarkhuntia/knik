@@ -1,0 +1,146 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Toggles & checks" subtitle="Switch, radio, checkbox in active states" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      /* Toggle */
+      .switch {
+        position: relative;
+        width: 40px;
+        height: 22px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        transition: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid var(--border-2);
+      }
+      .slider::before {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        left: 2px;
+        top: 2px;
+        background: var(--fg-3);
+        border-radius: 50%;
+        transition: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      input:checked + .slider {
+        background: var(--aurora-400);
+        border-color: rgba(0, 217, 244, 0.5);
+      }
+      input:checked + .slider::before {
+        transform: translateX(18px);
+        background: var(--on-primary);
+      }
+      /* Radio + checkbox */
+      .radio,
+      .check {
+        width: 18px;
+        height: 18px;
+        border: 1.5px solid var(--border-3);
+        background: var(--bg-surface-2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .radio {
+        border-radius: 50%;
+      }
+      .check {
+        border-radius: 4px;
+      }
+      .radio.on,
+      .check.on {
+        background: var(--aurora-400);
+        border-color: var(--aurora-400);
+        box-shadow: 0 0 0 3px rgba(0, 217, 244, 0.18);
+      }
+      .radio.on::after {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--on-primary);
+      }
+      .check.on::after {
+        content: "";
+        width: 10px;
+        height: 5px;
+        border-left: 2px solid var(--on-primary);
+        border-bottom: 2px solid var(--on-primary);
+        transform: rotate(-45deg) translate(1px, -1px);
+      }
+      .label {
+        font-size: 13px;
+        color: var(--fg-2);
+      }
+      .label-mono {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <label class="switch"
+        ><input type="checkbox" checked /><span class="slider"></span
+      ></label>
+      <span class="label">Stream responses</span>
+      <span class="label-mono">on</span>
+    </div>
+    <div class="row">
+      <label class="switch"
+        ><input type="checkbox" /><span class="slider"></span
+      ></label>
+      <span class="label">Save conversation history</span>
+      <span class="label-mono">off</span>
+    </div>
+    <div class="row">
+      <span class="radio on"></span>
+      <span class="label">Use voice af_heart</span>
+      <span class="label-mono">selected</span>
+    </div>
+    <div class="row">
+      <span class="radio"></span>
+      <span class="label">Use voice am_michael</span>
+    </div>
+    <div class="row">
+      <span class="check on"></span>
+      <span class="label">Auto-retry failed steps</span>
+    </div>
+  </body>
+</html>

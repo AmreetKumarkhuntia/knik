@@ -1,0 +1,142 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Graph · edge variants" subtitle="Edit-gradient, success, running, failed, pending edges" viewport="700x300" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-canvas);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 110px 1fr 90px;
+        align-items: center;
+        gap: 14px;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-3);
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+        text-align: right;
+      }
+      svg {
+        display: block;
+        height: 30px;
+        width: 100%;
+      }
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -40;
+        }
+      }
+      .arrow {
+        width: 0;
+        height: 0;
+        border-left: 7px solid currentColor;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">edit · gradient</span>
+      <svg viewBox="0 0 540 30" preserveAspectRatio="none">
+        <defs>
+          <linearGradient
+            id="g-edit"
+            x1="0"
+            x2="540"
+            y1="0"
+            y2="0"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stop-color="#10b981" />
+            <stop offset="100%" stop-color="#ef4444" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0,15 L540,15"
+          stroke="url(#g-edit)"
+          stroke-width="2"
+          stroke-dasharray="5 5"
+          fill="none"
+          style="animation: dash 1s linear infinite"
+        />
+        <polygon points="540,15 528,9 528,21" fill="#ef4444" />
+      </svg>
+      <span class="meta">animated</span>
+    </div>
+
+    <div class="row">
+      <span class="label">success</span>
+      <svg viewBox="0 0 540 30" preserveAspectRatio="none">
+        <path d="M0,15 L540,15" stroke="#10b981" stroke-width="2" fill="none" />
+        <polygon points="540,15 528,9 528,21" fill="#10b981" />
+      </svg>
+      <span class="meta">#10B981</span>
+    </div>
+
+    <div class="row">
+      <span class="label">running</span>
+      <svg viewBox="0 0 540 30" preserveAspectRatio="none">
+        <path
+          d="M0,15 L540,15"
+          stroke="#00d9f4"
+          stroke-width="2.4"
+          stroke-dasharray="8 6"
+          fill="none"
+          style="animation: dash 1.2s linear infinite"
+        />
+        <polygon points="540,15 528,9 528,21" fill="#00d9f4" />
+      </svg>
+      <span class="meta">cyan · dashed</span>
+    </div>
+
+    <div class="row">
+      <span class="label">failed</span>
+      <svg viewBox="0 0 540 30" preserveAspectRatio="none">
+        <path
+          d="M0,15 L540,15"
+          stroke="#ef4444"
+          stroke-width="2.5"
+          fill="none"
+        />
+        <polygon points="540,15 528,9 528,21" fill="#ef4444" />
+      </svg>
+      <span class="meta">2.5px</span>
+    </div>
+
+    <div class="row">
+      <span class="label">pending</span>
+      <svg viewBox="0 0 540 30" preserveAspectRatio="none">
+        <path
+          d="M0,15 L540,15"
+          stroke="#6a7585"
+          stroke-width="2"
+          stroke-dasharray="4 6"
+          fill="none"
+          opacity="0.6"
+        />
+        <polygon points="540,15 528,9 528,21" fill="#6a7585" opacity="0.6" />
+      </svg>
+      <span class="meta">muted</span>
+    </div>
+  </body>
+</html>

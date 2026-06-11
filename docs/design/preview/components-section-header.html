@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .sec {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .ttl-stack {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .ttl {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.012em;
+        color: var(--fg-1);
+      }
+      .count {
+        background: var(--bg-surface-3);
+        color: var(--fg-3);
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .action {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--aurora-300);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+      }
+      .crumb-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--fg-4);
+      }
+      .crumb-item .ic {
+        font-size: 14px;
+        color: var(--fg-5);
+      }
+      .crumb-item.last {
+        color: var(--fg-1);
+        font-weight: 500;
+      }
+      .sep {
+        color: var(--fg-5);
+        font-size: 14px;
+        line-height: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- section header w/ count + action -->
+    <div class="sec">
+      <div class="ttl-stack">
+        <div class="ttl">Recent executions</div>
+        <span class="count">128</span>
+      </div>
+      <button class="action">
+        View all
+        <span class="material-symbols-outlined" style="font-size: 14px"
+          >arrow_forward</span
+        >
+      </button>
+    </div>
+
+    <!-- section header w/ count -->
+    <div class="sec">
+      <div class="ttl-stack">
+        <div class="ttl">Workflows</div>
+        <span class="count">12 active</span>
+      </div>
+      <button class="action">+ New</button>
+    </div>
+
+    <!-- breadcrumb deep -->
+    <nav class="crumbs">
+      <span class="crumb-item"
+        ><span class="material-symbols-outlined ic">home</span>Knik</span
+      >
+      <span class="sep">›</span>
+      <span class="crumb-item">Workflows</span>
+      <span class="sep">›</span>
+      <span class="crumb-item">Daily digest</span>
+      <span class="sep">›</span>
+      <span class="crumb-item last"
+        >Execution
+        <span style="font-family: var(--font-mono); color: var(--aurora-300)"
+          >#9210</span
+        ></span
+      >
+    </nav>
+  </body>
+</html>

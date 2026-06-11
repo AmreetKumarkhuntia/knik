@@ -1,0 +1,182 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Execution detail" subtitle="Header + tabbed views + 4-stat strip" viewport="700x260" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .header {
+        padding: 18px 28px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .id {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--aurora-300);
+        background: var(--bg-code);
+        padding: 3px 8px;
+        border-radius: 5px;
+        border: 1px solid var(--border-1);
+      }
+      .title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        margin-top: 3px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+        background: rgba(16, 185, 129, 0.16);
+        color: #10b981;
+      }
+      .badge .d {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .tabs {
+        display: flex;
+        gap: 0;
+        padding: 0 28px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .tab {
+        padding: 11px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--fg-3);
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: -1px;
+      }
+      .tab.active {
+        color: var(--fg-1);
+        border-bottom-color: var(--aurora-400);
+      }
+      .tab .ms {
+        font-size: 16px;
+      }
+      .tab .count {
+        font-family: var(--font-mono);
+        background: var(--bg-surface-3);
+        color: var(--fg-3);
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 999px;
+      }
+      .body {
+        padding: 16px 28px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      .stat {
+        padding: 12px;
+        border: 1px solid var(--border-2);
+        background: var(--bg-surface-2);
+        border-radius: 10px;
+      }
+      .stat .l {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-4);
+        margin-bottom: 4px;
+      }
+      .stat .v {
+        font-family: var(--font-mono);
+        font-size: 16px;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat .v b {
+        color: var(--aurora-300);
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="id">ex-9210</span>
+        <div>
+          <div class="title">Daily digest</div>
+          <div class="meta">workflow · wf-1 · cron(0 9 * * *)</div>
+        </div>
+      </div>
+      <span class="badge"><span class="d"></span>Success</span>
+    </div>
+    <div class="tabs">
+      <span class="tab active"
+        ><span class="material-symbols-outlined ms">summarize</span
+        >Overview</span
+      >
+      <span class="tab"
+        ><span class="material-symbols-outlined ms">timeline</span>Node
+        trace<span class="count">4</span></span
+      >
+      <span class="tab"
+        ><span class="material-symbols-outlined ms">input</span>Inputs</span
+      >
+      <span class="tab"
+        ><span class="material-symbols-outlined ms">output</span>Outputs</span
+      >
+      <span class="tab"
+        ><span class="material-symbols-outlined ms">terminal</span>Logs<span
+          class="count"
+          >128</span
+        ></span
+      >
+    </div>
+    <div class="body">
+      <div class="stat">
+        <div class="l">Duration</div>
+        <div class="v"><b>12.4</b>s</div>
+      </div>
+      <div class="stat">
+        <div class="l">Started</div>
+        <div class="v">12:41:08</div>
+      </div>
+      <div class="stat">
+        <div class="l">Tokens</div>
+        <div class="v">3,812 / <b>412</b></div>
+      </div>
+      <div class="stat">
+        <div class="l">Cost</div>
+        <div class="v">$0.0023</div>
+      </div>
+    </div>
+  </body>
+</html>

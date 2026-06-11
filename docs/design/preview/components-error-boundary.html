@@ -1,0 +1,138 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Error boundary screen" subtitle="Crash recovery with error code + stack hint" viewport="700x340" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 26px 28px;
+        background: var(--bg-base);
+        background-image: radial-gradient(
+          at 50% 0%,
+          rgba(239, 68, 68, 0.1) 0px,
+          transparent 60%
+        );
+        box-sizing: border-box;
+        color: var(--fg-2);
+        height: 340px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .glyph {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ef4444;
+        margin-bottom: 18px;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-size: 36px;
+        font-weight: 600;
+        letter-spacing: -0.035em;
+        color: var(--fg-1);
+        margin: 0 0 8px;
+      }
+      .code {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        background: rgba(239, 68, 68, 0.08);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+      p {
+        font-size: 14px;
+        color: var(--fg-3);
+        max-width: 460px;
+        margin: 0 0 18px;
+      }
+      .btn-row {
+        display: flex;
+        gap: 10px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border-2);
+        background: var(--bg-surface-2);
+        color: var(--fg-1);
+        cursor: pointer;
+      }
+      .btn.primary {
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        border-color: rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 14px -4px rgba(0, 217, 244, 0.55);
+      }
+      .trace {
+        margin-top: 22px;
+        background: var(--bg-code);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-3);
+        text-align: left;
+        width: 460px;
+        line-height: 1.6;
+      }
+      .trace .file {
+        color: var(--aurora-300);
+      }
+      .trace .err {
+        color: #fca5a5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glyph">
+      <span class="material-symbols-outlined" style="font-size: 34px"
+        >bug_report</span
+      >
+    </div>
+    <h1>Something broke <span class="code">err_05ab</span></h1>
+    <p>
+      KNIK hit an error rendering this view. The team has been notified — you
+      can keep working in another tab while we investigate.
+    </p>
+    <div class="btn-row">
+      <button class="btn primary">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >refresh</span
+        >Try again
+      </button>
+      <button class="btn">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >home</span
+        >Back to chat
+      </button>
+    </div>
+    <div class="trace">
+      <span class="file">src/workflows/Builder.tsx:142</span><br />
+      <span class="err">TypeError</span>: Cannot read properties of
+      <span class="err">undefined</span> (reading 'nodes')
+    </div>
+  </body>
+</html>

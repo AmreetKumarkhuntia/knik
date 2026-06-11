@@ -1,0 +1,176 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Graph · execution snapshot" subtitle="Mid-run DAG with status colours and animated edges" viewport="700x330" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 24px;
+        background: var(--bg-canvas);
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          );
+        background-size: 24px 24px;
+        box-sizing: border-box;
+        position: relative;
+        height: 290px;
+      }
+      .node {
+        position: absolute;
+        width: 140px;
+        padding: 8px 12px;
+        background: rgba(11, 16, 24, 0.94);
+        border: 1px solid var(--border-2);
+        border-radius: 9px;
+        font-size: 12px;
+        color: var(--fg-1);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .node .t {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-4);
+        font-weight: 400;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .dur {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        font-weight: 400;
+        margin-top: 2px;
+      }
+      .s-success {
+        border-color: rgba(16, 185, 129, 0.45);
+      }
+      .s-running {
+        border-color: rgba(0, 217, 244, 0.55);
+        box-shadow: 0 0 24px -6px rgba(0, 217, 244, 0.55);
+      }
+      .s-failed {
+        border-color: rgba(239, 68, 68, 0.5);
+      }
+      .s-pending {
+        opacity: 0.55;
+      }
+      .s-success .t::before,
+      .s-failed .t::before,
+      .s-pending .t::before,
+      .s-running .t::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .s-success .t::before {
+        background: #10b981;
+      }
+      .s-running .t::before {
+        background: #00d9f4;
+      }
+      .s-failed .t::before {
+        background: #ef4444;
+      }
+      .s-pending .t::before {
+        background: #6a7585;
+      }
+      svg.edges {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -36;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="edges" viewBox="0 0 652 290" preserveAspectRatio="none">
+      <!-- Success edges -->
+      <path
+        d="M170,55 C220,55 220,150 320,150"
+        stroke="#10b981"
+        stroke-width="2"
+        fill="none"
+      />
+      <path
+        d="M170,235 C220,235 220,150 320,150"
+        stroke="#10b981"
+        stroke-width="2"
+        fill="none"
+      />
+      <!-- Running edge -->
+      <path
+        d="M460,150 L580,150"
+        stroke="#00d9f4"
+        stroke-width="2.4"
+        stroke-dasharray="8 6"
+        fill="none"
+        style="animation: dash 1.2s linear infinite"
+      />
+      <!-- Pending edges -->
+      <path
+        d="M580,150 L580,55"
+        stroke="#6a7585"
+        stroke-width="2"
+        stroke-dasharray="4 6"
+        fill="none"
+        opacity="0.55"
+      />
+      <path
+        d="M580,150 L580,235"
+        stroke="#6a7585"
+        stroke-width="2"
+        stroke-dasharray="4 6"
+        fill="none"
+        opacity="0.55"
+      />
+    </svg>
+
+    <div class="node s-success" style="left: 30px; top: 35px">
+      <div class="t">Action</div>
+      Fetch sources
+      <div class="dur">142ms</div>
+    </div>
+    <div class="node s-success" style="left: 30px; top: 215px">
+      <div class="t">TTS</div>
+      Synthesise
+      <div class="dur">1.84s</div>
+    </div>
+    <div class="node s-running" style="left: 320px; top: 130px">
+      <div class="t">LLM</div>
+      Summarise
+      <div class="dur">6.2s…</div>
+    </div>
+    <div class="node s-pending" style="left: 498px; top: 35px">
+      <div class="t">End</div>
+      Email digest
+    </div>
+    <div class="node s-pending" style="left: 498px; top: 215px">
+      <div class="t">End</div>
+      Ping Slack
+    </div>
+  </body>
+</html>

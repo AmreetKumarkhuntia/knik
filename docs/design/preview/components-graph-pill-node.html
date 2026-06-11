@@ -1,0 +1,139 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Graph · pill node" subtitle="Start / end pill nodes · BaseNode shape='pill'" viewport="700x180" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 26px 28px;
+        background: var(--bg-canvas);
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.08) 1px,
+          transparent 1px
+        );
+        background-size: 16px 16px;
+        box-sizing: border-box;
+        display: flex;
+        gap: 22px;
+        align-items: center;
+        justify-content: center;
+      }
+      .pill {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        background: var(--bg-surface-2);
+        border: 1px solid;
+        border-radius: 999px;
+        box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.6);
+      }
+      .pill.start {
+        border-color: rgba(20, 184, 166, 0.55);
+      }
+      .pill.end {
+        border-color: rgba(139, 92, 246, 0.5);
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .dot.start {
+        background: var(--teal-400);
+        box-shadow: 0 0 8px var(--teal-400);
+      }
+      .dot.end {
+        background: #a78bfa;
+        box-shadow: 0 0 8px #a78bfa;
+      }
+      .ico {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .start .ico {
+        background: rgba(20, 184, 166, 0.16);
+        color: var(--teal-300);
+      }
+      .end .ico {
+        background: rgba(139, 92, 246, 0.18);
+        color: #a78bfa;
+      }
+      .title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+        line-height: 1.1;
+      }
+      .typelabel {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        line-height: 1.4;
+      }
+      .start .typelabel {
+        color: var(--teal-300);
+      }
+      .end .typelabel {
+        color: #a78bfa;
+      }
+      .handle {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--aurora-400);
+        border: 2px solid #0d111a;
+      }
+      .h-l {
+        left: -5px;
+      }
+      .h-r {
+        right: -5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pill start">
+      <span class="dot start"></span>
+      <span class="ico"
+        ><span class="material-symbols-outlined" style="font-size: 18px"
+          >play_arrow</span
+        ></span
+      >
+      <span>
+        <div class="title">Start</div>
+        <div class="typelabel">Trigger</div>
+      </span>
+      <span class="handle h-r" style="background: var(--teal-400)"></span>
+    </div>
+    <div class="pill end">
+      <span class="ico"
+        ><span class="material-symbols-outlined" style="font-size: 18px"
+          >flag</span
+        ></span
+      >
+      <span style="text-align: right">
+        <div class="title">End</div>
+        <div class="typelabel">Email</div>
+      </span>
+      <span class="dot end"></span>
+      <span class="handle h-l" style="background: #a78bfa"></span>
+    </div>
+  </body>
+</html>

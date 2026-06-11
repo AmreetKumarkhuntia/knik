@@ -1,0 +1,209 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Tooltip + popover" subtitle="Hover tip + actions popover with shortcuts" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 30px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        justify-content: center;
+      }
+      /* Tooltip */
+      .anchor {
+        position: relative;
+        padding: 6px 10px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 7px;
+        color: var(--fg-2);
+        font-size: 12px;
+      }
+      .tip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-base);
+        color: var(--fg-1);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        padding: 5px 9px;
+        border: 1px solid var(--border-2);
+        border-radius: 5px;
+        white-space: nowrap;
+        box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6);
+      }
+      .tip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: var(--border-2);
+      }
+      .tip b {
+        color: var(--aurora-300);
+        font-weight: 400;
+      }
+      /* Popover */
+      .pop-anchor {
+        position: relative;
+        padding: 8px 12px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        color: var(--fg-1);
+        font-size: 13px;
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .pop {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 200px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        box-shadow: 0 14px 36px -10px rgba(0, 0, 0, 0.6);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 2;
+      }
+      .pop-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--fg-2);
+      }
+      .pop-item:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .pop-item.danger {
+        color: #ef4444;
+      }
+      .pop-item.danger:hover {
+        background: rgba(239, 68, 68, 0.12);
+      }
+      .pop-divider {
+        height: 1px;
+        background: var(--border-1);
+        margin: 4px 0;
+      }
+      .kbd {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      "
+    >
+      <div class="anchor">
+        <span class="tip"><b>Run now</b> &nbsp; ⌘ R</span>
+        <span
+          class="material-symbols-outlined"
+          style="font-size: 16px; vertical-align: middle; color: var(--fg-3)"
+          >play_arrow</span
+        >
+      </div>
+      <div
+        style="
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: var(--fg-4);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        "
+      >
+        Tooltip
+      </div>
+    </div>
+
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      "
+    >
+      <div class="pop-anchor">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >more_horiz</span
+        >
+        Actions
+        <div class="pop">
+          <div class="pop-item">
+            <span
+              class="material-symbols-outlined"
+              style="font-size: 15px; color: var(--fg-3)"
+              >edit</span
+            >Edit<span class="kbd">⌘ E</span>
+          </div>
+          <div class="pop-item">
+            <span
+              class="material-symbols-outlined"
+              style="font-size: 15px; color: var(--fg-3)"
+              >content_copy</span
+            >Duplicate
+          </div>
+          <div class="pop-item">
+            <span
+              class="material-symbols-outlined"
+              style="font-size: 15px; color: var(--fg-3)"
+              >share</span
+            >Share<span class="kbd">⌘ ⇧ S</span>
+          </div>
+          <div class="pop-divider"></div>
+          <div class="pop-item danger">
+            <span class="material-symbols-outlined" style="font-size: 15px"
+              >delete</span
+            >Delete<span class="kbd" style="color: rgba(239, 68, 68, 0.5)"
+              >⌫</span
+            >
+          </div>
+        </div>
+      </div>
+      <div
+        style="
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: var(--fg-4);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        "
+      >
+        Popover menu
+      </div>
+    </div>
+  </body>
+</html>

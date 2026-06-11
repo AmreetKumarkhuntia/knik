@@ -1,0 +1,141 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Page + section header" subtitle="Sticky breadcrumb header + section title with action" viewport="700x260" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      /* Sticky page header */
+      .ph {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 28px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border-bottom: 1px solid var(--border-2);
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .crumb {
+        font-size: 14px;
+        color: var(--fg-4);
+        letter-spacing: -0.012em;
+      }
+      .crumb.last {
+        color: var(--fg-1);
+        font-weight: 600;
+      }
+      .sep {
+        color: var(--fg-5);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 13px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border-2);
+        background: var(--bg-surface-2);
+        color: var(--fg-2);
+        cursor: pointer;
+      }
+      .btn.primary {
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        border-color: rgba(0, 0, 0, 0.2);
+        box-shadow:
+          0 4px 14px -4px rgba(0, 217, 244, 0.55),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
+      /* Section header */
+      .sh {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 28px 8px;
+      }
+      .sh h2 {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.012em;
+        color: var(--fg-1);
+        margin: 0;
+      }
+      .sh .vall {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: var(--aurora-300);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+      }
+      .filler {
+        margin: 0 28px 18px;
+        padding: 16px;
+        background: var(--bg-surface-2);
+        border: 1px dashed var(--border-2);
+        border-radius: 10px;
+        color: var(--fg-4);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ph">
+      <div class="crumbs">
+        <span class="crumb">Workflows</span>
+        <span class="sep">/</span>
+        <span class="crumb last">Workflow hub</span>
+      </div>
+      <div class="actions">
+        <button class="btn">
+          <span class="material-symbols-outlined" style="font-size: 16px"
+            >filter_list</span
+          >Filter
+        </button>
+        <button class="btn primary">
+          <span class="material-symbols-outlined" style="font-size: 16px"
+            >add</span
+          >Create workflow
+        </button>
+      </div>
+    </div>
+
+    <div class="sh">
+      <h2>Recent executions</h2>
+      <button class="vall">
+        View all
+        <span class="material-symbols-outlined" style="font-size: 15px"
+          >arrow_forward</span
+        >
+      </button>
+    </div>
+    <div class="filler">Content area</div>
+  </body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- @dsCard group="Colors" name="Foreground / text" subtitle="fg-1 → fg-5 with usage examples" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 60px 1fr 110px 90px;
+        align-items: center;
+        gap: 14px;
+        padding: 9px 0;
+        border-bottom: 1px dashed var(--border-1);
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .swatch {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 1px solid var(--border-2);
+      }
+      .demo {
+        font-size: 15px;
+      }
+      .name {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+      }
+      .hex {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-5);
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="swatch" style="background: #f6f8fb"></div>
+      <div
+        class="demo"
+        style="color: #f6f8fb; font-weight: 600; letter-spacing: -0.012em"
+      >
+        Hi-emphasis · headings · numbers
+      </div>
+      <span class="name">--fg-1</span>
+      <span class="hex">#F6F8FB</span>
+    </div>
+    <div class="row">
+      <div class="swatch" style="background: #d6dde7"></div>
+      <div class="demo" style="color: #d6dde7">Body text · long-form copy</div>
+      <span class="name">--fg-2</span>
+      <span class="hex">#D6DDE7</span>
+    </div>
+    <div class="row">
+      <div class="swatch" style="background: #9aa6b6"></div>
+      <div class="demo" style="color: #9aa6b6">Secondary · captions · meta</div>
+      <span class="name">--fg-3</span>
+      <span class="hex">#9AA6B6</span>
+    </div>
+    <div class="row">
+      <div class="swatch" style="background: #6a7585"></div>
+      <div class="demo" style="color: #6a7585">Muted · helper · timestamps</div>
+      <span class="name">--fg-4</span>
+      <span class="hex">#6A7585</span>
+    </div>
+    <div class="row">
+      <div class="swatch" style="background: #424c5b"></div>
+      <div class="demo" style="color: #424c5b">Disabled · placeholder</div>
+      <span class="name">--fg-5</span>
+      <span class="hex">#424C5B</span>
+    </div>
+  </body>
+</html>

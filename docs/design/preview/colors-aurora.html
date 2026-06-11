@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- @dsCard group="Colors" name="Aurora cyan scale" subtitle="Primary brand scale · 50–900 + featured token" viewport="700x260" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .scale {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 6px;
+      }
+      .swatch {
+        border-radius: 6px;
+        aspect-ratio: 1.4 / 1;
+        border: 1px solid var(--border-1);
+        position: relative;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 5px 6px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-start;
+      }
+      .swatch.dark {
+        color: rgba(0, 0, 0, 0.7);
+      }
+      .row-label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-4);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .featured {
+        margin-top: 18px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .chip {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        background: var(--aurora-400);
+        box-shadow: 0 0 40px -4px rgba(0, 217, 244, 0.55);
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-3);
+        line-height: 1.7;
+      }
+      .meta strong {
+        color: var(--fg-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row-label">aurora · primary</div>
+    <div class="scale">
+      <div class="swatch dark" style="background: #e6fbff">50</div>
+      <div class="swatch dark" style="background: #b8f3fd">100</div>
+      <div class="swatch dark" style="background: #79e6f9">200</div>
+      <div class="swatch dark" style="background: #34d3ee">300</div>
+      <div class="swatch dark" style="background: #00d9f4">400</div>
+      <div class="swatch" style="background: #00b8d4">500</div>
+      <div class="swatch" style="background: #008faa">600</div>
+      <div class="swatch" style="background: #006a80">700</div>
+      <div class="swatch" style="background: #054757">800</div>
+      <div class="swatch" style="background: #082b36">900</div>
+    </div>
+
+    <div class="featured">
+      <div class="chip"></div>
+      <div class="meta">
+        <div><strong>--primary · aurora-400</strong></div>
+        <div>#00D9F4 · oklch(80% 0.13 215)</div>
+        <div>Use for primary actions, focus rings, accents.</div>
+      </div>
+    </div>
+  </body>
+</html>

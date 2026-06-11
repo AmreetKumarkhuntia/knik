@@ -1,0 +1,179 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Inline banners" subtitle="Info / warn / error / success row banners" viewport="700x360" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid;
+        margin-bottom: 12px;
+      }
+      .banner:last-child {
+        margin-bottom: 0;
+      }
+      .banner.info {
+        background: rgba(0, 217, 244, 0.06);
+        border-color: rgba(0, 217, 244, 0.3);
+        color: var(--aurora-200);
+      }
+      .banner.warn {
+        background: rgba(245, 158, 11, 0.07);
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #fcd34d;
+      }
+      .banner.error {
+        background: rgba(239, 68, 68, 0.07);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+      }
+      .banner.success {
+        background: rgba(16, 185, 129, 0.07);
+        border-color: rgba(16, 185, 129, 0.3);
+        color: #6ee7b7;
+      }
+      .ico {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        flex-shrink: 0;
+      }
+      .ttl {
+        font-size: 13.5px;
+        font-weight: 600;
+        letter-spacing: -0.012em;
+        color: var(--fg-1);
+      }
+      .msg {
+        font-size: 12.5px;
+        color: var(--fg-3);
+        margin-top: 2px;
+        line-height: 1.5;
+      }
+      .msg code {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        background: var(--bg-code);
+        color: var(--aurora-300);
+        padding: 1px 5px;
+        border-radius: 3px;
+        border: 1px solid var(--border-1);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .actions a {
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .actions .primary {
+        color: var(--aurora-300);
+      }
+      .actions .ghost {
+        color: var(--fg-4);
+      }
+      .close {
+        color: var(--fg-4);
+        margin-left: auto;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner info">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >info</span
+        >
+      </div>
+      <div style="flex: 1">
+        <div class="ttl">
+          3 nodes auto-updated to <code>gemini-1.5-flash-002</code>
+        </div>
+        <div class="msg">
+          Older model versions are being retired. We migrated your workflows
+          automatically.
+        </div>
+        <div class="actions">
+          <a class="primary">View changes</a><a class="ghost">Dismiss</a>
+        </div>
+      </div>
+      <span class="close"
+        ><span class="material-symbols-outlined" style="font-size: 14px"
+          >close</span
+        ></span
+      >
+    </div>
+
+    <div class="banner warn">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >warning</span
+        >
+      </div>
+      <div style="flex: 1">
+        <div class="ttl">You're approaching your monthly token limit</div>
+        <div class="msg">
+          You've used <code>89%</code> of your Pro plan —
+          <code>1.1M of 1.25M</code> tokens.
+        </div>
+      </div>
+      <span class="close"
+        ><span class="material-symbols-outlined" style="font-size: 14px"
+          >close</span
+        ></span
+      >
+    </div>
+
+    <div class="banner error">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >cloud_off</span
+        >
+      </div>
+      <div style="flex: 1">
+        <div class="ttl">You're offline</div>
+        <div class="msg">
+          Some features will be unavailable until the connection returns.
+          Messages will queue.
+        </div>
+      </div>
+    </div>
+
+    <div class="banner success">
+      <div class="ico">
+        <span class="material-symbols-outlined" style="font-size: 16px"
+          >check_circle</span
+        >
+      </div>
+      <div style="flex: 1">
+        <div class="ttl">Workflow saved</div>
+        <div class="msg">
+          &ldquo;Daily digest&rdquo; will run at <code>09:00 UTC</code> daily.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

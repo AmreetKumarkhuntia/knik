@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 from collections.abc import AsyncGenerator, Generator
 from typing import Any, ClassVar
 
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from ...core.config import Config
 from ...utils.printer import printer
@@ -503,6 +504,12 @@ class AIClient:
         it as context (matching the OpenCode approach).
 
         Falls back to loading the last N turn pairs when no compaction exists.
+
+        For assistant messages that have ``tool_calls`` in their metadata, the
+        full LangChain message sequence is reconstructed: an AIMessage declaring
+        tool calls, one ToolMessage per tool result, and a final AIMessage with
+        the text response.  This gives the LLM accurate memory of prior tool
+        usage across conversation turns.
         """
         DB = cls._conversation_db()
 
@@ -522,7 +529,39 @@ class AIClient:
             if (summary_message_id and i == 0 and msg.metadata.get("is_compaction_summary")) or msg.role == "user":
                 history.append(HumanMessage(content=content))
             elif msg.role == "assistant":
-                history.append(AIMessage(content=content))
+                tool_calls_meta = msg.metadata.get("tool_calls")
+
+                if tool_calls_meta:
+                    lc_tool_calls = []
+                    for j, tc in enumerate(tool_calls_meta):
+                        tc_id = f"hist_tc_{i}_{j}"
+                        lc_tool_calls.append(
+                            {
+                                "name": tc.get("tool_name", "unknown"),
+                                "args": tc.get("tool_args", {}),
+                                "id": tc_id,
+                            }
+                        )
+
+                    history.append(AIMessage(content="", tool_calls=lc_tool_calls))
+
+                    for j, tc in enumerate(tool_calls_meta):
+                        tc_id = f"hist_tc_{i}_{j}"
+                        result = tc.get("tool_result", "")
+                        if not isinstance(result, str):
+                            result = json.dumps(result, default=str) if not isinstance(result, str) else result
+                        history.append(
+                            ToolMessage(
+                                content=result,
+                                tool_call_id=tc_id,
+                                name=tc.get("tool_name", "unknown"),
+                            )
+                        )
+
+                    if content.strip():
+                        history.append(AIMessage(content=content))
+                else:
+                    history.append(AIMessage(content=content))
         return history
 
     @staticmethod
@@ -538,7 +577,18 @@ class AIClient:
         if history:
             for msg in history:
                 if hasattr(msg, "type"):
-                    history_messages.append({"role": msg.type, "content": msg.content})
+                    if msg.type == "tool":
+                        d: dict[str, Any] = {
+                            "role": "tool",
+                            "content": msg.content,
+                            "name": getattr(msg, "name", ""),
+                        }
+                        history_messages.append(d)
+                    else:
+                        d = {"role": msg.type, "content": msg.content}
+                        if msg.type == "ai" and hasattr(msg, "tool_calls") and msg.tool_calls:
+                            d["tool_calls"] = msg.tool_calls
+                        history_messages.append(d)
         history_messages.append({"role": "user", "content": prompt})
 
         input_tokens = count_message_tokens(history_messages, model=model)

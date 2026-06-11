@@ -1,0 +1,195 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Controls (select / slider / segmented / swatches)" subtitle="Compact form controls used across the product" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .row:last-child {
+        margin-bottom: 0;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-4);
+        width: 100px;
+        flex-shrink: 0;
+      }
+      /* Select trigger */
+      .select {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 10px 7px 12px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        color: var(--fg-1);
+        font-size: 13px;
+        width: 240px;
+        cursor: pointer;
+      }
+      .select .v {
+        font-family: var(--font-mono);
+        color: var(--aurora-300);
+      }
+      .select .ms {
+        color: var(--fg-3);
+        margin-left: auto;
+      }
+      /* Slider */
+      .slider {
+        flex: 1;
+        height: 4px;
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        position: relative;
+      }
+      .slider .fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 65%;
+        background: linear-gradient(90deg, var(--aurora-400), var(--teal-400));
+        border-radius: 999px;
+      }
+      .slider .thumb {
+        position: absolute;
+        top: 50%;
+        left: 65%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--fg-1);
+        border: 3px solid var(--aurora-400);
+        box-shadow:
+          0 0 0 4px rgba(0, 217, 244, 0.2),
+          0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+      .val {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--aurora-300);
+        width: 56px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+      /* Segmented */
+      .segmented {
+        display: inline-flex;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 3px;
+        gap: 2px;
+      }
+      .seg {
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--fg-3);
+        cursor: pointer;
+      }
+      .seg.active {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+      /* Color picker */
+      .colors {
+        display: flex;
+        gap: 8px;
+      }
+      .color {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(0, 0, 0, 0.6);
+      }
+      .color.on {
+        border-color: var(--fg-1);
+        box-shadow: 0 0 0 2px var(--bg-surface);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="label">model</span>
+      <div class="select">
+        <span
+          class="material-symbols-outlined"
+          style="font-size: 16px; color: var(--aurora-300)"
+          >smart_toy</span
+        >
+        <span class="v">gemini-1.5-flash</span>
+        <span class="material-symbols-outlined ms" style="font-size: 18px"
+          >expand_more</span
+        >
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">temperature</span>
+      <div class="slider">
+        <div class="fill"></div>
+        <div class="thumb"></div>
+      </div>
+      <span class="val">0.65</span>
+    </div>
+
+    <div class="row">
+      <span class="label">range</span>
+      <div class="segmented">
+        <span class="seg">1H</span>
+        <span class="seg">24H</span>
+        <span class="seg active">7D</span>
+        <span class="seg">30D</span>
+        <span class="seg">All</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">accent</span>
+      <div class="colors">
+        <div class="color on" style="background: #00d9f4">
+          <span
+            class="material-symbols-outlined"
+            style="font-size: 16px; color: #04141a"
+            >check</span
+          >
+        </div>
+        <div class="color" style="background: #14b8a6"></div>
+        <div class="color" style="background: #8b5cf6"></div>
+        <div class="color" style="background: #ec4899"></div>
+        <div class="color" style="background: #f59e0b"></div>
+        <div class="color" style="background: #10b981"></div>
+      </div>
+    </div>
+  </body>
+</html>

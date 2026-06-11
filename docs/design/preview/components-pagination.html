@@ -1,0 +1,93 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Pagination" subtitle="Numbered pagination with prev / next + ellipsis" viewport="700x120" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .pag {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-2);
+      }
+      .meta {
+        font-size: 13px;
+        color: var(--fg-3);
+      }
+      .meta b {
+        color: var(--fg-1);
+        font-weight: 600;
+      }
+      .ctrls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn {
+        height: 32px;
+        min-width: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        color: var(--fg-2);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .btn:hover {
+        background: var(--bg-surface-3);
+      }
+      .btn.active {
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        border-color: rgba(0, 0, 0, 0.2);
+        box-shadow:
+          0 4px 14px -4px rgba(0, 217, 244, 0.55),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
+      .btn[disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .dots {
+        padding: 0 6px;
+        color: var(--fg-5);
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pag">
+      <div class="meta">Page <b>3</b> of <b>12</b> · 247 results</div>
+      <div class="ctrls">
+        <button class="btn">‹ Previous</button>
+        <button class="btn">1</button>
+        <span class="dots">…</span>
+        <button class="btn">2</button>
+        <button class="btn active">3</button>
+        <button class="btn">4</button>
+        <span class="dots">…</span>
+        <button class="btn">12</button>
+        <button class="btn">Next ›</button>
+      </div>
+    </div>
+  </body>
+</html>

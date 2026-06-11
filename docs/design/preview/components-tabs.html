@@ -1,0 +1,89 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Tabs" subtitle="Underline + pill segmented control" viewport="700x160" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      /* Underline tabs */
+      .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .tab {
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--fg-3);
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: -1px;
+        transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .tab:hover {
+        color: var(--fg-1);
+      }
+      .tab.active {
+        color: var(--fg-1);
+        border-bottom-color: var(--aurora-400);
+      }
+      /* Pill tabs */
+      .pills {
+        display: inline-flex;
+        gap: 2px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        padding: 3px;
+        border-radius: 10px;
+      }
+      .pill {
+        padding: 7px 14px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--fg-3);
+        cursor: pointer;
+        transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .pill:hover {
+        color: var(--fg-1);
+      }
+      .pill.active {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tabs">
+      <span class="tab active">Overview</span>
+      <span class="tab">Node trace</span>
+      <span class="tab">Inputs</span>
+      <span class="tab">Outputs</span>
+    </div>
+
+    <div class="pills">
+      <span class="pill active">Dark</span>
+      <span class="pill">Light</span>
+      <span class="pill">System</span>
+    </div>
+  </body>
+</html>

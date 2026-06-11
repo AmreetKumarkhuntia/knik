@@ -1,0 +1,179 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Code block w/ toolbar" subtitle="Syntax highlight + line numbers + diff highlight" viewport="700x280" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .block {
+        background: var(--bg-code);
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        padding: 7px 8px 7px 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid var(--border-1);
+      }
+      .lang {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-4);
+      }
+      .file {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--aurora-300);
+        margin-left: 10px;
+      }
+      .actions {
+        margin-left: auto;
+        display: flex;
+        gap: 2px;
+      }
+      .icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        color: var(--fg-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      pre {
+        margin: 0;
+        display: flex;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        letter-spacing: -0.01em;
+        color: var(--fg-2);
+      }
+      .ln {
+        flex-shrink: 0;
+        text-align: right;
+        padding: 12px 10px 12px 14px;
+        color: var(--fg-5);
+        user-select: none;
+        background: rgba(255, 255, 255, 0.02);
+        border-right: 1px solid var(--border-1);
+      }
+      .ln span.h {
+        display: block;
+        background: rgba(0, 217, 244, 0.1);
+        margin: 0 -10px 0 -14px;
+        padding: 0 10px 0 14px;
+        color: var(--aurora-300);
+      }
+      code.body {
+        padding: 12px 14px;
+        flex: 1;
+        overflow-x: auto;
+      }
+      code.body span.h {
+        display: block;
+        margin: 0 -14px;
+        padding: 0 14px;
+        background: rgba(0, 217, 244, 0.08);
+        border-left: 2px solid var(--aurora-400);
+      }
+      .k {
+        color: var(--aurora-300);
+      }
+      .s {
+        color: var(--teal-300);
+      }
+      .n {
+        color: #f59e0b;
+      }
+      .c {
+        color: var(--fg-4);
+        font-style: italic;
+      }
+      .b {
+        color: var(--fg-1);
+      }
+      .fn {
+        color: #a78bfa;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        background: rgba(0, 217, 244, 0.1);
+        color: var(--aurora-300);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 217, 244, 0.25);
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="block">
+      <div class="toolbar">
+        <span class="lang">python</span>
+        <span class="file">src/loader.py</span>
+        <span class="badge"
+          ><span class="material-symbols-outlined" style="font-size: 11px"
+            >bolt</span
+          >+38% faster</span
+        >
+        <div class="actions">
+          <span class="icon-btn" title="Wrap"
+            ><span class="material-symbols-outlined" style="font-size: 15px"
+              >wrap_text</span
+            ></span
+          >
+          <span class="icon-btn" title="Open"
+            ><span class="material-symbols-outlined" style="font-size: 15px"
+              >open_in_new</span
+            ></span
+          >
+          <span class="icon-btn" title="Copy"
+            ><span class="material-symbols-outlined" style="font-size: 15px"
+              >content_copy</span
+            ></span
+          >
+        </div>
+      </div>
+      <pre><span class="ln">1
+2
+3
+<span class="h">4</span>
+<span class="h">5</span>
+<span class="h">6</span>
+7
+8</span><code class="body"><span class="k">import</span> orjson
+
+<span class="k">def</span> <span class="fn">stream_rows</span>(path: <span class="b">str</span>):
+<span class="h">    <span class="k">with</span> <span class="b">open</span>(path, <span class="s">"rb"</span>) <span class="k">as</span> f:</span>
+<span class="h">        <span class="k">for</span> line <span class="k">in</span> f:</span>
+<span class="h">            <span class="k">yield</span> orjson.loads(line)</span>
+
+<span class="c"># used by daily-digest workflow</span></code></pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Modal" subtitle="Glass modal with form, header, and footer actions" viewport="700x340" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-base);
+        background-image:
+          radial-gradient(
+            at 8% 0%,
+            rgba(0, 217, 244, 0.12) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 95% 100%,
+            rgba(20, 184, 166, 0.1) 0px,
+            transparent 50%
+          );
+        box-sizing: border-box;
+        height: 340px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(7, 9, 13, 0.55);
+        backdrop-filter: blur(6px);
+      }
+      .modal {
+        position: relative;
+        width: 440px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(28px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        box-shadow:
+          0 30px 60px -20px rgba(0, 0, 0, 0.65),
+          0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+        overflow: hidden;
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .head h3 {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.012em;
+        color: var(--fg-1);
+        margin: 0;
+      }
+      .close {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        color: var(--fg-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .body {
+        padding: 18px 20px;
+      }
+      .body label {
+        font-size: 12px;
+        color: var(--fg-3);
+        display: block;
+        margin-top: 12px;
+        margin-bottom: 6px;
+      }
+      .body label:first-child {
+        margin-top: 0;
+      }
+      .body input {
+        width: 100%;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--fg-1);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        outline: none;
+        box-sizing: border-box;
+      }
+      .foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 14px 20px;
+        border-top: 1px solid var(--border-2);
+      }
+      .btn {
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid transparent;
+        cursor: pointer;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--fg-3);
+      }
+      .btn.primary {
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        box-shadow:
+          0 4px 14px -4px rgba(0, 217, 244, 0.55),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scrim"></div>
+    <div class="modal">
+      <div class="head">
+        <h3>Create workflow</h3>
+        <span class="close"
+          ><span class="material-symbols-outlined" style="font-size: 18px"
+            >close</span
+          ></span
+        >
+      </div>
+      <div class="body">
+        <label>Workflow name</label>
+        <input value="Daily digest" />
+        <label>Trigger</label>
+        <input
+          value="cron(0 9 * * *)"
+          style="font-family: var(--font-mono); font-size: 13px"
+        />
+      </div>
+      <div class="foot">
+        <button class="btn ghost">Cancel</button>
+        <button class="btn primary">Create</button>
+      </div>
+    </div>
+  </body>
+</html>

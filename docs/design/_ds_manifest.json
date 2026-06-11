@@ -1,0 +1,1668 @@
+{
+  "namespace": "KNIKDesignSystem_e7b2f2",
+  "components": [
+    {
+      "name": "ActionButton",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/ActionButton.tsx"
+    },
+    {
+      "name": "Breadcrumb",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Breadcrumb.tsx"
+    },
+    {
+      "name": "Card",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Card.tsx"
+    },
+    {
+      "name": "ConfirmDialog",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/ConfirmDialog.tsx"
+    },
+    {
+      "name": "EmptyState",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/EmptyState.tsx"
+    },
+    {
+      "name": "ExecutionFlowGraph",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/ExecutionFlowGraph.tsx"
+    },
+    {
+      "name": "ExecutionTimeline",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/ExecutionTimeline.tsx"
+    },
+    {
+      "name": "FormField",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/FormField.tsx"
+    },
+    {
+      "name": "IconButton",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/IconButton.tsx"
+    },
+    {
+      "name": "Input",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Input.tsx"
+    },
+    {
+      "name": "LoadingSpinner",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/LoadingSpinner.tsx"
+    },
+    {
+      "name": "MarkdownMessage",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/MarkdownMessage.tsx"
+    },
+    {
+      "name": "MetricCard",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/MetricCard.tsx"
+    },
+    {
+      "name": "Modal",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Modal.tsx"
+    },
+    {
+      "name": "NavLink",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/NavLink.tsx"
+    },
+    {
+      "name": "NotificationButton",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/NotificationButton.tsx"
+    },
+    {
+      "name": "PageHeader",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/PageHeader.tsx"
+    },
+    {
+      "name": "Pagination",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Pagination.tsx"
+    },
+    {
+      "name": "SearchBar",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/SearchBar.tsx"
+    },
+    {
+      "name": "SectionHeader",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/SectionHeader.tsx"
+    },
+    {
+      "name": "StatusBadge",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/StatusBadge.tsx"
+    },
+    {
+      "name": "StructuredOutput",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/StructuredOutput.tsx"
+    },
+    {
+      "name": "Table",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Table.tsx"
+    },
+    {
+      "name": "Tabs",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/Tabs.tsx"
+    },
+    {
+      "name": "ToggleSwitch",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/ToggleSwitch.tsx"
+    },
+    {
+      "name": "UserProfile",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/UserProfile.tsx"
+    },
+    {
+      "name": "FunctionContent",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/graph/nodes/NodeContent.tsx"
+    },
+    {
+      "name": "ConditionalContent",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/graph/nodes/NodeContent.tsx"
+    },
+    {
+      "name": "MergeContent",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/graph/nodes/NodeContent.tsx"
+    },
+    {
+      "name": "AIContent",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/graph/nodes/NodeContent.tsx"
+    },
+    {
+      "name": "NodeContent",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/graph/nodes/NodeContent.tsx"
+    },
+    {
+      "name": "MenuIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "PlayIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "PauseIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "StopIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "CloseIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "TrashIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "SettingsIcon",
+      "sourcePath": "src/apps/web/frontend/src/lib/components/icons/Icons.tsx"
+    },
+    {
+      "name": "API",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/config.ts"
+    },
+    {
+      "name": "STORAGE",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/config.ts"
+    },
+    {
+      "name": "CSS_VARS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/config.ts"
+    },
+    {
+      "name": "CSS_CLASSES",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/config.ts"
+    },
+    {
+      "name": "STYLE_CONFIG",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/config.ts"
+    },
+    {
+      "name": "LAYOUT",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "ANIMATION",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "SPACING",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "SIZES",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "CANVAS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "TABS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "VIEWPORT",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "STATUS_BADGE",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/dimensions.ts"
+    },
+    {
+      "name": "ROUTES",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/navigation.ts"
+    },
+    {
+      "name": "KEYBOARD_SHORTCUTS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/navigation.ts"
+    },
+    {
+      "name": "NAV_ITEMS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/navigation.ts"
+    },
+    {
+      "name": "EDGE_STATUS_COLORS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/themes.ts"
+    },
+    {
+      "name": "CANVAS_OVERLAY_COLORS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/themes.ts"
+    },
+    {
+      "name": "DEFAULT_THEME",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/themes.ts"
+    },
+    {
+      "name": "DEFAULT_MODE",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/themes.ts"
+    },
+    {
+      "name": "UI_TEXT",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/ui.ts"
+    },
+    {
+      "name": "ACCOUNT",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/ui.ts"
+    },
+    {
+      "name": "BADGE",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/ui.ts"
+    },
+    {
+      "name": "NODE_LABELS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/ui.ts"
+    },
+    {
+      "name": "AI_DEFAULTS",
+      "sourcePath": "src/apps/web/frontend/src/lib/constants/ui.ts"
+    },
+    {
+      "name": "AudioControls",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/audio/AudioControls.tsx"
+    },
+    {
+      "name": "ChatPanel",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/chat/ChatPanel.tsx"
+    },
+    {
+      "name": "CompactionDivider",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/chat/CompactionDivider.tsx"
+    },
+    {
+      "name": "InputPanel",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/chat/InputPanel.tsx"
+    },
+    {
+      "name": "BackgroundEffects",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/effects/BackgroundEffects.tsx"
+    },
+    {
+      "name": "KeyboardShortcuts",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/home/KeyboardShortcuts.tsx"
+    },
+    {
+      "name": "SuggestionCards",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/home/SuggestionCards.tsx"
+    },
+    {
+      "name": "WelcomeContainer",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/home/WelcomeContainer.tsx"
+    },
+    {
+      "name": "WelcomePrompt",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/home/WelcomePrompt.tsx"
+    },
+    {
+      "name": "MainLayout",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/layout/MainLayout.tsx"
+    },
+    {
+      "name": "Sidebar",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/layout/Sidebar.tsx"
+    },
+    {
+      "name": "TopBar",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/layout/TopBar.tsx"
+    },
+    {
+      "name": "ThemeContext",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/theme/ThemeProvider.tsx"
+    },
+    {
+      "name": "ThemeProvider",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/theme/ThemeProvider.tsx"
+    },
+    {
+      "name": "ThemeSelector",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/theme/ThemeSelector.tsx"
+    },
+    {
+      "name": "ExecutionDetail",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/workflows/ExecutionHistory/ExecutionDetail.tsx"
+    },
+    {
+      "name": "WorkflowHub",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/workflows/WorkflowHub.tsx"
+    },
+    {
+      "name": "WorkflowsTable",
+      "sourcePath": "src/apps/web/frontend/src/lib/sections/workflows/WorkflowsTable.tsx"
+    }
+  ],
+  "startingPoints": [],
+  "cards": [
+    {
+      "path": "preview/brand-iconography.html",
+      "group": "Brand",
+      "viewport": "700x200",
+      "subtitle": "20 Material Symbols Outlined used by the app",
+      "name": "Iconography"
+    },
+    {
+      "path": "preview/brand-logo.html",
+      "group": "Brand",
+      "viewport": "700x200",
+      "subtitle": "KNIK glyph + Inter wordmark on mesh",
+      "name": "Logo / wordmark"
+    },
+    {
+      "path": "preview/brand-mesh-bg.html",
+      "group": "Brand",
+      "viewport": "700x260",
+      "subtitle": "Mesh gradient + blobs + gradient text",
+      "name": "Hero treatment"
+    },
+    {
+      "path": "preview/brand-surfaces.html",
+      "group": "Brand",
+      "viewport": "700x170",
+      "subtitle": "Glass, dot-grid, line-grid, mesh",
+      "name": "Background patterns"
+    },
+    {
+      "path": "preview/colors-aurora.html",
+      "group": "Colors",
+      "viewport": "700x260",
+      "subtitle": "Primary brand scale · 50–900 + featured token",
+      "name": "Aurora cyan scale"
+    },
+    {
+      "path": "preview/colors-foreground.html",
+      "group": "Colors",
+      "viewport": "700x280",
+      "subtitle": "fg-1 → fg-5 with usage examples",
+      "name": "Foreground / text"
+    },
+    {
+      "path": "preview/colors-semantic.html",
+      "group": "Colors",
+      "viewport": "700x160",
+      "subtitle": "Success / Running / Pending / Failed",
+      "name": "Semantic colors"
+    },
+    {
+      "path": "preview/colors-surfaces.html",
+      "group": "Colors",
+      "viewport": "700x170",
+      "subtitle": "6 surface tokens from ink black to code",
+      "name": "Dark surfaces"
+    },
+    {
+      "path": "preview/colors-teal-violet.html",
+      "group": "Colors",
+      "viewport": "700x220",
+      "subtitle": "Secondary teal and legacy violet scales",
+      "name": "Teal & violet"
+    },
+    {
+      "path": "preview/components-404.html",
+      "group": "Components",
+      "viewport": "700x240",
+      "subtitle": "Aurora-gradient 404 with recovery actions",
+      "name": "404 page"
+    },
+    {
+      "path": "preview/components-accordion-vtabs.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "FAQ accordion + vertical settings tabs",
+      "name": "Accordion + vertical tabs"
+    },
+    {
+      "path": "preview/components-activity-heatmap.html",
+      "group": "Components",
+      "viewport": "700x240",
+      "subtitle": "Day × hour run-activity grid (GitHub-style)",
+      "name": "Activity heatmap"
+    },
+    {
+      "path": "preview/components-agent-thinking.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Compaction divider, tool-call rows, diff block",
+      "name": "Agent thinking blocks"
+    },
+    {
+      "path": "preview/components-api-keys.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Active / revoked keys + webhook destination row",
+      "name": "API keys + webhooks"
+    },
+    {
+      "path": "preview/components-area-chart.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Trend chart with legend and tabular figures",
+      "name": "Area chart"
+    },
+    {
+      "path": "preview/components-badges.html",
+      "group": "Components",
+      "viewport": "700x140",
+      "subtitle": "Execution status + account-tier pills",
+      "name": "Badges"
+    },
+    {
+      "path": "preview/components-banners.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Info / warn / error / success row banners",
+      "name": "Inline banners"
+    },
+    {
+      "path": "preview/components-buttons.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Primary, secondary, ghost, danger, icon",
+      "name": "Buttons"
+    },
+    {
+      "path": "preview/components-chat-bubbles.html",
+      "group": "Components",
+      "viewport": "700x230",
+      "subtitle": "User + assistant messages with actions",
+      "name": "Chat bubbles"
+    },
+    {
+      "path": "preview/components-chips.html",
+      "group": "Components",
+      "viewport": "700x180",
+      "subtitle": "Tag, voice, lang, team, kbd, dashed input chips",
+      "name": "Chips & tags"
+    },
+    {
+      "path": "preview/components-code-block.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Syntax highlight + line numbers + diff highlight",
+      "name": "Code block w/ toolbar"
+    },
+    {
+      "path": "preview/components-command-palette.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "⌘ K search with grouped results",
+      "name": "Command palette"
+    },
+    {
+      "path": "preview/components-confirm-dialog.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Danger-variant confirmation with icon + double action",
+      "name": "Confirm dialog"
+    },
+    {
+      "path": "preview/components-controls.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Compact form controls used across the product",
+      "name": "Controls (select / slider / segmented / swatches)"
+    },
+    {
+      "path": "preview/components-conversation-history.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Date-grouped chats with type tags + active state",
+      "name": "Conversation history"
+    },
+    {
+      "path": "preview/components-data-charts.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Sparkline, bar chart, donut composition",
+      "name": "Data charts"
+    },
+    {
+      "path": "preview/components-data-table.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Sortable, checkable rows with status pills",
+      "name": "Data table"
+    },
+    {
+      "path": "preview/components-date-cron-picker.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Calendar with run-dots + cron schedule field",
+      "name": "Date + cron picker"
+    },
+    {
+      "path": "preview/components-empty-state.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Glyph + title + description + primary CTA",
+      "name": "Empty state"
+    },
+    {
+      "path": "preview/components-error-boundary.html",
+      "group": "Components",
+      "viewport": "700x340",
+      "subtitle": "Crash recovery with error code + stack hint",
+      "name": "Error boundary screen"
+    },
+    {
+      "path": "preview/components-execution-detail.html",
+      "group": "Components",
+      "viewport": "700x260",
+      "subtitle": "Header + tabbed views + 4-stat strip",
+      "name": "Execution detail"
+    },
+    {
+      "path": "preview/components-execution-timeline.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Vertical step timeline with inline error block",
+      "name": "Execution timeline"
+    },
+    {
+      "path": "preview/components-file-upload.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Attachment chips, progress row, drop zone",
+      "name": "File upload + drop zone"
+    },
+    {
+      "path": "preview/components-forms.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Text inputs, search, focus ring",
+      "name": "Form inputs"
+    },
+    {
+      "path": "preview/components-graph-card-node.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "AI / TTS card nodes with type chip + I/O lines",
+      "name": "Graph · card node"
+    },
+    {
+      "path": "preview/components-graph-edges.html",
+      "group": "Components",
+      "viewport": "700x300",
+      "subtitle": "Edit-gradient, success, running, failed, pending edges",
+      "name": "Graph · edge variants"
+    },
+    {
+      "path": "preview/components-graph-execution.html",
+      "group": "Components",
+      "viewport": "700x330",
+      "subtitle": "Mid-run DAG with status colours and animated edges",
+      "name": "Graph · execution snapshot"
+    },
+    {
+      "path": "preview/components-graph-pill-node.html",
+      "group": "Components",
+      "viewport": "700x180",
+      "subtitle": "Start / end pill nodes · BaseNode shape='pill'",
+      "name": "Graph · pill node"
+    },
+    {
+      "path": "preview/components-json-viewer.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Inputs / outputs tabs with copy + line numbers",
+      "name": "JSON viewer"
+    },
+    {
+      "path": "preview/components-keyboard-shortcuts.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Two-column shortcut reference with kbd keys",
+      "name": "Keyboard shortcuts"
+    },
+    {
+      "path": "preview/components-log-stream.html",
+      "group": "Components",
+      "viewport": "700x340",
+      "subtitle": "Terminal-style tail -f with level-coloured lines",
+      "name": "Live log stream"
+    },
+    {
+      "path": "preview/components-markdown.html",
+      "group": "Components",
+      "viewport": "700x380",
+      "subtitle": "Headings, lists, code fence, quote, inline code",
+      "name": "Markdown rendering"
+    },
+    {
+      "path": "preview/components-mcp-tools.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Searchable grid of 31 MCP tools by category",
+      "name": "MCP tool catalog"
+    },
+    {
+      "path": "preview/components-message-input.html",
+      "group": "Components",
+      "viewport": "700x200",
+      "subtitle": "Glass composer with attach, mic, send",
+      "name": "Message input"
+    },
+    {
+      "path": "preview/components-metric-cards.html",
+      "group": "Components",
+      "viewport": "700x200",
+      "subtitle": "Default, elevated, and glass variants",
+      "name": "Metric cards"
+    },
+    {
+      "path": "preview/components-mic-recorder.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Live waveform recording + idle ready state",
+      "name": "Microphone recorder"
+    },
+    {
+      "path": "preview/components-modal.html",
+      "group": "Components",
+      "viewport": "700x340",
+      "subtitle": "Glass modal with form, header, and footer actions",
+      "name": "Modal"
+    },
+    {
+      "path": "preview/components-notification-feed.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Glass popover with unread dots + mark-all-read",
+      "name": "Notification feed"
+    },
+    {
+      "path": "preview/components-page-section-header.html",
+      "group": "Components",
+      "viewport": "700x260",
+      "subtitle": "Sticky breadcrumb header + section title with action",
+      "name": "Page + section header"
+    },
+    {
+      "path": "preview/components-pagination.html",
+      "group": "Components",
+      "viewport": "700x120",
+      "subtitle": "Numbered pagination with prev / next + ellipsis",
+      "name": "Pagination"
+    },
+    {
+      "path": "preview/components-pricing-tiers.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Three-tier pricing with featured ribbon",
+      "name": "Pricing tiers"
+    },
+    {
+      "path": "preview/components-progress-loaders.html",
+      "group": "Components",
+      "viewport": "700x260",
+      "subtitle": "Linear progress, striped running, spinners, skeleton",
+      "name": "Progress + loaders"
+    },
+    {
+      "path": "preview/components-schedule-list.html",
+      "group": "Components",
+      "viewport": "700x260",
+      "subtitle": "Cron schedules with next-run + paused state",
+      "name": "Schedule list"
+    },
+    {
+      "path": "preview/components-settings.html",
+      "group": "Components",
+      "viewport": "700x360",
+      "subtitle": "Two-pane settings with toggles + selects",
+      "name": "Settings panel"
+    },
+    {
+      "path": "preview/components-sidebar-nav.html",
+      "group": "Components",
+      "viewport": "700x320",
+      "subtitle": "Glass nav with active + hover annotations",
+      "name": "Sidebar nav"
+    },
+    {
+      "path": "preview/components-stat-strip.html",
+      "group": "Components",
+      "viewport": "700x200",
+      "subtitle": "5-column KPI bar + live mini-stat chips",
+      "name": "Stat strip + chip metrics"
+    },
+    {
+      "path": "preview/components-stepper-breadcrumb.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Multi-step wizard + deep nav breadcrumb",
+      "name": "Stepper + deep breadcrumb"
+    },
+    {
+      "path": "preview/components-suggestions.html",
+      "group": "Components",
+      "viewport": "700x200",
+      "subtitle": "Welcome prompt cards · hover & default",
+      "name": "Suggestion cards"
+    },
+    {
+      "path": "preview/components-tabs.html",
+      "group": "Components",
+      "viewport": "700x160",
+      "subtitle": "Underline + pill segmented control",
+      "name": "Tabs"
+    },
+    {
+      "path": "preview/components-team-roster.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Overflow avatar stack + member rows with roles",
+      "name": "Team roster + avatar stack"
+    },
+    {
+      "path": "preview/components-theme-selector.html",
+      "group": "Components",
+      "viewport": "700x380",
+      "subtitle": "Mode toggle + accent palette with selected swatch",
+      "name": "Theme selector"
+    },
+    {
+      "path": "preview/components-toasts.html",
+      "group": "Components",
+      "viewport": "700x300",
+      "subtitle": "Success, error, info · left accent + close",
+      "name": "Toasts"
+    },
+    {
+      "path": "preview/components-toggles.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Switch, radio, checkbox in active states",
+      "name": "Toggles & checks"
+    },
+    {
+      "path": "preview/components-token-meter.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Stacked-segment usage + budget tracker",
+      "name": "Token + cost meter"
+    },
+    {
+      "path": "preview/components-tooltip-popover.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "Hover tip + actions popover with shortcuts",
+      "name": "Tooltip + popover"
+    },
+    {
+      "path": "preview/components-tts-player.html",
+      "group": "Components",
+      "viewport": "700x140",
+      "subtitle": "Kokoro TTS scrubber with live waveform",
+      "name": "TTS player"
+    },
+    {
+      "path": "preview/components-user-profile.html",
+      "group": "Components",
+      "viewport": "700x120",
+      "subtitle": "Avatar + name + badges + notification bell",
+      "name": "User profile"
+    },
+    {
+      "path": "preview/components-voice-picker.html",
+      "group": "Components",
+      "viewport": "700x280",
+      "subtitle": "9 Kokoro voices in a selectable grid",
+      "name": "Voice picker"
+    },
+    {
+      "path": "preview/components-workflow-nodes.html",
+      "group": "Components",
+      "viewport": "700x220",
+      "subtitle": "Start / LLM / End on a workflow grid",
+      "name": "Workflow nodes"
+    },
+    {
+      "path": "preview/spacing-motion.html",
+      "group": "Spacing",
+      "viewport": "700x220",
+      "subtitle": "ease-out, in-out, spring, linear",
+      "name": "Motion / easing"
+    },
+    {
+      "path": "preview/spacing-radii.html",
+      "group": "Spacing",
+      "viewport": "700x160",
+      "subtitle": "xs (4) → pill (999)",
+      "name": "Border radii"
+    },
+    {
+      "path": "preview/spacing-scale.html",
+      "group": "Spacing",
+      "viewport": "700x340",
+      "subtitle": "4 → 64px on a 4-pt base",
+      "name": "Spacing scale"
+    },
+    {
+      "path": "preview/spacing-shadows.html",
+      "group": "Spacing",
+      "viewport": "700x180",
+      "subtitle": "3 elevation steps + primary/teal glow",
+      "name": "Shadows & glow"
+    },
+    {
+      "path": "preview/type-body.html",
+      "group": "Type",
+      "viewport": "700x280",
+      "subtitle": "Body, small, caption, and eyebrow",
+      "name": "Body & caption"
+    },
+    {
+      "path": "preview/type-display.html",
+      "group": "Type",
+      "viewport": "700x200",
+      "subtitle": "Inter Variable · display sizes with tight tracking",
+      "name": "Display type"
+    },
+    {
+      "path": "preview/type-headings.html",
+      "group": "Type",
+      "viewport": "700x240",
+      "subtitle": "H1–H4 sizes, weights, and tracking",
+      "name": "Heading scale"
+    },
+    {
+      "path": "preview/type-mono.html",
+      "group": "Type",
+      "viewport": "700x200",
+      "subtitle": "JetBrains Mono inline and block usage",
+      "name": "Monospace"
+    },
+    {
+      "path": "ui_kits/web/index.html",
+      "group": "UI Kit — Web",
+      "viewport": "1280x720",
+      "subtitle": "Click-thru recreation: chat → workflow hub → builder",
+      "name": "Web UI kit · KNIK"
+    }
+  ],
+  "templates": [],
+  "globalCssPaths": ["colors_and_type.css"],
+  "tokens": [
+    {
+      "name": "--bg-base",
+      "value": "#07090d",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-surface",
+      "value": "#0d1117",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-surface-2",
+      "value": "#11161f",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-surface-3",
+      "value": "#161c27",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-glass",
+      "value": "rgba(15, 20, 28, 0.66)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-canvas",
+      "value": "#08101a",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-code",
+      "value": "#0c1118",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fg-1",
+      "value": "#f6f8fb",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fg-2",
+      "value": "#d6dde7",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fg-3",
+      "value": "#9aa6b6",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fg-4",
+      "value": "#6a7585",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fg-5",
+      "value": "#424c5b",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fg-inverse",
+      "value": "#07090d",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-50",
+      "value": "#e6fbff",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-100",
+      "value": "#b8f3fd",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-200",
+      "value": "#79e6f9",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-300",
+      "value": "#34d3ee",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-400",
+      "value": "#00d9f4",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-500",
+      "value": "#00b8d4",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-600",
+      "value": "#008faa",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-700",
+      "value": "#006a80",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-800",
+      "value": "#054757",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--aurora-900",
+      "value": "#082b36",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--teal-300",
+      "value": "#5eead4",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--teal-400",
+      "value": "#2dd4bf",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--teal-500",
+      "value": "#14b8a6",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--teal-600",
+      "value": "#0d9488",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--teal-700",
+      "value": "#0f766e",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--violet-400",
+      "value": "#a78bfa",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--violet-500",
+      "value": "#8b5cf6",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--violet-600",
+      "value": "#7c3aed",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--success",
+      "value": "#10b981",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--success-bg",
+      "value": "rgba(16, 185, 129, 0.16)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--warning",
+      "value": "#f59e0b",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--warning-bg",
+      "value": "rgba(245, 158, 11, 0.16)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--danger",
+      "value": "#ef4444",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--danger-bg",
+      "value": "rgba(239, 68, 68, 0.16)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--info",
+      "value": "#3b82f6",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--info-bg",
+      "value": "rgba(59, 130, 246, 0.16)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--border-1",
+      "value": "rgba(255, 255, 255, 0.06)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--border-2",
+      "value": "rgba(255, 255, 255, 0.10)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--border-3",
+      "value": "rgba(255, 255, 255, 0.18)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--border-focus",
+      "value": "var(--aurora-400)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--primary",
+      "value": "var(--aurora-400)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--primary-hover",
+      "value": "var(--aurora-300)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--primary-soft",
+      "value": "rgba(0, 217, 244, 0.12)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--primary-soft-2",
+      "value": "rgba(0, 217, 244, 0.22)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--on-primary",
+      "value": "#04141a",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--shadow-1",
+      "value": "0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.3)",
+      "kind": "shadow",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--shadow-2",
+      "value": "0 4px 14px -2px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.04) inset",
+      "kind": "shadow",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--shadow-3",
+      "value": "0 20px 50px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset",
+      "kind": "shadow",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--glow-primary",
+      "value": "0 0 0 1px rgba(0,217,244,0.35), 0 10px 30px -10px rgba(0,217,244,0.55)",
+      "kind": "shadow",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--glow-teal",
+      "value": "0 0 30px -8px rgba(20,184,166,0.45)",
+      "kind": "shadow",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-xs",
+      "value": "4px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-sm",
+      "value": "6px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-md",
+      "value": "8px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-lg",
+      "value": "12px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-xl",
+      "value": "16px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-2xl",
+      "value": "20px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--radius-pill",
+      "value": "999px",
+      "kind": "radius",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-1",
+      "value": "4px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-2",
+      "value": "8px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-3",
+      "value": "12px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-4",
+      "value": "16px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-5",
+      "value": "20px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-6",
+      "value": "24px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-8",
+      "value": "32px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-10",
+      "value": "40px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-12",
+      "value": "48px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-16",
+      "value": "64px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--space-20",
+      "value": "80px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--font-sans",
+      "value": "'Inter var', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--font-display",
+      "value": "'Inter var', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--font-mono",
+      "value": "'JetBrains Mono', 'SF Mono', ui-monospace, 'Cascadia Mono', Menlo, monospace",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-display-2xl",
+      "value": "clamp(56px, 7vw, 88px)",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-display-xl",
+      "value": "clamp(40px, 5vw, 64px)",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-display-lg",
+      "value": "40px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-h1",
+      "value": "32px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-h2",
+      "value": "24px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-h3",
+      "value": "18px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-h4",
+      "value": "16px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-body-lg",
+      "value": "17px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-body",
+      "value": "15px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-body-sm",
+      "value": "13px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-caption",
+      "value": "12px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--fs-micro",
+      "value": "11px",
+      "kind": "spacing",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--lh-tight",
+      "value": "1.05",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--lh-snug",
+      "value": "1.2",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--lh-base",
+      "value": "1.5",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--lh-relaxed",
+      "value": "1.65",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--tracking-tightest",
+      "value": "-0.04em",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--tracking-tighter",
+      "value": "-0.025em",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--tracking-tight",
+      "value": "-0.012em",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--tracking-normal",
+      "value": "0",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--tracking-wide",
+      "value": "0.02em",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--tracking-mono",
+      "value": "-0.01em",
+      "kind": "font",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--ease-out",
+      "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--ease-in-out",
+      "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--ease-spring",
+      "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--dur-fast",
+      "value": "120ms",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--dur-base",
+      "value": "200ms",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--dur-slow",
+      "value": "400ms",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--dur-slower",
+      "value": "700ms",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--blur-glass",
+      "value": "blur(20px) saturate(140%)",
+      "kind": "other",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--grid-line",
+      "value": "rgba(255,255,255,0.05)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--grid-line-strong",
+      "value": "rgba(255,255,255,0.08)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css"
+    },
+    {
+      "name": "--bg-base",
+      "value": "#fdfdfd",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--bg-surface",
+      "value": "#ffffff",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--bg-surface-2",
+      "value": "#f5f6f8",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--bg-surface-3",
+      "value": "#eceef2",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--bg-glass",
+      "value": "rgba(255,255,255,0.7)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--bg-canvas",
+      "value": "#f0f2f5",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--bg-code",
+      "value": "#f1f3f5",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--fg-1",
+      "value": "#0b0f14",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--fg-2",
+      "value": "#1d2530",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--fg-3",
+      "value": "#5b6677",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--fg-4",
+      "value": "#8893a3",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--fg-5",
+      "value": "#b5bdc8",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--fg-inverse",
+      "value": "#ffffff",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--border-1",
+      "value": "rgba(0,0,0,0.05)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--border-2",
+      "value": "rgba(0,0,0,0.10)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--border-3",
+      "value": "rgba(0,0,0,0.18)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--primary",
+      "value": "var(--aurora-500)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--primary-hover",
+      "value": "var(--aurora-600)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    },
+    {
+      "name": "--primary-soft",
+      "value": "rgba(0, 184, 212, 0.10)",
+      "kind": "color",
+      "definedIn": "colors_and_type.css",
+      "scope": "[data-theme='light']"
+    }
+  ],
+  "themes": [{ "selector": "[data-theme='light']", "label": "Light" }],
+  "fonts": [],
+  "brandFonts": [
+    {
+      "family": "Inter var",
+      "status": "maybe-remote",
+      "tokens": ["--font-sans", "--font-display"],
+      "path": "colors_and_type.css"
+    },
+    {
+      "family": "JetBrains Mono",
+      "status": "ok",
+      "tokens": ["--font-mono"],
+      "path": "colors_and_type.css"
+    }
+  ],
+  "source": "spa"
+}

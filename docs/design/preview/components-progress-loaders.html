@@ -1,0 +1,156 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Progress + loaders" subtitle="Linear progress, striped running, spinners, skeleton" viewport="700x260" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 26px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-4);
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .label .v {
+        color: var(--fg-1);
+        font-family: var(--font-mono);
+        font-weight: 500;
+      }
+      .label .v b {
+        color: var(--aurora-300);
+        font-weight: 500;
+      }
+      /* Linear progress */
+      .lin {
+        height: 6px;
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 18px;
+      }
+      .lin .fill {
+        height: 100%;
+        width: 68%;
+        background: linear-gradient(90deg, var(--aurora-400), var(--teal-400));
+        border-radius: 999px;
+        box-shadow: 0 0 12px var(--aurora-400);
+      }
+      /* Striped (running) */
+      .lin.running .fill {
+        background-image:
+          repeating-linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.18) 0 6px,
+            transparent 6px 12px
+          ),
+          linear-gradient(90deg, var(--aurora-400), var(--teal-400));
+        animation: stripe 1s linear infinite;
+      }
+      @keyframes stripe {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position:
+            24px 0,
+            0 0;
+        }
+      }
+      /* Spinners */
+      .spinners {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+      .spinner {
+        border: 2.5px solid var(--bg-surface-3);
+        border-top-color: var(--aurora-400);
+        border-radius: 50%;
+        animation: knik-spin 0.9s linear infinite;
+      }
+      .s-sm {
+        width: 16px;
+        height: 16px;
+        border-width: 2px;
+      }
+      .s-md {
+        width: 28px;
+        height: 28px;
+      }
+      .s-lg {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+      }
+      /* Skeleton */
+      .skel {
+        background: linear-gradient(
+          90deg,
+          var(--bg-surface-2) 0%,
+          var(--bg-surface-3) 40%,
+          var(--bg-surface-2) 80%
+        );
+        background-size: 200% 100%;
+        animation: skel 1.6s linear infinite;
+        border-radius: 6px;
+      }
+      @keyframes skel {
+        from {
+          background-position: 200% 0;
+        }
+        to {
+          background-position: -200% 0;
+        }
+      }
+      @keyframes knik-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="label">
+      Upload progress <span class="v"><b>68%</b> &middot; 13.4 / 19.7 MB</span>
+    </div>
+    <div class="lin"><div class="fill"></div></div>
+
+    <div class="label">
+      Synthesising audio <span class="v">running &middot; <b>af_heart</b></span>
+    </div>
+    <div class="lin running"><div class="fill" style="width: 42%"></div></div>
+
+    <div class="spinners">
+      <span class="spinner s-sm"></span>
+      <span class="spinner s-md"></span>
+      <span class="spinner s-lg"></span>
+      <div
+        style="
+          margin-left: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          width: 240px;
+        "
+      >
+        <div class="skel" style="height: 12px; width: 88%"></div>
+        <div class="skel" style="height: 12px; width: 64%"></div>
+        <div class="skel" style="height: 12px; width: 76%"></div>
+      </div>
+    </div>
+  </body>
+</html>

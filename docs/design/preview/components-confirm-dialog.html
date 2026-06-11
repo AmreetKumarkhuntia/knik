@@ -1,0 +1,113 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Confirm dialog" subtitle="Danger-variant confirmation with icon + double action" viewport="700x320" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 0;
+        background: var(--bg-base);
+        box-sizing: border-box;
+        height: 320px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(7, 9, 13, 0.55);
+        backdrop-filter: blur(6px);
+      }
+      .dialog {
+        position: relative;
+        width: 420px;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.65);
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+      }
+      .ico {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.16);
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--fg-1);
+        letter-spacing: -0.012em;
+        margin: 0 0 6px;
+      }
+      .body {
+        font-size: 13.5px;
+        color: var(--fg-3);
+        line-height: 1.5;
+      }
+      .foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .btn {
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--fg-3);
+      }
+      .btn.danger {
+        background: #ef4444;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scrim"></div>
+    <div class="dialog">
+      <div class="row">
+        <div class="ico">
+          <span class="material-symbols-outlined" style="font-size: 20px"
+            >warning</span
+          >
+        </div>
+        <div>
+          <h3 class="title">Delete workflow</h3>
+          <p class="body">
+            Are you sure you want to delete &ldquo;Daily digest&rdquo;? This
+            action cannot be undone, and all 1,247 execution records will be
+            wiped.
+          </p>
+        </div>
+      </div>
+      <div class="foot">
+        <button class="btn ghost">Cancel</button>
+        <button class="btn danger">Delete</button>
+      </div>
+    </div>
+  </body>
+</html>

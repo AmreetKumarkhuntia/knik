@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- @dsCard group="Spacing" name="Motion / easing" subtitle="ease-out, in-out, spring, linear" viewport="700x220" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 24px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 150px 1fr 110px;
+        gap: 16px;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border-1);
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .name {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--fg-2);
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-4);
+        text-align: right;
+      }
+      .track {
+        height: 6px;
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        position: relative;
+        overflow: hidden;
+      }
+      .dot {
+        position: absolute;
+        top: -7px;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--aurora-300), var(--teal-500));
+        box-shadow: 0 0 14px -2px rgba(0, 217, 244, 0.6);
+        animation-duration: 1.6s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+      }
+      .a-out {
+        animation-name: travel;
+        animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .a-in-out {
+        animation-name: travel;
+        animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+      }
+      .a-spring {
+        animation-name: travel;
+        animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .a-linear {
+        animation-name: travel;
+        animation-timing-function: linear;
+      }
+      @keyframes travel {
+        from {
+          left: 0;
+        }
+        to {
+          left: calc(100% - 20px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <span class="name">ease-out</span>
+      <div class="track"><div class="dot a-out"></div></div>
+      <span class="meta">0.16, 1, 0.3, 1</span>
+    </div>
+    <div class="row">
+      <span class="name">ease-in-out</span>
+      <div class="track"><div class="dot a-in-out"></div></div>
+      <span class="meta">0.65, 0, 0.35, 1</span>
+    </div>
+    <div class="row">
+      <span class="name">spring</span>
+      <div class="track"><div class="dot a-spring"></div></div>
+      <span class="meta">overshoot</span>
+    </div>
+    <div class="row">
+      <span class="name">linear · dash</span>
+      <div class="track"><div class="dot a-linear"></div></div>
+      <span class="meta">edge anim</span>
+    </div>
+  </body>
+</html>

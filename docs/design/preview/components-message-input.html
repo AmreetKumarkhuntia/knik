@@ -1,0 +1,150 @@
+<!doctype html>
+<!-- @dsCard group="Components" name="Message input" subtitle="Glass composer with attach, mic, send" viewport="700x200" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../colors_and_type.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        width: 700px;
+        padding: 22px 28px;
+        background: var(--bg-surface);
+        box-sizing: border-box;
+      }
+      .input {
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid var(--border-2);
+        border-radius: 14px;
+        padding: 10px 12px 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .input:focus-within {
+        border-color: rgba(0, 217, 244, 0.35);
+        box-shadow: 0 0 0 3px rgba(0, 217, 244, 0.1);
+      }
+      textarea {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--fg-1);
+        font-family: var(--font-sans);
+        font-size: 14.5px;
+        resize: none;
+        width: 100%;
+        padding: 6px 0;
+        height: 28px;
+      }
+      textarea::placeholder {
+        color: var(--fg-4);
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--fg-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+      }
+      .icon-btn:hover {
+        background: var(--bg-surface-3);
+        color: var(--fg-1);
+      }
+      .icon-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .send {
+        margin-left: auto;
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        background: var(--aurora-400);
+        color: var(--on-primary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 6px 22px -6px rgba(0, 217, 244, 0.65),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+        border: none;
+        cursor: pointer;
+      }
+      .send svg {
+        width: 16px;
+        height: 16px;
+      }
+      .hint {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--fg-5);
+        margin-top: 8px;
+        padding-left: 4px;
+      }
+      .kbd {
+        background: var(--bg-surface-3);
+        border: 1px solid var(--border-2);
+        border-radius: 4px;
+        padding: 1px 5px;
+        color: var(--fg-3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="input">
+      <textarea placeholder="Type your message…  (Shift+Enter for new line)">
+Run the daily-digest workflow with depth 3</textarea
+      >
+      <div class="actions">
+        <button class="icon-btn" aria-label="attach">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M21.44 11.05l-9.19 9.19a6 6 0 11-8.48-8.48l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+            />
+          </svg>
+        </button>
+        <button class="icon-btn" aria-label="voice">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="9" y="2" width="6" height="12" rx="3" />
+            <path d="M19 10a7 7 0 01-14 0M12 17v4M8 21h8" />
+          </svg>
+        </button>
+        <button class="send" aria-label="send">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 11l18-8-8 18-2-8z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="hint">
+      <span class="kbd">⌘</span> <span class="kbd">K</span> focus ·
+      <span class="kbd">Enter</span> send ·
+      <span class="kbd">⇧ Enter</span> newline
+    </div>
+  </body>
+</html>
