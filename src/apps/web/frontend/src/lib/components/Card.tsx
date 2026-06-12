@@ -1,9 +1,9 @@
 import type { CardProps } from '$types/components'
 
 const variants = {
-  default: 'bg-surface/50',
-  bordered: 'bg-surface/50 border border-border',
-  elevated: 'bg-surface/50 border border-border shadow-2xl',
+  default: 'knik-card',
+  bordered: 'knik-card',
+  elevated: 'knik-card shadow-knik-2',
 }
 
 const paddings = {
@@ -25,8 +25,6 @@ export default function Card({
       className={`
         ${variants[variant]}
         ${paddings[padding]}
-        rounded-xl
-        backdrop-blur-3xl
         ${className}
       `}
     >

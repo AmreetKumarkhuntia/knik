@@ -38,19 +38,18 @@ export const CSS_VARS = {
 }
 
 export const CSS_CLASSES = {
-  input:
-    'w-full bg-surface border border-border rounded-lg px-4 py-2 text-text focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all',
+  input: 'knik-input w-full disabled:opacity-50 disabled:cursor-not-allowed',
 
-  controls: '!bg-surface !border-border !rounded-lg',
-  miniMap: '!bg-surface !border-border',
+  controls: '!bg-[var(--bg-surface-2)] !border-[var(--border-2)] !rounded-md',
+  miniMap: '!bg-[var(--bg-surface-2)] !border-[var(--border-2)]',
   draggingCursor: 'cursor-copy',
 }
 
 export const STYLE_CONFIG = {
   cardVariants: {
-    default: 'bg-surface border border-border rounded-lg shadow-sm',
-    elevated: 'bg-surface border border-border rounded-lg shadow-lg',
-    glass: 'glass border border-white/10 shadow-sm',
+    default: 'knik-card',
+    elevated: 'knik-card shadow-knik-2',
+    glass: 'knik-card--glass',
   },
 
   cardPadding: {
@@ -61,38 +60,38 @@ export const STYLE_CONFIG = {
 
   badgeTypes: {
     pro: {
-      bg: 'bg-primary',
-      text: 'text-white',
+      bg: 'bg-[var(--primary)]',
+      text: 'text-[var(--on-primary)]',
     },
     admin: {
-      bg: 'bg-error',
+      bg: 'bg-[var(--danger)]',
       text: 'text-white',
     },
     basic: {
-      bg: 'bg-surface',
-      text: 'text-text',
+      bg: 'bg-surface-3',
+      text: 'text-fg-2',
     },
   },
 
   trendColors: {
     positive: {
-      text: 'text-success',
-      background: 'bg-success/10',
+      text: 'text-[var(--success)]',
+      background: 'bg-[var(--success-bg)]',
     },
     steady: {
-      text: 'text-secondary',
-      background: 'bg-white/5',
+      text: 'text-fg-3',
+      background: 'bg-[var(--bg-surface-3)]',
     },
     negative: {
-      text: 'text-error',
-      background: 'bg-error/10',
+      text: 'text-[var(--danger)]',
+      background: 'bg-[var(--danger-bg)]',
     },
   },
 
   statusColors: {
     active: {
-      background: 'bg-success/10',
-      text: 'text-success',
+      background: 'bg-[var(--success-bg)]',
+      text: 'text-[var(--success)]',
     },
   },
 

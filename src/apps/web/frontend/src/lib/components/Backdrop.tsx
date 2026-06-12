@@ -18,7 +18,8 @@ export default function Backdrop({
 
   return (
     <div
-      className={`fixed inset-0 z-30 bg-black/${opacity} ${blurClasses[blur]} ${className}`}
+      className={`fixed inset-0 z-30 ${blurClasses[blur]} ${className}`}
+      style={{ backgroundColor: `rgba(7, 9, 13, ${opacity / 100})` }}
       onClick={onClick}
     />
   )

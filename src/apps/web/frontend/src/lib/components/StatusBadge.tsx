@@ -7,7 +7,7 @@ export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${config.bg} ${config.text} ${badgeSizes[size]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${badgeSizes[size]} ${config.bg} ${config.text}`}
     >
       {status === 'running' && (
         <span className="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full" />

@@ -11,8 +11,8 @@ export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) 
     code(props: CodeProps) {
       const match = /language-(\w+)/.exec(props.className || '')
       return !props.inline && match ? (
-        <div className="my-4 rounded-md overflow-hidden bg-code border border-border">
-          <div className="flex items-center px-4 py-2 bg-surface/50 border-b border-border text-xs text-foreground/50">
+        <div className="my-4 rounded-md overflow-hidden bg-[var(--bg-code)] border border-[var(--border-2)]">
+          <div className="flex items-center px-4 py-2 bg-surface-2 border-b border-[var(--border-2)] text-xs text-fg-4">
             {match[1]}
           </div>
           <SyntaxHighlighter
@@ -27,7 +27,7 @@ export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) 
         </div>
       ) : (
         <code
-          className="px-1.5 py-0.5 rounded-md bg-surfaceRaised text-foreground/90 font-mono text-sm"
+          className="px-1.5 py-0.5 rounded-md bg-surface-2 text-fg-2 font-mono text-sm"
           {...props}
         >
           {props.children}
@@ -61,18 +61,18 @@ export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) 
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-info hover:text-info/80 underline underline-offset-2"
+          className="text-[var(--info)] hover:opacity-80 underline underline-offset-2"
         >
           {children}
         </a>
       )
     },
     strong({ children }) {
-      return <strong className="font-bold text-foreground">{children}</strong>
+      return <strong className="font-bold text-fg-1">{children}</strong>
     },
     blockquote({ children }) {
       return (
-        <blockquote className="border-l-4 border-border pl-4 py-1 mb-4 my-2 text-foreground/70 italic">
+        <blockquote className="border-l-4 border-[var(--border-2)] pl-4 py-1 mb-4 my-2 text-fg-3 italic">
           {children}
         </blockquote>
       )
@@ -80,27 +80,25 @@ export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) 
     table({ children }) {
       return (
         <div className="overflow-x-auto mb-4">
-          <table className="min-w-full divide-y divide-border">{children}</table>
+          <table className="min-w-full divide-y divide-[var(--border-2)]">{children}</table>
         </div>
       )
     },
     th({ children }) {
-      return (
-        <th className="px-4 py-2 text-left text-sm font-semibold text-foreground/80">{children}</th>
-      )
+      return <th className="px-4 py-2 text-left text-sm font-semibold text-fg-2">{children}</th>
     },
     td({ children }) {
-      return <td className="px-4 py-2 text-sm border-t border-border">{children}</td>
+      return <td className="px-4 py-2 text-sm border-t border-[var(--border-2)]">{children}</td>
     },
   }
 
   return (
-    <div className="max-w-none text-foreground overflow-hidden">
+    <div className="max-w-none text-fg-2 overflow-hidden">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {content}
       </ReactMarkdown>
       {isStreaming && (
-        <span className="inline-block w-0.5 h-5 bg-foreground/80 ml-1 mt-1 animate-pulse align-middle" />
+        <span className="inline-block w-0.5 h-5 bg-[var(--primary)] ml-1 mt-1 animate-pulse align-middle" />
       )}
     </div>
   )

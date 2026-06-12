@@ -8,10 +8,11 @@ export default function LinkButton({
   active = false,
   className = '',
 }: LinkButtonProps) {
-  const baseClasses = 'w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-all'
+  const baseClasses =
+    'w-full text-left px-4 py-2 rounded-md flex items-center gap-3 knik-interactive'
 
-  const activeClasses = 'text-foreground bg-surfaceRaised'
-  const inactiveClasses = 'text-foreground/70 hover:text-foreground hover:bg-surface'
+  const activeClasses = 'bg-[var(--primary-soft)] text-[var(--primary)]'
+  const inactiveClasses = 'text-fg-3 hover:bg-surface-3 hover:text-fg-1'
 
   return (
     <button

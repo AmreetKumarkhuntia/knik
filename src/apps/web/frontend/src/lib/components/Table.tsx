@@ -24,38 +24,38 @@ export default function Table<T>({
   }
 
   const tableWrapperClass = maxHeight ? 'overflow-x-auto overflow-y-auto' : 'overflow-x-auto'
-  const containerClass = `${glassContainer ? 'glass border border-border rounded-xl overflow-hidden' : ''}`
+  const containerClass = `${glassContainer ? 'knik-glass rounded-lg overflow-hidden' : ''}`
   const theadClass = stickyHeader
-    ? 'sticky top-0 bg-surfaceRaised/90 backdrop-blur-sm z-10'
-    : 'border-b border-border text-left'
+    ? 'sticky top-0 bg-surface-2/90 backdrop-blur-sm z-10'
+    : 'border-b border-[var(--border-2)] text-left'
 
   return (
     <div className={`${containerClass} ${className}`}>
       <div className={tableWrapperClass} style={maxHeight ? { maxHeight } : undefined}>
         <table className="w-full text-left border-collapse">
           <thead className={theadClass}>
-            <tr className="bg-surface">
+            <tr className="bg-surface-2">
               {columns.map((column, idx) => (
                 <th
                   key={idx}
-                  className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider"
+                  className="px-6 py-4 text-xs font-medium text-fg-4 uppercase tracking-wider"
                 >
                   {column.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-[var(--border-1)]">
             {data.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
-                className="hover:bg-surface transition-colors"
+                className="hover:bg-surface-3 transition-colors"
                 onClick={() => onRowClick?.(row)}
               >
                 {columns.map((column, colIdx) => {
                   const value = row[column.key as keyof T] as unknown
                   return (
-                    <td key={colIdx} className="px-6 py-4 text-sm text-foreground">
+                    <td key={colIdx} className="px-6 py-4 text-sm text-fg-2">
                       {column.render ? column.render(value, row) : String(value ?? '-')}
                     </td>
                   )

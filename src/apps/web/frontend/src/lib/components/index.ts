@@ -28,3 +28,41 @@ export { default as Tabs } from './Tabs'
 export { default as ToggleSwitch } from './ToggleSwitch'
 export { default as UserProfile } from './UserProfile'
 export * from './icons'
+
+export { default as Select } from './Select'
+export { default as Checkbox } from './Checkbox'
+export { default as Radio } from './Radio'
+export { default as Slider } from './Slider'
+export { default as FileUpload } from './FileUpload'
+
+// Phase 1 Foundations
+export { default as Badge } from './Badge'
+export { default as Chip } from './Chip'
+export { default as Tooltip } from './Tooltip'
+export { default as Popover } from './Popover'
+export { default as ProgressBar } from './ProgressBar'
+export { default as Banner } from './Banner'
+export { default as Accordion } from './Accordion'
+export { default as VerticalTabs } from './VerticalTabs'
+
+// Phase 3 Chat & Content
+export { default as AgentThinking } from './AgentThinking'
+export { default as ChatBubble } from './ChatBubble'
+export { default as CodeBlock } from './CodeBlock'
+export { default as JsonViewer } from './JsonViewer'
+export { default as MicRecorder } from './MicRecorder'
+
+// Phase 4 Data Viz
+export { default as StatStrip } from './StatStrip'
+export { default as TokenMeter } from './TokenMeter'
+export { default as AreaChart } from './charts/AreaChart'
+export { default as BarChart } from './charts/BarChart'
+export { default as DonutChart } from './charts/DonutChart'
+export { default as SparklineChart } from './charts/SparklineChart'
+
+// Phase 5 Product Specific
+export { default as CommandPalette } from './CommandPalette'
+export { default as McpToolsPanel } from './McpToolsPanel'
+export { default as NotificationFeed } from './NotificationFeed'
+export { default as TTSPlayer } from './TTSPlayer'
+export { default as VoicePicker } from './VoicePicker'

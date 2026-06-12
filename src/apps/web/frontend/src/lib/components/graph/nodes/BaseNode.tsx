@@ -40,11 +40,11 @@ function NodeHandle({
 function getStatusOverlay(status?: string) {
   switch (status) {
     case 'success':
-      return 'ring-1 ring-success/40 border-success/60'
+      return 'ring-1 ring-[rgba(16,185,129,0.4)] border-[rgba(16,185,129,0.6)]'
     case 'failed':
-      return 'ring-1 ring-error/40 border-error/60'
+      return 'ring-1 ring-[rgba(239,68,68,0.4)] border-[rgba(239,68,68,0.6)]'
     case 'running':
-      return 'animate-pulse border-info/60'
+      return 'animate-pulse border-[rgba(59,130,246,0.6)]'
     case 'pending':
       return 'opacity-60'
     default:
@@ -63,7 +63,7 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
   return (
     <div className="relative">
       <div
-        className={`flex items-center gap-2 rounded-full border ${colors.border} bg-surfaceRaised ${isExecution ? 'px-3 py-2' : 'px-5 py-3'} ${neonClass} ${statusOverlay}`}
+        className={`flex items-center gap-2 rounded-full border ${colors.border} bg-surface-2 ${isExecution ? 'px-3 py-2' : 'px-5 py-3'} ${neonClass} ${statusOverlay}`}
       >
         {!isStart && (
           <div className={`h-1.5 w-1.5 rounded-full ${colors.iconBg.replace('/10', '/60')}`} />
@@ -76,14 +76,14 @@ function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeDa
           </span>
         </div>
         <div className={`flex flex-col ${!isStart ? 'text-right' : ''}`}>
-          <h3 className="text-xs font-semibold text-foreground">{data.label || metadata.label}</h3>
+          <h3 className="text-xs font-semibold text-fg-1">{data.label || metadata.label}</h3>
           {!isExecution && (
             <p className={`text-[10px] ${colors.iconText} uppercase tracking-wider`}>
               {metadata.typeLabel}
             </p>
           )}
           {isExecution && data.duration !== undefined && (
-            <span className="text-[9px] text-secondary">
+            <span className="text-[9px] text-fg-3">
               {data.duration < 1000
                 ? `${data.duration}ms`
                 : `${(data.duration / 1000).toFixed(2)}s`}
@@ -114,9 +114,9 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
   return (
     <div className="relative">
       <div
-        className={`rounded-xl border ${colors.border} bg-surfaceRaised overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
+        className={`rounded-xl border ${colors.border} bg-surface-2 overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
       >
-        <div className="h-0.5 w-full bg-primary/60" />
+        <div className="h-0.5 w-full bg-[var(--primary)]" />
 
         <div className={`flex items-center gap-2 px-3 ${isExecution ? 'py-2' : 'pt-3 pb-2'}`}>
           <span
@@ -125,9 +125,7 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
             {icon}
           </span>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xs font-semibold text-foreground truncate">
-              {data.label || label}
-            </h3>
+            <h3 className="text-xs font-semibold text-fg-1 truncate">{data.label || label}</h3>
           </div>
           <span
             className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${colors.iconBg} ${colors.iconText} border ${colors.border}`}
@@ -140,29 +138,24 @@ function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNode
           <div className="px-3 pb-3">
             <NodeContent renderer={contentRenderer} data={data} />
             <div className="flex justify-between mt-2">
-              <span className="text-[9px] uppercase tracking-widest text-muted">INPUTS</span>
-              <span className="text-[9px] uppercase tracking-widest text-muted">OUTPUTS</span>
+              <span className="text-[9px] uppercase tracking-widest text-fg-4">INPUTS</span>
+              <span className="text-[9px] uppercase tracking-widest text-fg-4">OUTPUTS</span>
             </div>
           </div>
         )}
 
         {isExecution && data.duration !== undefined && (
-          <div className="px-3 pb-2 text-[10px] text-secondary">
+          <div className="px-3 pb-2 text-[10px] text-fg-3">
             {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
           </div>
         )}
       </div>
 
       {handles.inputs.map((handle, i) => (
-        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-surfaceRaised" />
+        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-surface-2" />
       ))}
       {handles.outputs.map((handle, i) => (
-        <NodeHandle
-          key={`out-${i}`}
-          config={handle}
-          type="source"
-          defaultColor="bg-surfaceRaised"
-        />
+        <NodeHandle key={`out-${i}`} config={handle} type="source" defaultColor="bg-surface-2" />
       ))}
     </div>
   )
@@ -177,7 +170,7 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
   return (
     <div className="relative">
       <div
-        className={`rounded-xl border ${colors.border} bg-surfaceRaised px-3 ${isExecution ? 'py-2' : 'px-4 py-3'} min-w-[160px] ${statusOverlay}`}
+        className={`rounded-xl border ${colors.border} bg-surface-2 px-3 ${isExecution ? 'py-2' : 'px-4 py-3'} min-w-[160px] ${statusOverlay}`}
       >
         {handles.inputs.map((handle, i) => (
           <NodeHandle
@@ -197,13 +190,9 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
             </span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-semibold text-foreground truncate">
-              {data.label || label}
-            </span>
+            <span className="text-xs font-semibold text-fg-1 truncate">{data.label || label}</span>
             {!isExecution && (
-              <span className="text-[10px] text-secondary uppercase tracking-wide">
-                {typeLabel}
-              </span>
+              <span className="text-[10px] text-fg-3 uppercase tracking-wide">{typeLabel}</span>
             )}
           </div>
         </div>
@@ -211,7 +200,7 @@ function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNod
         {!isExecution && <NodeContent renderer={contentRenderer} data={data} />}
 
         {isExecution && data.duration !== undefined && (
-          <div className="text-[10px] text-secondary mt-1">
+          <div className="text-[10px] text-fg-3 mt-1">
             {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
           </div>
         )}

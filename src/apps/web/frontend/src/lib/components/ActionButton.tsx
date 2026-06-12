@@ -21,13 +21,12 @@ export default function ActionButton({
       disabled={disabled || loading}
       title={title || (isIconOnly ? label : undefined)}
       className={`
-        inline-flex items-center justify-center rounded-lg border font-medium
-        transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+        knik-btn knik-focus
         ${buttonVariants[variant]} ${sizeVariants[size]} ${className}
       `}
     >
       {loading ? (
-        <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+        <span className="knik-spinner knik-spinner--sm" />
       ) : (
         icon && <span className={isIconOnly ? '' : ''}>{icon}</span>
       )}

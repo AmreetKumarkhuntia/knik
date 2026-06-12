@@ -2,7 +2,7 @@
 export type ThemeMode = 'dark' | 'light'
 
 /** Named accent theme. */
-export type ThemeName = 'purple' | 'blue' | 'teal'
+export type ThemeName = 'purple' | 'blue' | 'teal' | 'cyan'
 
 /** Complete set of color tokens for a theme. */
 export interface ThemeColors {

@@ -12,13 +12,13 @@ export default function PageHeader({
 
   return (
     <header
-      className={`h-16 border-b border-border glass flex items-center justify-between px-8 ${stickyClasses}`}
+      className={`h-16 border-b border-[var(--border-2)] knik-glass flex items-center justify-between px-8 ${stickyClasses}`}
     >
       <div className="flex items-center gap-2">
         {showBackButton && (
           <button
             onClick={onBackClick}
-            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-surface-3 transition-colors"
             title="Back"
           >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -28,17 +28,11 @@ export default function PageHeader({
           const isLast = index === breadcrumbs.length - 1
           return (
             <div key={index} className="flex items-center gap-2">
-              <span
-                className={`font-medium ${
-                  isLast ? 'text-foreground font-semibold' : 'text-secondary'
-                }`}
-              >
+              <span className={`font-medium ${isLast ? 'text-fg-1 font-semibold' : 'text-fg-3'}`}>
                 {crumb}
               </span>
               {!isLast && (
-                <span className="material-symbols-outlined text-secondary text-sm">
-                  chevron_right
-                </span>
+                <span className="material-symbols-outlined text-fg-4 text-sm">chevron_right</span>
               )}
             </div>
           )

@@ -1,90 +1,21 @@
+/* =================================================================
+   KNIK — Main Stylesheet
+   Imports design tokens and primitives, then Tailwind layers,
+   then app-specific utility classes.
+   ================================================================= */
+
+/* Design system foundation — tokens + primitives */
+@import './styles/tokens.css';
+@import './styles/primitives.css';
+
+/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* Dark mode defaults (applied before JS runs) */
-  --color-background: #0a0a0a;
-  --color-surface: #171717;
-  --color-surface-glass: rgba(23, 23, 23, 0.7);
-  --color-surface-raised: #1f1f1f;
-  --color-canvas: #0d111a;
-  --color-code: #1e1e1e;
-
-  --color-text: #fafafa;
-  --color-text-secondary: #a3a3a3;
-  --color-text-muted: #737373;
-  --color-text-subtle: #d4d4d4;
-  --color-text-inverse: #0a0a0a;
-
-  --color-primary: #8b5cf6;
-  --color-primary-hover: #a78bfa;
-  --color-accent: #00d9f4;
-  --color-accent-hover: #00e5ff;
-  --color-accent-teal: #14b8a6;
-  --color-accent-teal-hover: #0d9488;
-
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-border-light: rgba(255, 255, 255, 0.2);
-
-  --color-success: #10b981;
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
-  --color-info: #3b82f6;
-
-  --color-shadow: rgba(0, 0, 0, 0.25);
-  --color-shadow-subtle: rgba(0, 0, 0, 0.15);
-
-  --color-primary-rgb: 139, 92, 246;
-  --color-accent-purple: #8b5cf6;
-  --color-accent-purple-hover: #a78bfa;
-  --color-accent-purple-rgb: 139, 92, 246;
-  --color-background-canvas: #0d111a;
-  --color-background-dark: #0a0c14;
-  --color-neon-green: #22c55e;
-  --color-neon-red: #ef4444;
-}
-
-[data-theme='light'] {
-  --color-background: #ffffff;
-  --color-surface: #f5f5f5;
-  --color-surface-glass: rgba(255, 255, 255, 0.7);
-  --color-surface-raised: #e5e5e5;
-  --color-canvas: #efefef;
-  --color-code: #f0f0f0;
-
-  --color-text: #171717;
-  --color-text-secondary: #737373;
-  --color-text-muted: #a3a3a3;
-  --color-text-subtle: #404040;
-  --color-text-inverse: #fafafa;
-
-  --color-primary: #8b5cf6;
-  --color-primary-hover: #a78bfa;
-  --color-accent: #00d9f4;
-  --color-accent-hover: #00e5ff;
-
-  --color-border: rgba(0, 0, 0, 0.1);
-  --color-border-light: rgba(0, 0, 0, 0.2);
-
-  --color-success: #10b981;
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
-  --color-info: #3b82f6;
-
-  --color-shadow: rgba(0, 0, 0, 0.12);
-  --color-shadow-subtle: rgba(0, 0, 0, 0.08);
-}
-
+/* -----------------------------------------------------------------
+   Base resets
+   ----------------------------------------------------------------- */
 html,
 body,
 #root {
@@ -93,70 +24,63 @@ body,
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background: var(--bg-base);
+  color: var(--fg-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-base);
+  font-feature-settings: 'ss01', 'cv11', 'calt';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
 }
 
-/* Hide scrollbar but keep functionality */
+/* -----------------------------------------------------------------
+   Scrollbar hide utility
+   ----------------------------------------------------------------- */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
 }
 
-/* Glass Effects */
+/* -----------------------------------------------------------------
+   Legacy glass effects (kept for backward compat)
+   ----------------------------------------------------------------- */
 .glass {
-  background: rgba(127, 13, 242, 0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: 1px solid var(--border-2);
 }
 
 .glass-primary {
-  background: rgba(127, 13, 242, 0.2);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(127, 13, 242, 0.4);
+  background: var(--primary-soft-2);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: 1px solid rgba(0, 217, 244, 0.3);
 }
 
 .bg-gradient-mesh {
-  background-color: #0d021f;
+  background-color: var(--bg-base);
   background-image:
-    radial-gradient(at 0% 0%, rgba(127, 13, 242, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(0, 217, 244, 0.12) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.1) 0px, transparent 50%);
 }
 
-/* Material Symbols Outlined */
-.material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-  font-size: 24px;
-}
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-}
-
-/* Workflow Builder Styles */
+/* -----------------------------------------------------------------
+   Workflow grid
+   ----------------------------------------------------------------- */
 .workflow-grid {
   background-color: transparent;
   background-size: 40px 40px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
 }
 
 [data-theme='light'] .workflow-grid {
@@ -165,6 +89,9 @@ body,
     linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
 }
 
+/* -----------------------------------------------------------------
+   Neon border effects (workflow nodes)
+   ----------------------------------------------------------------- */
 .neon-border-green {
   box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
   border: 1px solid rgba(34, 197, 94, 0.8);
@@ -180,23 +107,13 @@ body,
   border: 1px solid rgba(139, 92, 246, 0.8);
 }
 
-.gradient-sidebar {
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%);
-}
-
-.gradient-text {
-  background: linear-gradient(90deg, #8b5cf6, #14b8a6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-primary-teal {
-  background: linear-gradient(90deg, #8b5cf6, #14b8a6);
+.neon-border-cyan {
+  box-shadow: 0 0 10px rgba(0, 217, 244, 0.5);
+  border: 1px solid rgba(0, 217, 244, 0.8);
 }
 
 .gradient-node-border {
-  background: linear-gradient(135deg, var(--color-accent-purple), var(--color-accent-teal));
+  background: linear-gradient(135deg, var(--aurora-400), var(--teal-500));
 }
 
 .node-glass {
@@ -205,7 +122,9 @@ body,
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Connection Line Animation */
+/* -----------------------------------------------------------------
+   Connection / edge animation
+   ----------------------------------------------------------------- */
 @keyframes dash {
   to {
     stroke-dashoffset: -20;
@@ -216,7 +135,9 @@ body,
   animation: dash 1s linear infinite;
 }
 
-/* Chat scrolling improvements */
+/* -----------------------------------------------------------------
+   Chat layout
+   ----------------------------------------------------------------- */
 .chat-container {
   display: flex;
   flex-direction: column;
@@ -231,12 +152,15 @@ body,
 }
 
 .message-transition {
-  transition: all 0.3s ease;
+  transition: all var(--dur-base) var(--ease-out);
 }
 
-/* Semantic theme utility classes — defined outside @layer to bypass Tailwind purge.
-   Opacity variants use color-mix() since CSS variable colors can't use Tailwind's
-   opacity modifier system. */
+/* =================================================================
+   Semantic utility classes
+   Defined outside @layer to bypass Tailwind purge.
+   Opacity variants use color-mix() since CSS variables can't use
+   Tailwind's opacity modifier syntax.
+   ================================================================= */
 
 /* -- text color -- */
 .text-foreground {
@@ -258,7 +182,6 @@ body,
   color: color-mix(in srgb, var(--color-text) 50%, transparent);
 }
 
-/* aliases */
 .text-text {
   color: var(--color-text);
 }
@@ -290,7 +213,6 @@ body,
   color: var(--color-text-inverse);
 }
 
-/* brand / semantic */
 .text-primary {
   color: var(--color-primary);
 }
@@ -368,7 +290,6 @@ body,
   background-color: var(--color-border);
 }
 
-/* brand */
 .bg-primary {
   background-color: var(--color-primary);
 }
@@ -385,7 +306,6 @@ body,
   background-color: var(--color-accent);
 }
 
-/* semantic */
 .bg-success {
   background-color: var(--color-success);
 }
@@ -411,7 +331,6 @@ body,
   background-color: color-mix(in srgb, var(--color-info) 20%, transparent);
 }
 
-/* foreground opacity fills */
 .bg-foreground\/10 {
   background-color: color-mix(in srgb, var(--color-text) 10%, transparent);
 }
@@ -498,7 +417,6 @@ body,
   border-color: color-mix(in srgb, var(--color-info) 60%, transparent);
 }
 
-/* directional borders */
 .border-t-foreground {
   border-top-color: var(--color-text);
 }

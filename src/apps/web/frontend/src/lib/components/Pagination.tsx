@@ -58,17 +58,17 @@ export default function Pagination({
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 py-4 px-6 border-t border-border">
-      <div className="text-sm text-secondary">
-        Page <span className="font-semibold text-foreground">{currentPage}</span> of{' '}
-        <span className="font-semibold text-foreground">{totalPages}</span>
+    <div className="flex items-center justify-between gap-4 py-4 px-6 border-t border-[var(--border-2)]">
+      <div className="text-sm text-fg-3">
+        Page <span className="font-semibold text-fg-1">{currentPage}</span> of{' '}
+        <span className="font-semibold text-fg-1">{totalPages}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <button
           onClick={handlePrevious}
           disabled={disabled || currentPage === 1}
-          className="px-3 py-1.5 text-sm font-medium rounded-lg border border-border bg-surfaceRaised text-subtle hover:bg-surface hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           Previous
         </button>
@@ -77,7 +77,7 @@ export default function Pagination({
           {getPageNumbers().map((page, idx) => {
             if (page === '...') {
               return (
-                <span key={`ellipsis-${idx}`} className="px-3 py-1.5 text-muted">
+                <span key={`ellipsis-${idx}`} className="px-3 py-1.5 text-fg-4">
                   ...
                 </span>
               )
@@ -91,10 +91,10 @@ export default function Pagination({
                 key={pageNum}
                 onClick={() => handlePageClick(pageNum)}
                 disabled={disabled}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
                   isActive
-                    ? 'border-primary bg-primary text-foreground'
-                    : 'border-border bg-surfaceRaised text-subtle hover:bg-surface hover:text-foreground'
+                    ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
+                    : 'border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1'
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {pageNum}
@@ -106,7 +106,7 @@ export default function Pagination({
         <button
           onClick={handleNext}
           disabled={disabled || currentPage === totalPages}
-          className="px-3 py-1.5 text-sm font-medium rounded-lg border border-border bg-surfaceRaised text-subtle hover:bg-surface hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           Next
         </button>

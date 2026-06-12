@@ -14,12 +14,12 @@ export default function UserProfile({
   const getBadgeColor = () => {
     switch (badgeType) {
       case BADGE.types.pro:
-        return STYLE_CONFIG.badgeTypes.pro.bg
+        return `${STYLE_CONFIG.badgeTypes.pro.bg} ${STYLE_CONFIG.badgeTypes.pro.text}`
       case BADGE.types.admin:
-        return STYLE_CONFIG.badgeTypes.admin.bg
+        return `${STYLE_CONFIG.badgeTypes.admin.bg} ${STYLE_CONFIG.badgeTypes.admin.text}`
       case BADGE.types.basic:
       default:
-        return STYLE_CONFIG.badgeTypes.basic.bg
+        return `${STYLE_CONFIG.badgeTypes.basic.bg} ${STYLE_CONFIG.badgeTypes.basic.text}`
     }
   }
 
@@ -39,7 +39,7 @@ export default function UserProfile({
   return (
     <div className="flex items-center gap-4">
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center text-foreground font-semibold ${!displayOnly ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-fg-1 font-semibold ${!displayOnly ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
         style={{ backgroundColor: avatarColor }}
         aria-label={ACCOUNT.profileLabel(name)}
       >
@@ -48,13 +48,13 @@ export default function UserProfile({
 
       {account && (
         <div className="flex flex-col">
-          <span className="text-foreground font-medium text-sm">{name}</span>
-          <span className="text-secondary text-xs">{account}</span>
+          <span className="text-fg-1 font-medium text-sm">{name}</span>
+          <span className="text-fg-3 text-xs">{account}</span>
         </div>
       )}
 
       {showBadge && (
-        <span className={`px-2 py-0.5 rounded text-xs font-bold text-inverse ${getBadgeColor()}`}>
+        <span className={`px-2 py-0.5 rounded text-xs font-bold ${getBadgeColor()}`}>
           {getBadgeText()}
         </span>
       )}

@@ -47,15 +47,12 @@ export default function Modal({
         animate={animationEnabled ? { opacity: 1, scale: 1 } : { opacity: 1, scale: 1 }}
         exit={animationEnabled ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
         transition={animationEnabled ? { type: 'spring', stiffness: 300, damping: 30 } : {}}
-        className={`relative bg-surfaceGlass backdrop-blur-xl rounded-2xl border border-borderLight shadow-2xl ${sizeClasses[size]} w-full mx-4 pointer-events-auto ${className}`}
-        style={{
-          boxShadow: '0 25px 50px -12px var(--color-shadow)',
-          zIndex: 130,
-        }}
+        className={`relative knik-glass rounded-xl shadow-knik-3 ${sizeClasses[size]} w-full mx-4 pointer-events-auto ${className}`}
+        style={{ zIndex: 130 }}
       >
         {title && (
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <div className="px-6 py-4 border-b border-[var(--border-2)] flex items-center justify-between">
+            <h2 className="text-xl font-bold text-fg-1">{title}</h2>
           </div>
         )}
         <div className="p-6">{children}</div>

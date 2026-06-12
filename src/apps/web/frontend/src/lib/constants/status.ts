@@ -13,26 +13,26 @@ export const executionStatusConfig: Record<
   }
 > = {
   pending: {
-    bg: 'bg-warning/20',
-    text: 'text-warning',
+    bg: 'bg-[var(--warning-bg)]',
+    text: 'text-[var(--warning)]',
     label: 'Pending',
     hex: EDGE_STATUS_COLORS.default,
   },
   running: {
-    bg: 'bg-info/20',
-    text: 'text-info',
+    bg: 'bg-[var(--info-bg)]',
+    text: 'text-[var(--info)]',
     label: 'Running',
     hex: EDGE_STATUS_COLORS.running,
   },
   success: {
-    bg: 'bg-success/20',
-    text: 'text-success',
+    bg: 'bg-[var(--success-bg)]',
+    text: 'text-[var(--success)]',
     label: 'Success',
     hex: EDGE_STATUS_COLORS.success,
   },
   failed: {
-    bg: 'bg-error/20',
-    text: 'text-error',
+    bg: 'bg-[var(--danger-bg)]',
+    text: 'text-[var(--danger)]',
     label: 'Failed',
     hex: EDGE_STATUS_COLORS.failed,
   },

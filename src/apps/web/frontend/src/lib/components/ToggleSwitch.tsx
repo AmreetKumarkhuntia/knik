@@ -17,8 +17,16 @@ export default function ToggleSwitch({
         disabled={disabled}
         className="sr-only peer"
       />
-      <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-text peer-checked:after:bg-text peer-checked:after:rounded-full peer-checked:after:h-5 peer-checked:after:w-5 peer-checked:after:transition-all peer-checked:bg-success disabled:opacity-50 disabled:cursor-not-allowed" />
-      {label && <span className="ml-3 text-sm text-textSecondary">{label}</span>}
+      <div
+        className="relative w-10 h-[22px] rounded-full bg-[var(--bg-surface-3)] transition-colors duration-fast
+          peer-checked:bg-[var(--aurora-400)]
+          after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-[18px] after:w-[18px]
+          after:rounded-full after:bg-white after:transition-all after:duration-fast
+          peer-checked:after:translate-x-[18px]
+          peer-focus-visible:ring-[3px] peer-focus-visible:ring-[rgba(0,217,244,0.18)]
+          peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+      />
+      {label && <span className="ml-3 text-sm text-fg-3">{label}</span>}
     </label>
   )
 }
