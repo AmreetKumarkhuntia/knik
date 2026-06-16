@@ -100,6 +100,11 @@ export const themePresets: Record<string, ThemeColors> = {
     primary: '#00d9f4',
     primaryHover: '#34d3ee',
   },
+  amber: {
+    ...darkThemeColors,
+    primary: '#f59e0b',
+    primaryHover: '#fbbf24',
+  },
 }
 
 export const lightThemePresets: Record<string, ThemeColors> = {
@@ -123,7 +128,84 @@ export const lightThemePresets: Record<string, ThemeColors> = {
     primary: '#00b8d4',
     primaryHover: '#008faa',
   },
+  amber: {
+    ...lightThemeColors,
+    primary: '#d97706',
+    primaryHover: '#f59e0b',
+  },
 }
+
+/**
+ * Accent CSS-variable sets driven onto the document root by ThemeProvider.
+ * Mirrors the redesign prototype's ACCENTS map: --acc / --acc-text / --acc-soft
+ * / --acc-border / --acc-glow / --acc-blob power every accent-styled surface.
+ */
+export interface AccentVars {
+  acc: string
+  text: string
+  soft: string
+  border: string
+  glow: string
+  blob: string
+}
+
+export const ACCENT_VARS: Record<string, AccentVars> = {
+  cyan: {
+    acc: '#00d9f4',
+    text: '#34d3ee',
+    soft: 'rgba(0, 217, 244, 0.12)',
+    border: 'rgba(0, 217, 244, 0.42)',
+    glow: 'rgba(0, 217, 244, 0.55)',
+    blob: 'rgba(0, 217, 244, 0.16)',
+  },
+  teal: {
+    acc: '#14b8a6',
+    text: '#2dd4bf',
+    soft: 'rgba(20, 184, 166, 0.13)',
+    border: 'rgba(20, 184, 166, 0.42)',
+    glow: 'rgba(20, 184, 166, 0.5)',
+    blob: 'rgba(20, 184, 166, 0.16)',
+  },
+  purple: {
+    acc: '#8b5cf6',
+    text: '#a78bfa',
+    soft: 'rgba(139, 92, 246, 0.14)',
+    border: 'rgba(139, 92, 246, 0.42)',
+    glow: 'rgba(139, 92, 246, 0.5)',
+    blob: 'rgba(139, 92, 246, 0.16)',
+  },
+  blue: {
+    acc: '#3b82f6',
+    text: '#60a5fa',
+    soft: 'rgba(59, 130, 246, 0.13)',
+    border: 'rgba(59, 130, 246, 0.42)',
+    glow: 'rgba(59, 130, 246, 0.5)',
+    blob: 'rgba(59, 130, 246, 0.16)',
+  },
+  amber: {
+    acc: '#f59e0b',
+    text: '#fbbf24',
+    soft: 'rgba(245, 158, 11, 0.14)',
+    border: 'rgba(245, 158, 11, 0.42)',
+    glow: 'rgba(245, 158, 11, 0.5)',
+    blob: 'rgba(245, 158, 11, 0.16)',
+  },
+}
+
+/** Corner-radius presets → --r-btn / --r-card (mirrors prototype RADII). */
+export const RADIUS_PRESETS = {
+  sharp: { btn: '4px', card: '7px' },
+  default: { btn: '8px', card: '12px' },
+  round: { btn: '12px', card: '18px' },
+} as const
+
+/** Layout density → --pad-card (mirrors prototype density tweak). */
+export const DENSITY_PRESETS = {
+  comfortable: { padCard: '18px' },
+  compact: { padCard: '13px' },
+} as const
 
 export const DEFAULT_THEME = 'cyan'
 export const DEFAULT_MODE = 'dark' as const
+export const DEFAULT_DENSITY = 'comfortable' as const
+export const DEFAULT_RADIUS = 'default' as const

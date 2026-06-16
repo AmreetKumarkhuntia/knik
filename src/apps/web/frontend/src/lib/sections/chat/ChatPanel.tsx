@@ -1,17 +1,45 @@
+import { motion } from 'framer-motion'
 import { MarkdownMessage } from '$components/MarkdownMessage'
 import LoadingSpinner from '$components/LoadingSpinner'
-import Card from '$components/Card'
-import { motion } from 'framer-motion'
-import { ContentCopy, ThumbUp, Refresh } from '@mui/icons-material'
+import KnikGlyph from '$components/KnikGlyph'
+import Avatar from '$components/Avatar'
+import ActionIcon from '$components/ActionIcon'
+import AgentThinking from '$components/AgentThinking'
+import MS from '$components/MS'
 import CompactionDivider from './CompactionDivider'
-import type { ChatPanelProps } from '$types/sections/chat'
+import { DEMO_ACCOUNT } from '$lib/constants'
+import type { AgentThinkingStep } from '$components/AgentThinking'
+import type { ChatPanelProps, Message } from '$types/sections/chat'
+
+/** Assistant glyph tile avatar. */
+function AssistantAvatar() {
+  return (
+    <div
+      className="flex items-center justify-center flex-shrink-0"
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: 9,
+        background: 'linear-gradient(135deg, var(--acc-soft), rgba(20,184,166,0.22))',
+        border: '1px solid var(--acc-border, rgba(0,217,244,0.4))',
+      }}
+    >
+      <KnikGlyph size={16} glow={false} />
+    </div>
+  )
+}
+
+/** Read reasoning steps from message metadata, if present. */
+function reasoningSteps(msg: Message): AgentThinkingStep[] | null {
+  const r = msg.metadata?.reasoning
+  if (Array.isArray(r) && r.length > 0) return r as AgentThinkingStep[]
+  return null
+}
 
 export default function ChatPanel({ messages, isLoading, summaryMessageId }: ChatPanelProps) {
   const handleCopy = (content: string) => {
     void navigator.clipboard.writeText(content)
   }
-
-  const handleRegenerate = () => {}
 
   let compactionDividerIndex = -1
   let summaryContent: string | undefined
@@ -27,105 +55,111 @@ export default function ChatPanel({ messages, isLoading, summaryMessageId }: Cha
   }
 
   return (
-    <div className="min-h-full space-y-4">
-      {messages.length === 0
-        ? null
-        : messages.map((msg, idx) => {
-            const isLastMessage = idx === messages.length - 1
-            const isStreaming = isLastMessage && isLoading && msg.role === 'assistant'
+    <div className="min-h-full" style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+      {messages.map((msg, idx) => {
+        const isUser = msg.role === 'user'
+        const isLastMessage = idx === messages.length - 1
+        const isStreaming = isLastMessage && !!isLoading && msg.role === 'assistant'
+        const steps = !isUser ? reasoningSteps(msg) : null
+        const modelTag = typeof msg.metadata?.model === 'string' ? msg.metadata.model : undefined
 
-            return (
-              <div key={idx}>
-                <motion.div
-                  initial={{ opacity: 0, x: msg.role === 'user' ? 20 : -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 25,
+        return (
+          <div key={idx}>
+            <motion.div
+              initial={{ opacity: 0, x: isUser ? 12 : -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="flex"
+              style={{ gap: 13, flexDirection: isUser ? 'row-reverse' : 'row' }}
+            >
+              {isUser ? <Avatar initials={DEMO_ACCOUNT.initials} size={30} /> : <AssistantAvatar />}
+
+              <div
+                style={{
+                  maxWidth: isUser ? '78%' : '100%',
+                  flex: isUser ? 'none' : 1,
+                  minWidth: 0,
+                }}
+              >
+                {!isUser && (
+                  <div className="flex items-center" style={{ gap: 8, marginBottom: 7 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg-1)' }}>
+                      Knik AI
+                    </span>
+                    {modelTag && (
+                      <span
+                        className="font-mono"
+                        style={{
+                          fontSize: 10.5,
+                          color: 'var(--fg-4)',
+                          background: 'var(--bg-surface)',
+                          border: '1px solid var(--border-1)',
+                          padding: '1px 6px',
+                          borderRadius: 5,
+                        }}
+                      >
+                        {modelTag}
+                      </span>
+                    )}
+                    {msg.timestamp && (
+                      <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--fg-5)' }}>
+                        {msg.timestamp}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {!isUser && steps && !isStreaming && (
+                  <div style={{ marginBottom: 12 }}>
+                    <AgentThinking steps={steps} />
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    fontSize: 14.5,
+                    lineHeight: 1.6,
+                    color: isUser ? 'var(--fg-1)' : 'var(--fg-2)',
+                    background: isUser ? 'var(--bg-surface-2)' : 'transparent',
+                    border: isUser ? '1px solid var(--border-2)' : 'none',
+                    borderRadius: isUser ? 'var(--r-card, 12px)' : 0,
+                    padding: isUser ? '11px 15px' : 0,
                   }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <Card
-                    variant="default"
-                    padding="md"
-                    className={`max-w-[85%] transition-all duration-300 !bg-transparent !backdrop-blur-none !shadow-none ${
-                      msg.role === 'user' ? 'animate-slide-in-right' : 'animate-slide-in-left'
-                    }`}
-                  >
-                    <div className="flex flex-col items-start justify-between gap-3">
-                      <div className="flex-1">
-                        {msg.role === 'user' ? (
-                          <MarkdownMessage content={msg.content} />
-                        ) : (
-                          <MarkdownMessage content={msg.content} isStreaming={isStreaming} />
-                        )}
-                      </div>
+                  <MarkdownMessage content={msg.content} isStreaming={isStreaming} />
+                </div>
 
-                      <div>
-                        {msg.role === 'assistant' && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="flex items-center gap-1 flex-shrink-0"
-                          >
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleCopy(msg.content)}
-                              className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
-                              aria-label="Copy message"
-                            >
-                              <ContentCopy style={{ fontSize: 16 }} />
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
-                              aria-label="Like message"
-                            >
-                              <ThumbUp style={{ fontSize: 16 }} />
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={handleRegenerate}
-                              className="p-1.5 rounded-lg text-textSecondary hover:text-text transition-colors duration-200"
-                              aria-label="Regenerate response"
-                            >
-                              <Refresh style={{ fontSize: 16 }} />
-                            </motion.button>
-                          </motion.div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-                {idx === compactionDividerIndex && (
-                  <CompactionDivider summaryContent={summaryContent} />
+                {!isUser && !isStreaming && (
+                  <div className="flex" style={{ gap: 1, marginTop: 8 }}>
+                    <ActionIcon
+                      size={30}
+                      icon={<MS name="content_copy" size={15} />}
+                      title="Copy"
+                      onClick={() => handleCopy(msg.content)}
+                    />
+                    <ActionIcon size={30} icon={<MS name="thumb_up" size={15} />} title="Good" />
+                    <ActionIcon size={30} icon={<MS name="thumb_down" size={15} />} title="Bad" />
+                    <ActionIcon
+                      size={30}
+                      icon={<MS name="refresh" size={15} />}
+                      title="Regenerate"
+                    />
+                  </div>
                 )}
               </div>
-            )
-          })}
+            </motion.div>
+            {idx === compactionDividerIndex && (
+              <CompactionDivider summaryContent={summaryContent} />
+            )}
+          </div>
+        )
+      })}
 
       {isLoading && messages.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{
-            type: 'spring',
-            stiffness: 300,
-            damping: 25,
-          }}
-          className="flex justify-start"
-        >
-          <Card variant="bordered" padding="md" className="animate-slide-in-left">
-            <LoadingSpinner size="sm" />
-          </Card>
-        </motion.div>
+        <div className="flex" style={{ gap: 13 }}>
+          <AssistantAvatar />
+          <LoadingSpinner size="sm" />
+        </div>
       )}
     </div>
   )

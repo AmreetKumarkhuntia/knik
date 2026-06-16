@@ -1,12 +1,15 @@
-import { forwardRef, useImperativeHandle, useRef, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { AttachFile, Mic, Send as SendIcon } from '@mui/icons-material'
+import { forwardRef, useImperativeHandle, useRef, useEffect, useCallback, useState } from 'react'
+import MS from '$components/MS'
+import Kbd from '$components/Kbd'
+import ActionIcon from '$components/ActionIcon'
+import ModelPicker from '$components/ModelPicker'
 import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
-/** Chat input bar with send, attach, and voice action buttons. */
+/** Chat composer: glass field with model picker, attach/voice, send, and a hint row. */
 const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
-  ({ value, onChange, onSend, disabled }, ref) => {
+  ({ value, onChange, onSend, disabled, model, onModel }, ref) => {
     const inputRef = useRef<HTMLTextAreaElement>(null)
+    const [focused, setFocused] = useState(false)
 
     const autoResize = useCallback(() => {
       const el = inputRef.current
@@ -27,66 +30,81 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey && !disabled) {
         e.preventDefault()
-        onSend()
+        if (value.trim()) onSend()
       }
     }
 
+    const canSend = !!value.trim() && !disabled
+
     return (
-      <div className="bg-surfaceGlass backdrop-blur-lg rounded-xl p-3" style={{}}>
-        <div className="flex flex-col gap-2">
+      <div>
+        <div
+          style={{
+            background: 'var(--bg-glass)',
+            backdropFilter: 'blur(20px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+            border: `1px solid ${focused ? 'var(--acc-border, rgba(0,217,244,0.45))' : 'var(--border-2)'}`,
+            borderRadius: 'var(--r-card, 14px)',
+            padding: '12px 12px 10px 14px',
+            transition: 'all 200ms var(--ease-out)',
+            boxShadow: focused ? '0 0 0 3px var(--acc-soft)' : 'var(--shadow-1)',
+          }}
+        >
           <textarea
             ref={inputRef}
             value={value}
             onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message... (Shift+Enter for new line)"
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder="Type your message…  (Shift+Enter for new line)"
             disabled={disabled}
             rows={1}
-            className="flex-1 bg-transparent text-text placeholder-textSecondary outline-none border-none text-base focus:ring-0 resize-none overflow-hidden px-3 py-2.5 leading-relaxed"
-            style={{ maxHeight: '200px', transition: 'height 0.15s ease' }}
+            className="w-full resize-none outline-none border-none bg-transparent font-sans"
+            style={{
+              minHeight: 26,
+              maxHeight: 200,
+              color: 'var(--fg-1)',
+              fontSize: 14.5,
+              lineHeight: 1.5,
+              padding: '4px 0',
+            }}
           />
 
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-textSecondary hover:text-text transition-colors duration-200"
-              aria-label="Attach file"
-              disabled={disabled}
-            >
-              <AttachFile />
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-textSecondary hover:text-text transition-colors duration-200"
-              aria-label="Voice input"
-              disabled={disabled}
-            >
-              <Mic />
-            </motion.button>
-
+          <div className="flex items-center" style={{ gap: 6 }}>
+            {model && onModel && <ModelPicker model={model} onChange={onModel} compact />}
+            <ActionIcon title="Attach" icon={<MS name="attach_file" size={18} />} />
+            <ActionIcon title="Voice" icon={<MS name="mic" size={18} />} />
             <div className="flex-1" />
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onSend}
-              disabled={disabled || !value.trim()}
-              className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                !value.trim() || disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-              }`}
-              style={{
-                backgroundColor: 'var(--color-primary)',
-                boxShadow:
-                  value.trim() && !disabled ? '0 4px 15px -3px var(--color-primary)' : 'none',
-              }}
+            <button
+              type="button"
+              onClick={() => canSend && onSend()}
+              disabled={!canSend}
               aria-label="Send message"
+              className="inline-flex items-center justify-center transition-all duration-200 ease-knik-out"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 'var(--r-btn, 10px)',
+                background: 'var(--acc, var(--aurora-400))',
+                color: 'var(--on-primary)',
+                border: 'none',
+                cursor: canSend ? 'pointer' : 'not-allowed',
+                boxShadow: canSend
+                  ? '0 6px 22px -6px var(--acc-glow, rgba(0,217,244,0.65)), 0 1px 0 rgba(255,255,255,0.2) inset'
+                  : 'none',
+                opacity: canSend ? 1 : 0.4,
+              }}
             >
-              <SendIcon style={{ color: 'var(--color-text-inverse)', fontSize: 20 }} />
-            </motion.button>
+              <MS name="arrow_upward" size={20} weight={500} />
+            </button>
           </div>
+        </div>
+        <div
+          className="font-mono"
+          style={{ marginTop: 8, paddingInline: 4, fontSize: 10.5, color: 'var(--fg-5)' }}
+        >
+          <Kbd>⌘</Kbd> <Kbd>K</Kbd> command · <Kbd>Enter</Kbd> send · <Kbd>⇧ Enter</Kbd> newline
         </div>
       </div>
     )

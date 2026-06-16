@@ -9,12 +9,17 @@ export interface MainLayoutProps {
 
 /** Props for the sidebar component. */
 export interface SidebarProps {
-  onClearHistory: () => void
   onNewChat: () => void
   onSelectConversation: (conversationId: string) => void
+  onOpenSearch: () => void
 }
 
-/** Props for the top bar component. */
+/** Props for the top bar command-bar. */
 export interface TopBarProps {
-  isLoading?: boolean
+  crumbs?: string[]
+  right?: ReactNode
+  onOpenSearch: () => void
+  dark: boolean
+  onToggleTheme: () => void
+  notif?: number
 }

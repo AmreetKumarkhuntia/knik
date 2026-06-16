@@ -20,6 +20,8 @@ export interface InputPanelProps {
   onChange: (value: string) => void
   onSend: () => void
   disabled?: boolean
+  model?: string
+  onModel?: (id: string) => void
 }
 
 /** Imperative handle exposed by the input panel via ref. */

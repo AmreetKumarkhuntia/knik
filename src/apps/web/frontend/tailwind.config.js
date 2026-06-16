@@ -42,6 +42,12 @@ export default {
           5: 'var(--fg-5)',
           inverse: 'var(--fg-inverse)',
         },
+        acc: {
+          DEFAULT: 'var(--acc)',
+          text: 'var(--acc-text)',
+          soft: 'var(--acc-soft)',
+          border: 'var(--acc-border)',
+        },
       },
 
       /* ---- Spacing from token scale ---- */
@@ -68,6 +74,9 @@ export default {
         xl: 'var(--radius-xl)',
         '2xl': 'var(--radius-2xl)',
         pill: 'var(--radius-pill)',
+        /* density-aware tweak radii */
+        btn: 'var(--r-btn, var(--radius-md))',
+        card: 'var(--r-card, var(--radius-lg))',
       },
 
       /* ---- Font families from tokens ---- */

@@ -13,6 +13,7 @@ export default function Home({ inputRef }: HomeProps) {
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
+  const [model, setModel] = useState('gemini-1.5-flash')
 
   const messages = useStore(s => s.messages)
   const inputText = useStore(s => s.inputText)
@@ -83,12 +84,8 @@ export default function Home({ inputRef }: HomeProps) {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [])
 
+  // Note: ⌘K is reserved globally for the command palette (see MainLayout).
   useKeyboardShortcuts([
-    {
-      key: KEYBOARD_SHORTCUTS.focusInput.key,
-      ctrlKey: KEYBOARD_SHORTCUTS.focusInput.ctrlKey,
-      handler: () => inputRef.current?.focus(),
-    },
     {
       key: KEYBOARD_SHORTCUTS.clearInput.key,
       handler: () => inputRef.current?.clear(),
@@ -145,6 +142,8 @@ export default function Home({ inputRef }: HomeProps) {
           onChange={setInputText}
           onSend={() => void handleSend()}
           disabled={loading}
+          model={model}
+          onModel={setModel}
         />
       </div>
 

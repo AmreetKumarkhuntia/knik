@@ -6,9 +6,11 @@ import { themePresets } from '$lib/constants/themes'
 import type { ThemeSelectorProps } from '$types/theme'
 
 const accentColors = [
-  { name: 'purple' as const, label: 'Purple', color: themePresets.purple.primary },
-  { name: 'blue' as const, label: 'Blue', color: themePresets.blue.primary },
+  { name: 'cyan' as const, label: 'Aurora', color: themePresets.cyan.primary },
   { name: 'teal' as const, label: 'Teal', color: themePresets.teal.primary },
+  { name: 'purple' as const, label: 'Violet', color: themePresets.purple.primary },
+  { name: 'blue' as const, label: 'Blue', color: themePresets.blue.primary },
+  { name: 'amber' as const, label: 'Amber', color: themePresets.amber.primary },
 ]
 
 /** Modal for selecting color mode and accent color with live preview. */

@@ -3,7 +3,15 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '$sections/theme'
 import MainLayout from '$sections/layout/MainLayout'
 import ErrorBoundary from '$sections/feedback/ErrorBoundary'
-import { Home, Workflows, WorkflowBuilder, ExecutionDetail, AllExecutions } from '$pages/index'
+import {
+  Home,
+  Workflows,
+  WorkflowBuilder,
+  ExecutionDetail,
+  AllExecutions,
+  Schedules,
+  Settings,
+} from '$pages/index'
 import { useStore } from '$store/index'
 import type { InputPanelRef } from '$types/sections/chat'
 
@@ -43,6 +51,8 @@ function AppContent() {
           <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
           <Route path="/workflows/executions" element={<AllExecutions />} />
           <Route path="/executions/:id" element={<ExecutionDetail />} />
+          <Route path="/schedules" element={<Schedules />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>

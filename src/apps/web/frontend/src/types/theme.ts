@@ -2,7 +2,13 @@
 export type ThemeMode = 'dark' | 'light'
 
 /** Named accent theme. */
-export type ThemeName = 'purple' | 'blue' | 'teal' | 'cyan'
+export type ThemeName = 'purple' | 'blue' | 'teal' | 'cyan' | 'amber'
+
+/** Layout density tweak. */
+export type Density = 'comfortable' | 'compact'
+
+/** Corner-radius tweak. */
+export type Radius = 'sharp' | 'default' | 'round'
 
 /** Complete set of color tokens for a theme. */
 export interface ThemeColors {
@@ -44,8 +50,12 @@ export interface ThemeContextType {
   theme: Theme
   mode: ThemeMode
   accentName: ThemeName
+  density: Density
+  radius: Radius
   setMode: (mode: ThemeMode) => void
   setAccent: (accent: ThemeName) => void
+  setDensity: (density: Density) => void
+  setRadius: (radius: Radius) => void
 }
 
 /** Props for the theme selector dropdown. */
