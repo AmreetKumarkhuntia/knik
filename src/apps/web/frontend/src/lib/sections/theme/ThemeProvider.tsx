@@ -3,8 +3,18 @@
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { DEFAULT_MODE, DEFAULT_THEME, themePresets, lightThemePresets } from '$lib/constants/themes'
-import type { Theme, ThemeMode, ThemeName, ThemeContextType } from '$types/theme'
+import {
+  DEFAULT_MODE,
+  DEFAULT_THEME,
+  DEFAULT_DENSITY,
+  DEFAULT_RADIUS,
+  themePresets,
+  lightThemePresets,
+  ACCENT_VARS,
+  RADIUS_PRESETS,
+  DENSITY_PRESETS,
+} from '$lib/constants/themes'
+import type { Theme, ThemeMode, ThemeName, Density, Radius, ThemeContextType } from '$types/theme'
 
 /** React context providing the current theme mode, accent, and setter functions. */
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -24,6 +34,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return (localStorage.getItem('knik-theme-accent') as ThemeName) ?? DEFAULT_THEME
     } catch {
       return DEFAULT_THEME
+    }
+  })
+
+  const [density, setDensityState] = useState<Density>(() => {
+    try {
+      return (localStorage.getItem('knik-theme-density') as Density) ?? DEFAULT_DENSITY
+    } catch {
+      return DEFAULT_DENSITY
+    }
+  })
+
+  const [radius, setRadiusState] = useState<Radius>(() => {
+    try {
+      return (localStorage.getItem('knik-theme-radius') as Radius) ?? DEFAULT_RADIUS
+    } catch {
+      return DEFAULT_RADIUS
     }
   })
 
@@ -72,6 +98,30 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.setAttribute('data-theme', mode)
   }, [theme, mode])
 
+  // Tweak vars: accent (--acc*), corner radius (--r-*), and density (--pad-card).
+  // These drive the redesign's accent-styled surfaces and keep --primary in sync.
+  useEffect(() => {
+    const root = document.documentElement
+    const acc = ACCENT_VARS[accentName] ?? ACCENT_VARS.cyan
+    const r = RADIUS_PRESETS[radius] ?? RADIUS_PRESETS.default
+    const d = DENSITY_PRESETS[density] ?? DENSITY_PRESETS.comfortable
+
+    root.style.setProperty('--acc', acc.acc)
+    root.style.setProperty('--acc-text', acc.text)
+    root.style.setProperty('--acc-soft', acc.soft)
+    root.style.setProperty('--acc-border', acc.border)
+    root.style.setProperty('--acc-glow', acc.glow)
+    root.style.setProperty('--acc-blob', acc.blob)
+
+    root.style.setProperty('--primary', acc.acc)
+    root.style.setProperty('--primary-soft', acc.soft)
+    root.style.setProperty('--border-focus', acc.acc)
+
+    root.style.setProperty('--r-btn', r.btn)
+    root.style.setProperty('--r-card', r.card)
+    root.style.setProperty('--pad-card', d.padCard)
+  }, [accentName, radius, density])
+
   const setMode = (newMode: ThemeMode) => {
     setModeState(newMode)
     localStorage.setItem('knik-theme-mode', newMode)
@@ -82,8 +132,30 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('knik-theme-accent', newAccent)
   }
 
+  const setDensity = (newDensity: Density) => {
+    setDensityState(newDensity)
+    localStorage.setItem('knik-theme-density', newDensity)
+  }
+
+  const setRadius = (newRadius: Radius) => {
+    setRadiusState(newRadius)
+    localStorage.setItem('knik-theme-radius', newRadius)
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, mode, accentName, setMode, setAccent }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        mode,
+        accentName,
+        density,
+        radius,
+        setMode,
+        setAccent,
+        setDensity,
+        setRadius,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   )

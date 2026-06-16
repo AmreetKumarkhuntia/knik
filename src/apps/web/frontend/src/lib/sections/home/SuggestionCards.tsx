@@ -1,50 +1,20 @@
 import { motion } from 'framer-motion'
-import { Code, EditNote, BugReport, Description } from '@mui/icons-material'
-
-const suggestions = [
-  {
-    icon: <Code />,
-    title: 'Refactor my Python script',
-    subtitle: 'Optimize performance and readability',
-  },
-  {
-    icon: <EditNote />,
-    title: 'Write a blog post outline',
-    subtitle: 'On future of AI in healthcare',
-  },
-  {
-    icon: <BugReport />,
-    title: 'Debug my React component',
-    subtitle: 'Fix state management issues',
-  },
-  { icon: <Description />, title: 'Create API documentation', subtitle: 'For REST endpoints' },
-]
-
+import MS from '$components/MS'
+import { DEMO_SUGGESTIONS } from '$lib/constants'
 import type { SuggestionCardsProps } from '$types/sections/home'
 
-/** Grid of clickable prompt suggestion cards. */
+/** Grid of clickable prompt suggestion cards with an icon tile + category tag. */
 export default function SuggestionCards({ onSelectPrompt }: SuggestionCardsProps) {
   const container = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.5,
-      },
-    },
+    show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.4 } },
   }
-
   const item = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 12 },
     show: {
       opacity: 1,
       y: 0,
-      transition: {
-        type: 'spring' as const,
-        stiffness: 300,
-        damping: 24,
-      },
+      transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
     },
   }
 
@@ -53,45 +23,76 @@ export default function SuggestionCards({ onSelectPrompt }: SuggestionCardsProps
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto"
+      className="grid grid-cols-1 md:grid-cols-2 mx-auto w-full"
+      style={{ gap: 12, maxWidth: 720 }}
     >
-      {suggestions.map((suggestion, index) => (
-        <motion.div
+      {DEMO_SUGGESTIONS.map((s, index) => (
+        <motion.button
           key={index}
+          type="button"
           variants={item}
-          whileHover={{
-            scale: 1.05,
-            y: -5,
-            transition: { type: 'spring', stiffness: 400, damping: 20 },
-          }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onSelectPrompt(suggestion.title)}
-          className="relative overflow-hidden rounded-xl p-5 cursor-pointer bg-surface border border-border transition-all duration-300 hover:border-primary hover:shadow-xl"
+          whileHover={{ y: -2 }}
+          onClick={() => onSelectPrompt(s.title)}
+          className="flex items-start text-left transition-all duration-200 ease-knik-out"
           style={{
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            gap: 13,
+            cursor: 'pointer',
+            background: 'var(--bg-surface-2)',
+            border: '1px solid var(--border-2)',
+            borderRadius: 'var(--r-card, 12px)',
+            padding: 'var(--pad-card, 18px)',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--acc-border, rgba(0,217,244,0.5))'
+            e.currentTarget.style.boxShadow =
+              '0 14px 32px -16px var(--acc-glow, rgba(0,217,244,0.5))'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border-2)'
+            e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          <div className="flex items-start gap-4">
-            <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'var(--color-primary)', opacity: 0.1 }}
-            >
-              <div style={{ color: 'var(--color-primary)' }}>{suggestion.icon}</div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-foreground font-semibold mb-1 truncate">{suggestion.title}</h3>
-              <p className="text-textSecondary text-sm line-clamp-2">{suggestion.subtitle}</p>
-            </div>
-          </div>
-
-          <motion.div
-            className="absolute inset-0 rounded-xl"
-            initial={false}
-            whileHover={{
-              boxShadow: `0 0 20px -5px var(--color-primary)`,
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 'var(--r-btn, 9px)',
+              background: 'var(--acc-soft)',
+              color: 'var(--acc-text, var(--aurora-300))',
             }}
-          />
-        </motion.div>
+          >
+            <MS name={s.icon} size={20} />
+          </div>
+          <div className="min-w-0">
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--fg-1)',
+                letterSpacing: '-0.012em',
+              }}
+            >
+              {s.title}
+            </span>
+            <div style={{ fontSize: 12.5, color: 'var(--fg-3)', marginTop: 3 }}>{s.subtitle}</div>
+            <span
+              className="inline-block font-mono"
+              style={{
+                marginTop: 9,
+                fontSize: 10,
+                letterSpacing: '0.04em',
+                color: 'var(--fg-4)',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-1)',
+                padding: '2px 7px',
+                borderRadius: 5,
+              }}
+            >
+              {s.tag}
+            </span>
+          </div>
+        </motion.button>
       ))}
     </motion.div>
   )

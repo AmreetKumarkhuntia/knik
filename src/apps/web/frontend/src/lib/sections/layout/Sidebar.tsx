@@ -1,38 +1,46 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Delete as TrashIcon,
-  Settings,
-  SmartToy,
-  AddComment,
-  Chat as ChatIcon,
-  AccountTree,
-} from '@mui/icons-material'
+import { motion } from 'framer-motion'
+import MS from '$components/MS'
+import Kbd from '$components/Kbd'
+import Avatar from '$components/Avatar'
+import KnikGlyph from '$components/KnikGlyph'
 import LoadingSpinner from '$components/LoadingSpinner'
 import EmptyState from '$components/EmptyState'
-import { ThemeSelector } from '$sections/theme'
 import type { SidebarProps } from '$types/sections/layout'
 import type { Conversation } from '$types/api'
 import { ConversationAPI } from '$services/api'
-import { UI_TEXT, NAV_ITEMS, EMPTY_STATE_DEFAULTS } from '$lib/constants'
+import { NAV_ITEMS, ROUTES, UI_TEXT, EMPTY_STATE_DEFAULTS, DEMO_ACCOUNT } from '$lib/constants'
 
-/** Collapsible sidebar with navigation, conversations, and theme settings. */
-export default function Sidebar({ onClearHistory, onNewChat, onSelectConversation }: SidebarProps) {
+/** Eyebrow: small mono section label. */
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="font-mono uppercase"
+      style={{
+        fontSize: 10,
+        letterSpacing: '0.09em',
+        color: 'var(--fg-4)',
+        padding: '10px 11px 7px',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+/** Collapsible, sectioned sidebar: brand, new-chat, workspace nav, recents, account. */
+export default function Sidebar({ onNewChat, onSelectConversation, onOpenSearch }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(false)
-  const [themeSelectorOpen, setThemeSelectorOpen] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-
-  const isExpanded = isHovered
+  const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
-    if (isExpanded) {
-      void fetchConversations()
-    }
-  }, [isExpanded])
+    if (collapsed) return
+    void fetchConversations()
+  }, [collapsed])
 
   const fetchConversations = async () => {
     try {
@@ -47,22 +55,11 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
     }
   }
 
-  const handleClearHistory = () => {
-    onClearHistory()
-    setConversations([])
-  }
-
   const handleSelectConversation = (id: string) => {
     onSelectConversation(id)
-    if (location.pathname !== '/') {
-      void navigate('/')
-    }
+    if (location.pathname !== '/') void navigate('/')
   }
 
-  /**
-   * Derive a display label for a conversation.
-   * Prefer the AI-generated title; fall back to the first user message preview.
-   */
   const getConversationLabel = (conv: Conversation): string => {
     if (conv.title) return conv.title
     const firstUserMsg = conv.messages.find(m => m.role === 'user')
@@ -71,194 +68,293 @@ export default function Sidebar({ onClearHistory, onNewChat, onSelectConversatio
         ? firstUserMsg.content.slice(0, 40) + '...'
         : firstUserMsg.content
     }
-    return 'New Chat'
+    return 'New chat'
   }
 
-  /**
-   * Format a timestamp for the sidebar (e.g. "Today", "Yesterday", or "Mar 25").
-   */
   const formatTimestamp = (isoString: string | null): string => {
     if (!isoString) return ''
     const date = new Date(isoString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
+    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24))
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Yesterday'
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
+  const navItemStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    position: 'relative',
+    padding: collapsed ? 0 : '9px 11px',
+    height: collapsed ? 44 : undefined,
+    width: collapsed ? 44 : '100%',
+    marginInline: collapsed ? 'auto' : 0,
+    justifyContent: collapsed ? 'center' : 'flex-start',
+    borderRadius: 'var(--r-btn, 8px)',
+    border: 'none',
+    cursor: 'pointer',
+    background: active ? 'var(--acc-soft)' : 'transparent',
+    color: active ? 'var(--acc-text, var(--aurora-200))' : 'var(--fg-3)',
+    fontSize: 13.5,
+    fontWeight: 550,
+    letterSpacing: '-0.01em',
+    transition: 'all 160ms var(--ease-out)',
+  })
+
   return (
-    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-      <motion.div
-        initial={false}
-        animate={{ width: isExpanded ? '320px' : '80px' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="h-full bg-surfaceGlass backdrop-blur-3xl border-r border-borderLight z-50 shadow-2xl flex-shrink-0"
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? 76 : 264 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+      className="h-full flex flex-col flex-shrink-0 overflow-hidden"
+      style={{
+        background: 'var(--bg-glass)',
+        backdropFilter: 'blur(20px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+        borderRight: '1px solid var(--border-2)',
+        padding: collapsed ? '16px' : '16px 14px',
+      }}
+    >
+      {/* Brand / collapse toggle */}
+      <button
+        type="button"
+        onClick={() => setCollapsed(c => !c)}
+        title={collapsed ? 'Expand' : 'Collapse'}
+        className="flex items-center"
         style={{
-          boxShadow: 'var(--color-shadow-subtle)',
+          gap: 10,
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          padding: collapsed ? 0 : '4px 6px',
+          marginBottom: 14,
+          justifyContent: collapsed ? 'center' : 'flex-start',
         }}
       >
-        <div className="flex flex-col h-full py-4">
-          <div
-            className={`flex items-center mb-6 ${isExpanded ? 'px-6 justify-between' : 'justify-center'}`}
-          >
-            <div className={`flex items-center gap-2 ${isExpanded ? '' : 'justify-center w-full'}`}>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
-                <SmartToy style={{ color: 'var(--color-primary)', fontSize: '24px' }} />
-              </div>
-              {isExpanded && <h2 className="text-xl font-bold text-foreground">Knik AI</h2>}
-            </div>
-          </div>
-
-          <div className={`mb-6 ${isExpanded ? 'px-6' : 'flex justify-center'}`}>
-            <button
-              onClick={() => {
-                onNewChat()
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 11,
+            background: 'rgba(11,18,26,0.7)',
+            border: '1px solid var(--acc-border, rgba(0,217,244,0.4))',
+            boxShadow: '0 0 24px -6px var(--acc-glow, rgba(0,217,244,0.55))',
+          }}
+        >
+          <KnikGlyph size={22} />
+        </div>
+        {!collapsed && (
+          <div className="text-left min-w-0 flex-1">
+            <div
+              className="font-display"
+              style={{
+                fontWeight: 600,
+                fontSize: 16,
+                letterSpacing: '-0.025em',
+                color: 'var(--fg-1)',
+                lineHeight: 1.1,
               }}
-              className={`
-                font-medium transition-all
-                ${
-                  isExpanded
-                    ? 'w-full text-secondary hover:text-foreground hover:bg-surface px-4 py-3 rounded-lg'
-                    : 'w-12 h-12 flex items-center justify-center text-secondary hover:text-foreground hover:bg-surface rounded-lg'
-                }
-              `}
-              title={isExpanded ? undefined : UI_TEXT.nav.newChat}
             >
-              <AddComment />
-              {isExpanded && <span className="ml-3">{UI_TEXT.nav.newChat}</span>}
-            </button>
+              Knik AI
+            </div>
+            <div
+              className="flex items-center"
+              style={{ gap: 5, fontSize: 11, color: 'var(--fg-4)' }}
+            >
+              <span
+                style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }}
+              />
+              Local · running
+            </div>
           </div>
+        )}
+        {!collapsed && <MS name="unfold_more" size={16} style={{ color: 'var(--fg-5)' }} />}
+      </button>
 
-          <div className="mb-6 border-b border-border pb-4">
-            <h3
-              className={`text-sm font-semibold text-secondary mb-3 ${isExpanded ? 'px-6' : 'hidden'}`}
+      {/* New chat + search */}
+      <div className="flex flex-col" style={{ gap: 6, marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={onNewChat}
+          title={collapsed ? UI_TEXT.nav.newChat : undefined}
+          className="flex items-center transition-all ease-knik-out"
+          style={{
+            gap: 9,
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            padding: collapsed ? 0 : '9px 12px',
+            height: collapsed ? 44 : undefined,
+            width: collapsed ? 44 : '100%',
+            marginInline: collapsed ? 'auto' : 0,
+            borderRadius: 'var(--r-btn, 8px)',
+            border: '1px solid var(--acc-border, rgba(0,217,244,0.35))',
+            cursor: 'pointer',
+            background: 'var(--acc-soft)',
+            color: 'var(--acc-text, var(--aurora-200))',
+            fontSize: 13.5,
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          <MS name="add" size={20} />
+          {!collapsed && 'New chat'}
+        </button>
+        {!collapsed && (
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            className="flex items-center transition-all ease-knik-out"
+            style={{
+              gap: 9,
+              padding: '8px 12px',
+              width: '100%',
+              borderRadius: 'var(--r-btn, 8px)',
+              border: '1px solid var(--border-2)',
+              cursor: 'pointer',
+              background: 'var(--bg-surface)',
+              color: 'var(--fg-4)',
+              fontSize: 13,
+            }}
+          >
+            <MS name="search" size={18} />
+            <span style={{ flex: 1, textAlign: 'left' }}>Search…</span>
+            <Kbd>⌘K</Kbd>
+          </button>
+        )}
+      </div>
+
+      {/* Nav */}
+      {!collapsed && <Eyebrow>Workspace</Eyebrow>}
+      <div className="flex flex-col" style={{ gap: 2 }}>
+        {NAV_ITEMS.map(item => {
+          const active = location.pathname === item.path
+          return (
+            <button
+              key={item.path}
+              type="button"
+              onClick={() => void navigate(item.path)}
+              title={collapsed ? item.label : undefined}
+              style={navItemStyle(active)}
             >
-              {UI_TEXT.nav.navigation}
-            </h3>
-            <div className={`flex flex-col gap-1 ${isExpanded ? 'px-4' : 'items-center'}`}>
-              {NAV_ITEMS.map(item => (
-                <button
-                  key={item.path}
-                  onClick={() => {
-                    void navigate(item.path)
+              {active && !collapsed && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: -14,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 3,
+                    height: 18,
+                    borderRadius: 999,
+                    background: 'var(--acc, var(--aurora-400))',
                   }}
-                  className={`
-                    flex items-center transition-all rounded-lg
-                    ${
-                      location.pathname === item.path
-                        ? 'bg-primary/20 text-primary'
-                        : 'text-secondary hover:bg-surface hover:text-foreground'
-                    }
-                    ${isExpanded ? 'justify-start px-4 py-3 w-full' : 'justify-center w-12 h-12'}
-                  `}
-                  title={isExpanded ? undefined : item.label}
+                />
+              )}
+              <MS name={item.icon} size={20} fill={active ? 1 : 0} />
+              {!collapsed && <span>{item.label}</span>}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Recents */}
+      {!collapsed ? (
+        <div className="flex flex-col min-h-0 flex-1" style={{ marginTop: 18 }}>
+          <Eyebrow>Recent chats</Eyebrow>
+          <div className="overflow-y-auto flex flex-col scrollbar-hide" style={{ gap: 1 }}>
+            {loading ? (
+              <LoadingSpinner size="sm" className="py-8" />
+            ) : conversations.length === 0 ? (
+              <EmptyState
+                icon={EMPTY_STATE_DEFAULTS.icon}
+                title={UI_TEXT.empty.noHistoryTitle}
+                description={UI_TEXT.empty.noHistoryDescription}
+              />
+            ) : (
+              conversations.map(conv => (
+                <button
+                  key={conv.id}
+                  type="button"
+                  onClick={() => handleSelectConversation(conv.id)}
+                  className="text-left transition-colors"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '7px 11px',
+                    borderRadius: 'var(--r-btn, 8px)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-surface-3)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  {item.icon === 'Chat' && <ChatIcon className={isExpanded ? 'mr-3' : ''} />}
-                  {item.icon === 'AccountTree' && (
-                    <AccountTree className={isExpanded ? 'mr-3' : ''} />
-                  )}
-                  {isExpanded && <span className="font-medium">{item.label}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isExpanded && (
-            <div className="flex-1 overflow-y-auto mb-6 scrollbar-hide px-6">
-              <h3 className="text-sm font-semibold text-secondary mb-3">
-                {UI_TEXT.nav.recentConversations}
-              </h3>
-              <div className="space-y-1">
-                {loading ? (
-                  <LoadingSpinner size="sm" className="py-8" />
-                ) : conversations.length === 0 ? (
-                  <EmptyState
-                    icon={EMPTY_STATE_DEFAULTS.icon}
-                    title={UI_TEXT.empty.noHistoryTitle}
-                    description={UI_TEXT.empty.noHistoryDescription}
-                  />
-                ) : (
-                  conversations.map(conv => (
-                    <button
-                      key={conv.id}
-                      onClick={() => handleSelectConversation(conv.id)}
-                      className="w-full text-left px-3 py-3 rounded-lg text-sm text-secondary hover:bg-surface transition-all cursor-pointer"
+                  <div className="flex items-center" style={{ gap: 6 }}>
+                    <span
+                      className="truncate flex-1"
+                      style={{ fontSize: 12.5, fontWeight: 550, color: 'var(--fg-2)' }}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-secondary text-xs truncate">
-                          {getConversationLabel(conv)}
-                        </span>
-                        <span className="text-xs text-muted ml-2 flex-shrink-0">
-                          {formatTimestamp(conv.updated_at)}
-                        </span>
-                      </div>
-                      {conv.messages.length > 0 && (
-                        <div className="line-clamp-1 text-xs text-muted">
-                          {conv.messages[conv.messages.length - 1].content.slice(0, 60)}
-                        </div>
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className={`space-y-3 ${isExpanded ? 'px-6' : 'items-center flex flex-col'}`}>
-            <button
-              onClick={() => setThemeSelectorOpen(true)}
-              className={`
-                text-secondary hover:text-foreground hover:bg-surface rounded-lg transition-all flex items-center
-                ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
-              `}
-              title={isExpanded ? undefined : UI_TEXT.nav.themeSettings}
-            >
-              <SmartToy />
-              {isExpanded && <span>{UI_TEXT.nav.themeSettings}</span>}
-            </button>
-
-            <button
-              onClick={() => void handleClearHistory()}
-              className={`
-                text-secondary hover:text-foreground hover:bg-surface rounded-lg transition-all flex items-center
-                ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
-              `}
-              title={isExpanded ? undefined : UI_TEXT.nav.clearHistory}
-            >
-              <TrashIcon />
-              {isExpanded && <span>{UI_TEXT.nav.clearHistory}</span>}
-            </button>
-
-            <button
-              className={`
-                text-secondary hover:text-foreground hover:bg-surface rounded-lg transition-all flex items-center
-                ${isExpanded ? 'w-full px-4 py-3 gap-3' : 'w-12 h-12 justify-center'}
-              `}
-              title={isExpanded ? undefined : UI_TEXT.nav.settings}
-            >
-              <Settings />
-              {isExpanded && <span>{UI_TEXT.nav.settings}</span>}
-            </button>
+                      {getConversationLabel(conv)}
+                    </span>
+                    <span
+                      className="font-mono flex-shrink-0"
+                      style={{ fontSize: 10, color: 'var(--fg-5)' }}
+                    >
+                      {formatTimestamp(conv.updated_at)}
+                    </span>
+                  </div>
+                  {conv.messages.length > 0 && (
+                    <div
+                      className="truncate"
+                      style={{ fontSize: 11.5, color: 'var(--fg-4)', marginTop: 1 }}
+                    >
+                      {conv.messages[conv.messages.length - 1].content.slice(0, 60)}
+                    </div>
+                  )}
+                </button>
+              ))
+            )}
           </div>
         </div>
-      </motion.div>
+      ) : (
+        <div style={{ flex: 1 }} />
+      )}
 
-      <AnimatePresence>
-        {themeSelectorOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-50 flex items-center justify-center"
-          >
-            <ThemeSelector isOpen={themeSelectorOpen} onClose={() => setThemeSelectorOpen(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      {/* Account footer */}
+      <div style={{ marginTop: 10, paddingTop: 12, borderTop: '1px solid var(--border-1)' }}>
+        <button
+          type="button"
+          onClick={() => void navigate(ROUTES.settings)}
+          title={collapsed ? 'Settings & account' : undefined}
+          className="flex items-center transition-colors"
+          style={{
+            gap: 10,
+            width: collapsed ? 44 : '100%',
+            marginInline: collapsed ? 'auto' : 0,
+            padding: collapsed ? 0 : '8px',
+            height: collapsed ? 44 : undefined,
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            borderRadius: 'var(--r-btn, 8px)',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-surface-3)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+        >
+          <Avatar initials={DEMO_ACCOUNT.initials} size={collapsed ? 32 : 30} color="accent" />
+          {!collapsed && (
+            <div className="text-left flex-1 min-w-0">
+              <div
+                className="truncate"
+                style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--fg-1)' }}
+              >
+                {DEMO_ACCOUNT.name}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--fg-4)' }}>Local account</div>
+            </div>
+          )}
+          {!collapsed && <MS name="settings" size={17} style={{ color: 'var(--fg-4)' }} />}
+        </button>
+      </div>
+    </motion.aside>
   )
 }

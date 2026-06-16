@@ -1,0 +1,174 @@
+<!doctype html>
+<!-- @dsCard group="UI Kit — Redesign" name="KNIK redesign · full app" subtitle="Click-thru: chat · hub · builder · schedules · settings + ⌘K + tweaks" viewport="1280x720" -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>KNIK — Redesign</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../../colors_and_type.css" />
+    <style>
+      html,
+      body,
+      #app {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+      body {
+        background: var(--bg-base);
+        background-image:
+          radial-gradient(
+            at 6% 0%,
+            rgba(0, 217, 244, 0.1) 0px,
+            transparent 48%
+          ),
+          radial-gradient(
+            at 96% 100%,
+            rgba(20, 184, 166, 0.07) 0px,
+            transparent 50%
+          );
+        color: var(--fg-2);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      button {
+        font-family: inherit;
+      }
+      input,
+      textarea {
+        font-family: inherit;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--bg-surface-3);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--border-3);
+        background-clip: padding-box;
+        border: 2px solid transparent;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        scrollbar-width: none;
+      }
+
+      @keyframes knik-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes knik-dash {
+        to {
+          stroke-dashoffset: -28;
+        }
+      }
+      @keyframes knik-pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      @keyframes knik-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes knik-slide-l {
+        from {
+          opacity: 0;
+          transform: translateX(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes knik-slide-r {
+        from {
+          opacity: 0;
+          transform: translateX(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes knik-blob {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.5;
+        }
+        33% {
+          transform: translate(40px, -50px) scale(1.15);
+          opacity: 0.62;
+        }
+        66% {
+          transform: translate(-30px, 40px) scale(0.88);
+          opacity: 0.4;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script
+      src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- KNIK design system bundle (plain compiled JS; React must be loaded first) -->
+    <script src="../../_ds_bundle.js"></script>
+
+    <script type="text/babel" src="tweaks-panel.jsx"></script>
+    <script type="text/babel" src="app/icons.jsx"></script>
+    <script type="text/babel" src="app/data.jsx"></script>
+    <script type="text/babel" src="app/primitives.jsx"></script>
+    <script type="text/babel" src="app/shell.jsx"></script>
+    <script type="text/babel" src="app/chat.jsx"></script>
+    <script type="text/babel" src="app/workflows.jsx"></script>
+    <script type="text/babel" src="app/builder.jsx"></script>
+    <script type="text/babel" src="app/settings.jsx"></script>
+    <script type="text/babel" src="app/App.jsx"></script>
+  </body>
+</html>

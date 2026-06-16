@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Canvas from '$sections/workflows/WorkflowBuilder/Canvas'
+import RunBar from '$sections/workflows/WorkflowBuilder/RunBar'
 import type { WorkflowDefinition } from '$types/workflow'
 import type { CanvasHandle } from '$types/sections/workflow-builder'
 import { workflowApi } from '$services/workflowApi'
@@ -13,6 +14,7 @@ export default function WorkflowBuilder() {
   const [workflowData, setWorkflowData] = useState<WorkflowDefinition | undefined>()
   const [workflowName, setWorkflowName] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(false)
+  const [runBarOpen, setRunBarOpen] = useState(false)
 
   const isEditMode = !!id
 
@@ -59,10 +61,8 @@ export default function WorkflowBuilder() {
   }
 
   const handleExecute = async () => {
-    if (!id) {
-      alert('Please save the workflow first before executing')
-      return
-    }
+    setRunBarOpen(true)
+    if (!id) return
     try {
       await workflowApi.workflows.execute(id)
     } catch (error) {
@@ -96,7 +96,7 @@ export default function WorkflowBuilder() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
+    <div className="flex-1 flex flex-col overflow-hidden w-full h-full relative">
       <Canvas
         ref={canvasRef}
         workflowId={id}
@@ -107,6 +107,7 @@ export default function WorkflowBuilder() {
         onExportJson={handleExportJson}
         readOnly={false}
       />
+      {runBarOpen && <RunBar onClose={() => setRunBarOpen(false)} />}
     </div>
   )
 }
