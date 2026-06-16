@@ -1,17 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-
-export interface ChatBubbleProps {
-  role: 'user' | 'assistant'
-  content: React.ReactNode
-  timestamp?: string
-  actions?: {
-    copy?: () => void
-    thumbsUp?: () => void
-    retry?: () => void
-  }
-  className?: string
-}
+import type { ChatBubbleProps } from '$types'
 
 export default function ChatBubble({
   role,

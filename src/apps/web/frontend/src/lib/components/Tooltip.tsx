@@ -1,12 +1,5 @@
 import React from 'react'
-
-export interface TooltipProps {
-  content: React.ReactNode
-  placement?: 'top' | 'bottom' | 'left' | 'right'
-  delay?: number
-  children: React.ReactNode
-  className?: string
-}
+import type { TooltipProps } from '$types'
 
 export default function Tooltip({
   content,

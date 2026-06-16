@@ -1,21 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import MS from './MS'
 import { DEMO_MODELS } from '$lib/constants/redesignData'
-import type { DemoModel, AccentBadge } from '$lib/constants/redesignData'
-
-export interface ModelPickerProps {
-  model: string
-  onChange: (id: string) => void
-  compact?: boolean
-  models?: DemoModel[]
-}
-
-const DOT: Record<AccentBadge, string> = {
-  primary: 'var(--acc, var(--aurora-400))',
-  teal: 'var(--teal-400)',
-  violet: 'var(--violet-400)',
-  success: 'var(--success)',
-}
+import type { ModelPickerProps } from '$types'
+import { MODEL_ACCENT_DOT as DOT } from '$lib/constants'
 
 /** Inline model selector for the composer / top bar — a small popover of models. */
 export default function ModelPicker({

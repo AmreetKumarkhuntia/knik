@@ -29,3 +29,27 @@ export interface InputPanelRef {
   focus: () => void
   clear: () => void
 }
+
+/** Props for the compaction divider shown when a conversation is summarized. */
+export interface CompactionDividerProps {
+  summaryContent?: string
+}
+
+/** A single item in the demo conversation history list. */
+export interface ConversationHistoryItem {
+  id: string
+  name: string
+  time: string
+  group: string
+  tag: string
+  preview: string
+  active?: boolean
+}
+
+/** Props for the grouped conversation history list. */
+export interface ConversationHistoryProps {
+  conversations?: ConversationHistoryItem[]
+  onSelect: (id: string) => void
+  onDelete?: (id: string) => void
+  className?: string
+}

@@ -1,20 +1,5 @@
-import type { ReactNode } from 'react'
 import { DEFAULT_NOTIFICATIONS } from '$constants/demoData'
-
-export interface NotificationItem {
-  id: string
-  type: 'success' | 'fail' | 'info' | 'user'
-  title: ReactNode
-  time: string
-  unread: boolean
-}
-
-export interface NotificationFeedProps {
-  notifications?: NotificationItem[]
-  onDismiss: (id: string) => void
-  onMarkRead: () => void
-  className?: string
-}
+import type { NotificationFeedProps } from '$types'
 
 const ICONS = {
   success: {

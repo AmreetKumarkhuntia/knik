@@ -1,14 +1,8 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Backdrop from '$components/Backdrop'
-import type { ModalProps, ModalSize } from '$types/components'
-
-const sizeClasses: Record<ModalSize, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-}
+import type { ModalProps } from '$types/components'
+import { MODAL_SIZE_CLASSES as sizeClasses } from '$lib/constants'
 
 /** Animated modal dialog with backdrop and size variants. */
 export default function Modal({

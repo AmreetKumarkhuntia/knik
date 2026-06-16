@@ -1,10 +1,5 @@
 import { useId } from 'react'
-
-export interface KnikGlyphProps {
-  size?: number
-  glow?: boolean
-  className?: string
-}
+import type { KnikGlyphProps } from '$types'
 
 /**
  * The KNIK brand mark — five aurora→teal gradient strokes forming a sound-wave

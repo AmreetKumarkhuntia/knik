@@ -1,26 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DEFAULT_COMMANDS } from '$constants/demoData'
-
-export interface CommandItem {
-  id: string
-  label: string
-  shortcut?: string
-  icon?: string
-}
-
-export interface CommandGroup {
-  group: string
-  items: CommandItem[]
-}
-
-export interface CommandPaletteProps {
-  commands?: CommandGroup[]
-  onSelect: (id: string) => void
-  open: boolean
-  onClose: () => void
-  className?: string
-}
+import type { CommandPaletteProps } from '$types'
 
 export default function CommandPalette({
   commands = DEFAULT_COMMANDS,

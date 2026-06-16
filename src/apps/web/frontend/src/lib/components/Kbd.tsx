@@ -1,9 +1,4 @@
-import type { ReactNode } from 'react'
-
-export interface KbdProps {
-  children: ReactNode
-  className?: string
-}
+import type { KbdProps } from '$types'
 
 /** Inline keyboard-key indicator (e.g. ⌘ K). */
 export default function Kbd({ children, className = '' }: KbdProps) {

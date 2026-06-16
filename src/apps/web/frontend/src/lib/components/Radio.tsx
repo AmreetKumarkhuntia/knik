@@ -1,18 +1,4 @@
-export interface RadioOption {
-  label: string
-  value: string
-  monoLabel?: string
-}
-
-export interface RadioProps {
-  options: RadioOption[]
-  value: string
-  onChange: (value: string) => void
-  name: string
-  disabled?: boolean
-  className?: string
-}
-
+import type { RadioProps } from '$types'
 /**
  * Custom radio group with dot fill on select.
  */

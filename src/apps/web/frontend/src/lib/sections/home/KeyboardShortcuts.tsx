@@ -1,14 +1,7 @@
 import { motion } from 'framer-motion'
 import Modal from '$components/Modal'
 import type { KeyboardShortcutsProps } from '$types/sections/home'
-
-const shortcuts = [
-  { key: 'Ctrl + K', description: 'Focus input field' },
-  { key: 'Esc', description: 'Clear input' },
-  { key: 'Enter', description: 'Send message' },
-  { key: '?', description: 'Toggle this panel' },
-  { key: 'Ctrl + /', description: 'Open shortcuts help' },
-]
+import { KEYBOARD_SHORTCUT_ITEMS as shortcuts } from '$lib/constants'
 
 /** Modal listing available keyboard shortcuts. */
 export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcutsProps) {

@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-
-export interface MicRecorderProps {
-  onRecordComplete: (blob: Blob) => void
-  maxDuration?: number // in seconds
-  className?: string
-}
+import type { MicRecorderProps } from '$types'
 
 export default function MicRecorder({
   onRecordComplete,

@@ -1,14 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-export interface PopoverProps {
-  trigger: React.ReactNode
-  content: React.ReactNode
-  placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end'
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  className?: string
-}
+import type { PopoverProps } from '$types'
 
 export default function Popover({
   trigger,

@@ -1,11 +1,5 @@
 import React from 'react'
-
-export interface TokenMeterProps {
-  used: number
-  limit: number
-  model?: string
-  className?: string
-}
+import type { TokenMeterProps } from '$types'
 
 export default function TokenMeter({
   used,

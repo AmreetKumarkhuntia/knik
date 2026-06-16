@@ -1,21 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-export interface SelectOption {
-  label: string
-  value: string
-  icon?: string
-}
-
-export interface SelectProps {
-  options: SelectOption[]
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  disabled?: boolean
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
-}
+import type { SelectProps } from '$types'
 
 /**
  * Custom dropdown select with glass overlay and aurora focus ring.

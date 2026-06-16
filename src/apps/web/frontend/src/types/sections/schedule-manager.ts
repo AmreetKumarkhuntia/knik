@@ -30,3 +30,22 @@ export interface ScheduleFormProps {
   initialData?: Schedule
   loading?: boolean
 }
+
+/** A single scheduled job in the demo schedule list. */
+export interface ScheduleJob {
+  id: string
+  name: string
+  cron: string
+  nextRun: string
+  active: boolean
+  lastStatus?: 'success' | 'failed' | 'running'
+}
+
+/** Props for the demo schedule list (ScheduleJob-based, distinct from ScheduleListProps). */
+export interface ScheduleJobListProps {
+  schedules: ScheduleJob[]
+  onEdit?: (id: string) => void
+  onDelete?: (id: string) => void
+  onToggle?: (id: string, active: boolean) => void
+  className?: string
+}

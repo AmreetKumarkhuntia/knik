@@ -1,4 +1,4 @@
-import type { ThemeColors } from '../../types/theme'
+import type { ThemeColors, ThemeName } from '../../types/theme'
 
 export const EDGE_STATUS_COLORS = {
   default: '#6b7280',
@@ -209,3 +209,20 @@ export const DEFAULT_THEME = 'cyan'
 export const DEFAULT_MODE = 'dark' as const
 export const DEFAULT_DENSITY = 'comfortable' as const
 export const DEFAULT_RADIUS = 'default' as const
+
+/** Accent swatches for the ThemeSelector modal (live preview from presets). */
+export const THEME_ACCENT_SWATCHES = [
+  { name: 'cyan' as const, label: 'Aurora', color: themePresets.cyan.primary },
+  { name: 'teal' as const, label: 'Teal', color: themePresets.teal.primary },
+  { name: 'purple' as const, label: 'Violet', color: themePresets.purple.primary },
+  { name: 'blue' as const, label: 'Blue', color: themePresets.blue.primary },
+  { name: 'amber' as const, label: 'Amber', color: themePresets.amber.primary },
+]
+
+/** Accent options for the Settings → Appearance pane. */
+export const SETTINGS_ACCENTS: { id: ThemeName; label: string; color: string }[] = [
+  { id: 'cyan', label: 'Aurora cyan', color: '#00d9f4' },
+  { id: 'teal', label: 'Deep teal', color: '#14b8a6' },
+  { id: 'purple', label: 'Violet', color: '#8b5cf6' },
+  { id: 'amber', label: 'Amber', color: '#f59e0b' },
+]

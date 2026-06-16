@@ -1,14 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-
-export interface ProgressBarProps {
-  value: number
-  max?: number
-  variant?: 'default' | 'running'
-  animated?: boolean
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
-}
+import type { ProgressBarProps } from '$types'
 
 export default function ProgressBar({
   value,

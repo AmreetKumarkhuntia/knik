@@ -1,10 +1,4 @@
-export interface AvatarProps {
-  initials: string
-  size?: number
-  color?: 'surface' | 'accent'
-  className?: string
-}
-
+import type { AvatarProps } from '$types'
 /** Compact initials avatar; the accent variant uses a subtle aurora→teal fill. */
 export default function Avatar({ initials, size = 30, color = 'surface', className }: AvatarProps) {
   const isAccent = color === 'accent'

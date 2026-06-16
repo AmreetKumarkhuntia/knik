@@ -1,16 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-export interface AgentThinkingStep {
-  type: 'thinking' | 'tool_call' | 'diff'
-  content: string
-}
-
-export interface AgentThinkingProps {
-  steps: AgentThinkingStep[]
-  defaultExpanded?: boolean
-  className?: string
-}
+import type { AgentThinkingStep, AgentThinkingProps } from '$types'
 
 export default function AgentThinking({
   steps,

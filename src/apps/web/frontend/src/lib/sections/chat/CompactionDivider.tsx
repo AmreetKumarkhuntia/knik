@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { ExpandMore, Compress } from '@mui/icons-material'
 import { MarkdownMessage } from '$components/MarkdownMessage'
-
-interface CompactionDividerProps {
-  summaryContent?: string
-}
+import type { CompactionDividerProps } from '$types'
 
 export default function CompactionDivider({ summaryContent }: CompactionDividerProps) {
   const [expanded, setExpanded] = useState(false)

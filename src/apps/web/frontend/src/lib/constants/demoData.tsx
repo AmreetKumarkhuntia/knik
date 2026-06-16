@@ -7,13 +7,13 @@
  * stay presentational and the sample content lives in one place.
  */
 import React from 'react'
-import type { Conversation } from '$sections/chat/ConversationHistory'
+import type { ConversationHistoryItem } from '$types'
 import type { CommandGroup } from '$components/CommandPalette'
 import type { NotificationItem } from '$components/NotificationFeed'
 import type { Voice } from '$components/VoicePicker'
 import type { McpTool } from '$components/McpToolsPanel'
 
-export const DEFAULT_CONVERSATIONS: Conversation[] = [
+export const DEFAULT_CONVERSATIONS: ConversationHistoryItem[] = [
   {
     id: '1',
     name: 'Refactor Python pipeline',

@@ -1,14 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-export interface BannerProps {
-  variant?: 'info' | 'warning' | 'danger' | 'success'
-  dismissible?: boolean
-  icon?: React.ReactNode
-  children: React.ReactNode
-  className?: string
-  onDismiss?: () => void
-}
+import type { BannerProps } from '$types'
 
 export default function Banner({
   variant = 'info',

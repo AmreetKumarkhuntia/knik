@@ -1,14 +1,4 @@
-import type { CSSProperties } from 'react'
-
-export interface MSProps {
-  name: string
-  size?: number
-  fill?: 0 | 1
-  weight?: number
-  grade?: number
-  className?: string
-  style?: CSSProperties
-}
+import type { MSProps } from '$types'
 
 /**
  * Material Symbols (Outlined) glyph helper. The font is loaded globally in

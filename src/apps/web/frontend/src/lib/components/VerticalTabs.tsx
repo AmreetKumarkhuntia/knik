@@ -1,18 +1,5 @@
 import React, { useState } from 'react'
-
-export interface VerticalTab {
-  id: string
-  label: string
-  icon?: string
-  content: React.ReactNode
-}
-
-export interface VerticalTabsProps {
-  tabs: VerticalTab[]
-  activeTab?: string
-  onChange?: (id: string) => void
-  className?: string
-}
+import type { VerticalTabsProps } from '$types'
 
 export default function VerticalTabs({
   tabs,

@@ -1,11 +1,6 @@
-import type { Node } from '@xyflow/react'
 import { getNodeMetadata } from '$lib/constants/nodes'
 import NodeProperties from '../PropertiesPanel/NodeProperties'
-
-interface NodePropertiesPanelProps {
-  selectedNode: Node | null
-  onNodeUpdate: (nodeId: string, data: Record<string, unknown>) => void
-}
+import type { NodePropertiesPanelProps } from '$types'
 
 export default function NodePropertiesPanel({
   selectedNode,

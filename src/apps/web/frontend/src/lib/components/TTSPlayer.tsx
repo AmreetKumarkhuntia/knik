@@ -1,11 +1,5 @@
 import React, { useState } from 'react'
-
-export interface TTSPlayerProps {
-  audioSrc?: string
-  voiceName?: string
-  text?: string
-  className?: string
-}
+import type { TTSPlayerProps } from '$types'
 
 const WAVE_BARS = [
   8, 14, 18, 22, 20, 24, 18, 12, 20, 26, 22, 16, 10, 14, 22, 28, 24, 20, 14, 10, 16, 22, 26, 20, 18,

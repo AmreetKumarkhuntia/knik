@@ -1,18 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-export interface AccordionItem {
-  id: string
-  title: string
-  content: React.ReactNode
-}
-
-export interface AccordionProps {
-  items: AccordionItem[]
-  allowMultiple?: boolean
-  defaultOpen?: string[]
-  className?: string
-}
+import type { AccordionProps } from '$types'
 
 export default function Accordion({
   items,
