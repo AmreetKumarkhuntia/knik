@@ -7,9 +7,23 @@
  * prefers real data and falls back to these.
  */
 
+import type { RunLog } from '$types'
+
 export type AccentBadge = 'primary' | 'teal' | 'violet' | 'success'
 export type RunStatus = 'success' | 'running' | 'failed' | 'pending'
 export type WorkflowStatus = 'active' | 'paused'
+
+/** Demo log stream for the workflow builder run-bar (RunBar). */
+export const DEMO_RUN_LOGS: RunLog[] = [
+  { t: '12:41:02', m: 'Trigger fired · cron 0 9 * * *', c: 'var(--fg-4)' },
+  { t: '12:41:03', m: 'Fetch sources → 14 items (rss, github, gmail)', c: 'var(--success)' },
+  { t: '12:41:05', m: 'Synthesise → kokoro af_heart · 1.2s', c: 'var(--success)' },
+  {
+    t: '12:41:06',
+    m: 'Summarise → gemini-1.5-flash · streaming…',
+    c: 'var(--acc-text, var(--aurora-300))',
+  },
+]
 
 export interface DemoModel {
   id: string

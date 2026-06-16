@@ -1,23 +1,7 @@
 import React from 'react'
 import ToggleSwitch from '../../components/ToggleSwitch'
 import Badge from '../../components/Badge'
-
-export interface ScheduleJob {
-  id: string
-  name: string
-  cron: string
-  nextRun: string
-  active: boolean
-  lastStatus?: 'success' | 'failed' | 'running'
-}
-
-export interface ScheduleListProps {
-  schedules: ScheduleJob[]
-  onEdit?: (id: string) => void
-  onDelete?: (id: string) => void
-  onToggle?: (id: string, active: boolean) => void
-  className?: string
-}
+import type { ScheduleJobListProps } from '$types'
 
 export default function ScheduleList({
   schedules,
@@ -25,7 +9,7 @@ export default function ScheduleList({
   onDelete,
   onToggle,
   className = '',
-}: ScheduleListProps) {
+}: ScheduleJobListProps) {
   if (!schedules || schedules.length === 0) {
     return (
       <div className="p-8 text-center text-fg-3 knik-card border-dashed">

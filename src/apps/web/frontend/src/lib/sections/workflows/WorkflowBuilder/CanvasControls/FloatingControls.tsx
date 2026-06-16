@@ -1,10 +1,7 @@
 import { memo, useState, useEffect, useRef } from 'react'
 import { useReactFlow, type Node as FlowNode } from '@xyflow/react'
 import { getAllNodeTypes, getDefaultNodeData } from '$lib/constants/nodes'
-
-interface FloatingControlsProps {
-  onAddNode?: (node: FlowNode) => void
-}
+import type { FloatingControlsProps } from '$types'
 
 let nodeIdCounter = 0
 const generateNodeId = () => `node_${++nodeIdCounter}_${Date.now()}`

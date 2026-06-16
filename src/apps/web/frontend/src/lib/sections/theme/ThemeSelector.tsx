@@ -2,16 +2,8 @@ import { motion } from 'framer-motion'
 import { CheckCircle, DarkMode, LightMode, Star } from '@mui/icons-material'
 import Modal from '$components/Modal'
 import { useTheme } from '$hooks/useTheme'
-import { themePresets } from '$lib/constants/themes'
+import { THEME_ACCENT_SWATCHES as accentColors } from '$lib/constants'
 import type { ThemeSelectorProps } from '$types/theme'
-
-const accentColors = [
-  { name: 'cyan' as const, label: 'Aurora', color: themePresets.cyan.primary },
-  { name: 'teal' as const, label: 'Teal', color: themePresets.teal.primary },
-  { name: 'purple' as const, label: 'Violet', color: themePresets.purple.primary },
-  { name: 'blue' as const, label: 'Blue', color: themePresets.blue.primary },
-  { name: 'amber' as const, label: 'Amber', color: themePresets.amber.primary },
-]
 
 /** Modal for selecting color mode and accent color with live preview. */
 export default function ThemeSelector({ isOpen, onClose }: ThemeSelectorProps) {

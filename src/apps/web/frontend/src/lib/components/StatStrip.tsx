@@ -1,19 +1,5 @@
 import React from 'react'
-
-export interface StatItem {
-  label: string
-  value: string | number
-  trend?: {
-    direction: 'up' | 'down' | 'neutral'
-    value: string
-  }
-  icon?: string
-}
-
-export interface StatStripProps {
-  stats: StatItem[]
-  className?: string
-}
+import type { StatStripProps } from '$types'
 
 export default function StatStrip({ stats, className = '' }: StatStripProps) {
   return (

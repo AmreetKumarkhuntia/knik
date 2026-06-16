@@ -1,16 +1,5 @@
 import React from 'react'
-
-export interface DonutSegment {
-  label: string
-  value: number
-  color: string
-}
-
-export interface DonutChartProps {
-  segments: DonutSegment[]
-  size?: number
-  className?: string
-}
+import type { DonutChartProps } from '$types'
 
 export default function DonutChart({ segments, size = 120, className = '' }: DonutChartProps) {
   const total = segments.reduce((sum, seg) => sum + seg.value, 0)

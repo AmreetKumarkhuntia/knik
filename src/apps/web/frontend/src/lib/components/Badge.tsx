@@ -1,11 +1,5 @@
 import React from 'react'
-
-export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary'
-  size?: 'sm' | 'md'
-  className?: string
-  children: React.ReactNode
-}
+import type { BadgeProps } from '$types'
 
 export default function Badge({
   variant = 'default',

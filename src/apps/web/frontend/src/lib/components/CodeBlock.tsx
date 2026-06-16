@@ -1,14 +1,7 @@
 import React, { useState } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-
-export interface CodeBlockProps {
-  code: string
-  language?: string
-  showLineNumbers?: boolean
-  copyable?: boolean
-  className?: string
-}
+import type { CodeBlockProps } from '$types'
 
 export default function CodeBlock({
   code,

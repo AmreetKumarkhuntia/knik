@@ -1,28 +1,7 @@
 import React, { useState } from 'react'
 import { DEFAULT_TOOLS } from '$constants/demoData'
-
-export interface McpTool {
-  id: string
-  name: string
-  desc: string
-  category: 'shell' | 'file' | 'browser' | 'cron' | 'text' | string
-  icon: string
-}
-
-export interface McpToolsPanelProps {
-  tools?: McpTool[]
-  onToggle?: (id: string) => void
-  className?: string
-}
-
-const CATEGORY_STYLES: Record<string, string> = {
-  shell: 'bg-[color-mix(in_srgb,var(--teal-500)_14%,transparent)] text-[var(--teal-300)]',
-  file: 'bg-[color-mix(in_srgb,var(--violet-500)_14%,transparent)] text-[var(--violet-400)]',
-  browser: 'bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]',
-  cron: 'bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] text-[var(--aurora-300)]',
-  // No system token for pink; kept as a raw accent for this category.
-  text: 'bg-[rgba(236,72,153,0.14)] text-[#ec4899]',
-}
+import { MCP_CATEGORY_STYLES as CATEGORY_STYLES } from '$lib/constants'
+import type { McpToolsPanelProps } from '$types'
 
 export default function McpToolsPanel({
   tools = DEFAULT_TOOLS,

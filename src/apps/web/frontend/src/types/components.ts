@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
-import type { InputHTMLAttributes } from 'react'
+import type * as React from 'react'
+import type { ReactNode, CSSProperties, InputHTMLAttributes } from 'react'
 import type { ExecutionStatus, NodeExecutionStep, ExecutionDetail } from '$types/workflow'
+import type { DemoModel } from '$lib/constants/redesignData'
 
 /** Supported toast notification types. */
 export type ToastType = 'success' | 'error' | 'info'
@@ -311,4 +312,380 @@ export interface ToastState {
   id: number
   message: string
   type: ToastType
+}
+
+/* ------------------------------------------------------------------ *
+ * Design-system component props (relocated from co-located .tsx files
+ * to satisfy the types-live-in-types/ boundary; see eslint.config.js).
+ * ------------------------------------------------------------------ */
+
+export interface AccordionItem {
+  id: string
+  title: string
+  content: React.ReactNode
+}
+
+export interface AccordionProps {
+  items: AccordionItem[]
+  allowMultiple?: boolean
+  defaultOpen?: string[]
+  className?: string
+}
+
+export interface ActionIconProps {
+  icon: ReactNode
+  onClick?: (e: React.MouseEvent) => void
+  title?: string
+  size?: number
+  active?: boolean
+  danger?: boolean
+  className?: string
+}
+
+export interface AgentThinkingStep {
+  type: 'thinking' | 'tool_call' | 'diff'
+  content: string
+}
+
+export interface AgentThinkingProps {
+  steps: AgentThinkingStep[]
+  defaultExpanded?: boolean
+  className?: string
+}
+
+export interface AvatarProps {
+  initials: string
+  size?: number
+  color?: 'surface' | 'accent'
+  className?: string
+}
+
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary'
+  size?: 'sm' | 'md'
+  className?: string
+  children: React.ReactNode
+}
+
+export interface BannerProps {
+  variant?: 'info' | 'warning' | 'danger' | 'success'
+  dismissible?: boolean
+  icon?: React.ReactNode
+  children: React.ReactNode
+  className?: string
+  onDismiss?: () => void
+}
+
+export interface ChatBubbleProps {
+  role: 'user' | 'assistant'
+  content: React.ReactNode
+  timestamp?: string
+  actions?: {
+    copy?: () => void
+    thumbsUp?: () => void
+    retry?: () => void
+  }
+  className?: string
+}
+
+export interface CheckboxProps {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label?: string
+  disabled?: boolean
+  indeterminate?: boolean
+  className?: string
+}
+
+export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
+  label: React.ReactNode
+  variant?: 'default' | 'tag' | 'voice' | 'lang' | 'team' | 'input' | 'kbd'
+  icon?: React.ReactNode
+  onRemove?: () => void
+  className?: string
+}
+
+export interface CodeBlockProps {
+  code: string
+  language?: string
+  showLineNumbers?: boolean
+  copyable?: boolean
+  className?: string
+}
+
+export interface CommandItem {
+  id: string
+  label: string
+  shortcut?: string
+  icon?: string
+}
+
+export interface CommandGroup {
+  group: string
+  items: CommandItem[]
+}
+
+export interface CommandPaletteProps {
+  commands?: CommandGroup[]
+  onSelect: (id: string) => void
+  open: boolean
+  onClose: () => void
+  className?: string
+}
+
+export interface FileUploadProps {
+  accept?: string
+  multiple?: boolean
+  onUpload: (files: File[]) => void
+  maxSize?: number // in bytes
+  className?: string
+}
+
+export interface JsonViewerProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any
+  tabs?: string[]
+  copyable?: boolean
+  className?: string
+}
+
+export interface KbdProps {
+  children: ReactNode
+  className?: string
+}
+
+export interface KnikGlyphProps {
+  size?: number
+  glow?: boolean
+  className?: string
+}
+
+export interface MSProps {
+  name: string
+  size?: number
+  fill?: 0 | 1
+  weight?: number
+  grade?: number
+  className?: string
+  style?: CSSProperties
+}
+
+export interface McpTool {
+  id: string
+  name: string
+  desc: string
+  category: 'shell' | 'file' | 'browser' | 'cron' | 'text' | string
+  icon: string
+}
+
+export interface McpToolsPanelProps {
+  tools?: McpTool[]
+  onToggle?: (id: string) => void
+  className?: string
+}
+
+export interface MicRecorderProps {
+  onRecordComplete: (blob: Blob) => void
+  maxDuration?: number // in seconds
+  className?: string
+}
+
+export interface ModelPickerProps {
+  model: string
+  onChange: (id: string) => void
+  compact?: boolean
+  models?: DemoModel[]
+}
+
+export interface NotificationItem {
+  id: string
+  type: 'success' | 'fail' | 'info' | 'user'
+  title: ReactNode
+  time: string
+  unread: boolean
+}
+
+export interface NotificationFeedProps {
+  notifications?: NotificationItem[]
+  onDismiss: (id: string) => void
+  onMarkRead: () => void
+  className?: string
+}
+
+export interface PopoverProps {
+  trigger: React.ReactNode
+  content: React.ReactNode
+  placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end'
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  className?: string
+}
+
+export interface ProgressBarProps {
+  value: number
+  max?: number
+  variant?: 'default' | 'running'
+  animated?: boolean
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+export interface RadioOption {
+  label: string
+  value: string
+  monoLabel?: string
+}
+
+export interface RadioProps {
+  options: RadioOption[]
+  value: string
+  onChange: (value: string) => void
+  name: string
+  disabled?: boolean
+  className?: string
+}
+
+export interface SegmentedOption {
+  value: string
+  label: string
+  icon?: React.ReactNode
+}
+
+export interface SegmentedProps {
+  options: (SegmentedOption | string)[]
+  value: string
+  onChange: (value: string) => void
+  size?: 'sm' | 'md'
+  className?: string
+}
+
+export interface SelectOption {
+  label: string
+  value: string
+  icon?: string
+}
+
+export interface SelectProps {
+  options: SelectOption[]
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+export interface SliderProps {
+  min: number
+  max: number
+  value: number
+  onChange: (value: number) => void
+  step?: number
+  label?: string
+  className?: string
+}
+
+export interface StatItem {
+  label: string
+  value: string | number
+  trend?: {
+    direction: 'up' | 'down' | 'neutral'
+    value: string
+  }
+  icon?: string
+}
+
+export interface StatStripProps {
+  stats: StatItem[]
+  className?: string
+}
+
+export interface TTSPlayerProps {
+  audioSrc?: string
+  voiceName?: string
+  text?: string
+  className?: string
+}
+
+export interface TokenMeterProps {
+  used: number
+  limit: number
+  model?: string
+  className?: string
+}
+
+export interface TooltipProps {
+  content: React.ReactNode
+  placement?: 'top' | 'bottom' | 'left' | 'right'
+  delay?: number
+  children: React.ReactNode
+  className?: string
+}
+
+export interface VerticalTab {
+  id: string
+  label: string
+  icon?: string
+  content: React.ReactNode
+}
+
+export interface VerticalTabsProps {
+  tabs: VerticalTab[]
+  activeTab?: string
+  onChange?: (id: string) => void
+  className?: string
+}
+
+export interface Voice {
+  id: string
+  name: string
+  lang: string
+  tags: string[]
+  gradient: string
+}
+
+export interface VoicePickerProps {
+  voices?: Voice[]
+  selected?: string
+  onSelect: (id: string) => void
+  className?: string
+}
+
+export interface AreaChartProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[]
+  xKey: string
+  yKey: string
+  legend?: boolean
+  gradient?: boolean
+  className?: string
+}
+
+export interface BarChartProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[]
+  xKey: string
+  yKey: string
+  horizontal?: boolean
+  className?: string
+}
+
+export interface DonutSegment {
+  label: string
+  value: number
+  color: string
+}
+
+export interface DonutChartProps {
+  segments: DonutSegment[]
+  size?: number
+  className?: string
+}
+
+export interface SparklineChartProps {
+  data: number[]
+  color?: string
+  width?: number | string
+  height?: number | string
+  className?: string
 }

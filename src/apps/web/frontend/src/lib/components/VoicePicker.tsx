@@ -1,32 +1,7 @@
 import React from 'react'
 import { DEFAULT_VOICES } from '$constants/demoData'
-
-export interface Voice {
-  id: string
-  name: string
-  lang: string
-  tags: string[]
-  gradient: string
-}
-
-export interface VoicePickerProps {
-  voices?: Voice[]
-  selected?: string
-  onSelect: (id: string) => void
-  className?: string
-}
-
-const GRADIENTS: Record<string, string> = {
-  'g-rose': 'bg-gradient-to-br from-pink-500 to-pink-700',
-  'g-amber': 'bg-gradient-to-br from-amber-500 to-amber-700',
-  'g-aurora': 'bg-gradient-to-br from-[var(--aurora-400)] to-teal-500',
-  'g-violet': 'bg-gradient-to-br from-violet-400 to-violet-600',
-  'g-emerald': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
-  'g-sky': 'bg-gradient-to-br from-sky-400 to-sky-600',
-  'g-slate': 'bg-gradient-to-br from-slate-400 to-slate-600',
-  'g-zinc': 'bg-gradient-to-br from-zinc-300 to-zinc-500',
-  'g-stone': 'bg-gradient-to-br from-stone-300 to-stone-500',
-}
+import { VOICE_GRADIENTS as GRADIENTS } from '$lib/constants'
+import type { VoicePickerProps } from '$types'
 
 export default function VoicePicker({
   voices = DEFAULT_VOICES,

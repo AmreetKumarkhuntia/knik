@@ -9,22 +9,11 @@ import {
   DEMO_METRICS,
   DEMO_WORKFLOWS,
   DEMO_EXECUTIONS,
+  HUB_METRIC_COLOR as METRIC_COLOR,
+  HUB_TREND_DIR as TREND_DIR,
+  HUB_EXEC_ICON as EXEC_ICON,
   type DemoWorkflow,
-  type RunStatus,
 } from '$lib/constants'
-
-const METRIC_COLOR: Record<string, 'primary' | 'teal' | 'rose' | 'blue'> = {
-  primary: 'primary',
-  teal: 'teal',
-  success: 'teal',
-  violet: 'blue',
-}
-
-const TREND_DIR: Record<string, 'up' | 'down' | 'neutral'> = {
-  up: 'up',
-  down: 'down',
-  flat: 'neutral',
-}
 
 /** Small inline status pill (workflow active/paused). */
 function WorkflowStatus({ status }: { status: 'active' | 'paused' }) {
@@ -48,13 +37,6 @@ function WorkflowStatus({ status }: { status: 'active' | 'paused' }) {
       {cfg.label}
     </span>
   )
-}
-
-const EXEC_ICON: Record<RunStatus, { name: string; color: string }> = {
-  success: { name: 'check_circle', color: 'var(--success)' },
-  failed: { name: 'cancel', color: 'var(--danger)' },
-  running: { name: 'pending', color: 'var(--info)' },
-  pending: { name: 'pending', color: 'var(--info)' },
 }
 
 function SearchField({ value, onChange }: { value: string; onChange: (v: string) => void }) {

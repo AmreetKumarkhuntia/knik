@@ -1,13 +1,4 @@
-export interface SliderProps {
-  min: number
-  max: number
-  value: number
-  onChange: (value: number) => void
-  step?: number
-  label?: string
-  className?: string
-}
-
+import type { SliderProps } from '$types'
 /**
  * Slider track with aurora gradient thumb.
  */

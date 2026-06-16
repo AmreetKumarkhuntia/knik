@@ -1,12 +1,5 @@
 import React, { useId, useMemo } from 'react'
-
-export interface SparklineChartProps {
-  data: number[]
-  color?: string
-  width?: number | string
-  height?: number | string
-  className?: string
-}
+import type { SparklineChartProps } from '$types'
 
 export default function SparklineChart({
   data,

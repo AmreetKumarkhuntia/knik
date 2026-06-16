@@ -1,17 +1,4 @@
-export interface SegmentedOption {
-  value: string
-  label: string
-  icon?: React.ReactNode
-}
-
-export interface SegmentedProps {
-  options: (SegmentedOption | string)[]
-  value: string
-  onChange: (value: string) => void
-  size?: 'sm' | 'md'
-  className?: string
-}
-
+import type { SegmentedProps } from '$types'
 /** Compact segmented control for mutually-exclusive choices (e.g. status filters). */
 export default function Segmented({
   options,

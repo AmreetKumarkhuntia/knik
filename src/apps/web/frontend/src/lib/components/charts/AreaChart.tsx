@@ -1,13 +1,5 @@
 import React from 'react'
-
-export interface AreaChartProps {
-  data: any[]
-  xKey: string
-  yKey: string
-  legend?: boolean
-  gradient?: boolean
-  className?: string
-}
+import type { AreaChartProps } from '$types'
 
 export default function AreaChart({ data, yKey, gradient = true, className = '' }: AreaChartProps) {
   if (!data || data.length === 0) return null

@@ -1,26 +1,7 @@
 import { useState } from 'react'
 import MS from '$components/MS'
-
-interface RunLog {
-  t: string
-  m: string
-  c: string
-}
-
-const LOGS: RunLog[] = [
-  { t: '12:41:02', m: 'Trigger fired · cron 0 9 * * *', c: 'var(--fg-4)' },
-  { t: '12:41:03', m: 'Fetch sources → 14 items (rss, github, gmail)', c: 'var(--success)' },
-  { t: '12:41:05', m: 'Synthesise → kokoro af_heart · 1.2s', c: 'var(--success)' },
-  {
-    t: '12:41:06',
-    m: 'Summarise → gemini-1.5-flash · streaming…',
-    c: 'var(--acc-text, var(--aurora-300))',
-  },
-]
-
-export interface RunBarProps {
-  onClose?: () => void
-}
+import type { RunBarProps } from '$types'
+import { DEMO_RUN_LOGS } from '$lib/constants'
 
 /** Floating run bar: live status + step progress + collapsible log stream. */
 export default function RunBar({ onClose }: RunBarProps) {
@@ -137,7 +118,7 @@ export default function RunBar({ onClose }: RunBarProps) {
             animation: 'knik-fade-up 200ms var(--ease-out) both',
           }}
         >
-          {LOGS.map((l, i) => (
+          {DEMO_RUN_LOGS.map((l, i) => (
             <div
               key={i}
               className="flex font-mono"

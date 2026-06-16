@@ -1,12 +1,5 @@
 import React from 'react'
-
-export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
-  label: React.ReactNode
-  variant?: 'default' | 'tag' | 'voice' | 'lang' | 'team' | 'input' | 'kbd'
-  icon?: React.ReactNode
-  onRemove?: () => void
-  className?: string
-}
+import type { ChipProps } from '$types'
 
 export default function Chip({
   label,

@@ -2,18 +2,7 @@ import React from 'react'
 import VerticalTabs from '../../components/VerticalTabs'
 import ToggleSwitch from '../../components/ToggleSwitch'
 import Select from '../../components/Select'
-
-export interface SettingsSection {
-  id: string
-  label: string
-  icon: string
-  content: React.ReactNode
-}
-
-export interface SettingsPanelProps {
-  sections?: SettingsSection[]
-  className?: string
-}
+import type { SettingsSection, SettingsPanelProps } from '$types'
 
 export default function SettingsPanel({ sections, className = '' }: SettingsPanelProps) {
   // Default dummy sections if none provided

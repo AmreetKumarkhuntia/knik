@@ -1,22 +1,6 @@
 import React from 'react'
 import { DEFAULT_CONVERSATIONS } from '$constants/demoData'
-
-export interface Conversation {
-  id: string
-  name: string
-  time: string
-  group: string
-  tag: string
-  preview: string
-  active?: boolean
-}
-
-export interface ConversationHistoryProps {
-  conversations?: Conversation[]
-  onSelect: (id: string) => void
-  onDelete?: (id: string) => void
-  className?: string
-}
+import type { ConversationHistoryItem, ConversationHistoryProps } from '$types'
 
 export default function ConversationHistory({
   conversations = DEFAULT_CONVERSATIONS,
@@ -30,7 +14,7 @@ export default function ConversationHistory({
       acc[curr.group].push(curr)
       return acc
     },
-    {} as Record<string, Conversation[]>
+    {} as Record<string, ConversationHistoryItem[]>
   )
 
   return (

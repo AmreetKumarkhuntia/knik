@@ -1,12 +1,5 @@
 import React from 'react'
-
-export interface BarChartProps {
-  data: any[]
-  xKey: string
-  yKey: string
-  horizontal?: boolean
-  className?: string
-}
+import type { BarChartProps } from '$types'
 
 export default function BarChart({
   data,

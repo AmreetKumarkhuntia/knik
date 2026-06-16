@@ -17,8 +17,8 @@ import {
   DEMO_MCP_TOOLS,
   DEMO_VOICES,
   DEMO_API_KEYS,
+  SETTINGS_ACCENTS as ACCENTS,
 } from '$lib/constants'
-import type { ThemeName } from '$types/theme'
 
 /* ---------- shared layout atoms ---------- */
 function Group({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
@@ -183,13 +183,6 @@ function GeneralPane() {
 }
 
 /* ---------- Appearance ---------- */
-const ACCENTS: { id: ThemeName; label: string; color: string }[] = [
-  { id: 'cyan', label: 'Aurora cyan', color: '#00d9f4' },
-  { id: 'teal', label: 'Deep teal', color: '#14b8a6' },
-  { id: 'purple', label: 'Violet', color: '#8b5cf6' },
-  { id: 'amber', label: 'Amber', color: '#f59e0b' },
-]
-
 function AppearancePane() {
   const { mode, accentName, density, radius, setMode, setAccent, setDensity, setRadius } =
     useTheme()

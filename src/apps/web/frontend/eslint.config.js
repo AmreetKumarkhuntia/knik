@@ -36,4 +36,42 @@ export default defineConfig([
       '@typescript-eslint/no-unnecessary-condition': 'warn',
     },
   },
+  // Architectural boundaries for component files:
+  //  - types/interfaces must live in src/types/** (import via $types)
+  //  - module-scope static config (option arrays + Record<…> lookup maps) must
+  //    live in src/lib/constants/** (import via $lib/constants)
+  // The destination dirs are excluded so they remain free to hold types/configs
+  // (src/lib/constants also contains demoData.tsx, a legit .tsx data module).
+  {
+    files: ['**/*.tsx'],
+    // Anchored with **/ so the excludes match whether ESLint is invoked from the
+    // frontend dir (src/...) or the repo root (src/apps/web/frontend/src/...),
+    // e.g. via the pre-commit frontend-lint hook which passes full paths.
+    ignores: ['**/src/types/**', '**/src/lib/constants/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSInterfaceDeclaration',
+          message: 'Declare interfaces in src/types/** (import via $types), not in .tsx files.',
+        },
+        {
+          selector: 'TSTypeAliasDeclaration',
+          message: 'Declare type aliases in src/types/** (import via $types), not in .tsx files.',
+        },
+        {
+          selector:
+            ':matches(Program, ExportNamedDeclaration) > VariableDeclaration > VariableDeclarator > ArrayExpression:has(> ObjectExpression)',
+          message:
+            'Move static config arrays to src/lib/constants/** (import via $lib/constants), not .tsx files.',
+        },
+        {
+          selector:
+            ":matches(Program, ExportNamedDeclaration) > VariableDeclaration > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name='Record']",
+          message:
+            'Move static lookup maps to src/lib/constants/** (import via $lib/constants), not .tsx files.',
+        },
+      ],
+    },
+  },
 ])

@@ -1,12 +1,5 @@
 import { useState, useRef, DragEvent, ChangeEvent } from 'react'
-
-export interface FileUploadProps {
-  accept?: string
-  multiple?: boolean
-  onUpload: (files: File[]) => void
-  maxSize?: number // in bytes
-  className?: string
-}
+import type { FileUploadProps } from '$types'
 
 /**
  * Drag-and-drop zone with dashed border and file list preview.

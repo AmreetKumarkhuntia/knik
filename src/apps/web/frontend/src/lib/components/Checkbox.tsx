@@ -1,12 +1,4 @@
-export interface CheckboxProps {
-  checked: boolean
-  onChange: (checked: boolean) => void
-  label?: string
-  disabled?: boolean
-  indeterminate?: boolean
-  className?: string
-}
-
+import type { CheckboxProps } from '$types'
 /**
  * Custom checkbox with aurora check mark and focus ring.
  */

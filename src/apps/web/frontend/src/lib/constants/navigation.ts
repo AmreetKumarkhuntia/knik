@@ -63,3 +63,12 @@ export const COMMAND_GROUPS = [
     ],
   },
 ]
+
+/** Keyboard shortcuts listed in the KeyboardShortcuts help modal. */
+export const KEYBOARD_SHORTCUT_ITEMS = [
+  { key: 'Ctrl + K', description: 'Focus input field' },
+  { key: 'Esc', description: 'Clear input' },
+  { key: 'Enter', description: 'Send message' },
+  { key: '?', description: 'Toggle this panel' },
+  { key: 'Ctrl + /', description: 'Open shortcuts help' },
+]

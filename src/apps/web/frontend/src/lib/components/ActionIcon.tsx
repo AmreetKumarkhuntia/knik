@@ -1,15 +1,5 @@
 import { useState } from 'react'
-import type { ReactNode } from 'react'
-
-export interface ActionIconProps {
-  icon: ReactNode
-  onClick?: (e: React.MouseEvent) => void
-  title?: string
-  size?: number
-  active?: boolean
-  danger?: boolean
-  className?: string
-}
+import type { ActionIconProps } from '$types'
 
 /**
  * Compact icon button with token-driven hover/active states — the redesign's
