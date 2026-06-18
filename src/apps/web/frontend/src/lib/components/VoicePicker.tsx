@@ -1,4 +1,3 @@
-import React from 'react'
 import { DEFAULT_VOICES } from '$constants/demoData'
 import { VOICE_GRADIENTS as GRADIENTS } from '$lib/constants'
 import type { VoicePickerProps } from '$types'

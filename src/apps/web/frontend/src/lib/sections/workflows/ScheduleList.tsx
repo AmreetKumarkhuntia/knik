@@ -1,4 +1,3 @@
-import React from 'react'
 import ToggleSwitch from '../../components/ToggleSwitch'
 import Badge from '../../components/Badge'
 import type { ScheduleJobListProps } from '$types'

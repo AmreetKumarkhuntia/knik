@@ -1,4 +1,3 @@
-import React from 'react'
 import type { AreaChartProps } from '$types'
 
 export default function AreaChart({ data, yKey, gradient = true, className = '' }: AreaChartProps) {

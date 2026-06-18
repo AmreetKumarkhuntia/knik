@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     checker({
-      typescript: true,
+      typescript: { tsconfigPath: './tsconfig.app.json' },
       overlay: {
         position: 'br',
         initialIsOpen: false,

@@ -1,4 +1,3 @@
-import React from 'react'
 import type { BarChartProps } from '$types'
 
 export default function BarChart({

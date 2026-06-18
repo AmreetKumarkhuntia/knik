@@ -8,10 +8,10 @@
  */
 import React from 'react'
 import type { ConversationHistoryItem } from '$types'
-import type { CommandGroup } from '$components/CommandPalette'
-import type { NotificationItem } from '$components/NotificationFeed'
-import type { Voice } from '$components/VoicePicker'
-import type { McpTool } from '$components/McpToolsPanel'
+import type { CommandGroup } from '$types'
+import type { NotificationItem } from '$types'
+import type { Voice } from '$types'
+import type { McpTool } from '$types'
 
 export const DEFAULT_CONVERSATIONS: ConversationHistoryItem[] = [
   {

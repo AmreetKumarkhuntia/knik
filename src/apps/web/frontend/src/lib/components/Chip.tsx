@@ -1,4 +1,3 @@
-import React from 'react'
 import type { ChipProps } from '$types'
 
 export default function Chip({

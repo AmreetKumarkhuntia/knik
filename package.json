@@ -35,7 +35,7 @@
     "format:frontend": "./scripts/format_frontend.sh",
     "format:all": "npm run format && npm run format:frontend",
     "typecheck": "./scripts/typecheck_backend.sh",
-    "typecheck:frontend": "cd src/apps/web/frontend && tsc --noEmit",
+    "typecheck:frontend": "cd src/apps/web/frontend && tsc -b --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky"
   },

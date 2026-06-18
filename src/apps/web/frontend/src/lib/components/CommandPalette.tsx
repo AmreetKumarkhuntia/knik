@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DEFAULT_COMMANDS } from '$constants/demoData'
 import type { CommandPaletteProps } from '$types'

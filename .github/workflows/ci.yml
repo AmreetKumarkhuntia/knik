@@ -85,7 +85,7 @@ jobs:
         run: npx prettier --check "src/**/*.{ts,tsx,css,json}"
 
       - name: TypeScript type-check
-        run: npx tsc --noEmit
+        run: npx tsc -b --noEmit
 
       - name: Build
         run: npx vite build

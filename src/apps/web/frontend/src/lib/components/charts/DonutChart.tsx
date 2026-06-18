@@ -1,4 +1,3 @@
-import React from 'react'
 import type { DonutChartProps } from '$types'
 
 export default function DonutChart({ segments, size = 120, className = '' }: DonutChartProps) {

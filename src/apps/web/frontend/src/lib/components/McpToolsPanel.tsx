@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { DEFAULT_TOOLS } from '$constants/demoData'
 import { MCP_CATEGORY_STYLES as CATEGORY_STYLES } from '$lib/constants'
 import type { McpToolsPanelProps } from '$types'
