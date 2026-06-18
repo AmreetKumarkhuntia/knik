@@ -1,4 +1,3 @@
-import React from 'react'
 import VerticalTabs from '../../components/VerticalTabs'
 import ToggleSwitch from '../../components/ToggleSwitch'
 import Select from '../../components/Select'

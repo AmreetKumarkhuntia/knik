@@ -1,4 +1,3 @@
-import React from 'react'
 import type { TokenMeterProps } from '$types'
 
 export default function TokenMeter({

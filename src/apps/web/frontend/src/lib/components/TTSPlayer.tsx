@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { TTSPlayerProps } from '$types'
 
 const WAVE_BARS = [

@@ -1,4 +1,4 @@
-import React, { useId, useMemo } from 'react'
+import { useId, useMemo } from 'react'
 import type { SparklineChartProps } from '$types'
 
 export default function SparklineChart({

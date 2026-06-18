@@ -8,7 +8,7 @@ import AgentThinking from '$components/AgentThinking'
 import MS from '$components/MS'
 import CompactionDivider from './CompactionDivider'
 import { DEMO_ACCOUNT } from '$lib/constants'
-import type { AgentThinkingStep } from '$components/AgentThinking'
+import type { AgentThinkingStep } from '$types'
 import type { ChatPanelProps, Message } from '$types/sections/chat'
 
 /** Assistant glyph tile avatar. */
