@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 src_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(src_path))
 
+from apps.web.backend import state
 from apps.web.backend.config import WebBackendConfig
 from apps.web.backend.routes.admin import router as admin_router
 from apps.web.backend.routes.analytics import router as analytics_router
@@ -25,6 +26,7 @@ from apps.web.backend.routes.history import router as history_router
 from apps.web.backend.routes.workflow import router as workflow_router
 from imports import printer
 from lib.services.postgres.db import PostgresDB
+from lib.services.settings import SettingsDB
 
 
 config = WebBackendConfig()
@@ -60,6 +62,14 @@ async def lifespan(app: FastAPI):
         printer.success("PostgreSQL connection pool initialized")
     except Exception as e:
         printer.warning(f"PostgreSQL init failed (conversations will not persist): {e}")
+
+    try:
+        persisted = await SettingsDB.get()
+        if persisted:
+            state.set_persisted_overrides(persisted)
+            printer.info(f"Loaded persisted settings: {persisted.get('provider')}/{persisted.get('model')}")
+    except Exception as e:
+        printer.warning(f"Could not load persisted settings: {e}")
 
     printer.success(f"Backend ready on http://{config.host}:{config.port}")
     printer.info(f"AI Provider: {config.ai_provider}/{config.ai_model}")

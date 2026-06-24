@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import VerticalTabs from '$components/VerticalTabs'
 import ActionButton from '$components/ActionButton'
@@ -11,14 +11,17 @@ import Segmented from '$components/Segmented'
 import MS from '$components/MS'
 import { useTheme } from '$hooks/useTheme'
 import { useStore } from '$store/index'
-import {
-  DEMO_ACCOUNT,
-  DEMO_PROVIDERS,
-  DEMO_MCP_TOOLS,
-  DEMO_VOICES,
-  DEMO_API_KEYS,
-  SETTINGS_ACCENTS as ACCENTS,
-} from '$lib/constants'
+import { ApiClient } from '$services/api'
+import { formatDate } from '$utils/format'
+import { SETTINGS_ACCENTS as ACCENTS } from '$lib/constants'
+import type {
+  AdminOption,
+  ApiKeyCreated,
+  ApiKeyInfo,
+  McpToolInfo,
+  SettingsResponse,
+  SettingsUpdateFn,
+} from '$types/sections/settings'
 
 /* ---------- shared layout atoms ---------- */
 function Group({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
@@ -85,8 +88,8 @@ const fieldStyle: React.CSSProperties = {
 function ProviderStatus({ status }: { status: 'connected' | 'offline' }) {
   const cfg =
     status === 'connected'
-      ? { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Connected' }
-      : { bg: 'rgba(154,166,182,0.16)', color: 'var(--fg-3)', label: 'Offline' }
+      ? { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Active' }
+      : { bg: 'rgba(154,166,182,0.16)', color: 'var(--fg-3)', label: 'Available' }
   return (
     <span
       className="inline-flex items-center font-medium"
@@ -105,9 +108,40 @@ function ProviderStatus({ status }: { status: 'connected' | 'offline' }) {
   )
 }
 
+function initialsFrom(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'AI'
+  return parts
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+}
+
 /* ---------- General ---------- */
-function GeneralPane() {
+function GeneralPane({
+  settings,
+  onUpdate,
+}: {
+  settings: SettingsResponse | null
+  onUpdate: SettingsUpdateFn
+}) {
   const handleClearHistory = useStore(s => s.handleClearHistory)
+  const [models, setModels] = useState<AdminOption[]>([])
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setModels((await ApiClient.admin.getModels()).models)
+      } catch (e) {
+        console.error('Failed to load models:', e)
+      }
+    })()
+  }, [])
+
+  const displayName = settings?.display_name ?? ''
+  const username = settings?.username ?? ''
+
   return (
     <>
       <Group title="Profile" sub="How you appear across Knik AI">
@@ -120,10 +154,10 @@ function GeneralPane() {
             marginBottom: 6,
           }}
         >
-          <Avatar initials={DEMO_ACCOUNT.initials} size={56} color="accent" />
+          <Avatar initials={initialsFrom(displayName)} size={56} color="accent" />
           <div className="flex-1">
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--fg-1)' }}>
-              {DEMO_ACCOUNT.name}
+              {displayName || 'Local account'}
             </div>
             <div
               className="flex items-center"
@@ -135,35 +169,58 @@ function GeneralPane() {
               Local account · this device
             </div>
           </div>
-          <ActionButton
-            variant="secondary"
-            size="sm"
-            icon={<MS name="photo_camera" size={15} />}
-            label="Change"
-          />
         </div>
         <Row label="Display name">
-          <input defaultValue={DEMO_ACCOUNT.name} style={fieldStyle} />
+          <input
+            key={`dn-${displayName}`}
+            defaultValue={displayName}
+            onBlur={e => {
+              if (e.target.value !== displayName) void onUpdate({ display_name: e.target.value })
+            }}
+            style={fieldStyle}
+          />
         </Row>
         <Row label="Username" hint="Shown locally on this device" last>
-          <input defaultValue={DEMO_ACCOUNT.handle} style={fieldStyle} />
+          <input
+            key={`un-${username}`}
+            defaultValue={username}
+            onBlur={e => {
+              if (e.target.value !== username) void onUpdate({ username: e.target.value })
+            }}
+            style={fieldStyle}
+          />
         </Row>
       </Group>
 
       <Group title="Defaults">
         <Row label="Default model" hint="Used for new chats">
-          <div className="flex items-center" style={{ ...fieldStyle, display: 'flex', gap: 8 }}>
-            <span
-              style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--teal-400)' }}
-            />
-            Gemini 1.5 Flash
-          </div>
+          <select
+            value={settings?.model ?? ''}
+            onChange={e => void onUpdate({ model: e.target.value })}
+            style={fieldStyle}
+            disabled={!settings}
+          >
+            {settings && !models.some(m => m.id === settings.model) && (
+              <option value={settings.model}>{settings.model}</option>
+            )}
+            {models.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
         </Row>
         <Row label="Stream responses" hint="Show tokens as they generate">
-          <ToggleSwitch checked onChange={() => {}} />
+          <ToggleSwitch
+            checked={settings?.stream_responses ?? true}
+            onChange={v => void onUpdate({ stream_responses: v })}
+          />
         </Row>
         <Row label="Send telemetry" hint="Anonymous usage to improve KNIK" last>
-          <ToggleSwitch checked={false} onChange={() => {}} />
+          <ToggleSwitch
+            checked={settings?.send_telemetry ?? false}
+            onChange={v => void onUpdate({ send_telemetry: v })}
+          />
         </Row>
       </Group>
 
@@ -326,44 +383,108 @@ function AppearancePane() {
 }
 
 /* ---------- Providers ---------- */
-function ProvidersPane() {
+function ProvidersPane({
+  settings,
+  onUpdate,
+}: {
+  settings: SettingsResponse | null
+  onUpdate: SettingsUpdateFn
+}) {
+  const [providers, setProviders] = useState<AdminOption[]>([])
+  const [tools, setTools] = useState<McpToolInfo[]>([])
+
+  const loadTools = async () => {
+    try {
+      setTools((await ApiClient.admin.getMcpTools()).tools)
+    } catch (e) {
+      console.error('Failed to load MCP tools:', e)
+    }
+  }
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setProviders((await ApiClient.admin.getProviders()).providers)
+      } catch (e) {
+        console.error('Failed to load providers:', e)
+      }
+    })()
+    void (async () => {
+      try {
+        setTools((await ApiClient.admin.getMcpTools()).tools)
+      } catch (e) {
+        console.error('Failed to load MCP tools:', e)
+      }
+    })()
+  }, [])
+
+  const toggleTool = async (t: McpToolInfo) => {
+    setTools(prev => prev.map(x => (x.name === t.name ? { ...x, enabled: !x.enabled } : x)))
+    try {
+      await ApiClient.admin.toggleMcpTool(t.name, !t.enabled)
+    } catch (e) {
+      console.error('Failed to toggle MCP tool:', e)
+      void loadTools()
+    }
+  }
+
   return (
     <>
-      <Group title="AI providers" sub="Local-first — connect the models you run">
-        {DEMO_PROVIDERS.map((p, i) => (
-          <Row key={p.id} label={p.name} hint={p.models} last={i === DEMO_PROVIDERS.length - 1}>
-            <div className="flex items-center" style={{ gap: 12 }}>
-              <ProviderStatus status={p.status} />
-              <ActionButton
-                variant={p.status === 'offline' ? 'primary' : 'secondary'}
-                size="sm"
-                label={p.status === 'offline' ? 'Connect' : 'Manage'}
-              />
-            </div>
-          </Row>
-        ))}
+      <Group title="AI providers" sub="Local-first — pick the model backend Knik uses">
+        {providers.map((p, i) => {
+          const active = settings?.provider === p.id
+          return (
+            <Row key={p.id} label={p.name} last={i === providers.length - 1}>
+              <div className="flex items-center" style={{ gap: 12 }}>
+                <ProviderStatus status={active ? 'connected' : 'offline'} />
+                <ActionButton
+                  variant={active ? 'secondary' : 'primary'}
+                  size="sm"
+                  label={active ? 'In use' : 'Use'}
+                  onClick={active ? () => {} : () => void onUpdate({ provider: p.id })}
+                />
+              </div>
+            </Row>
+          )
+        })}
+        {providers.length === 0 && (
+          <div style={{ fontSize: 12.5, color: 'var(--fg-4)', padding: '8px 0' }}>
+            Loading providers…
+          </div>
+        )}
       </Group>
 
-      <Group title="MCP tools" sub="Enabled integrations available to workflows & chat">
+      <Group title="MCP tools" sub="Toggle the tool groups available to workflows & chat">
         <div className="flex flex-wrap" style={{ gap: 8 }}>
-          {DEMO_MCP_TOOLS.map(t => (
-            <Chip
+          {tools.map(t => (
+            <button
               key={t.name}
-              icon={<MS name="extension" size={14} />}
-              label={
-                <>
-                  {t.name}
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 10, color: 'var(--fg-5)', marginLeft: 4 }}
-                  >
-                    {t.count}
-                  </span>
-                </>
-              }
-            />
+              type="button"
+              onClick={() => void toggleTool(t)}
+              className="inline-flex items-center transition-all ease-knik-out"
+              style={{
+                gap: 6,
+                padding: '6px 11px',
+                borderRadius: 999,
+                cursor: 'pointer',
+                border: `1px solid ${t.enabled ? 'var(--acc-border, rgba(0,217,244,0.4))' : 'var(--border-2)'}`,
+                background: t.enabled ? 'var(--acc-soft)' : 'var(--bg-surface)',
+                color: t.enabled ? 'var(--acc-text, var(--aurora-200))' : 'var(--fg-4)',
+                opacity: t.enabled ? 1 : 0.65,
+              }}
+              title={`${t.category} · ${t.count} tools · ${t.enabled ? 'enabled' : 'disabled'}`}
+            >
+              <MS name="extension" size={14} />
+              <span style={{ fontSize: 12.5, fontWeight: 550 }}>{t.name}</span>
+              <span className="font-mono" style={{ fontSize: 10, color: 'var(--fg-5)' }}>
+                {t.count}
+              </span>
+              <MS name={t.enabled ? 'check_circle' : 'radio_button_unchecked'} size={13} />
+            </button>
           ))}
-          <Chip variant="input" icon={<MS name="add" size={14} />} label="Add tool" />
+          {tools.length === 0 && (
+            <Chip icon={<MS name="extension" size={14} />} label="Loading tools…" />
+          )}
         </div>
       </Group>
     </>
@@ -371,14 +492,34 @@ function ProvidersPane() {
 }
 
 /* ---------- Voice ---------- */
-function VoicePane() {
-  const [sel, setSel] = useState('af_heart')
+function VoicePane({
+  settings,
+  onUpdate,
+}: {
+  settings: SettingsResponse | null
+  onUpdate: SettingsUpdateFn
+}) {
+  const [voices, setVoices] = useState<AdminOption[]>([])
   const [rate, setRate] = useState(1)
+  const [ttsEnabled, setTtsEnabled] = useState(true)
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setVoices((await ApiClient.admin.getVoices()).voices)
+      } catch (e) {
+        console.error('Failed to load voices:', e)
+      }
+    })()
+  }, [])
+
+  const sel = settings?.voice ?? ''
+
   return (
     <>
       <Group title="Text-to-speech" sub="Powered by Kokoro-82M · 9 voices · 10 languages">
         <Row label="Enable TTS" hint="Read assistant replies aloud">
-          <ToggleSwitch checked onChange={() => {}} />
+          <ToggleSwitch checked={ttsEnabled} onChange={setTtsEnabled} />
         </Row>
         <Row label="Speaking rate" last>
           <div className="flex items-center" style={{ gap: 10, minWidth: 220 }}>
@@ -399,13 +540,14 @@ function VoicePane() {
 
       <Group title="Voice" sub="Default voice for synthesis">
         <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 10 }}>
-          {DEMO_VOICES.map(v => {
+          {voices.map(v => {
             const on = sel === v.id
+            const female = v.id.startsWith('af_')
             return (
               <button
                 key={v.id}
                 type="button"
-                onClick={() => setSel(v.id)}
+                onClick={() => void onUpdate({ voice: v.id })}
                 className="text-left transition-all duration-150 ease-knik-out"
                 style={{
                   padding: '12px 13px',
@@ -422,11 +564,8 @@ function VoicePane() {
                       width: 30,
                       height: 30,
                       borderRadius: 8,
-                      background: v.gender === 'F' ? 'rgba(139,92,246,0.16)' : 'var(--acc-soft)',
-                      color:
-                        v.gender === 'F'
-                          ? 'var(--violet-400)'
-                          : 'var(--acc-text, var(--aurora-300))',
+                      background: female ? 'rgba(139,92,246,0.16)' : 'var(--acc-soft)',
+                      color: female ? 'var(--violet-400)' : 'var(--acc-text, var(--aurora-300))',
                     }}
                   >
                     <MS name="graphic_eq" size={16} />
@@ -444,9 +583,6 @@ function VoicePane() {
                 <code className="font-mono" style={{ fontSize: 10.5, color: 'var(--fg-4)' }}>
                   {v.id}
                 </code>
-                <div style={{ fontSize: 11, color: 'var(--fg-4)', marginTop: 3 }}>
-                  {v.lang} · {v.gender === 'F' ? 'Female' : 'Male'}
-                </div>
               </button>
             )
           })}
@@ -458,70 +594,206 @@ function VoicePane() {
 
 /* ---------- API keys ---------- */
 function KeysPane() {
+  const [keys, setKeys] = useState<ApiKeyInfo[]>([])
+  const [created, setCreated] = useState<ApiKeyCreated | null>(null)
+
+  const load = async () => {
+    try {
+      setKeys((await ApiClient.admin.listApiKeys()).api_keys)
+    } catch (e) {
+      console.error('Failed to load API keys:', e)
+    }
+  }
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setKeys((await ApiClient.admin.listApiKeys()).api_keys)
+      } catch (e) {
+        console.error('Failed to load API keys:', e)
+      }
+    })()
+  }, [])
+
+  const handleCreate = async () => {
+    const label = window.prompt('Name this API key:')
+    if (!label?.trim()) return
+    try {
+      const res = await ApiClient.admin.createApiKey(label.trim())
+      setCreated(res)
+      await load()
+    } catch (e) {
+      console.error('Failed to create API key:', e)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Revoke this API key? Apps using it will stop working.')) return
+    try {
+      await ApiClient.admin.deleteApiKey(id)
+      await load()
+    } catch (e) {
+      console.error('Failed to revoke API key:', e)
+    }
+  }
+
   return (
     <Group title="API keys" sub="Use these to call the KNIK API from your own apps">
+      {created && (
+        <div
+          style={{
+            marginBottom: 14,
+            padding: '13px 14px',
+            borderRadius: 'var(--r-btn, 10px)',
+            border: '1px solid var(--acc-border, rgba(0,217,244,0.4))',
+            background: 'var(--acc-soft)',
+          }}
+        >
+          <div className="flex items-center" style={{ gap: 8, marginBottom: 8 }}>
+            <MS name="warning" size={15} style={{ color: 'var(--acc-text, var(--aurora-300))' }} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--fg-1)' }}>
+              Copy your key now — it won’t be shown again.
+            </span>
+          </div>
+          <div className="flex items-center" style={{ gap: 8 }}>
+            <code
+              className="font-mono flex-1 truncate"
+              style={{ fontSize: 12, color: 'var(--fg-2)' }}
+            >
+              {created.key}
+            </code>
+            <ActionIcon
+              size={30}
+              icon={<MS name="content_copy" size={15} />}
+              title="Copy"
+              onClick={() => void navigator.clipboard.writeText(created.key)}
+            />
+            <ActionButton
+              variant="secondary"
+              size="sm"
+              label="Done"
+              onClick={() => setCreated(null)}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end" style={{ marginBottom: 8 }}>
         <ActionButton
           variant="primary"
           size="sm"
           icon={<MS name="add" size={15} />}
           label="Create key"
+          onClick={() => void handleCreate()}
         />
       </div>
-      {DEMO_API_KEYS.map((k, i) => (
-        <div
-          key={k.id}
-          className="flex items-center"
-          style={{
-            gap: 14,
-            padding: '13px 0',
-            borderBottom: i === DEMO_API_KEYS.length - 1 ? 'none' : '1px solid var(--border-1)',
-          }}
-        >
+
+      {keys.length === 0 ? (
+        <div style={{ fontSize: 12.5, color: 'var(--fg-4)', padding: '10px 0' }}>
+          No API keys yet. Create one to call the KNIK API.
+        </div>
+      ) : (
+        keys.map((k, i) => (
           <div
-            className="flex items-center justify-center flex-shrink-0"
+            key={k.id}
+            className="flex items-center"
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 'var(--r-btn, 8px)',
-              background: 'var(--bg-surface-3)',
-              color: 'var(--fg-3)',
+              gap: 14,
+              padding: '13px 0',
+              borderBottom: i === keys.length - 1 ? 'none' : '1px solid var(--border-1)',
             }}
           >
-            <MS name="key" size={17} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center" style={{ gap: 8 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--fg-1)' }}>
-                {k.label}
-              </span>
-              <Chip label={k.scope} />
+            <div
+              className="flex items-center justify-center flex-shrink-0"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 'var(--r-btn, 8px)',
+                background: 'var(--bg-surface-3)',
+                color: 'var(--fg-3)',
+              }}
+            >
+              <MS name="key" size={17} />
             </div>
-            <code className="font-mono" style={{ fontSize: 12, color: 'var(--fg-4)' }}>
-              {k.prefix}••••••••••••
-            </code>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 12, color: 'var(--fg-3)' }}>Used {k.lastUsed}</div>
-            <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--fg-5)' }}>
-              {k.created}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center" style={{ gap: 8 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--fg-1)' }}>
+                  {k.label}
+                </span>
+                {k.scopes.map(scope => (
+                  <Chip key={scope} label={scope} />
+                ))}
+              </div>
+              <code className="font-mono" style={{ fontSize: 12, color: 'var(--fg-4)' }}>
+                {k.key_prefix}••••••••••••
+              </code>
             </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12, color: 'var(--fg-3)' }}>
+                {k.last_used_at ? `Used ${formatDate(k.last_used_at)}` : 'Never used'}
+              </div>
+              <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--fg-5)' }}>
+                {formatDate(k.created_at ?? undefined)}
+              </div>
+            </div>
+            <ActionIcon
+              size={32}
+              icon={<MS name="delete" size={15} />}
+              title="Revoke"
+              danger
+              onClick={() => void handleDelete(k.id)}
+            />
           </div>
-          <ActionIcon size={32} icon={<MS name="content_copy" size={15} />} title="Copy" />
-          <ActionIcon size={32} icon={<MS name="delete" size={15} />} title="Revoke" danger />
-        </div>
-      ))}
+        ))
+      )}
     </Group>
   )
 }
 
 /** Settings page: General · Appearance · Providers · Voice · API keys. */
 export default function Settings() {
+  const [settings, setSettings] = useState<SettingsResponse | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setSettings(await ApiClient.admin.getSettings())
+      } catch (e) {
+        console.error('Failed to load settings:', e)
+      }
+    })()
+  }, [])
+
+  const onUpdate: SettingsUpdateFn = async patch => {
+    setSettings(prev => (prev ? ({ ...prev, ...patch } as SettingsResponse) : prev))
+    try {
+      await ApiClient.admin.updateSettings(patch)
+      setSettings(await ApiClient.admin.getSettings())
+    } catch (e) {
+      console.error('Failed to update settings:', e)
+    }
+  }
+
   const tabs = [
-    { id: 'general', label: 'General', icon: 'tune', content: <GeneralPane /> },
+    {
+      id: 'general',
+      label: 'General',
+      icon: 'tune',
+      content: <GeneralPane settings={settings} onUpdate={onUpdate} />,
+    },
     { id: 'appearance', label: 'Appearance', icon: 'palette', content: <AppearancePane /> },
-    { id: 'providers', label: 'Providers', icon: 'hub', content: <ProvidersPane /> },
-    { id: 'voice', label: 'Voice', icon: 'graphic_eq', content: <VoicePane /> },
+    {
+      id: 'providers',
+      label: 'Providers',
+      icon: 'hub',
+      content: <ProvidersPane settings={settings} onUpdate={onUpdate} />,
+    },
+    {
+      id: 'voice',
+      label: 'Voice',
+      icon: 'graphic_eq',
+      content: <VoicePane settings={settings} onUpdate={onUpdate} />,
+    },
     { id: 'keys', label: 'API keys', icon: 'key', content: <KeysPane /> },
   ]
 

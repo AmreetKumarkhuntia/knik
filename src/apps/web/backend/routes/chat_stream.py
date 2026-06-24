@@ -17,7 +17,6 @@ import numpy as np
 import soundfile as sf
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 
 
 src_path = Path(__file__).parent.parent.parent.parent
@@ -25,6 +24,7 @@ sys.path.insert(0, str(src_path))
 
 from apps.web.backend import state
 from apps.web.backend.config import WebBackendConfig
+from apps.web.backend.models.chat import StreamChatRequest
 from imports import printer
 from lib.services.conversation import ConversationDB
 from lib.services.tts.utils import is_speakable
@@ -38,11 +38,6 @@ _TTS_DONE = object()
 
 # Provides natural back-pressure if the LLM streams much faster than TTS.
 _TTS_QUEUE_MAX = 10
-
-
-class StreamChatRequest(BaseModel):
-    message: str
-    conversation_id: str | None = None
 
 
 def _encode_audio(audio_data: np.ndarray, sample_rate: int) -> str:

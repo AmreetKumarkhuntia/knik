@@ -96,8 +96,17 @@ class ConversationDB:
         """List conversations ordered by most recently updated."""
         try:
             await ConversationDB._ensure_initialized()
+            # Omit full message bodies for speed; surface a short preview of the
+            # last message and the message count for list rendering.
             query = """
-                SELECT id, title, '[]'::jsonb AS messages, created_at, updated_at
+                SELECT
+                    id,
+                    title,
+                    '[]'::jsonb AS messages,
+                    COALESCE(jsonb_array_length(messages), 0) AS message_count,
+                    LEFT(messages -> -1 ->> 'content', 200) AS preview,
+                    created_at,
+                    updated_at
                 FROM conversations
                 ORDER BY updated_at DESC
                 LIMIT %s OFFSET %s

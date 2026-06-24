@@ -44,12 +44,25 @@ class Conversation:
     summary_message_id: str | None = None
     compacted_count: int = 0
     total_tokens: int = 0
+    preview: str | None = None
+    message_count: int = 0
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Conversation":
         """Create a Conversation from a database row."""
         raw_messages = row.get("messages", [])
         messages = [ConversationMessage.from_dict(m) for m in raw_messages] if raw_messages else []
+
+        # ``preview`` / ``message_count`` are supplied directly by the list
+        # query (which omits full message bodies for speed). For full rows that
+        # carry the whole messages array, derive them from the loaded messages.
+        message_count = row.get("message_count")
+        if message_count is None:
+            message_count = len(messages)
+
+        preview = row.get("preview")
+        if preview is None and messages:
+            preview = messages[-1].content
 
         return cls(
             id=row["id"],
@@ -60,6 +73,8 @@ class Conversation:
             summary_message_id=row.get("summary_message_id"),
             compacted_count=row.get("compacted_count") or 0,
             total_tokens=row.get("total_tokens") or 0,
+            preview=preview,
+            message_count=message_count,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -72,4 +87,6 @@ class Conversation:
             "summary_message_id": self.summary_message_id,
             "compacted_count": self.compacted_count,
             "total_tokens": self.total_tokens,
+            "preview": self.preview,
+            "message_count": self.message_count,
         }

@@ -1,3 +1,5 @@
+import { API } from '$constants/config'
+
 interface StreamCallbacks {
   onText?: (chunk: string) => void
   onAudio?: (audioBase64: string) => void
@@ -38,8 +40,7 @@ export async function streamChat(
   callbacks: StreamCallbacks,
   options?: StreamOptions
 ): Promise<AbortController> {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-  const url = `${apiUrl}/api/chat/stream`
+  const url = `${API.baseApiURL}/chat/stream/`
 
   const abortController = new AbortController()
 

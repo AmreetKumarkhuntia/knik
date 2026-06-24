@@ -9,26 +9,19 @@ import sys
 from pathlib import Path
 
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
 from apps.console.history import ConversationHistory
+from apps.web.backend.models.history import MessageAdd
 from lib.services.conversation import ConversationDB
 
 
 router = APIRouter()
 
 conversation_history = ConversationHistory()
-
-
-class MessageAdd(BaseModel):
-    """Request body for adding a message to conversation history."""
-
-    role: str  # "user" or "assistant"
-    content: str
 
 
 async def _is_db_available() -> bool:

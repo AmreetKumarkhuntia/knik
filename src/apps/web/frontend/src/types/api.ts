@@ -31,6 +31,10 @@ export interface Conversation {
   summary_message_id: string | null
   compacted_count: number
   total_tokens: number
+  /** Short snippet of the last message — populated by the list endpoint (messages omitted there). */
+  preview?: string | null
+  /** Number of messages in the conversation — populated by the list endpoint. */
+  message_count?: number
 }
 
 /** Paginated API response listing conversations. */

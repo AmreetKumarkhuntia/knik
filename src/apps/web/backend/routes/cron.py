@@ -1,27 +1,13 @@
 """Router for querying and managing Cron Schedules via Web API."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
+from apps.web.backend.models.cron import ScheduleCreateRequest, ScheduleToggleRequest
 from lib.cron import schedule_service
 from lib.cron.models import Schedule
 
 
 router = APIRouter()
-
-
-class ScheduleCreateRequest(BaseModel):
-    """Request body for creating a new cron schedule."""
-
-    target_workflow_id: str
-    schedule_description: str
-    timezone: str = "UTC"
-
-
-class ScheduleToggleRequest(BaseModel):
-    """Request body for toggling a schedule's enabled status."""
-
-    enabled: bool
 
 
 def _serialize_schedule(s: Schedule) -> dict:

@@ -59,6 +59,52 @@ async def create_workflow(
     }
 
 
+async def update_workflow(
+    workflow_id: str,
+    name: str,
+    definition: dict[str, Any],
+    description: str | None = None,
+) -> dict[str, Any]:
+    """Update an existing workflow's name, definition, and description.
+
+    Args:
+        workflow_id: ID of the workflow to update (must already exist).
+        name: New human-readable workflow name.
+        definition: New DAG definition dict with 'nodes' and 'connections'.
+        description: Optional new description; preserved if None.
+
+    Returns:
+        Dict with 'success' and details on success, or 'error' (and optionally
+        'details') if the workflow is missing or the definition is invalid.
+    """
+    existing = await SchedulerDB.get_workflow(workflow_id)
+    if not existing:
+        return {"error": f"Workflow {workflow_id} not found", "workflow_id": workflow_id}
+
+    validation_result = validate_workflow_definition(definition)
+    if not validation_result["valid"]:
+        return {
+            "error": f"Invalid workflow definition: {validation_result['message']}",
+            "details": validation_result.get("details"),
+        }
+
+    workflow = Workflow(
+        id=workflow_id,
+        name=name,
+        definition=definition,
+        description=description if description is not None else existing.description,
+    )
+    await SchedulerDB.create_workflow(workflow)  # upsert via ON CONFLICT DO UPDATE
+
+    printer.info(f"Workflow updated successfully: {workflow_id}")
+    return {
+        "success": True,
+        "workflow_id": workflow_id,
+        "name": name,
+        "description": workflow.description,
+    }
+
+
 async def get_workflow(workflow_id: str) -> Workflow | None:
     """Retrieve a workflow by ID."""
     return await SchedulerDB.get_workflow(workflow_id)

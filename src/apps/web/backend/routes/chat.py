@@ -8,7 +8,6 @@ from pathlib import Path
 
 import soundfile as sf
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 
 src_path = Path(__file__).parent.parent.parent.parent
@@ -16,17 +15,13 @@ sys.path.insert(0, str(src_path))
 
 from apps.web.backend import state
 from apps.web.backend.config import WebBackendConfig
+from apps.web.backend.models.chat import SimpleChatRequest
 from imports import printer
 
 
 router = APIRouter()
 
 config = WebBackendConfig()
-
-
-class SimpleChatRequest(BaseModel):
-    message: str
-    conversation_id: str | None = None
 
 
 @router.post("/")
