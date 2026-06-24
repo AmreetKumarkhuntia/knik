@@ -20,5 +20,5 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Run frontend dev server
-echo "✨ Starting Vite dev server on http://localhost:5173"
+echo "✨ Starting Vite dev server on http://localhost:8020"
 npm run dev
