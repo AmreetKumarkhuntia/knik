@@ -30,7 +30,7 @@ function createWindow() {
   });
 
   const startUrl = isDev
-    ? "http://localhost:5173"
+    ? "http://localhost:8020"
     : `file://${join(__dirname, "src/apps/web/frontend/dist/index.html")}`;
 
   mainWindow.loadURL(startUrl);

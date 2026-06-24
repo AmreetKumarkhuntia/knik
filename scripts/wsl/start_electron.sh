@@ -25,8 +25,8 @@ fi
 
 echo ""
 echo "📦 Starting services..."
-echo "  - Backend API: http://localhost:8000"
-echo "  - Frontend Dev Server: http://localhost:5173"
+echo "  - Backend API: http://localhost:8010"
+echo "  - Frontend Dev Server: http://localhost:8020"
 echo "  - Electron Window: Loading..."
 echo ""
 
