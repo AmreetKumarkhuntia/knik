@@ -573,3 +573,79 @@ class SchedulerDB:
             result = await PostgresDB.fetch_one(query)
 
         return round(result["avg_duration"] or 0, 2) if result else 0.0
+
+    @staticmethod
+    def get_date_range(time_range: str) -> tuple[datetime | None, datetime | None]:
+        """Resolve a named time range to (start_date, end_date) in UTC.
+
+        Supported: today, 7days, 30days, 90days, all. Returns (None, None)
+        for "all" so downstream queries run unbounded.
+        """
+        from datetime import UTC, timedelta
+
+        end_date = datetime.now(UTC)
+        if time_range == "today":
+            start_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif time_range == "7days":
+            start_date = end_date - timedelta(days=7)
+        elif time_range == "30days":
+            start_date = end_date - timedelta(days=30)
+        elif time_range == "90days":
+            start_date = end_date - timedelta(days=90)
+        elif time_range == "all":
+            return None, None
+        else:
+            raise ValueError(f"Invalid time_range: {time_range}")
+
+        return start_date, end_date
+
+    @staticmethod
+    async def get_top_workflows(
+        limit: int = 10,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> list[dict]:
+        """Top workflows by execution count within an optional date range."""
+        await SchedulerDB.check_initialized()
+
+        success_rate_expr = """
+            COALESCE(
+                ROUND(
+                    SUM(CASE WHEN e.status = 'success' THEN 1 ELSE 0 END)::numeric
+                    / NULLIF(COUNT(e.id), 0) * 100, 2
+                ), 0
+            ) as success_rate
+        """
+
+        if start_date:
+            query = f"""
+                SELECT w.id, w.name, COUNT(e.id) as executions, {success_rate_expr}
+                FROM workflows w
+                LEFT JOIN executions e
+                    ON w.id = e.workflow_id
+                    AND e.started_at >= %s AND e.started_at <= %s
+                GROUP BY w.id, w.name
+                ORDER BY executions DESC, w.created_at DESC
+                LIMIT %s
+            """
+            rows = await PostgresDB.fetch_all(query, (start_date, end_date, limit))
+        else:
+            query = f"""
+                SELECT w.id, w.name, COUNT(e.id) as executions, {success_rate_expr}
+                FROM workflows w
+                LEFT JOIN executions e ON w.id = e.workflow_id
+                GROUP BY w.id, w.name
+                ORDER BY executions DESC, w.created_at DESC
+                LIMIT %s
+            """
+            rows = await PostgresDB.fetch_all(query, (limit,))
+
+        return [
+            {
+                "id": row["id"],
+                "name": row["name"],
+                "executions": row["executions"],
+                "success_rate": float(row["success_rate"]),
+            }
+            for row in rows
+        ]

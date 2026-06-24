@@ -6,41 +6,17 @@ Workflow metrics, top performing workflows, and activity feed
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
 
+from apps.web.backend.models.analytics import (
+    ActivityResponse,
+    DashboardResponse,
+    TopWorkflowsResponse,
+    WorkflowMetricsResponse,
+)
 from lib.services.scheduler.db_client import SchedulerDB
 
 
 router = APIRouter()
-
-
-class DashboardResponse(BaseModel):
-    """Response containing dashboard metrics, recent workflows, and executions."""
-
-    success: bool
-    data: dict
-
-
-class WorkflowMetricsResponse(BaseModel):
-    """Response containing aggregated workflow execution metrics."""
-
-    success: bool
-    metrics: dict
-
-
-class TopWorkflowsResponse(BaseModel):
-    """Response containing top performing workflows sorted by execution count."""
-
-    success: bool
-    workflows: list[dict]
-    total: int
-
-
-class ActivityResponse(BaseModel):
-    """Response containing recent activity feed entries."""
-
-    success: bool
-    activities: list[dict]
 
 
 @router.get("/dashboard")

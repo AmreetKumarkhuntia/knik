@@ -32,6 +32,16 @@ tts_processor: KokoroVoiceModel | None = None
 _factory_config: _FactoryConfig | None = None
 _init_lock: asyncio.Lock | None = None
 
+# Persisted settings (provider/model/voice/api_base/api_key) loaded from the DB at
+# startup and applied the first time the factory config / TTS are built.
+_persisted_overrides: dict | None = None
+
+
+def set_persisted_overrides(overrides: dict | None) -> None:
+    """Record persisted settings to apply on first init (called from startup)."""
+    global _persisted_overrides
+    _persisted_overrides = overrides or None
+
 
 def _get_init_lock() -> asyncio.Lock:
     global _init_lock
@@ -64,19 +74,24 @@ def _build_client(cfg: _FactoryConfig) -> tuple[MCPServerRegistry, AIClient]:
 async def init(cfg_source) -> None:
     global tts_processor, _factory_config
 
+    overrides = _persisted_overrides or {}
+
     async with _get_init_lock():
         if _factory_config is None:
             _factory_config = _FactoryConfig(
-                provider=cfg_source.ai_provider,
-                model=cfg_source.ai_model,
+                provider=overrides.get("provider") or cfg_source.ai_provider,
+                model=overrides.get("model") or cfg_source.ai_model,
                 project_id=cfg_source.ai_project_id,
                 location=cfg_source.ai_location,
                 system_instruction=str(cfg_source.system_instruction) if cfg_source.system_instruction else None,
+                api_base=overrides.get("api_base"),
+                api_key=overrides.get("api_key"),
             )
 
         if tts_processor is None:
-            tts_processor = await asyncio.to_thread(KokoroVoiceModel)
-            printer.success(f"TTS ready: {cfg_source.voice_name}")
+            voice = overrides.get("voice") or cfg_source.voice_name
+            tts_processor = await asyncio.to_thread(KokoroVoiceModel, voice=voice)
+            printer.success(f"TTS ready: {voice}")
 
 
 async def get_or_create_ai_client(conversation_id: str | None) -> AIClient:

@@ -207,6 +207,16 @@ export interface DashboardWorkflow {
   status: 'active' | 'inactive'
 }
 
+/** A row in the WorkflowHub table: workflow identity merged with execution stats. */
+export interface HubWorkflowRow {
+  id: string
+  name: string
+  description: string
+  totalExecutions: number
+  status: 'active' | 'inactive'
+  lastExecutedAt?: string
+}
+
 /** An execution summary used on the dashboard. */
 export interface DashboardExecution {
   id: number

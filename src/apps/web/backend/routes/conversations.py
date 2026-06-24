@@ -7,29 +7,17 @@ import sys
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 
 src_path = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(src_path))
 
+from apps.web.backend.models.conversations import ConversationCreate, ConversationUpdate
 from lib.services.ai_client.base_tool import BaseTool
 from lib.services.conversation import ConversationDB
 
 
 router = APIRouter()
-
-
-class ConversationCreate(BaseModel):
-    """Request body for creating a new conversation."""
-
-    title: str | None = None
-
-
-class ConversationUpdate(BaseModel):
-    """Request body for updating a conversation's title."""
-
-    title: str
 
 
 @router.get("/")

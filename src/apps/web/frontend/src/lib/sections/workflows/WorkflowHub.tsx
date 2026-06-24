@@ -1,26 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MetricCard from '$components/MetricCard'
-import SparklineChart from '$components/charts/SparklineChart'
 import Segmented from '$components/Segmented'
 import ActionIcon from '$components/ActionIcon'
+import LoadingSpinner from '$components/LoadingSpinner'
+import EmptyState from '$components/EmptyState'
 import MS from '$components/MS'
-import {
-  DEMO_METRICS,
-  DEMO_WORKFLOWS,
-  DEMO_EXECUTIONS,
-  HUB_METRIC_COLOR as METRIC_COLOR,
-  HUB_TREND_DIR as TREND_DIR,
-  HUB_EXEC_ICON as EXEC_ICON,
-  type DemoWorkflow,
-} from '$lib/constants'
+import { workflowApi } from '$services/workflowApi'
+import { formatDuration, formatDate } from '$utils/format'
+import { HUB_EXEC_ICON as EXEC_ICON } from '$lib/constants'
+import type { DashboardExecution, HubWorkflowRow, WorkflowMetrics } from '$types/workflow'
 
-/** Small inline status pill (workflow active/paused). */
-function WorkflowStatus({ status }: { status: 'active' | 'paused' }) {
+/** Small inline status pill (workflow active/inactive). */
+function WorkflowStatus({ status }: { status: 'active' | 'inactive' }) {
   const cfg =
     status === 'active'
       ? { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Active' }
-      : { bg: 'rgba(154,166,182,0.16)', color: 'var(--fg-3)', label: 'Paused' }
+      : { bg: 'rgba(154,166,182,0.16)', color: 'var(--fg-3)', label: 'Inactive' }
   return (
     <span
       className="inline-flex items-center font-medium"
@@ -74,9 +70,87 @@ export default function WorkflowHub() {
   const [filter, setFilter] = useState('all')
   const [q, setQ] = useState('')
 
-  const rows: DemoWorkflow[] = DEMO_WORKFLOWS.filter(
+  const [metrics, setMetrics] = useState<WorkflowMetrics | null>(null)
+  const [workflows, setWorkflows] = useState<HubWorkflowRow[]>([])
+  const [executions, setExecutions] = useState<DashboardExecution[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        setLoading(true)
+        const [dash, metricsRes, list] = await Promise.all([
+          workflowApi.analytics.getDashboard(),
+          workflowApi.analytics.getMetrics('30days'),
+          workflowApi.workflows.list(),
+        ])
+        if (cancelled) return
+
+        // Merge workflow identity (id/name/description) with execution stats.
+        const statsById = new Map(dash.data.recentWorkflows.map(w => [w.id, w]))
+        const rows: HubWorkflowRow[] = list.workflows.map(w => {
+          const s = statsById.get(w.id)
+          return {
+            id: w.id,
+            name: w.name,
+            description: w.description ?? '',
+            totalExecutions: s?.totalExecutions ?? 0,
+            status: s?.status ?? 'inactive',
+            lastExecutedAt: s?.lastExecutedAt,
+          }
+        })
+
+        const extra = metricsRes.metrics as Partial<WorkflowMetrics>
+        setMetrics({ ...dash.data.metrics, avgDurationMs: extra.avgDurationMs })
+        setWorkflows(rows)
+        setExecutions(dash.data.recentExecutions)
+        setError(null)
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load workflows')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const rows = workflows.filter(
     w => (filter === 'all' || w.status === filter) && w.name.toLowerCase().includes(q.toLowerCase())
   )
+
+  const metricCards: {
+    icon: string
+    label: string
+    value: string | number
+    color: 'primary' | 'teal' | 'rose' | 'blue'
+  }[] = metrics
+    ? [
+        {
+          icon: 'account_tree',
+          label: 'Workflows',
+          value: metrics.totalWorkflows,
+          color: 'primary',
+        },
+        { icon: 'bolt', label: 'Executions today', value: metrics.executionsToday, color: 'teal' },
+        {
+          icon: 'check_circle',
+          label: 'Success rate',
+          value: `${metrics.successRate}%`,
+          color: 'blue',
+        },
+        {
+          icon: 'timer',
+          label: 'Avg duration',
+          value: formatDuration(metrics.avgDurationMs),
+          color: 'rose',
+        },
+      ]
+    : []
 
   const td: React.CSSProperties = { padding: '13px 18px' }
 
@@ -85,17 +159,21 @@ export default function WorkflowHub() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px 48px' }}>
         {/* Metric strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 14, marginBottom: 30 }}>
-          {DEMO_METRICS.map((m, i) => (
+          {metricCards.map((m, i) => (
             <MetricCard
               key={i}
               icon={m.icon}
               label={m.label}
               value={m.value}
-              subtext={m.sub}
-              trend={{ direction: TREND_DIR[m.trend.dir], value: m.trend.value }}
-              color={METRIC_COLOR[m.color]}
+              color={m.color}
+              loading={loading}
             />
           ))}
+          {!metrics &&
+            loading &&
+            Array.from({ length: 4 }).map((_, i) => (
+              <MetricCard key={`s${i}`} icon="bolt" label="Loading…" value="—" loading />
+            ))}
         </div>
 
         {/* Workflows toolbar */}
@@ -113,7 +191,7 @@ export default function WorkflowHub() {
               Workflows
             </h2>
             <div style={{ fontSize: 12.5, color: 'var(--fg-4)', marginTop: 3 }}>
-              {rows.length} of {DEMO_WORKFLOWS.length} shown
+              {rows.length} of {workflows.length} shown
             </div>
           </div>
           <div className="flex items-center" style={{ gap: 10 }}>
@@ -125,7 +203,7 @@ export default function WorkflowHub() {
               options={[
                 { value: 'all', label: 'All' },
                 { value: 'active', label: 'Active' },
-                { value: 'paused', label: 'Paused' },
+                { value: 'inactive', label: 'Inactive' },
               ]}
             />
           </div>
@@ -144,12 +222,12 @@ export default function WorkflowHub() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Workflow', 'Activity', 'Last run', 'Status', 'Runs', ''].map((h, i) => (
+                {['Workflow', 'Last run', 'Status', 'Runs', ''].map((h, i) => (
                   <th
                     key={i}
                     className="font-mono uppercase"
                     style={{
-                      textAlign: i >= 4 ? 'right' : 'left',
+                      textAlign: i >= 3 ? 'right' : 'left',
                       padding: '11px 18px',
                       fontSize: 10.5,
                       fontWeight: 550,
@@ -174,7 +252,7 @@ export default function WorkflowHub() {
                 return (
                   <tr
                     key={w.id}
-                    onClick={() => void navigate('/workflows/create')}
+                    onClick={() => void navigate(`/workflows/${w.id}/edit`)}
                     className="transition-colors"
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-surface-3)')}
@@ -207,30 +285,18 @@ export default function WorkflowHub() {
                           </div>
                           <div
                             className="truncate"
-                            style={{ fontSize: 11.5, color: 'var(--fg-4)' }}
+                            style={{ fontSize: 11.5, color: 'var(--fg-4)', maxWidth: 360 }}
                           >
-                            {w.desc}
+                            {w.description}
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td style={cell}>
-                      <div style={{ width: 84 }}>
-                        <SparklineChart
-                          data={w.spark}
-                          width={84}
-                          height={26}
-                          color={
-                            w.status === 'paused' ? 'var(--fg-4)' : 'var(--acc, var(--aurora-400))'
-                          }
-                        />
                       </div>
                     </td>
                     <td
                       className="font-mono"
                       style={{ ...cell, fontSize: 12, color: 'var(--fg-3)' }}
                     >
-                      {w.last}
+                      {w.lastExecutedAt ? formatDate(w.lastExecutedAt) : '—'}
                     </td>
                     <td style={cell}>
                       <WorkflowStatus status={w.status} />
@@ -245,7 +311,7 @@ export default function WorkflowHub() {
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >
-                      {w.total.toLocaleString()}
+                      {w.totalExecutions.toLocaleString()}
                     </td>
                     <td style={{ ...cell, textAlign: 'right' }}>
                       <div
@@ -257,14 +323,13 @@ export default function WorkflowHub() {
                           size={30}
                           icon={<MS name="edit" size={15} />}
                           title="Edit"
-                          onClick={() => void navigate('/workflows/create')}
+                          onClick={() => void navigate(`/workflows/${w.id}/edit`)}
                         />
                         <ActionIcon
                           size={30}
-                          icon={
-                            <MS name={w.status === 'paused' ? 'play_arrow' : 'pause'} size={16} />
-                          }
-                          title={w.status === 'paused' ? 'Resume' : 'Pause'}
+                          icon={<MS name="play_arrow" size={16} />}
+                          title="Run"
+                          onClick={() => void workflowApi.workflows.execute(w.id)}
                         />
                       </div>
                     </td>
@@ -273,6 +338,19 @@ export default function WorkflowHub() {
               })}
             </tbody>
           </table>
+          {loading && rows.length === 0 && <LoadingSpinner size="sm" className="py-10" />}
+          {!loading && !error && workflows.length === 0 && (
+            <EmptyState
+              icon="account_tree"
+              title="No workflows yet"
+              description="Create your first workflow to see it here."
+            />
+          )}
+          {error && (
+            <div style={{ padding: '20px 18px', fontSize: 13, color: 'var(--danger)' }}>
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Recent executions feed */}
@@ -314,63 +392,71 @@ export default function WorkflowHub() {
             borderRadius: 'var(--r-card, 12px)',
           }}
         >
-          {DEMO_EXECUTIONS.map((ex, i) => {
-            const icon = EXEC_ICON[ex.status]
-            return (
-              <div
-                key={ex.id}
-                className="flex items-center"
-                style={{
-                  gap: 16,
-                  padding: '13px 18px',
-                  borderBottom:
-                    i === DEMO_EXECUTIONS.length - 1 ? 'none' : '1px solid var(--border-1)',
-                }}
-              >
-                <MS
-                  name={icon.name}
-                  size={18}
-                  fill={1}
-                  style={{ color: icon.color, flexShrink: 0 }}
-                />
-                <span
-                  className="font-mono"
+          {executions.length === 0 && !loading ? (
+            <EmptyState
+              icon="bolt"
+              title="No executions yet"
+              description="Runs will appear here once your workflows execute."
+            />
+          ) : (
+            executions.map((ex, i) => {
+              const icon = EXEC_ICON[ex.status]
+              return (
+                <div
+                  key={ex.id}
+                  className="flex items-center"
                   style={{
-                    fontSize: 12,
-                    color: 'var(--acc-text, var(--aurora-300))',
-                    width: 84,
-                    flexShrink: 0,
+                    gap: 16,
+                    padding: '13px 18px',
+                    borderBottom:
+                      i === executions.length - 1 ? 'none' : '1px solid var(--border-1)',
                   }}
                 >
-                  {ex.id}
-                </span>
-                <span
-                  className="flex-1 min-w-0"
-                  style={{ fontSize: 13.5, color: 'var(--fg-1)', fontWeight: 500 }}
-                >
-                  {ex.wf}
-                </span>
-                <span
-                  className="font-mono"
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--fg-3)',
-                    width: 56,
-                    textAlign: 'right',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {ex.dur}
-                </span>
-                <span
-                  className="font-mono"
-                  style={{ fontSize: 12, color: 'var(--fg-5)', width: 72, textAlign: 'right' }}
-                >
-                  {ex.at}
-                </span>
-              </div>
-            )
-          })}
+                  <MS
+                    name={icon.name}
+                    size={18}
+                    fill={1}
+                    style={{ color: icon.color, flexShrink: 0 }}
+                  />
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--acc-text, var(--aurora-300))',
+                      width: 84,
+                      flexShrink: 0,
+                    }}
+                  >
+                    #{ex.id}
+                  </span>
+                  <span
+                    className="flex-1 min-w-0 truncate"
+                    style={{ fontSize: 13.5, color: 'var(--fg-1)', fontWeight: 500 }}
+                  >
+                    {ex.workflowName}
+                  </span>
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--fg-3)',
+                      width: 64,
+                      textAlign: 'right',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatDuration(ex.durationMs)}
+                  </span>
+                  <span
+                    className="font-mono"
+                    style={{ fontSize: 12, color: 'var(--fg-5)', width: 150, textAlign: 'right' }}
+                  >
+                    {formatDate(ex.startedAt)}
+                  </span>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
     </div>

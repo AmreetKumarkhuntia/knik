@@ -1,10 +1,17 @@
+/** Backend origin. Override per-environment via VITE_API_URL (see .env). */
+const API_HOST = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 export const API = {
-  baseURL: 'http://localhost:8000',
+  /** Backend origin, e.g. http://localhost:8000 */
+  baseURL: API_HOST,
+  /** Backend API root, e.g. http://localhost:8000/api — the single source for all clients. */
+  baseApiURL: `${API_HOST}/api`,
   port: 8000,
   endpoints: {
     workflows: '/api/workflows',
     history: '/api/history',
     conversations: '/api/conversations',
+    admin: '/api/admin',
     executionNodes: (workflowId: string, executionId: string) =>
       `/api/workflows/${workflowId}/executions/${executionId}/nodes`,
   },

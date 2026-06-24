@@ -1,10 +1,12 @@
 """Router for querying, managing, and executing Workflows via Web API."""
 
-from typing import Any
-
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
+from apps.web.backend.models.workflow import (
+    WorkflowCreateRequest,
+    WorkflowExecuteRequest,
+    WorkflowUpdateRequest,
+)
 from lib.cron import workflow_service
 from lib.cron.scheduler import Scheduler
 from lib.services.scheduler.db_client import SchedulerDB
@@ -13,12 +15,6 @@ from lib.services.scheduler.db_client import SchedulerDB
 router = APIRouter()
 
 scheduler = Scheduler()
-
-
-class WorkflowExecuteRequest(BaseModel):
-    """Request body for executing a workflow."""
-
-    inputs: dict[str, Any] | None = None
 
 
 @router.get("/")
@@ -39,6 +35,24 @@ async def list_workflows():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@router.post("/")
+async def create_workflow(request: WorkflowCreateRequest):
+    """Create a new workflow from a name + DAG definition."""
+    try:
+        result = await workflow_service.create_workflow(
+            name=request.name,
+            definition=request.definition,
+            description=request.description,
+        )
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return {"success": True, "workflow": request.definition, **result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 @router.get("/{workflow_id}")
 async def get_workflow(workflow_id: str):
     """Get workflow details by ID."""
@@ -47,6 +61,26 @@ async def get_workflow(workflow_id: str):
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
         return {"success": True, "workflow": workflow.definition}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.patch("/{workflow_id}")
+async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
+    """Update an existing workflow's name, definition, and description."""
+    try:
+        result = await workflow_service.update_workflow(
+            workflow_id=workflow_id,
+            name=request.name,
+            definition=request.definition,
+            description=request.description,
+        )
+        if "error" in result:
+            status = 404 if "not found" in result["error"] else 400
+            raise HTTPException(status_code=status, detail=result["error"])
+        return {"success": True, "workflow": request.definition, **result}
     except HTTPException:
         raise
     except Exception as e:

@@ -1,6 +1,15 @@
 import type { ChatResponse, Conversation, ConversationListResponse } from '../types/api'
+import type {
+  AdminOption,
+  ApiKeyCreated,
+  ApiKeyInfo,
+  McpToolInfo,
+  SettingsResponse,
+  SettingsUpdate,
+} from '../types/sections/settings'
+import { API } from '$constants/config'
 
-const API_BASE_URL = 'http://localhost:8000/api'
+const API_BASE_URL = API.baseApiURL
 
 /** Handles chat streaming, history retrieval, and history clearing. */
 class ChatAPI {
@@ -9,7 +18,7 @@ class ChatAPI {
     onAudioChunk?: (audio: string, sampleRate: number) => void,
     conversationId?: string
   ): Promise<ChatResponse & { conversation_id?: string }> {
-    const response = await fetch(`${API_BASE_URL}/chat/stream`, {
+    const response = await fetch(`${API_BASE_URL}/chat/stream/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, conversation_id: conversationId }),
@@ -72,7 +81,7 @@ class ChatAPI {
   }
 
   static async getHistory() {
-    const response = await fetch(`${API_BASE_URL}/history`)
+    const response = await fetch(`${API_BASE_URL}/history/`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }
@@ -87,7 +96,7 @@ class ChatAPI {
 /** CRUD operations for conversations. */
 class ConversationAPI {
   static async list(limit = 20, offset = 0): Promise<ConversationListResponse> {
-    const response = await fetch(`${API_BASE_URL}/conversations?limit=${limit}&offset=${offset}`)
+    const response = await fetch(`${API_BASE_URL}/conversations/?limit=${limit}&offset=${offset}`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }
@@ -101,7 +110,7 @@ class ConversationAPI {
   static async create(
     title?: string
   ): Promise<{ id: string; title: string | null; status: string }> {
-    const response = await fetch(`${API_BASE_URL}/conversations`, {
+    const response = await fetch(`${API_BASE_URL}/conversations/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(title ? { title } : {}),
@@ -132,10 +141,81 @@ class ConversationAPI {
   }
 }
 
-/** Admin-related API calls. */
+/** Admin/settings API calls (AI defaults, providers, voices, MCP tools, API keys). */
 class AdminAPI {
-  static async getSettings() {
+  static async getSettings(): Promise<SettingsResponse> {
     const response = await fetch(`${API_BASE_URL}/admin/settings`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async updateSettings(
+    update: SettingsUpdate
+  ): Promise<{ status: string; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/admin/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(update),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getProviders(): Promise<{ providers: AdminOption[] }> {
+    const response = await fetch(`${API_BASE_URL}/admin/providers`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getModels(): Promise<{ models: AdminOption[] }> {
+    const response = await fetch(`${API_BASE_URL}/admin/models`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getVoices(): Promise<{ voices: AdminOption[] }> {
+    const response = await fetch(`${API_BASE_URL}/admin/voices`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async getMcpTools(): Promise<{ tools: McpToolInfo[] }> {
+    const response = await fetch(`${API_BASE_URL}/admin/mcp-tools`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async toggleMcpTool(
+    name: string,
+    enabled: boolean
+  ): Promise<{ status: string; tool_name: string; enabled: boolean }> {
+    const response = await fetch(`${API_BASE_URL}/admin/mcp-tools/${name}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async listApiKeys(): Promise<{ api_keys: ApiKeyInfo[] }> {
+    const response = await fetch(`${API_BASE_URL}/admin/api-keys`)
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async createApiKey(label: string, scopes?: string[]): Promise<ApiKeyCreated> {
+    const response = await fetch(`${API_BASE_URL}/admin/api-keys`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, scopes }),
+    })
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`)
+    return response.json()
+  }
+
+  static async deleteApiKey(id: string): Promise<{ status: string; id: string }> {
+    const response = await fetch(`${API_BASE_URL}/admin/api-keys/${id}`, { method: 'DELETE' })
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }

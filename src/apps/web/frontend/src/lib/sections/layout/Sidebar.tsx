@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import MS from '$components/MS'
 import Kbd from '$components/Kbd'
 import Avatar from '$components/Avatar'
+import ActionIcon from '$components/ActionIcon'
 import KnikGlyph from '$components/KnikGlyph'
 import LoadingSpinner from '$components/LoadingSpinner'
 import EmptyState from '$components/EmptyState'
 import type { SidebarProps } from '$types/sections/layout'
 import type { Conversation } from '$types/api'
 import { ConversationAPI } from '$services/api'
+import { useStore } from '$store/index'
 import { NAV_ITEMS, ROUTES, UI_TEXT, EMPTY_STATE_DEFAULTS, DEMO_ACCOUNT } from '$lib/constants'
 
 /** Eyebrow: small mono section label. */
@@ -37,10 +39,25 @@ export default function Sidebar({ onNewChat, onSelectConversation, onOpenSearch 
   const [loading, setLoading] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
+  // Chat state from the store, used to keep the recents list in sync with the
+  // active conversation (new chats appear; previews/titles refresh after replies).
+  const conversationId = useStore(s => s.conversationId)
+  const chatLoading = useStore(s => s.loading)
+  const prevChatLoading = useRef(chatLoading)
+
+  // Fetch on expand and whenever the active conversation changes (new chat / switch).
   useEffect(() => {
     if (collapsed) return
     void fetchConversations()
-  }, [collapsed])
+  }, [collapsed, conversationId])
+
+  // Refresh recents (titles + previews) when a reply finishes streaming.
+  useEffect(() => {
+    if (prevChatLoading.current && !chatLoading && !collapsed) {
+      void fetchConversations()
+    }
+    prevChatLoading.current = chatLoading
+  }, [chatLoading, collapsed])
 
   const fetchConversations = async () => {
     try {
@@ -60,16 +77,31 @@ export default function Sidebar({ onNewChat, onSelectConversation, onOpenSearch 
     if (location.pathname !== '/') void navigate('/')
   }
 
-  const getConversationLabel = (conv: Conversation): string => {
-    if (conv.title) return conv.title
-    const firstUserMsg = conv.messages.find(m => m.role === 'user')
-    if (firstUserMsg) {
-      return firstUserMsg.content.length > 40
-        ? firstUserMsg.content.slice(0, 40) + '...'
-        : firstUserMsg.content
+  const handleRename = async (conv: Conversation) => {
+    const next = window.prompt('Rename conversation', conv.title ?? '')
+    if (next === null) return
+    const title = next.trim()
+    if (!title || title === conv.title) return
+    try {
+      await ConversationAPI.updateTitle(conv.id, title)
+      await fetchConversations()
+    } catch (error) {
+      console.error('Failed to rename conversation:', error)
     }
-    return 'New chat'
   }
+
+  const handleDelete = async (conv: Conversation) => {
+    if (!window.confirm('Delete this conversation? This cannot be undone.')) return
+    try {
+      await ConversationAPI.delete(conv.id)
+      if (conversationId === conv.id) onNewChat()
+      await fetchConversations()
+    } catch (error) {
+      console.error('Failed to delete conversation:', error)
+    }
+  }
+
+  const getConversationLabel = (conv: Conversation): string => conv.title || 'New chat'
 
   const formatTimestamp = (isoString: string | null): string => {
     if (!isoString) return ''
@@ -272,44 +304,66 @@ export default function Sidebar({ onNewChat, onSelectConversation, onOpenSearch 
               />
             ) : (
               conversations.map(conv => (
-                <button
+                <div
                   key={conv.id}
-                  type="button"
-                  onClick={() => handleSelectConversation(conv.id)}
-                  className="text-left transition-colors"
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    padding: '7px 11px',
-                    borderRadius: 'var(--r-btn, 8px)',
-                    cursor: 'pointer',
-                  }}
+                  className="group relative transition-colors"
+                  style={{ borderRadius: 'var(--r-btn, 8px)' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-surface-3)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <div className="flex items-center" style={{ gap: 6 }}>
-                    <span
-                      className="truncate flex-1"
-                      style={{ fontSize: 12.5, fontWeight: 550, color: 'var(--fg-2)' }}
-                    >
-                      {getConversationLabel(conv)}
-                    </span>
-                    <span
-                      className="font-mono flex-shrink-0"
-                      style={{ fontSize: 10, color: 'var(--fg-5)' }}
-                    >
-                      {formatTimestamp(conv.updated_at)}
-                    </span>
-                  </div>
-                  {conv.messages.length > 0 && (
-                    <div
-                      className="truncate"
-                      style={{ fontSize: 11.5, color: 'var(--fg-4)', marginTop: 1 }}
-                    >
-                      {conv.messages[conv.messages.length - 1].content.slice(0, 60)}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectConversation(conv.id)}
+                    className="w-full text-left"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '7px 11px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div className="flex items-center" style={{ gap: 6 }}>
+                      <span
+                        className="truncate flex-1"
+                        style={{ fontSize: 12.5, fontWeight: 550, color: 'var(--fg-2)' }}
+                      >
+                        {getConversationLabel(conv)}
+                      </span>
+                      <span
+                        className="font-mono flex-shrink-0 transition-opacity group-hover:opacity-0"
+                        style={{ fontSize: 10, color: 'var(--fg-5)' }}
+                      >
+                        {formatTimestamp(conv.updated_at)}
+                      </span>
                     </div>
-                  )}
-                </button>
+                    {conv.preview && (
+                      <div
+                        className="truncate"
+                        style={{ fontSize: 11.5, color: 'var(--fg-4)', marginTop: 1 }}
+                      >
+                        {conv.preview}
+                      </div>
+                    )}
+                  </button>
+                  <div
+                    className="absolute flex items-center opacity-0 transition-opacity group-hover:opacity-100"
+                    style={{ top: 4, right: 6, gap: 2 }}
+                  >
+                    <ActionIcon
+                      size={26}
+                      icon={<MS name="edit" size={13} />}
+                      title="Rename"
+                      onClick={() => void handleRename(conv)}
+                    />
+                    <ActionIcon
+                      size={26}
+                      icon={<MS name="delete" size={13} />}
+                      title="Delete"
+                      danger
+                      onClick={() => void handleDelete(conv)}
+                    />
+                  </div>
+                </div>
               ))
             )}
           </div>

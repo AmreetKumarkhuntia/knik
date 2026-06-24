@@ -18,13 +18,14 @@ import type {
   WorkflowMetricsResponse,
   WorkflowsListResponse,
 } from '../types/workflow'
+import { API } from '$constants/config'
 
-const API_BASE_URL = 'http://localhost:8000/api'
+const API_BASE_URL = API.baseApiURL
 
 /** Workflow CRUD, execution, and history APIs. */
 class WorkflowAPI {
   static async list(): Promise<WorkflowListResponse> {
-    const response = await fetch(`${API_BASE_URL}/workflows`)
+    const response = await fetch(`${API_BASE_URL}/workflows/`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }
@@ -58,7 +59,7 @@ class WorkflowAPI {
     name: string,
     definition: WorkflowDefinition
   ): Promise<WorkflowDetailResponse> {
-    const response = await fetch(`${API_BASE_URL}/workflows`, {
+    const response = await fetch(`${API_BASE_URL}/workflows/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, definition }),
@@ -102,13 +103,13 @@ class WorkflowAPI {
 /** Scheduled job (cron) management APIs. */
 class ScheduleAPI {
   static async list(): Promise<SchedulesListResponse> {
-    const response = await fetch(`${API_BASE_URL}/cron`)
+    const response = await fetch(`${API_BASE_URL}/cron/`)
     if (!response.ok) throw new Error(`API error: ${response.statusText}`)
     return response.json()
   }
 
   static async create(request: ScheduleCreateRequest): Promise<ScheduleCreateResponse> {
-    const response = await fetch(`${API_BASE_URL}/cron`, {
+    const response = await fetch(`${API_BASE_URL}/cron/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
