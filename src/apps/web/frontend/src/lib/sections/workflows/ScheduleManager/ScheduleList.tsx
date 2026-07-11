@@ -1,5 +1,4 @@
-import LoadingSpinner from '$components/LoadingSpinner'
-import EmptyState from '$components/EmptyState'
+import { LoadingSpinner, EmptyState } from '$components'
 import ScheduleCard from './ScheduleCard'
 import type { ScheduleListProps } from '$types/sections/schedule-manager'
 import { Schedule as ScheduleIcon } from '@mui/icons-material'

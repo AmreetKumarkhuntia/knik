@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import MS from '$components/MS'
+import { MS } from '$components'
 import type { RunBarProps } from '$types'
 import { DEMO_RUN_LOGS } from '$lib/constants'
 

@@ -1,10 +1,10 @@
 /**
- * Demo / sample data for showcase components.
+ * Demo / sample data for showcase wiring.
  *
- * These arrays are the default props for components that can render
- * standalone (CommandPalette, NotificationFeed, VoicePicker, McpToolsPanel,
- * ConversationHistory). Kept out of the component files so the components
- * stay presentational and the sample content lives in one place.
+ * Tier-1 components never import these (enforced by eslint) — they receive
+ * all data via props. Sections/pages that want standalone sample content
+ * (e.g. ConversationHistory) pass these down as props; kept in constants/ so
+ * sample content lives in one place.
  */
 import React from 'react'
 import type { ConversationHistoryItem } from '$types'

@@ -1,8 +1,9 @@
-/* eslint-disable react-refresh/only-export-components, @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 'use client'
 
-import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import type { ReactNode } from 'react'
+import { ThemeContext } from '$hooks/useTheme'
 import {
   DEFAULT_MODE,
   DEFAULT_THEME,
@@ -14,10 +15,7 @@ import {
   RADIUS_PRESETS,
   DENSITY_PRESETS,
 } from '$lib/constants/themes'
-import type { Theme, ThemeMode, ThemeName, Density, Radius, ThemeContextType } from '$types/theme'
-
-/** React context providing the current theme mode, accent, and setter functions. */
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+import type { Theme, ThemeMode, ThemeName, Density, Radius } from '$types/theme'
 
 /** Provider component that manages theme mode and accent with localStorage persistence. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -159,13 +157,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeContext.Provider>
   )
-}
-
-/** Hook to access the current theme context values. */
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider')
-  }
-  return context
 }

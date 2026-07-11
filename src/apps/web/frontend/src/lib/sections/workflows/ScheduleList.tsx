@@ -1,5 +1,4 @@
-import ToggleSwitch from '../../components/ToggleSwitch'
-import Badge from '../../components/Badge'
+import { ToggleSwitch, Badge } from '$components'
 import type { ScheduleJobListProps } from '$types'
 
 export default function ScheduleList({

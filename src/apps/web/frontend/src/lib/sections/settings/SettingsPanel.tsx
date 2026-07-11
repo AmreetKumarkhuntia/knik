@@ -1,6 +1,4 @@
-import VerticalTabs from '../../components/VerticalTabs'
-import ToggleSwitch from '../../components/ToggleSwitch'
-import Select from '../../components/Select'
+import { VerticalTabs, ToggleSwitch, Select } from '$components'
 import type { SettingsSection, SettingsPanelProps } from '$types'
 
 export default function SettingsPanel({ sections, className = '' }: SettingsPanelProps) {

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import MS from '$components/MS'
+import { MS } from '$components'
 import { DEMO_SUGGESTIONS } from '$lib/constants'
 import type { SuggestionCardsProps } from '$types/sections/home'
 

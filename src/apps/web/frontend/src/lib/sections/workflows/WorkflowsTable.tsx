@@ -1,7 +1,4 @@
-import StatusBadge from '$components/StatusBadge'
-import EmptyState from '$components/EmptyState'
-import ActionButton from '$components/ActionButton'
-import Table from '$components/Table'
+import { StatusBadge, EmptyState, ActionButton, Table } from '$components'
 import { formatDate } from '$lib/utils/format'
 import { AccountTree } from '@mui/icons-material'
 import type { DashboardWorkflow } from '$types/workflow'

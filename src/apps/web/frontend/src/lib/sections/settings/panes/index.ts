@@ -1,0 +1,5 @@
+export { default as GeneralPane } from './GeneralPane'
+export { default as AppearancePane } from './AppearancePane'
+export { default as ProvidersPane } from './ProvidersPane'
+export { default as VoicePane } from './VoicePane'
+export { default as KeysPane } from './KeysPane'

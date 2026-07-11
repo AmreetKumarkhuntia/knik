@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { NodeExecutionRecord } from '$types/workflow'
 import { workflowApi } from '$services/workflowApi'
-import LoadingSpinner from '$components/LoadingSpinner'
-import StatusBadge from '$components/StatusBadge'
-import Backdrop from '$components/Backdrop'
-import Tabs from '$components/Tabs'
-import Card from '$components/Card'
-import IconButton from '$components/IconButton'
+import { LoadingSpinner, StatusBadge, Backdrop, Tabs, Card, IconButton } from '$components'
 import type { ExecutionDetailProps } from '$types/sections/execution-history'
 
 /** Safely formats a value as pretty-printed JSON. */

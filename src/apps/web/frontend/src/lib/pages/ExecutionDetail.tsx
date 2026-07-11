@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
-import type { ExecutionDetail as ExecutionDetailType, NodeExecutionStep } from '$types/workflow'
+import type {
+  ExecutionDetail as ExecutionDetailType,
+  NodeExecutionStep,
+  WorkflowDefinition,
+} from '$types/workflow'
 import { workflowApi } from '$services/workflowApi'
 import { calculateMetrics } from '$lib/utils/metricsCalculator'
 
-import PageHeader from '$lib/components/PageHeader'
-import MetricCard from '$lib/components/MetricCard'
-import LoadingSpinner from '$lib/components/LoadingSpinner'
-import ExecutionFlowGraph from '$lib/components/ExecutionFlowGraph'
-import StructuredOutput from '$lib/components/StructuredOutput'
-import ExecutionTimeline from '$lib/components/ExecutionTimeline'
+import {
+  PageHeader,
+  MetricCard,
+  ExecutionFlowGraph,
+  StructuredOutput,
+  ExecutionTimeline,
+} from '$components'
+import { FullScreenLoader, FullScreenError } from '$widgets'
 
 /** Execution detail page showing metrics, flow graph, I/O, and timeline. */
 export default function ExecutionDetail() {
@@ -21,6 +27,8 @@ export default function ExecutionDetail() {
   const [timeline, setTimeline] = useState<NodeExecutionStep[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [definition, setDefinition] = useState<WorkflowDefinition | null>(null)
+  const [definitionError, setDefinitionError] = useState<string | null>(null)
   // Track status in a ref so the polling interval closure doesn't go stale
   const statusRef = useRef<string | null>(null)
 
@@ -64,25 +72,46 @@ export default function ExecutionDetail() {
     return () => clearInterval(intervalId)
   }, [id])
 
+  // Fetch the workflow definition once per workflow id — not on every 3 s poll
+  // tick (the polled `execution` object gets a new identity each fetch).
+  const workflowId = execution?.workflow_id
+  useEffect(() => {
+    if (!workflowId) return
+    // Hoisted function declarations don't see the narrowing above — capture it.
+    const wid = workflowId
+    let cancelled = false
+
+    async function fetchDefinition() {
+      try {
+        const detail = await workflowApi.workflows.get(wid)
+        if (!cancelled) {
+          setDefinition(detail.workflow)
+          setDefinitionError(null)
+        }
+      } catch (err) {
+        console.error('Failed to build execution graph:', err)
+        if (!cancelled) setDefinitionError('Failed to load execution graph')
+      }
+    }
+
+    void fetchDefinition()
+
+    return () => {
+      cancelled = true
+    }
+  }, [workflowId])
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
-      </div>
-    )
+    return <FullScreenLoader variant="screen" />
   }
 
   if (error || !execution) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-error text-lg">{error || 'Execution not found'}</p>
-        <button
-          onClick={() => void navigate(-1)}
-          className="px-4 py-2 bg-primary text-foreground rounded hover:bg-primary/80"
-        >
-          Go Back
-        </button>
-      </div>
+      <FullScreenError
+        layout="screen"
+        message={error || 'Execution not found'}
+        onBack={() => void navigate(-1)}
+      />
     )
   }
 
@@ -112,7 +141,11 @@ export default function ExecutionDetail() {
 
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-foreground">Execution Flow</h2>
-            <ExecutionFlowGraph execution={execution} timeline={timeline} />
+            <ExecutionFlowGraph
+              definition={definition}
+              definitionError={definitionError}
+              timeline={timeline}
+            />
           </div>
 
           <div className="space-y-2">

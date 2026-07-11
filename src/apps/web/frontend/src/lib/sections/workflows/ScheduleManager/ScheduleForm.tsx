@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import ActionButton from '$components/ActionButton'
-import Modal from '$components/Modal'
-import FormField from '$components/FormField'
+import { ActionButton, Modal, FormField } from '$components'
 import type { ScheduleFormProps } from '$types/sections/schedule-manager'
 import type { ScheduleCreateRequest } from '$types/workflow'
 

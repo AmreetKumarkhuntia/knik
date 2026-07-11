@@ -91,15 +91,6 @@ export const UI_TEXT = {
   },
 }
 
-export const ACCOUNT = {
-  default: {
-    initials: 'AR',
-    name: 'Alex Rivera',
-    accountType: 'Pro Account',
-  },
-  profileLabel: (name?: string) => `${name || ACCOUNT.default.name || 'User'}'s profile`,
-}
-
 export const BADGE = {
   types: {
     pro: 'pro',

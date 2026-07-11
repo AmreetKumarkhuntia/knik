@@ -32,6 +32,12 @@ export interface SettingsResponse {
 /** Applies a partial settings patch (persists + refreshes). */
 export type SettingsUpdateFn = (patch: SettingsUpdate) => Promise<void>
 
+/** Shared props for settings panes bound to the live settings + update fn. */
+export interface SettingsPaneProps {
+  settings: SettingsResponse | null
+  onUpdate: SettingsUpdateFn
+}
+
 /** Partial settings update body for POST /api/admin/settings. */
 export interface SettingsUpdate {
   provider?: string

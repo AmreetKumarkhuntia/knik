@@ -1,5 +1,4 @@
-import ActionButton from '$components/ActionButton'
-import ToggleSwitch from '$components/ToggleSwitch'
+import { ActionButton, ToggleSwitch } from '$components'
 import type { ScheduleCardProps } from '$types/sections/schedule-manager'
 import { PlayArrow, Edit, Delete } from '@mui/icons-material'
 

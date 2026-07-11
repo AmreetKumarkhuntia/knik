@@ -4,9 +4,17 @@ import InputPanel from '$sections/chat/InputPanel'
 import AudioControls from '$sections/audio/AudioControls'
 import { WelcomePrompt, SuggestionCards, WelcomeContainer, KeyboardShortcuts } from '$sections/home'
 import type { HomeProps } from '$types/pages'
+import type { AdminOption } from '$types/sections/settings'
+import type { ChatModelOption } from '$types/components/chat'
 import { useKeyboardShortcuts } from '$hooks/index'
 import { useStore } from '$store/index'
+import { ApiClient } from '$services/api'
 import { CHAT_DEFAULTS, KEYBOARD_SHORTCUTS } from '$lib/constants'
+
+/** Map a backend model option into the composer picker shape. */
+function toChatModelOption(m: AdminOption): ChatModelOption {
+  return { id: m.id, label: m.id, vendor: m.name, badge: 'primary' }
+}
 
 /** Home page with chat, audio controls, and welcome state. */
 export default function Home({ inputRef }: HomeProps) {
@@ -14,6 +22,7 @@ export default function Home({ inputRef }: HomeProps) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
   const [model, setModel] = useState('gemini-1.5-flash')
+  const [models, setModels] = useState<ChatModelOption[]>([])
 
   const messages = useStore(s => s.messages)
   const inputText = useStore(s => s.inputText)
@@ -25,6 +34,17 @@ export default function Home({ inputRef }: HomeProps) {
   const handleStopAudio = useStore(s => s.handleStopAudio)
   const handleTogglePause = useStore(s => s.handleTogglePause)
   const summaryMessageId = useStore(s => s.summaryMessageId)
+
+  // Load the selectable models once; the picker stays hidden until they arrive.
+  useEffect(() => {
+    void (async () => {
+      try {
+        setModels((await ApiClient.admin.getModels()).models.map(toChatModelOption))
+      } catch (e) {
+        console.error('Failed to load models:', e)
+      }
+    })()
+  }, [])
 
   useEffect(() => {
     const chatContainer = chatScrollRef.current
@@ -144,6 +164,7 @@ export default function Home({ inputRef }: HomeProps) {
           disabled={loading}
           model={model}
           onModel={setModel}
+          models={models}
         />
       </div>
 
