@@ -20,7 +20,7 @@ import NodePropertiesPanel from './NodePropertiesPanel/NodePropertiesPanel'
 import FloatingControls from './CanvasControls/FloatingControls'
 import WorkflowNavbar from './TopNavbar/WorkflowNavbar'
 import type { CanvasProps, CanvasHandle } from '$types/sections/workflow-builder'
-import { BaseNode, FlowEdge, FlowCanvas } from '$lib/components/graph'
+import { BaseNode, FlowEdge, FlowCanvas } from '$components/graph'
 import {
   canvasNodesToGraph,
   graphToWorkflowDefinition,

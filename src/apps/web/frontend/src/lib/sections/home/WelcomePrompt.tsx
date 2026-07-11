@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import KnikGlyph from '$components/KnikGlyph'
+import { KnikGlyph } from '$components'
 import { ANIMATION } from '$lib/constants'
 
 /** Animated welcome heading with the KNIK glyph and accent-gradient title. */

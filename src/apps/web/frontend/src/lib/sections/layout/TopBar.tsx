@@ -1,7 +1,5 @@
 import { Fragment } from 'react'
-import MS from '$components/MS'
-import ActionIcon from '$components/ActionIcon'
-import Kbd from '$components/Kbd'
+import { MS, ActionIcon, Kbd } from '$components'
 import type { TopBarProps } from '$types/sections/layout'
 
 /** Command-bar top bar: breadcrumbs, global search, per-page actions, theme + notifications. */

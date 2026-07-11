@@ -1,13 +1,10 @@
 import { forwardRef, useImperativeHandle, useRef, useEffect, useCallback, useState } from 'react'
-import MS from '$components/MS'
-import Kbd from '$components/Kbd'
-import ActionIcon from '$components/ActionIcon'
-import ModelPicker from '$components/ModelPicker'
+import { MS, Kbd, ActionIcon, ModelPicker } from '$components'
 import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
 /** Chat composer: glass field with model picker, attach/voice, send, and a hint row. */
 const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
-  ({ value, onChange, onSend, disabled, model, onModel }, ref) => {
+  ({ value, onChange, onSend, disabled, model, onModel, models }, ref) => {
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const [focused, setFocused] = useState(false)
 
@@ -72,7 +69,9 @@ const InputPanel = forwardRef<InputPanelRef, InputPanelProps>(
           />
 
           <div className="flex items-center" style={{ gap: 6 }}>
-            {model && onModel && <ModelPicker model={model} onChange={onModel} compact />}
+            {model && onModel && models && models.length > 0 && (
+              <ModelPicker model={model} onChange={onModel} models={models} compact />
+            )}
             <ActionIcon title="Attach" icon={<MS name="attach_file" size={18} />} />
             <ActionIcon title="Voice" icon={<MS name="mic" size={18} />} />
             <div className="flex-1" />

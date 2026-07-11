@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion'
-import { MarkdownMessage } from '$components/MarkdownMessage'
-import LoadingSpinner from '$components/LoadingSpinner'
-import KnikGlyph from '$components/KnikGlyph'
-import Avatar from '$components/Avatar'
-import ActionIcon from '$components/ActionIcon'
-import AgentThinking from '$components/AgentThinking'
-import MS from '$components/MS'
+import {
+  MarkdownMessage,
+  LoadingSpinner,
+  KnikGlyph,
+  Avatar,
+  ActionIcon,
+  AgentThinking,
+  MS,
+} from '$components'
 import CompactionDivider from './CompactionDivider'
 import { DEMO_ACCOUNT } from '$lib/constants'
 import type { AgentThinkingStep } from '$types'

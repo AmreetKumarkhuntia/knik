@@ -1,7 +1,4 @@
-import StatusBadge from '$components/StatusBadge'
-import EmptyState from '$components/EmptyState'
-import ActionButton from '$components/ActionButton'
-import Table from '$components/Table'
+import { StatusBadge, EmptyState, ActionButton, Table } from '$components'
 import { formatDuration, formatDate } from '$lib/utils/format'
 import type { DashboardExecution, ExecutionStatus } from '$types/workflow'
 import type { HistoryTableProps } from '$types/sections/execution-history'

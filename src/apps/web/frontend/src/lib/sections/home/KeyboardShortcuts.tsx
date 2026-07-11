@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import Modal from '$components/Modal'
+import { Modal } from '$components'
 import type { KeyboardShortcutsProps } from '$types/sections/home'
 import { KEYBOARD_SHORTCUT_ITEMS as shortcuts } from '$lib/constants'
 

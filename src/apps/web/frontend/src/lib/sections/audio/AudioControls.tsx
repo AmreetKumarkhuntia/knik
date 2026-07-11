@@ -1,4 +1,4 @@
-import { PlayIcon, PauseIcon, StopIcon } from '$components/icons'
+import { PlayIcon, PauseIcon, StopIcon } from '$components'
 import type { AudioControlsProps } from '$types/sections/audio'
 
 /** Audio playback controls with play/pause and stop buttons. */

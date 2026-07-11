@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { CheckCircle, DarkMode, LightMode, Star } from '@mui/icons-material'
-import Modal from '$components/Modal'
+import { Modal } from '$components'
 import { useTheme } from '$hooks/useTheme'
 import { THEME_ACCENT_SWATCHES as accentColors } from '$lib/constants'
 import type { ThemeSelectorProps } from '$types/theme'

@@ -1,13 +1,3 @@
-export const USER_PROFILE_DEFAULTS = {
-  initials: 'AR',
-  avatarColor: 'var(--color-primary)',
-  name: 'Alex Rivera',
-  accountType: 'Pro Account',
-  displayOnly: true,
-  showBadge: true,
-  badgeType: 'pro' as const,
-}
-
 export const SEARCH_BAR_DEFAULTS = {
   placeholder: 'Search...',
 }

@@ -1,3 +1,5 @@
+import type { ChatModelOption } from '$types/components/chat'
+
 /** A chat message with role and content. */
 export interface Message {
   role: 'user' | 'assistant'
@@ -22,6 +24,7 @@ export interface InputPanelProps {
   disabled?: boolean
   model?: string
   onModel?: (id: string) => void
+  models?: ChatModelOption[]
 }
 
 /** Imperative handle exposed by the input panel via ref. */
