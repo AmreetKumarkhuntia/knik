@@ -11,6 +11,9 @@ export interface StatusBadgeProps {
 
 /** Column definition for a data table. */
 export interface TableColumn<T> {
+  id?: string
+  align?: 'left' | 'center' | 'right'
+  className?: string
   key: keyof T | string
   label: string
   render?: (value: unknown, row: T) => ReactNode
@@ -20,6 +23,9 @@ export interface TableColumn<T> {
 export interface TableProps<T = Record<string, unknown>> {
   columns: TableColumn<T>[]
   data: T[]
+  getRowKey: (row: T) => React.Key
+  density?: 'compact' | 'comfortable'
+  error?: ReactNode
   onRowClick?: (row: T) => void
   loading?: boolean
   empty?: ReactNode
@@ -30,7 +36,10 @@ export interface TableProps<T = Record<string, unknown>> {
 }
 
 /** Props for a section header with optional action. */
-export interface SectionHeaderProps {
+export interface SectionHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  subtitle?: string
+  actions?: ReactNode
+  right?: ReactNode
   title: string
   actionText?: string
   onActionClick?: () => void

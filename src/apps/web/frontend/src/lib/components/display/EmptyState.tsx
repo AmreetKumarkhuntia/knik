@@ -1,3 +1,4 @@
+import MS from './MS'
 import type { EmptyStateProps } from '$types/components'
 import { EMPTY_STATE_DEFAULTS } from '$lib/constants'
 
@@ -16,7 +17,9 @@ export default function EmptyState({
       {isReactNode ? (
         <div className="flex justify-center mb-4 text-4xl text-fg-4">{icon}</div>
       ) : (
-        <p className="text-4xl mb-4">{icon}</p>
+        <p className="text-4xl mb-4" aria-hidden="true">
+          {/^[a-z_]+$/.test(icon) ? <MS name={icon} size={36} /> : icon}
+        </p>
       )}
       <p className="text-fg-2 font-medium">{title}</p>
       {description && <p className="text-sm mt-2 text-fg-4">{description}</p>}

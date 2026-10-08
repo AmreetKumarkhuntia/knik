@@ -4,7 +4,6 @@ import type { Node } from '@xyflow/react'
 /** Imperative handle exposed by the workflow canvas via ref. */
 export interface CanvasHandle {
   getWorkflowDefinition: () => WorkflowDefinition | null
-  getValidationErrors: () => string[]
 }
 
 /** Props for the workflow canvas component. */
@@ -15,6 +14,9 @@ export interface CanvasProps {
   onExecute?: () => void
   readOnly?: boolean
   workflowName?: string
+  onNameChange?: (name: string) => void
+  onBack?: () => void
+  canRun?: boolean
   onExportJson?: () => void
 }
 
@@ -39,6 +41,9 @@ export interface WorkflowNavbarProps {
   readOnly?: boolean
   userAvatar?: string
   workflowName?: string
+  onNameChange?: (name: string) => void
+  onBack?: () => void
+  canRun?: boolean
 }
 
 /** Props for the floating canvas controls (node palette launcher). */
@@ -48,6 +53,8 @@ export interface FloatingControlsProps {
 
 /** Props for the node properties side panel. */
 export interface NodePropertiesPanelProps {
+  compact?: boolean
+  onClose: () => void
   selectedNode: Node | null
   onNodeUpdate: (nodeId: string, data: Record<string, unknown>) => void
 }
@@ -62,4 +69,11 @@ export interface RunLog {
 /** Props for the floating workflow run-bar. */
 export interface RunBarProps {
   onClose?: () => void
+}
+
+export interface WorkflowBuilderWidgetProps {
+  workflowId?: string
+}
+export interface ExecutionDetailWidgetProps {
+  executionId?: string
 }

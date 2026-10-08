@@ -1,70 +1,91 @@
 import type { TableProps } from '$types/components'
 import LoadingSpinner from '../feedback/LoadingSpinner'
-
+import { TableRoot, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from './TableParts'
 export type { TableColumn } from '$types/components'
 
-/** Generic data table with column definitions and row click handling. */
 export default function Table<T>({
   columns,
   data,
+  getRowKey,
   onRowClick,
   loading = false,
   empty,
+  error,
   className = '',
   maxHeight,
   stickyHeader = false,
   glassContainer = false,
+  density = 'comfortable',
 }: TableProps<T>) {
-  if (loading) {
-    return <LoadingSpinner text="Loading..." className="py-10" />
-  }
-
-  if (data.length === 0 && empty) {
-    return <div className={className}>{empty}</div>
-  }
-
-  const tableWrapperClass = maxHeight ? 'overflow-x-auto overflow-y-auto' : 'overflow-x-auto'
-  const containerClass = `${glassContainer ? 'knik-glass rounded-lg overflow-hidden' : ''}`
-  const theadClass = stickyHeader
-    ? 'sticky top-0 bg-surface-2/90 backdrop-blur-sm z-10'
-    : 'border-b border-[var(--border-2)] text-left'
-
+  const padding = density === 'compact' ? 'px-4 py-2' : 'px-6 py-4'
   return (
-    <div className={`${containerClass} ${className}`}>
-      <div className={tableWrapperClass} style={maxHeight ? { maxHeight } : undefined}>
-        <table className="w-full text-left border-collapse">
-          <thead className={theadClass}>
-            <tr className="bg-surface-2">
-              {columns.map((column, idx) => (
-                <th
-                  key={idx}
-                  className="px-6 py-4 text-xs font-medium text-fg-4 uppercase tracking-wider"
+    <div
+      className={`${glassContainer ? 'knik-glass rounded-lg overflow-hidden' : ''} ${className}`}
+      aria-busy={loading}
+    >
+      {error && (
+        <div role="alert" className="p-4 text-[var(--danger)]">
+          {error}
+        </div>
+      )}
+      {loading && !data.length ? (
+        <LoadingSpinner text="Loading…" className="py-10" />
+      ) : !data.length ? (
+        <div className="p-4">{empty ?? 'No records to display.'}</div>
+      ) : (
+        <div className="overflow-auto" style={{ maxHeight }}>
+          <TableRoot className="w-full text-left border-collapse">
+            <TableHead
+              className={
+                stickyHeader
+                  ? 'sticky top-0 bg-surface-2/90 backdrop-blur-sm z-10'
+                  : 'border-b border-[var(--border-2)]'
+              }
+            >
+              <TableRow className="bg-surface-2">
+                {columns.map(column => (
+                  <TableHeaderCell
+                    key={column.id ?? String(column.key)}
+                    className={`${padding} text-xs font-medium text-fg-4 uppercase tracking-wider ${column.className ?? ''}`}
+                    style={{ textAlign: column.align }}
+                  >
+                    {column.label}
+                  </TableHeaderCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody className="divide-y divide-[var(--border-1)]">
+              {data.map(row => (
+                <TableRow
+                  key={getRowKey(row)}
+                  className="hover:bg-surface-3 transition-colors"
+                  onClick={event => {
+                    if (
+                      (event.target as HTMLElement).closest(
+                        'a,button,input,select,textarea,label,summary,[role="button"],[role="checkbox"],[role="switch"]'
+                      )
+                    )
+                      return
+                    onRowClick?.(row)
+                  }}
                 >
-                  {column.label}
-                </th>
+                  {columns.map(column => (
+                    <TableCell
+                      key={column.id ?? String(column.key)}
+                      className={`${padding} text-sm text-fg-2 ${column.className ?? ''}`}
+                      style={{ textAlign: column.align }}
+                    >
+                      {column.render
+                        ? column.render(row[column.key as keyof T], row)
+                        : String(row[column.key as keyof T] ?? '—')}
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border-1)]">
-            {data.map((row, rowIdx) => (
-              <tr
-                key={rowIdx}
-                className="hover:bg-surface-3 transition-colors"
-                onClick={() => onRowClick?.(row)}
-              >
-                {columns.map((column, colIdx) => {
-                  const value = row[column.key as keyof T] as unknown
-                  return (
-                    <td key={colIdx} className="px-6 py-4 text-sm text-fg-2">
-                      {column.render ? column.render(value, row) : String(value ?? '-')}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </TableBody>
+          </TableRoot>
+        </div>
+      )}
     </div>
   )
 }

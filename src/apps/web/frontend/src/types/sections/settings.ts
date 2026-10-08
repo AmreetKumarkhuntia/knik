@@ -1,56 +1,18 @@
-import type * as React from 'react'
-
-/** A single section in the settings panel (vertical-tabs driven). */
-export interface SettingsSection {
-  id: string
-  label: string
-  icon: string
-  content: React.ReactNode
-}
-
-/** Props for the settings panel. */
-export interface SettingsPanelProps {
-  sections?: SettingsSection[]
-  className?: string
-}
-
-/** Current settings as returned by GET /api/admin/settings. */
-export interface SettingsResponse {
+/** Editable frontend session preferences. */
+export interface FrontendSettings {
   provider: string
   model: string
   voice: string
   temperature: number
   max_tokens: number
   sample_rate: number
+  tts_enabled: boolean
+  speaking_rate: number
   stream_responses: boolean
   send_telemetry: boolean
   display_name: string | null
   username: string | null
   initialized: boolean
-}
-
-/** Applies a partial settings patch (persists + refreshes). */
-export type SettingsUpdateFn = (patch: SettingsUpdate) => Promise<void>
-
-/** Shared props for settings panes bound to the live settings + update fn. */
-export interface SettingsPaneProps {
-  settings: SettingsResponse | null
-  onUpdate: SettingsUpdateFn
-}
-
-/** Partial settings update body for POST /api/admin/settings. */
-export interface SettingsUpdate {
-  provider?: string
-  model?: string
-  voice?: string
-  api_base?: string
-  api_key?: string
-  temperature?: number
-  max_tokens?: number
-  stream_responses?: boolean
-  send_telemetry?: boolean
-  display_name?: string
-  username?: string
 }
 
 /** An id/name option (providers, models, voices). */
@@ -77,7 +39,7 @@ export interface ApiKeyInfo {
   last_used_at: string | null
 }
 
-/** Response when creating an API key — includes the full secret, shown once. */
+/** A supplied demo key scenario, including its displayable sample secret. */
 export interface ApiKeyCreated {
   id: string
   label: string

@@ -7,11 +7,20 @@ export default function ToggleSwitch({
   disabled = false,
   label,
   className = '',
+  id,
+  name,
+  'aria-label': ariaLabel,
+  'aria-describedby': describedBy,
 }: ToggleSwitchProps) {
   return (
     <label className={`relative inline-flex items-center cursor-pointer ${className}`}>
       <input
         type="checkbox"
+        role="switch"
+        id={id}
+        name={name}
+        aria-label={ariaLabel}
+        aria-describedby={describedBy}
         checked={checked}
         onChange={e => onChange(e.target.checked)}
         disabled={disabled}

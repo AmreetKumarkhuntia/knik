@@ -25,6 +25,7 @@ function FlowCanvasContent({
   onDrop,
   showMiniMap = false,
   fitView = true,
+  minZoom = 0.5,
   zoomOnScroll = true,
   panOnScroll = false,
   className = '',
@@ -49,6 +50,7 @@ function FlowCanvasContent({
       nodesConnectable={nodesConnectable}
       elementsSelectable={elementsSelectable}
       fitView={fitView}
+      minZoom={minZoom}
       zoomOnScroll={zoomOnScroll}
       panOnScroll={panOnScroll}
       className={className}

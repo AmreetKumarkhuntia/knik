@@ -9,6 +9,8 @@ export const buttonVariants = {
   secondary: 'knik-btn--secondary',
   danger: 'knik-btn--danger',
   ghost: 'knik-btn--ghost',
+  success: 'knik-btn--success',
+  warning: 'knik-btn--warning',
 }
 
 /** Button size modifiers — pair with the base `knik-btn` class. */

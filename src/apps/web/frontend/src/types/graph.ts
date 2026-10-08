@@ -55,6 +55,7 @@ export interface FlowCanvasProps {
   onDrop?: (event: React.DragEvent) => void
   showMiniMap?: boolean
   fitView?: boolean
+  minZoom?: number
   zoomOnScroll?: boolean
   panOnScroll?: boolean
   className?: string

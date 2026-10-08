@@ -129,12 +129,6 @@ h1.display {
     transform var(--dur-base) var(--ease-out);
 }
 
-.knik-card:hover {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px rgba(0, 217, 244, 0.15);
-  transform: translateY(-2px);
-}
-
 .knik-card--glass {
   background: var(--bg-glass);
   backdrop-filter: var(--blur-glass);
@@ -645,4 +639,13 @@ h1.display {
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+}
+
+.knik-btn--success {
+  color: var(--success);
+  background: var(--success-bg);
+}
+.knik-btn--warning {
+  color: var(--warning);
+  background: var(--warning-bg);
 }

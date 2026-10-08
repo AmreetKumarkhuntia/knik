@@ -1,31 +1,33 @@
 import type { SectionHeaderProps } from '$types/components'
-
-/** Section title with optional badge and action link. */
+import Button from '../buttons/Button'
+import Badge from './Badge'
 export default function SectionHeader({
   title,
+  subtitle,
+  actions,
+  right,
   actionText,
   onActionClick,
   badge,
   className = '',
+  ...props
 }: SectionHeaderProps) {
   return (
-    <div className={`flex items-center justify-between px-2 ${className}`}>
-      <div className="flex items-center gap-3">
-        <h2 className="text-fg-1 text-xl font-bold">{title}</h2>
-        {badge && (
-          <span className="px-2 py-0.5 text-xs font-medium bg-[var(--primary-soft)] text-[var(--primary)] rounded-full">
-            {badge}
-          </span>
-        )}
+    <div {...props} className={`flex flex-wrap items-center justify-between gap-3 ${className}`}>
+      <div>
+        <div className="flex items-center gap-3">
+          <h2 className="text-fg-1 text-xl font-bold">{title}</h2>
+          {badge && <Badge>{badge}</Badge>}
+        </div>
+        {subtitle && <p className="text-sm text-fg-4 mt-1">{subtitle}</p>}
       </div>
-      {actionText && onActionClick && (
-        <button
-          onClick={onActionClick}
-          className="text-[var(--primary)] text-sm font-semibold hover:underline"
-        >
-          {actionText}
-        </button>
-      )}
+      {actions ??
+        right ??
+        (actionText && onActionClick && (
+          <Button variant="ghost" size="sm" onClick={onActionClick}>
+            {actionText}
+          </Button>
+        ))}
     </div>
   )
 }

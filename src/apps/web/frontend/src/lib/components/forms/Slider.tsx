@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { SliderProps } from '$types'
 /**
  * Slider track with aurora gradient thumb.
@@ -10,15 +11,29 @@ export default function Slider({
   step = 1,
   label,
   className = '',
+  id,
+  name,
+  disabled,
+  'aria-label': ariaLabel,
+  'aria-describedby': describedBy,
+  formatValue,
 }: SliderProps) {
-  const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
+  const generatedId = useId()
+  const inputId = id ?? generatedId
+  const percentage = Math.max(
+    0,
+    Math.min(100, max === min ? 0 : ((value - min) / (max - min)) * 100)
+  )
 
   return (
     <div className={`flex items-center gap-3.5 w-full ${className}`}>
       {label && (
-        <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--fg-4)] w-[100px] shrink-0">
+        <label
+          htmlFor={inputId}
+          className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--fg-4)] w-[100px] shrink-0"
+        >
           {label}
-        </span>
+        </label>
       )}
       <div className="flex-1 h-[4px] bg-[var(--bg-surface-3)] rounded-full relative">
         <div
@@ -30,6 +45,11 @@ export default function Slider({
         />
         <input
           type="range"
+          id={inputId}
+          name={name}
+          disabled={disabled}
+          aria-label={ariaLabel}
+          aria-describedby={describedBy}
           min={min}
           max={max}
           step={step}
@@ -47,7 +67,7 @@ export default function Slider({
         />
       </div>
       <span className="font-mono text-[12px] text-[var(--aurora-300)] w-[56px] text-right shrink-0">
-        {value}
+        {formatValue ? formatValue(value) : value}
       </span>
     </div>
   )

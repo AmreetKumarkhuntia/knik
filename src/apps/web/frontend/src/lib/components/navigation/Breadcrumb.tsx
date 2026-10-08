@@ -1,27 +1,26 @@
 import { Link } from 'react-router-dom'
 import type { BreadcrumbProps } from '$types/components'
-
-/** Navigation breadcrumb trail with linked and active items. */
-export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
+export default function Breadcrumb({
+  items,
+  separator = 'chevron',
+  className = '',
+}: BreadcrumbProps) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {items.map((item, index) => (
-        <div key={index} className="flex items-center gap-2">
-          {index > 0 && (
-            <span className="material-symbols-outlined text-fg-4 text-sm">chevron_right</span>
-          )}
-          {item.path ? (
-            <Link
-              to={item.path}
-              className="text-fg-3 font-medium hover:text-[var(--primary)] transition-colors text-sm"
-            >
-              {item.label}
-            </Link>
-          ) : (
-            <span className="text-fg-1 font-semibold text-sm">{item.label}</span>
-          )}
-        </div>
-      ))}
-    </div>
+    <nav aria-label="Breadcrumb" className={className}>
+      <ol className="flex flex-wrap items-center gap-2 text-sm text-fg-3">
+        {items.map((item, index) => (
+          <li key={`${item.path ?? item.label}-${index}`} className="flex items-center gap-2">
+            {index > 0 && <span aria-hidden="true">{separator === '/' ? '/' : '›'}</span>}
+            {item.path && index < items.length - 1 ? (
+              <Link to={item.path}>{item.label}</Link>
+            ) : (
+              <span aria-current={index === items.length - 1 ? 'page' : undefined}>
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   )
 }

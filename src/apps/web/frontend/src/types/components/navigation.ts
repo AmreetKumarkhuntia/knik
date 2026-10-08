@@ -8,13 +8,17 @@ export interface BreadcrumbItem {
 
 /** Props for a breadcrumb navigation component. */
 export interface BreadcrumbProps {
+  separator?: '/' | 'chevron'
   items: BreadcrumbItem[]
   className?: string
 }
 
 /** Props for a navigation link. */
 export interface NavLinkProps {
-  icon: string
+  icon: React.ReactNode
+  collapsed?: boolean
+  className?: string
+  style?: React.CSSProperties
   label: string
   active?: boolean
   href?: string
@@ -34,6 +38,8 @@ export interface TabsProps<T extends string> {
   active: T
   onChange: (id: T) => void
   variant?: 'underline' | 'pills'
+  orientation?: 'horizontal' | 'vertical'
+  idPrefix?: string
   className?: string
 }
 
@@ -86,6 +92,8 @@ export interface CommandGroup {
 }
 
 export interface CommandPaletteProps {
+  query: string
+  onQueryChange: (query: string) => void
   commands: CommandGroup[]
   onSelect: (id: string) => void
   open: boolean

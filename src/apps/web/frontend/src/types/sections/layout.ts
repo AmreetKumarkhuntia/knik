@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { Conversation } from '$types/api'
+import type { Conversation } from '$types/conversation'
 
 /** Props for the main application layout. */
 export interface MainLayoutProps {

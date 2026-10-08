@@ -1,28 +1,26 @@
 import type * as React from 'react'
-import type { AccentBadge } from '$lib/constants/redesignData'
+
+export type AccentBadge = 'primary' | 'teal' | 'violet' | 'success'
 
 /** Props for a markdown message renderer. */
 export interface MarkdownMessageProps {
   content: string
   isStreaming?: boolean
-}
-
-/** Props for a markdown code block renderer. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CodeProps = any & {
-  _node: unknown
-  inline: boolean
-  className: string
-  children: unknown
+  onCopy?: (text: string) => void
 }
 
 export interface ChatBubbleProps {
   role: 'user' | 'assistant'
   content: React.ReactNode
   timestamp?: string
+  avatar?: React.ReactNode
+  header?: React.ReactNode
+  reasoning?: React.ReactNode
+  actionContent?: React.ReactNode
   actions?: {
     copy?: () => void
     thumbsUp?: () => void
+    thumbsDown?: () => void
     retry?: () => void
   }
   className?: string
@@ -44,18 +42,21 @@ export interface CodeBlockProps {
   language?: string
   showLineNumbers?: boolean
   copyable?: boolean
+  copied?: boolean
+  onCopy?: (text: string) => void
   className?: string
 }
 
 export interface JsonViewerProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any
+  data: unknown
   tabs?: string[]
   copyable?: boolean
+  copied?: boolean
+  onCopy?: (text: string) => void
   className?: string
 }
 
-/** Pure mic-button UI props; capture state comes from $hooks/useMicRecorder. */
+/** Pure mic-button UI props. */
 export interface MicRecorderProps {
   recording: boolean
   seconds: number
@@ -109,4 +110,6 @@ export interface StructuredOutputProps {
   inputs: Record<string, unknown> | undefined
   outputs: Record<string, unknown> | undefined
   loading: boolean
+  onCopy?: (text: string) => void
+  copied?: boolean
 }

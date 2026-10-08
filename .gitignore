@@ -11,3 +11,9 @@ src/apps/web/frontend/node_modules
 
 logs
 logs/*
+
+.archify/*
+
+src/apps/web/frontend/test-results/
+src/apps/web/frontend/playwright-report/
+src/apps/web/frontend/dist/

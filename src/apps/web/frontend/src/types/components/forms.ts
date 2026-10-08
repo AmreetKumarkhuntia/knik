@@ -1,21 +1,13 @@
-import type { InputHTMLAttributes } from 'react'
-
-/** Props for a generic form field. */
-export interface FormFieldProps {
-  label?: string
-  type?: 'text' | 'select' | 'number'
-  name?: string
-  value?: string
-  onChange?: (value: string) => void
-  options?: Array<{ value: string; label: string }>
-  placeholder?: string
-  required?: boolean
-  disabled?: boolean
-  className?: string
-}
+import type {
+  InputHTMLAttributes,
+  TextareaHTMLAttributes,
+  SelectHTMLAttributes,
+  ReactNode,
+} from 'react'
 
 /** Props for a text input field. */
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  density?: 'compact' | 'comfortable'
   error?: string
   fullWidth?: boolean
   id?: string
@@ -23,6 +15,10 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 
 /** Props for a toggle switch. */
 export interface ToggleSwitchProps {
+  id?: string
+  name?: string
+  'aria-label'?: string
+  'aria-describedby'?: string
   checked: boolean
   onChange: (checked: boolean) => void
   disabled?: boolean
@@ -31,16 +27,20 @@ export interface ToggleSwitchProps {
 }
 
 export interface CheckboxProps {
+  presentation?: 'standard' | 'chip'
+  id?: string
+  name?: string
+  'aria-describedby'?: string
   checked: boolean
   onChange: (checked: boolean) => void
-  label?: string
+  label?: ReactNode
   disabled?: boolean
   indeterminate?: boolean
   className?: string
 }
 
 export interface RadioOption {
-  label: string
+  label: ReactNode
   value: string
   monoLabel?: string
 }
@@ -50,6 +50,8 @@ export interface RadioProps {
   value: string
   onChange: (value: string) => void
   name: string
+  presentation?: 'standard' | 'card' | 'chip' | 'segmented'
+  label?: string
   disabled?: boolean
   className?: string
 }
@@ -60,10 +62,16 @@ export interface SelectOption {
   icon?: string
 }
 
-export interface SelectProps {
+export interface SelectProps extends Omit<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  'size' | 'value' | 'onChange' | 'children'
+> {
   options: SelectOption[]
   value: string
-  onChange: (value: string) => void
+  onChange?: (value: string) => void
+  onValueChange?: (value: string) => void
+  presentation?: 'native' | 'rich'
+  renderOption?: (option: SelectOption) => ReactNode
   placeholder?: string
   disabled?: boolean
   size?: 'sm' | 'md' | 'lg'
@@ -71,6 +79,12 @@ export interface SelectProps {
 }
 
 export interface SliderProps {
+  id?: string
+  name?: string
+  disabled?: boolean
+  'aria-label'?: string
+  'aria-describedby'?: string
+  formatValue?: (value: number) => string
   min: number
   max: number
   value: number
@@ -91,4 +105,8 @@ export interface FileUploadProps {
 /** Props for a search bar input. */
 export interface SearchBarProps {
   placeholder?: string
+}
+
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  error?: string
 }

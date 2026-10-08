@@ -1,12 +1,4 @@
-/**
- * Demo / sample data for showcase wiring.
- *
- * Tier-1 components never import these (enforced by eslint) — they receive
- * all data via props. Sections/pages that want standalone sample content
- * (e.g. ConversationHistory) pass these down as props; kept in constants/ so
- * sample content lives in one place.
- */
-import React from 'react'
+/** Historical sample records; not used to initialize the demo session. */
 import type { ConversationHistoryItem } from '$types'
 import type { CommandGroup } from '$types'
 import type { NotificationItem } from '$types'
@@ -79,51 +71,28 @@ export const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: '1',
     type: 'success',
-    title: (
-      <React.Fragment>
-        <b>Daily digest</b> finished in{' '}
-        <code className="font-mono text-[11.5px] bg-[var(--bg-code)] text-[var(--aurora-300)] px-1.5 py-[1px] rounded-[3px] border border-[var(--border-1)]">
-          12.4s
-        </code>
-      </React.Fragment>
-    ),
+    title: 'Daily digest finished in 12.4s',
     time: '2 min ago · ex-9210',
     unread: true,
   },
   {
     id: '2',
     type: 'fail',
-    title: (
-      <React.Fragment>
-        <b>GitHub digest</b> failed · SMTP relay denied
-      </React.Fragment>
-    ),
+    title: 'GitHub digest failed · SMTP relay denied',
     time: '11 min ago · ex-9207',
     unread: true,
   },
   {
     id: '3',
     type: 'info',
-    title: (
-      <React.Fragment>
-        New voice{' '}
-        <code className="font-mono text-[11.5px] bg-[var(--bg-code)] text-[var(--aurora-300)] px-1.5 py-[1px] rounded-[3px] border border-[var(--border-1)]">
-          am_ryan
-        </code>{' '}
-        is available
-      </React.Fragment>
-    ),
+    title: 'New voice am_ryan is available',
     time: '1 h ago · system',
     unread: true,
   },
   {
     id: '4',
     type: 'user',
-    title: (
-      <React.Fragment>
-        <b>Jay K.</b> shared <b>"Voice notes → tasks"</b> with you
-      </React.Fragment>
-    ),
+    title: 'Jay K. shared "Voice notes → tasks" with you',
     time: 'Yesterday · 17:42',
     unread: false,
   },

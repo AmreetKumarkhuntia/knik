@@ -1,36 +1,35 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { Children, isValidElement } from 'react'
+import type { ComponentProps } from 'react'
+import CodeBlock from './CodeBlock'
+import {
+  TableRoot,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeaderCell,
+  TableCell,
+} from '../display/TableParts'
 import type { Components } from 'react-markdown'
-import type { MarkdownMessageProps, CodeProps } from '$types/components'
+import type { MarkdownMessageProps } from '$types/components'
 
 /** Renders markdown content with syntax-highlighted code blocks. */
-export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) {
+export function MarkdownMessage({ content, isStreaming, onCopy }: MarkdownMessageProps) {
   const components: Components = {
-    code(props: CodeProps) {
-      const match = /language-(\w+)/.exec(props.className || '')
-      return !props.inline && match ? (
-        <div className="my-4 rounded-md overflow-hidden bg-[var(--bg-code)] border border-[var(--border-2)]">
-          <div className="flex items-center px-4 py-2 bg-surface-2 border-b border-[var(--border-2)] text-xs text-fg-4">
-            {match[1]}
-          </div>
-          <SyntaxHighlighter
-            style={vscDarkPlus as unknown as React.CSSProperties}
-            language={match[1]}
-            PreTag="div"
-            customStyle={{ margin: 0, background: 'transparent' }}
-            {...props}
-          >
-            {String(props.children).replace(/\n$/, '')}
-          </SyntaxHighlighter>
-        </div>
-      ) : (
+    pre({ children }) {
+      const child = Children.toArray(children).find(isValidElement)
+      if (!isValidElement<ComponentProps<'code'>>(child)) return <pre>{children}</pre>
+      const language = /language-([^\s]+)/.exec(child.props.className || '')?.[1] ?? 'text'
+      const code = Children.toArray(child.props.children).join('').replace(/\n$/, '')
+      return <CodeBlock code={code} language={language} onCopy={onCopy} className="my-4" />
+    },
+    code({ children, className }) {
+      return (
         <code
-          className="px-1.5 py-0.5 rounded-md bg-surface-2 text-fg-2 font-mono text-sm"
-          {...props}
+          className={`px-1.5 py-0.5 rounded-md bg-surface-2 text-fg-2 font-mono text-sm ${className || ''}`}
         >
-          {props.children}
+          {children}
         </code>
       )
     },
@@ -80,15 +79,32 @@ export function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) 
     table({ children }) {
       return (
         <div className="overflow-x-auto mb-4">
-          <table className="min-w-full divide-y divide-[var(--border-2)]">{children}</table>
+          <TableRoot className="min-w-full divide-y divide-[var(--border-2)]">{children}</TableRoot>
         </div>
       )
     },
+    thead({ children }) {
+      return <TableHead>{children}</TableHead>
+    },
+    tbody({ children }) {
+      return <TableBody>{children}</TableBody>
+    },
+    tr({ children }) {
+      return <TableRow>{children}</TableRow>
+    },
     th({ children }) {
-      return <th className="px-4 py-2 text-left text-sm font-semibold text-fg-2">{children}</th>
+      return (
+        <TableHeaderCell className="px-4 py-2 text-left text-sm font-semibold text-fg-2">
+          {children}
+        </TableHeaderCell>
+      )
     },
     td({ children }) {
-      return <td className="px-4 py-2 text-sm border-t border-[var(--border-2)]">{children}</td>
+      return (
+        <TableCell className="px-4 py-2 text-sm border-t border-[var(--border-2)]">
+          {children}
+        </TableCell>
+      )
     },
   }
 

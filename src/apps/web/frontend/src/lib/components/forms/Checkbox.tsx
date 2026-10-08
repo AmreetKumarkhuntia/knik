@@ -9,12 +9,16 @@ export default function Checkbox({
   disabled = false,
   indeterminate = false,
   className = '',
+  presentation = 'standard',
+  id,
+  name,
+  'aria-describedby': describedBy,
 }: CheckboxProps) {
   const isChecked = checked || indeterminate
 
   return (
     <label
-      className={`flex items-center gap-3 cursor-pointer ${
+      className={`flex items-center gap-3 cursor-pointer ${presentation === 'chip' ? 'px-3 py-2 rounded-lg border border-border-2 bg-surface-2' : ''} ${
         disabled ? 'opacity-50 cursor-not-allowed' : ''
       } ${className}`}
     >
@@ -26,6 +30,9 @@ export default function Checkbox({
         }`}
       >
         <input
+          id={id}
+          name={name}
+          aria-describedby={describedBy}
           type="checkbox"
           checked={checked}
           ref={input => {

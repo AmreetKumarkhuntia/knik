@@ -3,7 +3,8 @@
  * .tsx files to satisfy the configs-live-in-constants/ boundary (eslint.config.js).
  */
 import type { ModalSize } from '$types'
-import type { AccentBadge, RunStatus } from './redesignData'
+import type { AccentBadge } from '$types/components/chat'
+import type { ExecutionStatus } from '$types/workflow'
 
 /** Modal max-width class per size (Modal). */
 export const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
@@ -60,7 +61,7 @@ export const HUB_TREND_DIR: Record<string, 'up' | 'down' | 'neutral'> = {
 }
 
 /** Status icon + color per run status (WorkflowHub executions feed). */
-export const HUB_EXEC_ICON: Record<RunStatus, { name: string; color: string }> = {
+export const HUB_EXEC_ICON: Record<ExecutionStatus, { name: string; color: string }> = {
   success: { name: 'check_circle', color: 'var(--success)' },
   failed: { name: 'cancel', color: 'var(--danger)' },
   running: { name: 'pending', color: 'var(--info)' },

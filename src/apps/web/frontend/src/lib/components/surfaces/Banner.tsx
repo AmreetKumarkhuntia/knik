@@ -1,3 +1,4 @@
+import Button from '$components/buttons/Button'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BannerProps } from '$types'
@@ -40,13 +41,14 @@ export default function Banner({
           {icon && <span className="flex-shrink-0 flex items-center justify-center">{icon}</span>}
           <div className="flex-1">{children}</div>
           {dismissible && (
-            <button
+            <Button
+              variant="ghost"
               onClick={handleDismiss}
               className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors"
               aria-label="Dismiss banner"
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
-            </button>
+            </Button>
           )}
         </motion.div>
       )}

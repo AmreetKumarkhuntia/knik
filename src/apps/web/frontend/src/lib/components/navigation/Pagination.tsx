@@ -1,3 +1,4 @@
+import Button from '$components/buttons/Button'
 import type { PaginationProps } from '$types/components'
 
 /** Page navigation controls with ellipsis for large page ranges. */
@@ -65,13 +66,14 @@ export default function Pagination({
       </div>
 
       <div className="flex items-center gap-2">
-        <button
+        <Button
+          variant="ghost"
           onClick={handlePrevious}
           disabled={disabled || currentPage === 1}
           className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           Previous
-        </button>
+        </Button>
 
         <div className="flex gap-1">
           {getPageNumbers().map((page, idx) => {
@@ -87,7 +89,8 @@ export default function Pagination({
             const isActive = pageNum === currentPage
 
             return (
-              <button
+              <Button
+                variant="ghost"
                 key={pageNum}
                 onClick={() => handlePageClick(pageNum)}
                 disabled={disabled}
@@ -98,18 +101,19 @@ export default function Pagination({
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {pageNum}
-              </button>
+              </Button>
             )
           })}
         </div>
 
-        <button
+        <Button
+          variant="ghost"
           onClick={handleNext}
           disabled={disabled || currentPage === totalPages}
           className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   )

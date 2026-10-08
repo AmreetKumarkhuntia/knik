@@ -8,9 +8,16 @@ import type { KnikGlyphProps } from '$types'
 export default function KnikGlyph({ size = 22, glow = true, className }: KnikGlyphProps) {
   const id = useId()
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
       <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="24" y2="24">
+        <linearGradient gradientUnits="userSpaceOnUse" id={id} x1="0" y1="0" x2="24" y2="24">
           <stop offset="0%" stopColor="var(--aurora-200)" />
           <stop offset="55%" stopColor="var(--aurora-400)" />
           <stop offset="100%" stopColor="var(--teal-500)" />

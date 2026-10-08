@@ -1,8 +1,13 @@
+import CodeBlock from '../chat/CodeBlock'
 import type { ExecutionTimelineProps } from '$types/components'
 import { getNodeIcon } from '$lib/constants/nodes'
 
 /** Vertical timeline displaying execution step details. */
-export default function ExecutionTimeline({ timeline, loading = false }: ExecutionTimelineProps) {
+export default function ExecutionTimeline({
+  timeline,
+  loading = false,
+  onCopy,
+}: ExecutionTimelineProps) {
   if (loading) {
     return (
       <div className="space-y-3">
@@ -69,18 +74,24 @@ export default function ExecutionTimeline({ timeline, loading = false }: Executi
               <summary className="text-xs text-fg-3 cursor-pointer hover:text-[var(--primary)] transition-colors">
                 View inputs/outputs
               </summary>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
                   <div className="text-xs text-fg-4 mb-1">Inputs:</div>
-                  <pre className="text-xs bg-surface-2 p-2 rounded overflow-auto max-h-32 text-fg-2">
-                    {JSON.stringify(step.inputs, null, 2)}
-                  </pre>
+                  <CodeBlock
+                    code={JSON.stringify(step.inputs, null, 2)}
+                    language="json"
+                    onCopy={onCopy}
+                    className="max-h-48 overflow-auto"
+                  />
                 </div>
                 <div>
                   <div className="text-xs text-fg-4 mb-1">Outputs:</div>
-                  <pre className="text-xs bg-surface-2 p-2 rounded overflow-auto max-h-32 text-fg-2">
-                    {JSON.stringify(step.outputs, null, 2)}
-                  </pre>
+                  <CodeBlock
+                    code={JSON.stringify(step.outputs, null, 2)}
+                    language="json"
+                    onCopy={onCopy}
+                    className="max-h-48 overflow-auto"
+                  />
                 </div>
               </div>
             </details>

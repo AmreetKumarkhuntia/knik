@@ -26,7 +26,6 @@ export default defineConfig({
       $sections: path.resolve(__dirname, './src/lib/sections'),
       $pages: path.resolve(__dirname, './src/lib/pages'),
       $hooks: path.resolve(__dirname, './src/lib/hooks'),
-      $store: path.resolve(__dirname, './src/store'),
       $assets: path.resolve(__dirname, './src/assets'),
       $utils: path.resolve(__dirname, './src/lib/utils'),
       $constants: path.resolve(__dirname, './src/lib/constants'),

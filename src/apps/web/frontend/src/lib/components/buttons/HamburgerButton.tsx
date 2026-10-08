@@ -1,10 +1,12 @@
+import Button from '$components/buttons/Button'
 import { MenuIcon } from '../icons'
 import type { HamburgerButtonProps } from '$types/components'
 
 /** Fixed-position hamburger button for toggling the sidebar. */
 export default function HamburgerButton({ onClick }: HamburgerButtonProps) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       className="fixed top-6 left-6 z-20 w-11 h-11 knik-glass
                  rounded-md flex items-center justify-center text-fg-1 hover:bg-surface-3
@@ -12,6 +14,6 @@ export default function HamburgerButton({ onClick }: HamburgerButtonProps) {
       aria-label="Open sidebar"
     >
       <MenuIcon className="w-5 h-5" />
-    </button>
+    </Button>
   )
 }

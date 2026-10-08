@@ -66,3 +66,9 @@ export interface NodeMetadata {
 
 /** Registry mapping node type names to their metadata. */
 export type NodeRegistry = Partial<Record<string, NodeMetadata>>
+
+export interface NodeFieldProps {
+  field: FormFieldConfig
+  value: unknown
+  onChange: (value: unknown) => void
+}
