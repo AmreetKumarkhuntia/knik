@@ -1,15 +1,21 @@
-import type { WorkflowDefinition } from '$types/workflow'
-import type { Node } from '@xyflow/react'
+import type { Node, Edge, OnNodesChange, OnEdgesChange, OnConnect } from '@xyflow/react'
 
-/** Imperative handle exposed by the workflow canvas via ref. */
-export interface CanvasHandle {
-  getWorkflowDefinition: () => WorkflowDefinition | null
+export interface BuilderFieldStateProps {
+  modelOptions: Array<{ value: string; label: string }>
+  fieldDrafts: Record<string, string>
+  onFieldDraftChange: (field: string, value: string) => void
 }
-
-/** Props for the workflow canvas component. */
-export interface CanvasProps {
-  workflowId?: string
-  definition?: WorkflowDefinition
+export interface CanvasProps extends BuilderFieldStateProps {
+  nodes: Node[]
+  edges: Edge[]
+  selectedNode: Node | null
+  error: string | null
+  onNodesChange: OnNodesChange
+  onEdgesChange: OnEdgesChange
+  onConnect: OnConnect
+  onSelectNode: (id: string | null) => void
+  onNodeUpdate: (id: string, data: Record<string, unknown>) => void
+  onAddNode: (type: string, position: { x: number; y: number }) => void
   onSave?: () => void
   onExecute?: () => void
   readOnly?: boolean
@@ -21,13 +27,14 @@ export interface CanvasProps {
 }
 
 /** Props for the node properties sidebar panel. */
-export interface NodePropertiesProps {
+export interface NodePropertiesProps extends BuilderFieldStateProps {
   node: Node
   onUpdate: (data: Record<string, unknown>) => void
 }
 
 /** Props for the node configuration form. */
-export interface ConfigurationFormProps {
+export interface ConfigurationFormProps extends BuilderFieldStateProps {
+  nodeId: string
   nodeType: string
   data: Record<string, unknown>
   onDataChange: (field: string, value: unknown) => void
@@ -48,11 +55,11 @@ export interface WorkflowNavbarProps {
 
 /** Props for the floating canvas controls (node palette launcher). */
 export interface FloatingControlsProps {
-  onAddNode?: (node: Node) => void
+  onAddNode?: (type: string, position: { x: number; y: number }) => void
 }
 
 /** Props for the node properties side panel. */
-export interface NodePropertiesPanelProps {
+export interface NodePropertiesPanelProps extends BuilderFieldStateProps {
   compact?: boolean
   onClose: () => void
   selectedNode: Node | null

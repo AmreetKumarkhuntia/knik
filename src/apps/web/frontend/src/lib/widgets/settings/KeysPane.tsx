@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId } from 'react'
 import Button from '$components/buttons/Button'
 import MS from '$components/display/MS'
 import Input from '$components/forms/Input'
@@ -7,29 +7,20 @@ import ConfirmDialog from '$components/surfaces/ConfirmDialog'
 import ApiKeyRow from '$components/settings/ApiKeyRow'
 import KeyReveal from '$components/settings/KeyReveal'
 import FormGroup from '$widgets/FormGroup'
-import type { ApiKeyCreated, ApiKeyInfo } from '$types/sections/settings'
-import { useDemoSession } from '../session/useDemoSession'
-import { useSettingsCatalog } from '../session/useSettingsCatalog'
+import { useCredentialsStore, useCredentialsScope } from '$stores/credentials'
+import { useFeedbackStore } from '$stores/feedback'
+import { useCredentialsView } from '$stores/views'
 
 export default function KeysPane() {
-  const keys = useSettingsCatalog('apiKeys')
-  const scenarios = useDemoSession(s => s.keyScenarios)
-  const createDemoKey = useDemoSession(s => s.createDemoKey)
-  const deleteKey = useDemoSession(s => s.deleteKey)
-  const addToast = useDemoSession(s => s.addToast)
-  const [created, setCreated] = useState<ApiKeyCreated | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [label, setLabel] = useState('')
-  const [error, setError] = useState('')
-  const [deleting, setDeleting] = useState<ApiKeyInfo | null>(null)
+  const { scopeId, scope, patch } = useCredentialsScope()
+  const { created, creating, label, error } = scope
+  const { keys, available, deleting } = useCredentialsView(scopeId)
+  const createDemoKey = useCredentialsStore(s => s.createDemoKey)
+  const deleteKey = useCredentialsStore(s => s.deleteKey)
+  const closeCredentialEditor = useCredentialsStore(s => s.closeEditor)
+  const addToast = useFeedbackStore(s => s.addToast)
   const id = useId()
-  const available = scenarios.some(scenario => !keys.some(key => key.id === scenario.id))
-
-  const closeEditor = () => {
-    setCreating(false)
-    setLabel('')
-    setError('')
-  }
+  const closeEditor = () => closeCredentialEditor(scopeId)
   const copyKey = async () => {
     if (!created) return
     try {
@@ -46,7 +37,7 @@ export default function KeysPane() {
         <KeyReveal
           value={created.key}
           onCopy={() => void copyKey()}
-          onDismiss={() => setCreated(null)}
+          onDismiss={() => patch({ created: null })}
         />
       )}
       <div className="flex justify-end mb-2">
@@ -56,7 +47,7 @@ export default function KeysPane() {
           aria-label="Create key"
           icon={<MS name="add" size={15} />}
           disabled={!available}
-          onClick={() => setCreating(true)}
+          onClick={() => patch({ creating: true })}
         >
           Create key
         </Button>
@@ -72,7 +63,7 @@ export default function KeysPane() {
             key={key.id}
             apiKey={key}
             last={index === keys.length - 1}
-            onDelete={() => setDeleting(key)}
+            onDelete={() => patch({ deletingId: key.id })}
           />
         ))
       ) : (
@@ -82,17 +73,8 @@ export default function KeysPane() {
         <form
           onSubmit={event => {
             event.preventDefault()
-            if (!label.trim()) {
-              setError('Enter a key name.')
-              return
-            }
-            const result = createDemoKey(label)
-            if (!result.ok) {
-              setError(result.error)
-              return
-            }
-            setCreated(scenarios.find(scenario => scenario.id === result.id) ?? null)
-            closeEditor()
+            const result = createDemoKey(scopeId)
+            if (!result.ok) return
             addToast('Demo key added to this session.', 'success')
           }}
         >
@@ -103,8 +85,7 @@ export default function KeysPane() {
             id={`${id}-label`}
             value={label}
             onChange={event => {
-              setLabel(event.target.value)
-              setError('')
+              patch({ label: event.target.value, error: '' })
             }}
             error={error}
             required
@@ -127,12 +108,12 @@ export default function KeysPane() {
         title="Remove demo key?"
         message={`Remove ${deleting?.label ?? 'this key'} from the current session?`}
         confirmLabel="Remove key"
-        onCancel={() => setDeleting(null)}
+        onCancel={() => patch({ deletingId: null })}
         onConfirm={() => {
           if (!deleting) return
           deleteKey(deleting.id)
-          if (created?.id === deleting.id) setCreated(null)
-          setDeleting(null)
+          if (created?.id === deleting.id) patch({ created: null })
+          patch({ deletingId: null })
           addToast('Demo key removed from this session.', 'success')
         }}
       />

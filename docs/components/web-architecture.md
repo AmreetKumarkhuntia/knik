@@ -1,127 +1,113 @@
 # Knik frontend architecture
 
-The React/Vite frontend runs independently with widget-owned, in-memory demo state. It preserves the chat, workflows, builder, executions, schedules, and settings routes. Widgets select all application data, including settings catalogs, from their provider-scoped demo session. The frontend makes no application API calls, streaming connections, polling requests, or microphone capture requests. Backend source remains a separate, unchanged application.
+The React/Vite frontend uses provider-scoped, in-memory Zustand domain stores under `src/lib/stores`. Widgets obtain all application data and working state through public store hooks and actions. Components receive props and emit events. The frontend operates without application APIs, streaming, polling, browser persistence or microphone capture.
 
-## Ownership and dependencies
+For a visual walkthrough, open [domain ownership](../../.archify/store-architecture/domain-stores/domain-stores.html), [data flow](../../.archify/store-architecture/store-dataflow/store-dataflow.html), [interactions](../../.archify/store-architecture/store-interactions/store-interactions.html), or [session lifetime](../../.archify/store-architecture/store-lifecycle/store-lifecycle.html). The [implementation plan](../plan/07-frontend-component-consolidation.md) separates approved contracts from verified baseline observations and acceptance evidence.
 
-| Layer | Owns | May depend on |
-| --- | --- | --- |
-| App, pages, sections | Route selection/parameters, layout, widget composition | Public widgets, presentation components, shared types |
-| Widgets | Domain selectors/actions, drafts, filters, dialogs, session state, browser operations | Other widgets, components, shared types/constants/pure utilities |
-| Components | Props, emitted events, intrinsic focus/menu/layout behavior | Other components, shared types/constants/pure utilities |
-| Types, constants, utilities | Contracts, design tokens, static configuration, pure transformations | Lower-level code and type-only interfaces |
+The Archify files preserve the earlier proposed design. The chat behavior clarified on 2026-10-09 is specified below: saving a user message does not require a model or reply scenario.
 
-A widget must never import a page or section. A page must not import the widget store, source adapter, context, or domain hooks. The public `DemoSessionProvider` export is the App-level entry point; store hooks remain internal to widgets. Re-exporting through another directory does not bypass these rules.
+## Ownership
 
-```text
-App + route pages + layout sections
-                  |
-                  v
-              feature widgets <---- shared session selectors/actions
-                  |                            ^
-             props | events                    |
-                  v                            |
-          shared components ------------- widget actions
-```
-
-Source layout:
+| Layer                | Owns                                                                                                                         | Public dependencies                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| App, pages, sections | Routing, route parameters, layout and composition                                                                            | Provider entry point, widgets, presentation components        |
+| Stores               | Committed records, settings, selections, drafts, feature dialogs, errors, filters, sorting, derived views and domain actions | Shared types, constants and pure transformations              |
+| Widgets              | Bind store state/actions to component props/events; perform browser effects                                                  | Public store/domain/view barrels, components and pure helpers |
+| Components           | Supplied props/events and intrinsic focus/menu/layout behavior                                                               | Other components, types, tokens and pure helpers              |
 
 ```text
-src/apps/web/frontend/
-  eslint/frontend-boundaries.mjs   Local architecture rules
-  src/
-    App.tsx                        Providers, router, layout composition
-    lib/
-      pages/                       Route parameter adapters and widget composition
-      widgets/
-        session/                   Provider, source normalization, store and internal hook
-        chat/ layout/ feedback/    Chat, navigation, notifications and browser actions
-        workflows/ schedules/      Local workflow and schedule behavior
-        settings/ theme/           Preferences, key scenarios, audio assets and CSS variables
-      components/                  Shared controls and pure feature presentation
-      constants/                   Tokens and static configuration
-      utils/ data-structures/      Pure formatting and graph transformations
-    types/                         Component, widget and demo source interfaces
-    tests/                         Separate organized test suites
+DemoSource → validate + clone → independent domain stores
+                                        ↓
+                             public hooks + joined views
+                                        ↓
+Routes compose widgets → widgets supply component props
+                              ↑                 ↓
+                        store actions ← component events
 ```
 
-## Session data and interactions
+Store factories do not import peer domains. The session coordinator receives the store bundle and handles cross-domain commands. Joined views read multiple owners without copying records. Widgets cannot import store internals, raw Zustand APIs or demo modules. Pages/sections/components cannot select application state directly. A widget must not import a page or section.
 
-`DemoSessionProvider` creates one vanilla Zustand store for its own mounted lifetime. App mounts it above all routes. Independent provider instances own independent stores; a parent rerender or route change does not replace an existing store.
+## Domain relationships
 
-```text
-explicitly supplied DemoSource
-    -> widget-owned normalizeDemoSource
-    -> cloned initial snapshot
-    -> provider-scoped store
-    -> widget selectors
-    -> component props
+| Store       | Stored data and working state                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| Catalogs    | Providers, models, voices and tool definitions                                                  |
+| Chat        | Conversations, messages, active selection, reply scenarios, composer and rename scopes          |
+| Workflows   | Canonical workflow records, builder draft graph/name, selected node, validation and hub filters |
+| Schedules   | Records referencing workflow IDs, create/edit/delete working state                              |
+| Executions  | Records referencing workflow IDs, timelines, run scenarios, filters, sorting and pagination     |
+| Settings    | Profile, preferences, appearance, enabled tool IDs and pane working state                       |
+| Credentials | Key metadata, supplied key scenarios and create/reveal/delete state                             |
+| Shell       | Sidebar collapse and command palette state                                                      |
+| Feedback    | Toast queue                                                                                     |
 
-component callback
-    -> widget validation/action
-    -> committed session update
-    -> subscribed widgets rerender
-```
+Workflow names and definitions have one owner: the workflow store. Schedule and execution views join by workflow ID. Model options have explicit provider relationships, and chat/settings/builder select them from the same catalog. Dashboard metrics and recent conversation order are derived views, not independent datasets.
 
-The source adapter fills missing collections with empty arrays/maps, supplies initial preference defaults, and clones the source so session actions cannot modify the caller's fixture objects.
+Each domain exposes hooks and actions through its public barrel, with private store creation and selectors kept inside the subsystem. Interfaces belong under `src/types/stores`. The store tree separates `session/`, `demo/`, the nine domain folders, and `views/` for cross-domain projections.
 
-Provider, model, voice, MCP tool, and API key collections are dynamic session data. The internal `useSettingsCatalog(key)` hook selects the typed collection from the same provider-scoped store used by other widgets. Widgets map these records into component props; components contain no provider names, model lists, voice options, or tool catalogs. Local actions update subscribed widgets synchronously. Missing source collections are empty and never trigger a network fallback, timer, loading simulation, or mock API.
+## Initialization and lifetime
 
-No existing demo dataset is automatically selected. Historical demo modules remain disconnected until a source is explicitly chosen.
+`StoresProvider` creates one bundle above the routes and keeps it for the provider lifetime. An omitted source loads bundled demo data; an explicit source replaces that default. Normalize and validate before mounting consumers, then clone data to isolate both the fixture and each provider. Rerenders and navigation reuse the bundle.
 
-Committed records, shared selections, and preferences survive route navigation. Widget-local drafts, filters, sorting, dialogs, and playback state end with the owning widget. Saving validates before committing; invalid drafts remain editable; Cancel discards a draft. Reload mounts a new provider and restores the supplied source/defaults.
+| Action                               | Result                                                      |
+| ------------------------------------ | ----------------------------------------------------------- |
+| Open a widget                        | Create an isolated working scope for that instance/resource |
+| Type, filter, select or edit a graph | Update that domain's scoped working state                   |
+| Save                                 | Validate, commit the record and clear draft errors          |
+| Invalid input                        | Retain the draft and expose its validation error            |
+| Cancel                               | Discard the affected draft; keep saved records unchanged    |
+| Unmount or change resource           | Release the affected scope                                  |
+| Navigate and return                  | Reuse committed records; create fresh page working state    |
+| Reload or mount another provider     | Create an independent session from a cloned seed            |
 
-Appearance belongs to the same session: mode, accent, density, and corner radius. ThemeWidget applies the corresponding CSS variables and restores previous DOM values when it unmounts. The frontend does not read or write browser storage and does not clear keys left by older versions.
+Chat composer drafts and workflow edits therefore live in stores but remain transient. Two mounted editors have independent drafts. Store scope hooks handle StrictMode mount/cleanup without writing during render.
 
-## Demo capabilities
+The controlled workflow builder reads its name, nodes, edges, selection and errors from the workflow draft. Save reads the draft through the store command, rather than calling a canvas method. Cross-domain commands validate before any authoritative write; invalid references cannot produce partial domain updates.
 
-The `DemoSource` contract lives in `src/types/demo-session.ts`. It can supply conversations, model/suggestion options, workflows, schedules, executions/timelines, preferences, providers, voices, tools, and key records, plus explicit chat/run/key scenarios.
+## Demo capabilities and browser effects
 
-| Interaction | Behavior |
-| --- | --- |
-| Create/edit a workflow or schedule | Validate and update the local session; no execution service is called |
-| Send chat | Use a supplied matching chat scenario; otherwise retain the draft and explain unavailability |
-| Run workflow | Use the supplied run scenario for that workflow; otherwise unavailable |
-| View API keys | Read supplied key metadata from the demo session |
-| Create a demo key | Use a matching supplied key scenario; never generate a real secret |
-| Preview voice | Play only the selected supplied audio asset after a user action; stop when leaving the widget |
-| Clipboard/export | Widget performs the browser operation and reports success/failure |
-| Missing/deleted route ID | Render the relevant not-found/empty state |
+| Interaction                        | Behavior                                                                                                                               |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Create/edit workflow or schedule   | Validate and commit in memory                                                                                                          |
+| Send nonblank chat text            | Save the user message locally and clear the composer, regardless of model or scenario availability                                     |
+| Add a chat reply                   | Optionally append replies from a matching authored scenario; otherwise keep only the user message, with no warning or fabricated reply |
+| Blank text or deleted conversation | Reject the send, retain the draft and show the validation error                                                                        |
+| Run workflow                       | Require a scenario matching the committed definition; write execution and timeline together                                            |
+| Create demo key                    | Require an explicitly supplied sample-secret scenario; never generate a secret                                                         |
+| Preview voice                      | Play a supplied audio asset only after the user's action                                                                               |
+| Clipboard or export                | Widget performs the browser operation and updates store-owned status/feedback                                                          |
+| Missing/deleted route ID           | Show a not-found or empty state                                                                                                        |
 
-No timer simulates progress, no generated response substitutes for a missing scenario, and no live/demo mode switch exists. Static assets, fonts, and explicitly supplied media may load normally; this is not an offline asset-packaging mode.
+ThemeWidget applies CSS variables from the settings store. Audio elements, object URLs, DOM refs and focus mechanics remain browser resources rather than serializable store data. Their owning widgets clean them up. Existing storage keys are neither read nor cleared.
 
-## Shared controls and enforcement
+No network fallback, progress simulation, mock API or live/demo switch is present. Static assets and explicitly supplied media may load normally; this architecture does not promise offline packaging.
 
-One Button renders native buttons. Table and Markdown compose the same TableParts primitives, and Table requires stable row keys. Input, Textarea, Select, Radio, Checkbox, ToggleSwitch, and Slider form the shared control vocabulary. Modal and Popover own focus and dismissal. See [the component reference](react-common-components.md) for APIs and examples.
+Chat reply availability never blocks a valid local send. An unmatched message is still part of the conversation and appears in subscribed chat/sidebar views without a warning or reply-unavailable status. Authored scenarios provide optional local replay. No assistant message is fabricated and no provider is called. Whitespace-only drafts and sends targeting deleted conversations remain validation failures.
 
-ESLint enforces the ownership graph using configured TypeScript aliases, relative paths, direct exports, export-star barrels, and imported/re-exported aliases. Its browser rules reject all application fetch/XHR/WebSocket/EventSource transports, including catalog reads, telemetry beacons, microphone capture, browser storage, and component-owned clipboard/download/audio operations. Focus and layout DOM work remain allowed in components. Test fixtures/spies are exempt from application restrictions.
+## Controls, routes and verification
 
-Interfaces and type aliases belong in `src/types`; module-level option arrays and lookup maps belong in `src/lib/constants`. Imports from `$types/widgets` or `$types/sections` are type contracts, not imports of those UI layers.
+Canonical Button, Table/TableParts, form controls, Modal and Popover retain their shared responsibilities. See [component contracts](react-common-components.md). Store consolidation changes state ownership rather than visual design or routes.
 
-## Routes and development
-
-| Path | Feature widget |
-| --- | --- |
-| `/` | Chat |
-| `/workflows` | Workflow hub |
-| `/workflows/create` | Workflow builder |
-| `/workflows/:id/edit` | Workflow builder for a local record |
-| `/workflows/executions` | Execution list |
-| `/executions/:id` | Execution detail |
-| `/schedules` | Schedule management |
-| `/settings` | General, appearance, providers/tools, voice, demo keys |
+| Path                    | Feature                                                   |
+| ----------------------- | --------------------------------------------------------- |
+| `/`                     | Chat                                                      |
+| `/workflows`            | Workflow hub                                              |
+| `/workflows/create`     | Workflow builder                                          |
+| `/workflows/:id/edit`   | Builder for a saved workflow                              |
+| `/workflows/executions` | Execution list                                            |
+| `/executions/:id`       | Execution detail                                          |
+| `/schedules`            | Schedule management                                       |
+| `/settings`             | Profile, appearance, providers/tools, voice and demo keys |
 
 From `src/apps/web/frontend`:
 
 ```bash
-npm run dev          # Vite on port 8020; no backend is needed
-npm test             # Vitest + React Testing Library/user-event
-npm run lint         # Includes the local architecture rules
+npm run dev
+npm test
+npm run lint
 npm run type-check
-npm run build        # Lint/type checking and production bundle
-npm run test:browser # Playwright, using installed Chrome
+npm run build
+npm run test:browser
 ```
 
-Tests live under `src/tests/`, not alongside runtime components. Shared-control tests cover accessibility and event semantics; widget/session tests cover committed state, cancellation, validation, provider isolation, navigation, reset, and source immutability. Architecture tests use an in-memory module graph to exercise aliases and barrel bypasses. Browser tests cover routes, unsupported actions, themes, narrow layouts, and unexpected application requests. Browser tests reject all application data requests without catalog exceptions or API response fixtures; the backend is not started by the suite. Unit and integration tests supply arbitrary DemoSource records directly to the provider to verify dynamic catalog rendering and local updates.
-
-The [consolidation plan](../plan/07-frontend-component-consolidation.md) links the validated architecture, data-flow, interaction-sequence, session-lifecycle, and migration-workflow diagrams. They are explicitly labeled proposed design specifications; final implementation verification is recorded separately in that plan.
+Tests live separately under `src/tests`, including domain store, component, widget, architecture and browser suites. Architecture tests enforce aliases, relative paths, barrels and dynamic imports. Browser tests exercise all routes, themes and narrow layouts while rejecting application transports, persistence and microphone access. The [plan's acceptance checklist](../plan/07-frontend-component-consolidation.md#implementation-and-acceptance) is the verification contract for this migration.

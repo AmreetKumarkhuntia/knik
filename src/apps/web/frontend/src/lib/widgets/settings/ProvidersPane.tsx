@@ -3,16 +3,14 @@ import Checkbox from '$components/forms/Checkbox'
 import Radio from '$components/forms/Radio'
 import MS from '$components/display/MS'
 import FormGroup from '$widgets/FormGroup'
-import { useDemoSession } from '../session/useDemoSession'
-import { useSettingsCatalog } from '../session/useSettingsCatalog'
+import { useSettingsStore } from '$stores/settings'
+import { useProvidersView } from '$stores/views'
 
 export default function ProvidersPane() {
   const id = useId()
-  const providers = useSettingsCatalog('providers')
-  const provider = useDemoSession(s => s.settings.provider)
-  const tools = useSettingsCatalog('tools')
-  const updateSettings = useDemoSession(s => s.updateSettings)
-  const toggleTool = useDemoSession(s => s.toggleTool)
+  const { providers, provider, tools } = useProvidersView()
+  const updateSettings = useSettingsStore(s => s.updateSettings)
+  const toggleTool = useSettingsStore(s => s.toggleTool)
   return (
     <>
       <FormGroup title="AI providers" sub="Choose a default provider for this session">
@@ -23,11 +21,7 @@ export default function ProvidersPane() {
             presentation="card"
             value={provider}
             onChange={next => updateSettings({ provider: next })}
-            options={providers.map(option => ({
-              value: option.id,
-              label: option.name,
-              monoLabel: option.id === provider ? 'Selected' : 'Available',
-            }))}
+            options={providers}
           />
         ) : (
           <p className="text-[12.5px] text-[var(--fg-4)] py-2">No providers available.</p>

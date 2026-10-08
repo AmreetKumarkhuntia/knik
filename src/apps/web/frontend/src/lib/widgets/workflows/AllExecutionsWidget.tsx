@@ -1,31 +1,27 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, Pagination } from '$components'
 import HistoryTable from '$components/workflows/HistoryTable'
 import ExecutionsFilterBar from '$components/workflows/ExecutionsFilterBar'
-import { useDemoSession } from '$widgets/session/useDemoSession'
-import { toExecutionSummary } from './selectors'
+import { useExecutionsView } from '$stores/views'
+import { useSettingsStore } from '$stores/settings'
 
 export default function AllExecutionsWidget() {
   const navigate = useNavigate()
-  const density = useDemoSession(state => state.appearance.density)
-  const allExecutions = useDemoSession(state => state.executions)
-  const workflows = useDemoSession(state => state.workflows)
-  const [page, setPage] = useState(1)
-  const [selectedWorkflow, setSelectedWorkflow] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('all')
-  const filtered = allExecutions
-    .filter(
-      execution =>
-        (!selectedWorkflow || execution.workflow_id === selectedWorkflow) &&
-        (selectedStatus === 'all' || execution.status === selectedStatus)
-    )
-    .sort((a, b) => b.started_at.localeCompare(a.started_at))
-  const totalPages = Math.max(1, Math.ceil(filtered.length / 50))
-  const currentPage = Math.min(page, totalPages)
-  const executions = filtered
-    .slice((currentPage - 1) * 50, currentPage * 50)
-    .map(toExecutionSummary)
+  const density = useSettingsStore(state => state.appearance.density)
+  const {
+    workflows,
+    selectedWorkflow,
+    selectedStatus,
+    setWorkflow,
+    setStatus,
+    clear,
+    hasActiveFilters,
+    executions,
+    totalCount,
+    totalPages,
+    currentPage,
+    setPage,
+  } = useExecutionsView()
   return (
     <div className="h-full flex flex-col bg-background">
       <PageHeader breadcrumbs={['Workflows', 'All Executions']} sticky />
@@ -35,23 +31,13 @@ export default function AllExecutionsWidget() {
             workflows={workflows}
             selectedWorkflow={selectedWorkflow}
             selectedStatus={selectedStatus}
-            onWorkflowChange={value => {
-              setSelectedWorkflow(value)
-              setPage(1)
-            }}
-            onStatusChange={value => {
-              setSelectedStatus(value)
-              setPage(1)
-            }}
-            onClearFilters={() => {
-              setSelectedWorkflow('')
-              setSelectedStatus('all')
-              setPage(1)
-            }}
-            hasActiveFilters={selectedWorkflow !== '' || selectedStatus !== 'all'}
+            onWorkflowChange={setWorkflow}
+            onStatusChange={setStatus}
+            onClearFilters={clear}
+            hasActiveFilters={hasActiveFilters}
             loading={false}
             shownCount={executions.length}
-            totalCount={filtered.length}
+            totalCount={totalCount}
           />
           <div className="glass border border-border rounded-xl overflow-hidden">
             <HistoryTable

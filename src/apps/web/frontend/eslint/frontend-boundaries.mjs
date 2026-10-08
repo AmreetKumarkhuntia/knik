@@ -7,11 +7,20 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const slash = value => value.replaceAll('\\', '/')
 const within = (value, directory) => value === directory || value.startsWith(`${directory}/`)
 const withoutExtension = value => value.replace(/\.(?:[cm]?[jt]sx?)$/, '')
+const publicStoreModule = module =>
+  /^src\/lib\/stores\/(?:catalogs|chat|workflows|schedules|executions|settings|credentials|shell|feedback|views)$/.test(
+    module
+  )
+const storeHookModule = module =>
+  /^src\/lib\/stores\/(?:catalogs|chat|workflows|schedules|executions|settings|credentials|shell|feedback)\/hooks$/.test(
+    module
+  ) || /^src\/lib\/stores\/views\/[^/]+$/.test(module)
 const aliases = {
   $types: 'src/types',
   $lib: 'src/lib',
   $components: 'src/lib/components',
   $widgets: 'src/lib/widgets',
+  $stores: 'src/lib/stores',
   $sections: 'src/lib/sections',
   $pages: 'src/lib/pages',
   $hooks: 'src/lib/hooks',
@@ -41,6 +50,7 @@ function tier(relative) {
   if (within(relative, 'src/types')) return 'types'
   if (/^src\/lib\/(?:constants|utils|data-structures)(?:\/|$)/.test(relative)) return 'lower'
   if (within(relative, 'src/lib/components')) return 'components'
+  if (within(relative, 'src/lib/stores')) return 'stores'
   if (within(relative, 'src/lib/widgets')) return 'widgets'
   if (
     /^src\/lib\/(?:pages|sections)(?:\/|$)/.test(relative) ||
@@ -173,12 +183,12 @@ export function createFrontendArchitecture({
     }
     return edges
   }
-  function violation(origin, resolved, names, typeOnly) {
+  function violation(origin, resolved, names, typeOnly, publicHooks = false) {
     if (resolved.external) {
       if (!typeOnly && networkPackages.test(resolved.external))
-        return 'Application transport clients are removed; use widget-owned demo actions.'
-      if (!typeOnly && storePackages.test(resolved.external) && origin !== 'widgets')
-        return 'Only widgets own application stores and store hooks.'
+        return 'Application transport clients are removed; use store-owned demo actions.'
+      if (!typeOnly && storePackages.test(resolved.external) && origin !== 'stores')
+        return 'Only lib/stores owns application stores and Zustand hooks.'
       if (!typeOnly && ['types', 'lower'].includes(origin) && uiPackages.test(resolved.external))
         return 'Types, constants and utilities cannot depend on UI runtime code.'
       return null
@@ -190,51 +200,79 @@ export function createFrontendArchitecture({
       /^src\/(?:services|store)(?:\/|$)/.test(target) || within(target, 'src/lib/hooks')
     if (
       origin === 'components' &&
-      (['widgets', 'composition'].includes(targetTier) || serviceOrHook || isFixture(target))
+      (['stores', 'widgets', 'composition'].includes(targetTier) ||
+        serviceOrHook ||
+        isFixture(target))
     )
-      return 'Components render props and emit events; widgets own data, actions and browser operations.'
+      return 'Components render props and emit events; stores own data and actions; widgets own browser operations.'
     if (origin === 'widgets' && targetTier === 'composition')
       return 'Widgets may compose components and widgets, but cannot import pages, sections or App.'
     if (
       ['types', 'lower'].includes(origin) &&
       !typeOnly &&
-      (['components', 'widgets', 'composition'].includes(targetTier) ||
+      (['stores', 'components', 'widgets', 'composition'].includes(targetTier) ||
         serviceOrHook ||
         isFixture(target))
     )
       return 'Types, constants and utilities must stay below runtime UI and session state.'
+    const module = withoutExtension(target).replace(/\/index$/, '')
+    const publicProvider =
+      module === 'src/lib/stores' &&
+      names.length > 0 &&
+      names.every(name => name === 'StoresProvider')
+    const publicDomain = publicStoreModule(module)
+    const hookNames =
+      typeOnly || (names.length > 0 && names.every(name => name === '*' || /^use[A-Z]/.test(name)))
+    if (
+      origin === 'stores' &&
+      ['components', 'widgets', 'composition'].includes(targetTier) &&
+      !typeOnly
+    )
+      return 'Stores cannot depend on components, widgets, pages or sections.'
+    if (origin === 'widgets') {
+      if (isFixture(target)) return 'Widgets read application data only through public store hooks.'
+      if (
+        targetTier === 'stores' &&
+        (!publicDomain || !hookNames) &&
+        !(publicHooks && storeHookModule(module) && hookNames)
+      )
+        return 'Widgets use public domain store hooks; store factories, seed data and session internals are private.'
+    }
     if (origin === 'composition') {
-      const module = withoutExtension(target).replace(/\/index$/, '')
-      const publicSession =
-        module === 'src/lib/widgets/session' &&
-        names.length > 0 &&
-        names.every(name => name === 'DemoSessionProvider')
       const internalWidget =
-        target.startsWith('src/lib/widgets/session/') ||
-        target === 'src/lib/widgets/session' ||
-        /(?:^|\/)(?:hooks|store|stores|fixtures|data)(?:\/|$)/.test(target) ||
+        /(?:^|\/)(?:hooks|store|stores|session|fixtures|data)(?:\/|$)/.test(target) ||
         /(?:^|\/)use[A-Z][^/]*$/.test(module)
       if (
+        (targetTier === 'stores' && !publicProvider) ||
         serviceOrHook ||
         isFixture(target) ||
-        (targetTier === 'widgets' && internalWidget && !publicSession)
+        (targetTier === 'widgets' && internalWidget)
       )
-        return 'App, pages and sections compose public widgets; session internals, fixtures and domain hooks stay inside widgets.'
+        return 'App, pages and sections compose widgets; only the public StoresProvider may be imported from stores.'
     }
     return null
   }
-  function findViolation(origin, resolved, names, typeOnly, visited = new Set()) {
-    const direct = violation(origin, resolved, names, typeOnly)
+  function findViolation(
+    origin,
+    resolved,
+    names,
+    typeOnly,
+    visited = new Set(),
+    { factoryDomain, publicHooks = false } = {}
+  ) {
+    const targetDomain =
+      resolved.file && relative(resolved.file).match(/^src\/lib\/stores\/([^/]+)\//)?.[1]
+    if (!typeOnly && factoryDomain && targetDomain && factoryDomain !== targetDomain)
+      return {
+        reason: 'Domain factories cannot import other stores; use the session coordinator.',
+        target: relative(resolved.file),
+      }
+    const direct = violation(origin, resolved, names, typeOnly, publicHooks)
     if (direct)
       return { reason: direct, target: resolved.file ? relative(resolved.file) : resolved.external }
     if (!resolved.file || typeOnly || relative(resolved.file).startsWith('src/types/')) return null
-    // The public provider is an ownership boundary, not an invitation to import its store.
-    if (
-      origin === 'composition' &&
-      withoutExtension(relative(resolved.file)).replace(/\/index$/, '') ===
-        'src/lib/widgets/session'
-    )
-      return null
+    const module = withoutExtension(relative(resolved.file)).replace(/\/index$/, '')
+    if (origin === 'composition' && module === 'src/lib/stores') return null
     const key = `${resolved.file}:${names.join(',')}`
     if (visited.has(key)) return null
     visited.add(key)
@@ -246,7 +284,11 @@ export function createFrontendArchitecture({
         resolve(edge.specifier, resolved.file),
         nextNames,
         false,
-        visited
+        visited,
+        {
+          factoryDomain,
+          publicHooks: publicHooks || (origin === 'widgets' && publicStoreModule(module)),
+        }
       )
       if (found) return found
     }
@@ -267,7 +309,11 @@ export function createFrontendArchitecture({
           const origin = tier(from)
           const check = (node, source, names = ['*'], typeOnly = false) => {
             if (typeof source !== 'string') return
-            const found = findViolation(origin, resolve(source, file), names, typeOnly)
+            const resolved = resolve(source, file)
+            const factoryDomain = from.match(/^src\/lib\/stores\/([^/]+)\/store\.ts$/)?.[1]
+            const found = findViolation(origin, resolved, names, typeOnly, new Set(), {
+              factoryDomain,
+            })
             if (found) context.report({ node, messageId: 'boundary', data: found })
           }
           return {
@@ -367,15 +413,16 @@ export function createFrontendArchitecture({
           schema: [],
           messages: {
             transport:
-              'Application network transports and microphone capture are disabled; use the widget-owned demo session.',
+              'Application network transports and microphone capture are disabled; use the store-owned demo session.',
             storage: 'Session state resets on reload; do not read or write browser storage.',
-            component: 'Components emit events; browser I/O belongs in widgets.',
+            component:
+              'Components and stores cannot perform browser I/O; browser effects belong in widgets.',
           },
         },
         create(context) {
           const from = relative(context.filename)
           if (!from.startsWith('src/') || isTest(from)) return {}
-          const component = tier(from) === 'components'
+          const component = ['components', 'stores'].includes(tier(from))
           const source = context.sourceCode
           function globalPath(node, seen = new Set()) {
             if (!node || seen.has(node)) return null

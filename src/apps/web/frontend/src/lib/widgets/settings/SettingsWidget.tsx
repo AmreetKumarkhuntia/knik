@@ -1,3 +1,4 @@
+import { useSettingsScope } from '$stores/settings'
 import VerticalTabs from '$components/navigation/VerticalTabs'
 import SectionHeader from '$components/display/SectionHeader'
 import GeneralPane from './GeneralPane'
@@ -7,6 +8,7 @@ import VoicePane from './VoicePane'
 import KeysPane from './KeysPane'
 
 export default function SettingsWidget() {
+  const { scope, patch } = useSettingsScope()
   const tabs = [
     { id: 'general', label: 'General', icon: 'tune', content: <GeneralPane /> },
     { id: 'appearance', label: 'Appearance', icon: 'palette', content: <AppearancePane /> },
@@ -22,7 +24,7 @@ export default function SettingsWidget() {
           title="Settings"
           subtitle="Manage your workspace, models, and account"
         />
-        <VerticalTabs tabs={tabs} />
+        <VerticalTabs tabs={tabs} activeTab={scope.tab} onChange={tab => patch({ tab })} />
       </div>
     </div>
   )

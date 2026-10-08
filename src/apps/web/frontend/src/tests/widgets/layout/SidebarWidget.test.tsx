@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { DemoSessionProvider } from '$widgets/session/DemoSessionProvider'
+import { StoresProvider } from '$stores'
 import SidebarWidget from '$widgets/layout/SidebarWidget'
 
 describe('SidebarWidget conversation edits', () => {
@@ -10,7 +10,7 @@ describe('SidebarWidget conversation edits', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DemoSessionProvider
+        <StoresProvider
           source={{
             conversations: [
               {
@@ -27,7 +27,7 @@ describe('SidebarWidget conversation edits', () => {
           }}
         >
           <SidebarWidget onOpenSearch={() => {}} />
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     await user.click(screen.getByRole('button', { name: 'Rename' }))

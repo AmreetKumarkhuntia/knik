@@ -2,11 +2,11 @@ import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter, Routes, Route, Link } from 'react-router-dom'
-import { DemoSessionProvider } from '$widgets/session/DemoSessionProvider'
+import { StoresProvider } from '$stores'
 import WorkflowHubWidget from '$widgets/workflows/WorkflowHubWidget'
 import WorkflowBuilderWidget from '$widgets/workflows/WorkflowBuilderWidget'
 import ExecutionDetailWidget from '$widgets/workflows/ExecutionDetailWidget'
-import { normalizeNodes } from '$widgets/workflows/builder/normalizeNodes'
+import { normalizeNodes } from '$stores/workflows/selectors'
 
 afterEach(cleanup)
 
@@ -14,10 +14,10 @@ describe('workflow session views', () => {
   it('shows absent workflow and execution routes explicitly', () => {
     render(
       <MemoryRouter>
-        <DemoSessionProvider>
+        <StoresProvider source={{}}>
           <WorkflowBuilderWidget workflowId="missing" />
           <ExecutionDetailWidget executionId="not-a-number" />
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     expect(screen.getByText('Workflow not found')).toBeTruthy()
@@ -27,7 +27,7 @@ describe('workflow session views', () => {
   it('disables a run without a supplied scenario', () => {
     render(
       <MemoryRouter>
-        <DemoSessionProvider
+        <StoresProvider
           source={{
             workflows: [
               { id: 'one', name: 'Draft workflow', definition: { nodes: {}, connections: [] } },
@@ -35,7 +35,7 @@ describe('workflow session views', () => {
           }}
         >
           <WorkflowHubWidget />
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     expect(
@@ -48,7 +48,7 @@ describe('workflow session views', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DemoSessionProvider
+        <StoresProvider
           source={{
             workflows: [
               { id: 'one', name: 'Retained workflow', definition: { nodes: {}, connections: [] } },
@@ -59,7 +59,7 @@ describe('workflow session views', () => {
             <Route path="/" element={<WorkflowHubWidget />} />
             <Route path="/workflows/create" element={<Link to="/">Return to workflows</Link>} />
           </Routes>
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     await user.type(screen.getByRole('textbox', { name: 'Search workflows' }), 'unmatched query')
@@ -76,7 +76,7 @@ describe('workflow session views', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DemoSessionProvider
+        <StoresProvider
           source={{
             workflows: [
               { id: 'one', name: 'Draft workflow', definition: { nodes: {}, connections: [] } },
@@ -101,7 +101,7 @@ describe('workflow session views', () => {
             <Route path="/" element={<WorkflowHubWidget />} />
             <Route path="/executions/:id" element={<div>Supplied execution route</div>} />
           </Routes>
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     await user.click(screen.getByRole('button', { name: 'Run Draft workflow' }))

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useDemoSession } from '$widgets/session/useDemoSession'
+import { useSettingsStore } from '$stores/settings'
 import {
   themePresets,
   lightThemePresets,
@@ -10,7 +10,7 @@ import {
 import type { MainLayoutWidgetProps } from '$types/widgets/chat-shell'
 
 export default function ThemeWidget({ children }: MainLayoutWidgetProps) {
-  const appearance = useDemoSession(state => state.appearance)
+  const appearance = useSettingsStore(state => state.appearance)
 
   useEffect(() => {
     const { mode, accentName, radius, density } = appearance

@@ -1,12 +1,4 @@
-import {
-  forwardRef,
-  useId,
-  useImperativeHandle,
-  useRef,
-  useEffect,
-  useCallback,
-  useState,
-} from 'react'
+import { forwardRef, useImperativeHandle, useRef, useEffect, useCallback, useState } from 'react'
 import { MS, Kbd, ModelPicker } from '$components'
 import Button from '../buttons/Button'
 import Textarea from '../forms/Textarea'
@@ -14,8 +6,7 @@ import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
 /** Chat composer: glass field with model picker, attach/voice, send, and a hint row. */
 const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
-  ({ value, onChange, onSend, disabled, sendDisabledReason, model, onModel, models }, ref) => {
-    const availabilityId = useId()
+  ({ value, onChange, onSend, disabled, model, onModel, models }, ref) => {
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const [focused, setFocused] = useState(false)
 
@@ -35,20 +26,13 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
       clear: () => onChange(''),
     }))
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (
-        e.key === 'Enter' &&
-        !e.shiftKey &&
-        !e.nativeEvent.isComposing &&
-        !disabled &&
-        !sendDisabledReason
-      ) {
-        e.preventDefault()
-        if (value.trim()) onSend()
-      }
-    }
+    const canSend = !!value.trim() && !disabled
 
-    const canSend = !!value.trim() && !disabled && !sendDisabledReason
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
+      e.preventDefault()
+      if (canSend) onSend()
+    }
 
     return (
       <div>
@@ -66,7 +50,6 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
         >
           <Textarea
             aria-label="Message"
-            aria-describedby={sendDisabledReason ? availabilityId : undefined}
             ref={inputRef}
             value={value}
             onChange={e => onChange(e.target.value)}
@@ -135,11 +118,6 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
             </Button>
           </div>
         </div>
-        {sendDisabledReason && (
-          <p id={availabilityId} className="mt-2 text-xs text-fg-4" role="status">
-            {sendDisabledReason}
-          </p>
-        )}
         <div
           className="font-mono"
           style={{ marginTop: 8, paddingInline: 4, fontSize: 10.5, color: 'var(--fg-5)' }}

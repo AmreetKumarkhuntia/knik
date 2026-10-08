@@ -19,9 +19,9 @@ export default defineConfig({
   resolve: {
     alias: {
       $types: path.resolve(__dirname, './src/types'),
-      $services: path.resolve(__dirname, './src/services'),
       $lib: path.resolve(__dirname, './src/lib'),
       $components: path.resolve(__dirname, './src/lib/components'),
+      $stores: path.resolve(__dirname, './src/lib/stores'),
       $widgets: path.resolve(__dirname, './src/lib/widgets'),
       $sections: path.resolve(__dirname, './src/lib/sections'),
       $pages: path.resolve(__dirname, './src/lib/pages'),
