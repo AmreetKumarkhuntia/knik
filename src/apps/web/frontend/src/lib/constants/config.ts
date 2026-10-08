@@ -1,27 +1,3 @@
-/** Backend origin. Override per-environment via VITE_API_URL (see .env). */
-const API_HOST = import.meta.env.VITE_API_URL || 'http://localhost:8010'
-
-export const API = {
-  /** Backend origin, e.g. http://localhost:8010 */
-  baseURL: API_HOST,
-  /** Backend API root, e.g. http://localhost:8010/api — the single source for all clients. */
-  baseApiURL: `${API_HOST}/api`,
-  port: 8010,
-  endpoints: {
-    workflows: '/api/workflows',
-    history: '/api/history',
-    conversations: '/api/conversations',
-    admin: '/api/admin',
-    executionNodes: (workflowId: string, executionId: string) =>
-      `/api/workflows/${workflowId}/executions/${executionId}/nodes`,
-  },
-}
-
-export const STORAGE = {
-  themeMode: 'knik-theme-mode',
-  themeAccent: 'knik-theme-accent',
-}
-
 export const CSS_VARS = {
   backgroundColor: '--color-background',
   surfaceColor: '--color-surface',

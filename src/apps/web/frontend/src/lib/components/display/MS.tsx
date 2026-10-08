@@ -16,6 +16,7 @@ export default function MS({
 }: MSProps) {
   return (
     <span
+      aria-hidden="true"
       className={`material-symbols-outlined ${className}`}
       style={{
         fontSize: size,

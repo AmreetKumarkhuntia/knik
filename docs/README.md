@@ -43,6 +43,7 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 ### Architecture Plans
 
+- [Frontend Component Consolidation](plan/07-frontend-component-consolidation.md) - Canonical UI controls and frontend migration plan
 - [Web Backend Refactor](plan/04-web-backend-refactor.md) - Backend state management refactor (mostly complete)
 - [Fix Workflow Create Page](plan/02-fix-workflow-create-page.md) - Backend workflow create endpoint
 - [Settings Page](plan/03-settings-page-browser.md) - Browser and app settings UI

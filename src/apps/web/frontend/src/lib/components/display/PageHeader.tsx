@@ -1,3 +1,4 @@
+import Button from '$components/buttons/Button'
 import type { PageHeaderProps } from '$types/components'
 
 /** Page header bar with breadcrumbs and optional right-side content. */
@@ -16,13 +17,14 @@ export default function PageHeader({
     >
       <div className="flex items-center gap-2">
         {showBackButton && (
-          <button
+          <Button
+            variant="ghost"
             onClick={onBackClick}
             className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-surface-3 transition-colors"
             title="Back"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-          </button>
+          </Button>
         )}
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1

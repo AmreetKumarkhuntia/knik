@@ -25,9 +25,9 @@ export interface BackdropProps {
 }
 
 /** Props for a card container. */
-export interface CardProps {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode
-  variant?: 'default' | 'bordered' | 'elevated'
+  variant?: 'default' | 'bordered' | 'elevated' | 'glass'
   padding?: 'none' | 'sm' | 'md' | 'lg'
   className?: string
 }
@@ -46,7 +46,12 @@ export interface ConfirmDialogProps {
 }
 
 export interface PopoverProps {
-  trigger: React.ReactNode
+  renderTrigger: (
+    props: React.ButtonHTMLAttributes<HTMLButtonElement> & { ref: React.Ref<HTMLButtonElement> }
+  ) => React.ReactNode
+  role?: 'dialog' | 'listbox' | 'menu'
+  label?: string
+  autoFocus?: boolean
   content: React.ReactNode
   placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end'
   open?: boolean

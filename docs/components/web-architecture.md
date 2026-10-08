@@ -1,268 +1,127 @@
-# Knik Web App Architecture
+# Knik frontend architecture
 
-**React + Vite + Tailwind CSS + FastAPI Python Backend**
+The React/Vite frontend runs independently with widget-owned, in-memory demo state. It preserves the chat, workflows, builder, executions, schedules, and settings routes. Widgets select all application data, including settings catalogs, from their provider-scoped demo session. The frontend makes no application API calls, streaming connections, polling requests, or microphone capture requests. Backend source remains a separate, unchanged application.
 
-## Folder Structure
+## Ownership and dependencies
 
-### Backend
+| Layer | Owns | May depend on |
+| --- | --- | --- |
+| App, pages, sections | Route selection/parameters, layout, widget composition | Public widgets, presentation components, shared types |
+| Widgets | Domain selectors/actions, drafts, filters, dialogs, session state, browser operations | Other widgets, components, shared types/constants/pure utilities |
+| Components | Props, emitted events, intrinsic focus/menu/layout behavior | Other components, shared types/constants/pure utilities |
+| Types, constants, utilities | Contracts, design tokens, static configuration, pure transformations | Lower-level code and type-only interfaces |
 
-```
-src/apps/web/backend/
-├── __init__.py
-├── main.py              # FastAPI app setup, CORS, lifespan, route mounting
-├── config.py            # WebBackendConfig (extends core Config)
-├── state.py             # Shared mutable state (AIClient, MCPServerRegistry, TTS)
-├── requirements.txt     # Backend-specific Python deps
-├── models/
-│   └── __init__.py      # (placeholder — Pydantic models remain inline in routes)
-├── routes/
-│   ├── __init__.py
-│   ├── admin.py         # GET/POST /api/admin/settings
-│   ├── analytics.py     # GET /api/analytics/* (dashboard, metrics, activity)
-│   ├── chat.py          # POST /api/chat (non-streaming)
-│   ├── chat_stream.py   # POST /api/chat/stream (SSE streaming)
-│   ├── conversations.py # CRUD /api/conversations/* (persisted conversation history)
-│   ├── cron.py          # CRUD /api/cron/* (scheduled tasks)
-│   ├── history.py       # GET/POST /api/history (conversation history)
-│   └── workflow.py      # CRUD /api/workflows/* (workflow management)
-└── websocket/
-    └── __init__.py      # (placeholder)
+A widget must never import a page or section. A page must not import the widget store, source adapter, context, or domain hooks. The public `DemoSessionProvider` export is the App-level entry point; store hooks remain internal to widgets. Re-exporting through another directory does not bypass these rules.
+
+```text
+App + route pages + layout sections
+                  |
+                  v
+              feature widgets <---- shared session selectors/actions
+                  |                            ^
+             props | events                    |
+                  v                            |
+          shared components ------------- widget actions
 ```
 
-### Frontend
+Source layout:
 
-```
+```text
 src/apps/web/frontend/
-├── package.json
-├── vite.config.ts
-├── tailwind.config.js
-├── postcss.config.js
-├── tsconfig.json
-├── tsconfig.app.json    # Path aliases ($types, $components, etc.)
-├── index.html
-└── src/
-    ├── main.tsx         # React entry point
-    ├── App.tsx          # Router setup (6 routes)
-    ├── index.css        # Tailwind imports + global styles
-    ├── vite-env.d.ts
-    ├── assets/
-    │   └── react.svg
-    ├── lib/
-    │   ├── components/  # 29 reusable UI components
-    │   │   ├── index.ts # Barrel exports
-    │   │   ├── ActionButton.tsx
-    │   │   ├── Backdrop.tsx
-    │   │   ├── Breadcrumb.tsx
-    │   │   ├── Card.tsx
-    │   │   ├── ConfirmDialog.tsx
-    │   │   ├── EmptyState.tsx
-    │   │   ├── ExecutionFlowGraph.tsx
-    │   │   ├── ExecutionTimeline.tsx
-    │   │   ├── FormField.tsx
-    │   │   ├── HamburgerButton.tsx
-    │   │   ├── IconButton.tsx
-    │   │   ├── Input.tsx
-    │   │   ├── LinkButton.tsx
-    │   │   ├── LoadingSpinner.tsx
-    │   │   ├── MarkdownMessage.tsx
-    │   │   ├── MetricCard.tsx
-    │   │   ├── Modal.tsx
-    │   │   ├── NavLink.tsx
-    │   │   ├── NotificationButton.tsx
-    │   │   ├── PageHeader.tsx
-    │   │   ├── Pagination.tsx
-    │   │   ├── SearchBar.tsx
-    │   │   ├── SectionHeader.tsx
-    │   │   ├── StatusBadge.tsx
-    │   │   ├── StructuredOutput.tsx
-    │   │   ├── Table.tsx
-    │   │   ├── Tabs.tsx
-    │   │   ├── ToggleSwitch.tsx
-    │   │   ├── UserProfile.tsx
-    │   │   ├── graph/           # ReactFlow graph components
-    │   │   │   ├── FlowCanvas.tsx
-    │   │   │   ├── edges/FlowEdge.tsx
-    │   │   │   └── nodes/BaseNode.tsx, NodeContent.tsx
-    │   │   └── icons/
-    │   │       └── Icons.tsx    # MenuIcon, PlayIcon, PauseIcon, etc.
-    │   ├── constants/           # UI constants, themes, node types
-    │   │   ├── config.ts
-    │   │   ├── defaults.ts
-    │   │   ├── dimensions.ts
-    │   │   ├── navigation.ts
-    │   │   ├── nodes.ts
-    │   │   ├── status.ts
-    │   │   ├── themes.ts
-    │   │   ├── ui.ts
-    │   │   └── variants.ts
-    │   ├── data-structures/     # Graph data structures (d3-force layout)
-    │   │   ├── core/GraphNode.ts
-    │   │   ├── structures/Graph.ts
-    │   │   ├── layout/GraphLayout.ts
-    │   │   └── adapters/        # canvasAdapter, graphAdapter, workflowAdapter
-    │   ├── hooks/
-    │   │   ├── index.ts
-    │   │   ├── useKeyboardShortcuts.ts
-    │   │   └── useTheme.ts
-    │   ├── pages/               # Top-level route pages
-    │   │   ├── Home.tsx
-    │   │   ├── Workflows.tsx
-    │   │   ├── WorkflowBuilder.tsx
-    │   │   ├── ExecutionDetail.tsx
-    │   │   └── AllExecutions.tsx
-    │   ├── sections/            # App-specific section components
-    │   │   ├── audio/AudioControls.tsx
-    │   │   ├── chat/ChatPanel.tsx, InputPanel.tsx
-    │   │   ├── effects/BackgroundEffects.tsx
-    │   │   ├── feedback/ErrorBoundary.tsx, Toast.tsx
-    │   │   ├── home/WelcomeContainer.tsx, SuggestionCards.tsx, ...
-    │   │   ├── layout/MainLayout.tsx, Sidebar.tsx, TopBar.tsx
-    │   │   ├── theme/ThemeProvider.tsx, ThemeSelector.tsx, ThemeToggle.tsx
-    │   │   └── workflows/
-    │   │       ├── WorkflowHub.tsx, WorkflowsTable.tsx
-    │   │       ├── ExecutionHistory/
-    │   │       ├── ScheduleManager/
-    │   │       └── WorkflowBuilder/Canvas.tsx, FloatingControls, ...
-│   └── utils/
-│       ├── format.ts
-│       ├── metricsCalculator.ts
-│       └── uuid.ts
-    ├── services/
-    │   ├── api.ts               # ChatAPI, ConversationAPI, AdminAPI
-    │   ├── streaming.ts         # streamChat() SSE client
-    │   ├── workflowApi.ts       # WorkflowAPI, ScheduleAPI, AnalyticsAPI
-    │   ├── theme.ts
-    │   └── audio/
-    │       ├── queue.ts         # queueAudio(), clearAudioQueue()
-    │       ├── playback.ts      # playAudio(), pauseAudio(), etc.
-    │       └── mediaSession.ts  # Browser Media Session API
-    ├── store/                   # Zustand state management
-    │   ├── index.ts             # Root store (useStore)
-    │   ├── audioSlice.ts        # Audio playback state
-    │   ├── chatSlice.ts         # Chat message state
-    │   └── toastSlice.ts        # Toast notification state
-    └── types/
-        ├── api.ts, common.ts, components.ts, workflow.ts, ...
-        └── sections/            # Per-section type definitions
+  eslint/frontend-boundaries.mjs   Local architecture rules
+  src/
+    App.tsx                        Providers, router, layout composition
+    lib/
+      pages/                       Route parameter adapters and widget composition
+      widgets/
+        session/                   Provider, source normalization, store and internal hook
+        chat/ layout/ feedback/    Chat, navigation, notifications and browser actions
+        workflows/ schedules/      Local workflow and schedule behavior
+        settings/ theme/           Preferences, key scenarios, audio assets and CSS variables
+      components/                  Shared controls and pure feature presentation
+      constants/                   Tokens and static configuration
+      utils/ data-structures/      Pure formatting and graph transformations
+    types/                         Component, widget and demo source interfaces
+    tests/                         Separate organized test suites
 ```
 
-## Architecture
+## Session data and interactions
 
-```
-┌────────────────────────┐     REST / SSE     ┌──────────────────────┐
-│  React Frontend        │ ←────────────────→ │  FastAPI Backend     │
-│  (Vite dev: port 5173) │                    │  (Uvicorn: port 8000)│
-│                        │                    │                      │
-│  - 5 pages (Router)    │                    │  - 8 route files     │
-│  - 29 components       │                    │  - AIClient          │
-│  - SSE streaming       │                    │  - TTSAsyncProcessor │
-│  - Audio playback      │                    │  - MCP tools         │
-│  - Theme system        │                    │  - ConversationHist  │
-└────────────────────────┘                    └──────────────────────┘
-                                                       │
-                                               Direct Python imports
-                                                       │
-                                              ┌────────┴────────┐
-                                              │  src/lib/        │
-                                              │  Core Knik Code  │
-                                              │  (shared w/ all  │
-                                              │   app modes)     │
-                                              └─────────────────┘
+`DemoSessionProvider` creates one vanilla Zustand store for its own mounted lifetime. App mounts it above all routes. Independent provider instances own independent stores; a parent rerender or route change does not replace an existing store.
+
+```text
+explicitly supplied DemoSource
+    -> widget-owned normalizeDemoSource
+    -> cloned initial snapshot
+    -> provider-scoped store
+    -> widget selectors
+    -> component props
+
+component callback
+    -> widget validation/action
+    -> committed session update
+    -> subscribed widgets rerender
 ```
 
-## Backend Integration
+The source adapter fills missing collections with empty arrays/maps, supplies initial preference defaults, and clones the source so session actions cannot modify the caller's fixture objects.
 
-The backend imports existing Knik functionality directly -- no duplication:
+Provider, model, voice, MCP tool, and API key collections are dynamic session data. The internal `useSettingsCatalog(key)` hook selects the typed collection from the same provider-scoped store used by other widgets. Widgets map these records into component props; components contain no provider names, model lists, voice options, or tool catalogs. Local actions update subscribed widgets synchronously. Missing source collections are empty and never trigger a network fallback, timer, loading simulation, or mock API.
 
-```python
-# backend/routes/chat.py
-from imports import AIClient, ConversationHistory
-from lib.services.ai_client.registry import MCPServerRegistry
-```
+No existing demo dataset is automatically selected. Historical demo modules remain disconnected until a source is explicitly chosen.
 
-**No changes needed to:**
+Committed records, shared selections, and preferences survive route navigation. Widget-local drafts, filters, sorting, dialogs, and playback state end with the owning widget. Saving validates before committing; invalid drafts remain editable; Cancel discards a draft. Reload mounts a new provider and restores the supplied source/defaults.
 
-- `src/lib/` -- core logic, services, MCP tools
-- `src/apps/console/` -- console app
-- `imports.py` -- central import hub
+Appearance belongs to the same session: mode, accent, density, and corner radius. ThemeWidget applies the corresponding CSS variables and restores previous DOM values when it unmounts. The frontend does not read or write browser storage and does not clear keys left by older versions.
 
-> **Note:** The `src/lib/services/messaging_client/` module is a shared service primarily used by Bot app (`src/apps/bot/`). It provides a provider-agnostic messaging abstraction with implementations for Telegram and mock testing. See [API Reference](../reference/api.md) for `MessagingClient` documentation.
+## Demo capabilities
 
-## Frontend Routes
+The `DemoSource` contract lives in `src/types/demo-session.ts`. It can supply conversations, model/suggestion options, workflows, schedules, executions/timelines, preferences, providers, voices, tools, and key records, plus explicit chat/run/key scenarios.
 
-| Path                    | Page              | Description                         |
-| ----------------------- | ----------------- | ----------------------------------- |
-| `/`                     | `Home`            | Chat interface with audio streaming |
-| `/workflows`            | `Workflows`       | Workflow listing and management     |
-| `/workflows/create`     | `WorkflowBuilder` | Create a new workflow               |
-| `/workflows/:id/edit`   | `WorkflowBuilder` | Edit existing workflow              |
-| `/workflows/executions` | `AllExecutions`   | All execution history               |
-| `/executions/:id`       | `ExecutionDetail` | Single execution detail             |
+| Interaction | Behavior |
+| --- | --- |
+| Create/edit a workflow or schedule | Validate and update the local session; no execution service is called |
+| Send chat | Use a supplied matching chat scenario; otherwise retain the draft and explain unavailability |
+| Run workflow | Use the supplied run scenario for that workflow; otherwise unavailable |
+| View API keys | Read supplied key metadata from the demo session |
+| Create a demo key | Use a matching supplied key scenario; never generate a real secret |
+| Preview voice | Play only the selected supplied audio asset after a user action; stop when leaving the widget |
+| Clipboard/export | Widget performs the browser operation and reports success/failure |
+| Missing/deleted route ID | Render the relevant not-found/empty state |
 
-## Frontend-to-Backend API Mapping
+No timer simulates progress, no generated response substitutes for a missing scenario, and no live/demo mode switch exists. Static assets, fonts, and explicitly supplied media may load normally; this is not an offline asset-packaging mode.
 
-| Frontend Service         | Backend Route                           | Purpose                                 |
-| ------------------------ | --------------------------------------- | --------------------------------------- |
-| `ChatAPI.stream()`       | `chat_stream.py` `/api/chat/stream`     | SSE streaming chat + audio              |
-| `ChatAPI.getHistory()`   | `history.py` `/api/history`             | Get conversation history                |
-| `ChatAPI.clearHistory()` | `history.py` `/api/history/clear`       | Clear history                           |
-| `ConversationAPI.*`      | `conversations.py` `/api/conversations` | CRUD for persisted conversation history |
-| `AdminAPI.getSettings()` | `admin.py` `/api/admin/settings`        | Get server settings                     |
-| `WorkflowAPI.*`          | `workflow.py` `/api/workflows`          | Workflow CRUD + execution               |
-| `ScheduleAPI.*`          | `cron.py` `/api/cron`                   | Cron schedule management                |
-| `AnalyticsAPI.*`         | `analytics.py` `/api/analytics`         | Dashboard, metrics, activity            |
+## Shared controls and enforcement
 
-> The non-streaming `chat.py` endpoint (`POST /api/chat`) exists in the backend but is not consumed by the frontend.
+One Button renders native buttons. Table and Markdown compose the same TableParts primitives, and Table requires stable row keys. Input, Textarea, Select, Radio, Checkbox, ToggleSwitch, and Slider form the shared control vocabulary. Modal and Popover own focus and dismissal. See [the component reference](react-common-components.md) for APIs and examples.
 
-## Development
+ESLint enforces the ownership graph using configured TypeScript aliases, relative paths, direct exports, export-star barrels, and imported/re-exported aliases. Its browser rules reject all application fetch/XHR/WebSocket/EventSource transports, including catalog reads, telemetry beacons, microphone capture, browser storage, and component-owned clipboard/download/audio operations. Focus and layout DOM work remain allowed in components. Test fixtures/spies are exempt from application restrictions.
 
-### Backend Only
+Interfaces and type aliases belong in `src/types`; module-level option arrays and lookup maps belong in `src/lib/constants`. Imports from `$types/widgets` or `$types/sections` are type contracts, not imports of those UI layers.
+
+## Routes and development
+
+| Path | Feature widget |
+| --- | --- |
+| `/` | Chat |
+| `/workflows` | Workflow hub |
+| `/workflows/create` | Workflow builder |
+| `/workflows/:id/edit` | Workflow builder for a local record |
+| `/workflows/executions` | Execution list |
+| `/executions/:id` | Execution detail |
+| `/schedules` | Schedule management |
+| `/settings` | General, appearance, providers/tools, voice, demo keys |
+
+From `src/apps/web/frontend`:
 
 ```bash
-npm run start:web:backend
-# Starts FastAPI on http://localhost:8000
+npm run dev          # Vite on port 8020; no backend is needed
+npm test             # Vitest + React Testing Library/user-event
+npm run lint         # Includes the local architecture rules
+npm run type-check
+npm run build        # Lint/type checking and production bundle
+npm run test:browser # Playwright, using installed Chrome
 ```
 
-### Frontend Only
+Tests live under `src/tests/`, not alongside runtime components. Shared-control tests cover accessibility and event semantics; widget/session tests cover committed state, cancellation, validation, provider isolation, navigation, reset, and source immutability. Architecture tests use an in-memory module graph to exercise aliases and barrel bypasses. Browser tests cover routes, unsupported actions, themes, narrow layouts, and unexpected application requests. Browser tests reject all application data requests without catalog exceptions or API response fixtures; the backend is not started by the suite. Unit and integration tests supply arbitrary DemoSource records directly to the provider to verify dynamic catalog rendering and local updates.
 
-```bash
-npm run start:web:frontend
-# Starts Vite dev server on http://localhost:12414
-```
-
-### Bot App
-
-```bash
-python src/main.py --mode bot
-# Starts long-running bot daemon
-```
-
-### Full Stack (Separate Terminals)
-
-```bash
-# Terminal 1
-npm run start:web:backend
-
-# Terminal 2
-npm run start:web:frontend
-```
-
-### With Electron
-
-```bash
-npm run electron:dev
-# Starts backend + frontend + Electron concurrently
-```
-
-## Configuration
-
-Backend defaults are in `src/apps/web/backend/config.py`:
-
-| Setting         | Env Variable                | Default   |
-| --------------- | --------------------------- | --------- |
-| Host            | `KNIK_WEB_HOST`             | `0.0.0.0` |
-| Port            | `KNIK_WEB_PORT`             | `8000`    |
-| Hot Reload      | `KNIK_WEB_RELOAD`           | `True`    |
-| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5`       |
-
-See [environment-variables.md](../reference/environment-variables.md) for the full reference.
+The [consolidation plan](../plan/07-frontend-component-consolidation.md) links the validated architecture, data-flow, interaction-sequence, session-lifecycle, and migration-workflow diagrams. They are explicitly labeled proposed design specifications; final implementation verification is recorded separately in that plan.

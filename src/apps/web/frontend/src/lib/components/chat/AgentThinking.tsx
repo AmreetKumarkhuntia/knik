@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import Button from '../buttons/Button'
+import { useId, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AgentThinkingStep, AgentThinkingProps } from '$types'
 
@@ -7,6 +8,7 @@ export default function AgentThinking({
   defaultExpanded = false,
   className = '',
 }: AgentThinkingProps) {
+  const id = useId()
   const [expanded, setExpanded] = useState(defaultExpanded)
 
   const renderStep = (step: AgentThinkingStep, i: number) => {
@@ -32,38 +34,37 @@ export default function AgentThinking({
       )
     }
 
-    if (step.type === 'diff') {
-      const lines = step.content.split('\n')
-      return (
-        <div
-          key={i}
-          className="border border-border-2 rounded-[10px] overflow-hidden font-mono text-[12px]"
-        >
-          {lines.map((line, idx) => {
-            const isAdd = line.startsWith('+')
-            const isRm = line.startsWith('-')
-            let lineClass = 'text-fg-3 px-3 py-0.5'
-            if (isAdd) lineClass = 'bg-emerald-500/10 text-emerald-400 px-3 py-0.5'
-            if (isRm) lineClass = 'bg-red-500/10 text-red-400 px-3 py-0.5'
+    const lines = step.content.split('\n')
+    return (
+      <div
+        key={i}
+        className="border border-border-2 rounded-[10px] overflow-hidden font-mono text-[12px]"
+      >
+        {lines.map((line, idx) => {
+          const isAdd = line.startsWith('+')
+          const isRm = line.startsWith('-')
+          let lineClass = 'text-fg-3 px-3 py-0.5'
+          if (isAdd) lineClass = 'bg-emerald-500/10 text-emerald-400 px-3 py-0.5'
+          if (isRm) lineClass = 'bg-red-500/10 text-red-400 px-3 py-0.5'
 
-            return (
-              <div key={idx} className={lineClass}>
-                {line}
-              </div>
-            )
-          })}
-        </div>
-      )
-    }
-
-    return null
+          return (
+            <div key={idx} className={lineClass}>
+              {line}
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   return (
     <div className={`flex flex-col gap-3.5 ${className}`}>
       {/* Compaction divider toggle */}
-      <div
-        className="flex items-center gap-3 text-[12px] text-fg-4 cursor-pointer group select-none"
+      <Button
+        variant="ghost"
+        aria-expanded={expanded}
+        aria-controls={id}
+        className="w-full flex items-center gap-3 text-[12px] text-fg-4 cursor-pointer group select-none"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex-1 h-px bg-border-2 group-hover:bg-border-3 transition-colors" />
@@ -80,11 +81,12 @@ export default function AgentThinking({
           </motion.span>
         </span>
         <div className="flex-1 h-px bg-border-2 group-hover:bg-border-3 transition-colors" />
-      </div>
+      </Button>
 
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
+            id={id}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

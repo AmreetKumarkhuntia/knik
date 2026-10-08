@@ -1,0 +1,60 @@
+import { Modal } from '$components'
+import Button from '$components/buttons/Button'
+import { getNodeMetadata } from '$lib/constants/nodes'
+import NodeProperties from '../PropertiesPanel/NodeProperties'
+import type { NodePropertiesPanelProps } from '$types'
+
+export default function NodePropertiesPanel({
+  selectedNode,
+  onNodeUpdate,
+  compact = false,
+  onClose,
+}: NodePropertiesPanelProps) {
+  const metadata = selectedNode ? getNodeMetadata(selectedNode.type ?? '') : null
+
+  if (compact)
+    return selectedNode ? (
+      <Modal isOpen onClose={onClose} title="Node Properties">
+        <NodeProperties
+          key={selectedNode.id}
+          node={selectedNode}
+          onUpdate={data => onNodeUpdate(selectedNode.id, data)}
+        />
+        <div className="flex justify-end">
+          <Button onClick={onClose} aria-label="Close node properties">
+            Done
+          </Button>
+        </div>
+      </Modal>
+    ) : null
+
+  return (
+    <aside className="w-56 sm:w-72 max-w-[45%] border-r border-border bg-surfaceRaised/60 backdrop-blur-xl flex flex-col flex-shrink-0 overflow-hidden">
+      <div className="px-5 py-4 border-b border-border">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">
+          Node Properties
+        </p>
+        <p className="text-xs text-muted mt-0.5 truncate">
+          {metadata ? `Configure your ${metadata.label} node` : 'Select a node to configure'}
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {selectedNode ? (
+          <NodeProperties
+            key={selectedNode.id}
+            node={selectedNode}
+            onUpdate={data => onNodeUpdate(selectedNode.id, data)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full px-6 py-12 text-center gap-3">
+            <span className="material-symbols-outlined text-3xl text-muted">touch_app</span>
+            <p className="text-xs text-muted leading-relaxed">
+              Click a node on the canvas to view and edit its properties
+            </p>
+          </div>
+        )}
+      </div>
+    </aside>
+  )
+}

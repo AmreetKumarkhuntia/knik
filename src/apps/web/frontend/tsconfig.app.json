@@ -38,8 +38,6 @@
       "$constants/*": ["./src/lib/constants/*"],
       "$hooks": ["./src/lib/hooks"],
       "$hooks/*": ["./src/lib/hooks/*"],
-      "$store": ["./src/store"],
-      "$store/*": ["./src/store/*"],
       "$assets": ["./src/assets"],
       "$assets/*": ["./src/assets/*"]
     },

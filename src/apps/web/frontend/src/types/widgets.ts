@@ -15,6 +15,8 @@ export interface FormGroupProps {
 
 /** A labelled settings row: label/hint on the left, control on the right. */
 export interface FormRowProps {
+  htmlFor?: string
+  hintId?: string
   label: string
   hint?: string
   children: ReactNode
@@ -67,4 +69,22 @@ export interface IconTileProps {
   size?: number
   bg: string
   color: string
+}
+
+export interface FieldControlProps {
+  id: string
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean
+  required?: boolean
+}
+export interface FormFieldWidgetProps {
+  label: string
+  hint?: string
+  error?: string
+  htmlFor?: string
+  hintId?: string
+  required?: boolean
+  layout?: 'row' | 'stacked'
+  last?: boolean
+  children: ReactNode | ((props: FieldControlProps) => ReactNode)
 }

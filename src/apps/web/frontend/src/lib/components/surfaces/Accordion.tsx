@@ -1,3 +1,4 @@
+import Button from '$components/buttons/Button'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AccordionProps } from '$types'
@@ -31,7 +32,8 @@ export default function Accordion({
         const isOpen = openIds.has(item.id)
         return (
           <div key={item.id} className="knik-card overflow-hidden">
-            <button
+            <Button
+              variant="ghost"
               className="w-full flex items-center justify-between p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               onClick={() => toggleItem(item.id)}
               aria-expanded={isOpen}
@@ -44,7 +46,7 @@ export default function Accordion({
               >
                 expand_more
               </motion.span>
-            </button>
+            </Button>
             <AnimatePresence initial={false}>
               {isOpen && (
                 <motion.div

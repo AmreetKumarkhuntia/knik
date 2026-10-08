@@ -23,7 +23,7 @@ uvicorn[standard]>=0.32.0  # ASGI server
 python-multipart>=0.0.6  # Form data parsing
 
 # Development tools
-ruff>=0.7.0  # Modern Python linter and formatter
+ruff==0.14.7  # Keep formatting consistent with the Ruff pre-commit revision
 pre-commit>=3.8.0
 pyright>=1.1.380
 pytest>=8.0.0  # Testing framework

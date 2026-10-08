@@ -1,47 +1,37 @@
-import { useState } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import type { CodeBlockProps } from '$types'
+import Button from '../buttons/Button'
+import MS from '../display/MS'
+import type { CodeBlockProps } from '$types/components/chat'
 
 export default function CodeBlock({
   code,
   language = 'text',
   showLineNumbers = false,
   copyable = true,
+  copied = false,
+  onCopy,
   className = '',
 }: CodeBlockProps) {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    void navigator.clipboard.writeText(code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   return (
     <div className={`bg-code border border-border-2 rounded-[10px] overflow-hidden ${className}`}>
-      {/* Toolbar */}
       <div className="flex items-center px-3.5 py-1.5 bg-white/[0.03] border-b border-border-1">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-fg-4">
           {language}
         </span>
-        <div className="ml-auto flex gap-0.5">
-          {copyable && (
-            <button
-              onClick={handleCopy}
-              className="w-7 h-7 rounded-md text-fg-3 inline-flex items-center justify-center hover:bg-surface-3 hover:text-fg-1 transition-colors duration-fast cursor-pointer"
-              title="Copy"
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {copied ? 'check' : 'content_copy'}
-              </span>
-            </button>
-          )}
-        </div>
+        {copyable && onCopy && (
+          <Button
+            variant="ghost"
+            size="xs"
+            onClick={() => onCopy(code)}
+            aria-label={copied ? 'Copied code' : 'Copy code'}
+            className="ml-auto"
+          >
+            <MS name={copied ? 'check' : 'content_copy'} size={15} />
+          </Button>
+        )}
       </div>
-
-      {/* Code Body */}
-      <div className="text-[12.5px] leading-relaxed tracking-[-0.01em]">
+      <div className="text-[12.5px] leading-relaxed tracking-[-0.01em] overflow-auto">
         <SyntaxHighlighter
           language={language}
           style={vscDarkPlus}

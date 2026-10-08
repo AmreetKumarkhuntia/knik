@@ -1,98 +1,144 @@
-import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { SelectProps } from '$types'
+import { forwardRef, useId, useState, useRef, useEffect } from 'react'
+import type { SelectProps } from '$types/components/forms'
+import Button from '../buttons/Button'
+import Popover from '../surfaces/Popover'
 
-/**
- * Custom dropdown select with glass overlay and aurora focus ring.
- */
-export default function Select({
-  options,
-  value,
-  onChange,
-  placeholder = 'Select option...',
-  disabled = false,
-  className = '',
-}: SelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const selectedOption = options.find(o => o.value === value)
-
-  // Handle clicking outside to close
+const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
+  {
+    options,
+    value,
+    onChange,
+    onValueChange,
+    presentation = 'native',
+    renderOption,
+    placeholder = 'Select option…',
+    disabled,
+    size = 'md',
+    className = '',
+    id,
+    ...props
+  },
+  ref
+) {
+  const generatedId = useId()
+  const selectId = id ?? generatedId
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const selected = options.find(option => option.value === value)
+  const change = (next: string) => (onValueChange ?? onChange)?.(next)
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  return (
-    <div ref={containerRef} className={`relative inline-block ${className}`}>
-      <button
-        type="button"
+    if (open) optionRefs.current[active]?.focus()
+  }, [open, active])
+  if (presentation === 'native')
+    return (
+      <select
+        ref={ref}
+        {...props}
+        id={selectId}
+        value={value}
         disabled={disabled}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`flex items-center gap-2.5 px-3 py-[7px] bg-[var(--bg-surface-2)] border border-[var(--border-2)] rounded-md text-[var(--fg-1)] text-[13px] w-[240px] cursor-pointer outline-none transition-all duration-base focus-visible:border-[var(--aurora-400)] focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--primary)_18%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed`}
+        onChange={event => change(event.target.value)}
+        className={`knik-input px-3 py-2 ${className}`}
       >
-        {selectedOption?.icon && (
-          <span className="material-symbols-outlined text-[16px] text-[var(--aurora-300)]">
-            {selectedOption.icon}
-          </span>
-        )}
-        <span className="font-mono text-[var(--aurora-300)] truncate">
-          {selectedOption ? (
-            selectedOption.label
-          ) : (
-            <span className="text-[var(--fg-4)]">{placeholder}</span>
-          )}
-        </span>
-        <span className="material-symbols-outlined ml-auto text-[18px] text-[var(--fg-3)]">
-          expand_more
-        </span>
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full left-0 mt-1.5 w-full bg-[var(--bg-glass)] border border-[var(--border-2)] rounded-md shadow-knik-3 overflow-hidden z-50 backdrop-blur-xl"
-          >
-            <div className="max-h-[240px] overflow-y-auto knik-scrollbar py-1">
-              {options.map(option => (
-                <div
-                  key={option.value}
-                  onClick={() => {
-                    onChange(option.value)
-                    setIsOpen(false)
-                  }}
-                  className={`flex items-center gap-2.5 px-3 py-2 text-[13px] cursor-pointer transition-colors duration-150 hover:bg-[var(--bg-surface-3)] ${
-                    value === option.value ? 'bg-[var(--bg-surface-3)]' : ''
-                  }`}
-                >
-                  {option.icon && (
-                    <span className="material-symbols-outlined text-[16px] text-[var(--aurora-300)]">
-                      {option.icon}
-                    </span>
-                  )}
-                  <span
-                    className={`font-mono ${
-                      value === option.value ? 'text-[var(--aurora-300)]' : 'text-[var(--fg-2)]'
-                    }`}
-                  >
-                    {option.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        {!selected && <option value={value}>{value || placeholder}</option>}
+        {options.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    )
+  const choose = (next: string) => {
+    change(next)
+    setOpen(false)
+    triggerRef.current?.focus()
+  }
+  return (
+    <Popover
+      role="listbox"
+      label={props['aria-label'] ?? 'Options'}
+      autoFocus={false}
+      open={open}
+      onOpenChange={next => {
+        setOpen(next)
+        if (next)
+          setActive(
+            Math.max(
+              0,
+              options.findIndex(option => option.value === value)
+            )
+          )
+      }}
+      className={className}
+      renderTrigger={triggerProps => (
+        <Button
+          {...triggerProps}
+          ref={element => {
+            triggerRef.current = element
+            if (typeof triggerProps.ref === 'function') triggerProps.ref(element)
+            else if (triggerProps.ref) triggerProps.ref.current = element
+          }}
+          id={selectId}
+          disabled={disabled || !options.length}
+          size={size}
+          aria-label={props['aria-label']}
+          aria-labelledby={props['aria-labelledby']}
+          aria-describedby={props['aria-describedby']}
+          onKeyDown={event => {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+              event.preventDefault()
+              setOpen(true)
+              setActive(
+                Math.max(
+                  0,
+                  options.findIndex(option => option.value === value)
+                )
+              )
+            }
+          }}
+        >
+          {selected ? (renderOption?.(selected) ?? selected.label) : value || placeholder}
+          <span aria-hidden="true">⌄</span>
+        </Button>
+      )}
+      content={
+        <div
+          onKeyDown={event => {
+            if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+              event.preventDefault()
+              setActive(index =>
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? options.length - 1
+                    : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) %
+                      options.length
+              )
+            }
+          }}
+        >
+          {options.map((option, index) => (
+            <Button
+              key={option.value}
+              role="option"
+              aria-selected={value === option.value}
+              ref={element => {
+                optionRefs.current[index] = element
+              }}
+              tabIndex={index === active ? 0 : -1}
+              onClick={() => choose(option.value)}
+              variant="ghost"
+              className="w-full justify-start"
+              size={size}
+            >
+              {renderOption?.(option) ?? option.label}
+            </Button>
+          ))}
+        </div>
+      }
+    />
   )
-}
+})
+export default Select

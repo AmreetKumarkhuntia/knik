@@ -32,7 +32,7 @@ jobs:
         run: |
           uv venv .venv
           source .venv/bin/activate
-          uv pip install -r requirements.txt
+          uv pip install -r requirements.txt -c .github/constraints-ci.txt --only-binary tokenizers
 
       - name: Ruff lint
         run: |

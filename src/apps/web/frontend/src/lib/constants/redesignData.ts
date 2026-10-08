@@ -9,7 +9,8 @@
 
 import type { RunLog } from '$types'
 
-export type AccentBadge = 'primary' | 'teal' | 'violet' | 'success'
+import type { AccentBadge } from '$types/components/chat'
+export type { AccentBadge } from '$types/components/chat'
 export type RunStatus = 'success' | 'running' | 'failed' | 'pending'
 export type WorkflowStatus = 'active' | 'paused'
 

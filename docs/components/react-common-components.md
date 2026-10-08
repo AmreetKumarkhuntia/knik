@@ -1,608 +1,109 @@
-# Reusable UI Components
+# Shared frontend components
 
-All reusable UI components live in `src/apps/web/frontend/src/lib/components/` and are re-exported from the barrel file `index.ts`. Import via the `$components` path alias:
+The frontend has one implementation for each control family under `src/apps/web/frontend/src/lib/components/`. Widgets supply domain data and handle actions; components render props and emit callbacks. Prop interfaces live under `src/types/`, and static design configuration lives under `src/lib/constants/`.
 
-```tsx
-import ActionButton from "$components/ActionButton";
-import { Table } from "$components/Table";
-import Modal from "$components/Modal";
-```
-
-## Component Reference
-
-### ActionButton
-
-A flexible button with variant, size, loading state, and icon-only mode.
+Use the `$components` barrel or a concrete component path:
 
 ```tsx
-<ActionButton
-  label="Save"
-  variant="primary"
-  size="md"
-  icon={<SaveIcon />}
-  onClick={() => handleSave()}
-  loading={isSaving}
-/>
+import Button from '$components/buttons/Button'
+import Table from '$components/display/Table'
+import Input from '$components/forms/Input'
+import Select from '$components/forms/Select'
+import Modal from '$components/surfaces/Modal'
 ```
 
-| Prop        | Type                                              | Default     | Description                       |
-| ----------- | ------------------------------------------------- | ----------- | --------------------------------- |
-| `icon`      | `ReactNode`                                       | -           | Icon to display                   |
-| `label`     | `string`                                          | -           | Button label (omit for icon-only) |
-| `variant`   | `'primary' \| 'secondary' \| 'danger' \| 'ghost'` | `'primary'` | Visual style                      |
-| `size`      | `'xs' \| 'sm' \| 'md' \| 'lg'`                    | `'md'`      | Button size                       |
-| `onClick`   | `() => void`                                      | -           | Click handler                     |
-| `disabled`  | `boolean`                                         | `false`     | Disable the button                |
-| `loading`   | `boolean`                                         | `false`     | Show loading spinner              |
-| `className` | `string`                                          | `''`        | Additional CSS classes            |
-| `title`     | `string`                                          | -           | Tooltip text                      |
+## Buttons and navigation
 
-### Backdrop
-
-A fullscreen overlay with configurable blur and opacity. Used internally by `Modal`.
+`Button` is the only renderer of native button markup. It forwards native button attributes and refs, defaults to `type="button"`, and accepts `children` or `label`, `icon`, `endIcon`, `variant`, `size`, and `loading`. Loading disables the button and sets `aria-busy`. Use `type="submit"` explicitly inside forms and give icon-only buttons an accessible name.
 
 ```tsx
-<Backdrop visible={isOpen} onClick={handleClose} blur="md" opacity={0.5} />
+<Button type="submit" variant="primary" disabled={!dirty}>Save</Button>
+<Button variant="ghost" aria-label="Remove workflow" onClick={onDelete} icon={<MS name="delete" />} />
 ```
 
-| Prop        | Type                   | Default | Description                            |
-| ----------- | ---------------------- | ------- | -------------------------------------- |
-| `visible`   | `boolean`              | -       | Show/hide the backdrop                 |
-| `onClick`   | `() => void`           | -       | Click handler (typically closes modal) |
-| `blur`      | `'sm' \| 'md' \| 'lg'` | -       | Backdrop blur amount                   |
-| `opacity`   | `number`               | -       | Backdrop opacity                       |
-| `className` | `string`               | -       | Additional CSS classes                 |
+Variants are `primary`, `secondary`, `danger`, `ghost`, `success`, and `warning`; sizes are `xs`, `sm`, `md`, and `lg`. Specialized controls compose Button. Do not add another native or `motion.button` implementation.
 
-### Breadcrumb
+`NavLink` renders a router link for local paths, an anchor for external URLs, and Button for callback-only actions. Use links for navigation. It accepts an icon, label, `href`, active/collapsed state, and an optional click callback. `Breadcrumb` and the tabs components provide consistent navigation presentation. Tabs own focus/selection behavior; domain filtering belongs to widgets.
 
-A breadcrumb navigation trail.
+## Tables
 
-```tsx
-<Breadcrumb
-  items={[
-    { label: "Home", path: "/" },
-    { label: "Workflows", path: "/workflows" },
-    { label: "Edit" },
-  ]}
-/>
-```
-
-| Prop        | Type               | Default | Description                        |
-| ----------- | ------------------ | ------- | ---------------------------------- |
-| `items`     | `BreadcrumbItem[]` | -       | `{ label: string; path?: string }` |
-| `className` | `string`           | -       | Additional CSS classes             |
-
-### Card
-
-A container with variant and padding options.
-
-```tsx
-<Card variant="elevated" padding="lg">
-  <p>Card content</p>
-</Card>
-```
-
-| Prop        | Type                                    | Default | Description            |
-| ----------- | --------------------------------------- | ------- | ---------------------- |
-| `children`  | `ReactNode`                             | -       | Card content           |
-| `variant`   | `'default' \| 'bordered' \| 'elevated'` | -       | Visual style           |
-| `padding`   | `'none' \| 'sm' \| 'md' \| 'lg'`        | -       | Inner padding          |
-| `className` | `string`                                | -       | Additional CSS classes |
-
-### ConfirmDialog
-
-A modal dialog for confirming destructive or important actions.
-
-```tsx
-<ConfirmDialog
-  isOpen={showDelete}
-  title="Delete this item?"
-  message="This action cannot be undone."
-  variant="danger"
-  onConfirm={() => handleDelete()}
-  onCancel={() => setShowDelete(false)}
-/>
-```
-
-| Prop           | Type                              | Default     | Description          |
-| -------------- | --------------------------------- | ----------- | -------------------- |
-| `isOpen`       | `boolean`                         | -           | Show/hide the dialog |
-| `title`        | `string`                          | -           | Dialog title         |
-| `message`      | `string`                          | -           | Dialog message       |
-| `confirmLabel` | `string`                          | `'Confirm'` | Confirm button label |
-| `cancelLabel`  | `string`                          | `'Cancel'`  | Cancel button label  |
-| `variant`      | `'danger' \| 'warning' \| 'info'` | `'danger'`  | Visual style         |
-| `onConfirm`    | `() => void \| Promise<void>`     | -           | Confirm handler      |
-| `onCancel`     | `() => void`                      | -           | Cancel handler       |
-| `loading`      | `boolean`                         | `false`     | Show loading state   |
-
-Supports Escape key to cancel and auto-focuses on open.
-
-### EmptyState
-
-A centered placeholder for empty views.
-
-```tsx
-<EmptyState
-  icon="📜"
-  title="No workflows yet"
-  description="Create your first workflow to get started"
-  action={<ActionButton label="Create Workflow" onClick={handleCreate} />}
-/>
-```
-
-| Prop          | Type                  | Default      | Description                      |
-| ------------- | --------------------- | ------------ | -------------------------------- |
-| `icon`        | `string \| ReactNode` | default icon | Icon (emoji or component)        |
-| `title`       | `string`              | -            | Title message                    |
-| `description` | `string`              | -            | Additional description           |
-| `action`      | `ReactNode`           | -            | Optional action (e.g., a button) |
-| `className`   | `string`              | default      | Additional CSS classes           |
-
-### ExecutionFlowGraph
-
-A ReactFlow-based graph visualization for workflow executions.
-
-```tsx
-<ExecutionFlowGraph execution={executionData} timeline={nodeSteps} />
-```
-
-| Prop        | Type                  | Default | Description          |
-| ----------- | --------------------- | ------- | -------------------- |
-| `execution` | `ExecutionDetail`     | -       | Execution data       |
-| `timeline`  | `NodeExecutionStep[]` | -       | Node execution steps |
-
-### ExecutionTimeline
-
-A timeline view of node execution steps.
-
-```tsx
-<ExecutionTimeline timeline={steps} loading={isLoading} />
-```
-
-| Prop       | Type                               | Default | Description    |
-| ---------- | ---------------------------------- | ------- | -------------- |
-| `timeline` | `NodeExecutionStep[] \| undefined` | -       | Timeline steps |
-| `loading`  | `boolean`                          | -       | Loading state  |
-
-### FormField
-
-A form field that renders text/number inputs or select dropdowns.
-
-```tsx
-<FormField
-  label="Name"
-  type="text"
-  value={name}
-  onChange={setName}
-  placeholder="Enter name"
-  required
-/>
-
-<FormField
-  label="Category"
-  type="select"
-  value={category}
-  onChange={setCategory}
-  options={[
-    { value: "cat1", label: "Category 1" },
-    { value: "cat2", label: "Category 2" },
-  ]}
-/>
-```
-
-| Prop          | Type                                      | Default  | Description             |
-| ------------- | ----------------------------------------- | -------- | ----------------------- |
-| `label`       | `string`                                  | -        | Field label             |
-| `type`        | `'text' \| 'select' \| 'number'`          | `'text'` | Input type              |
-| `name`        | `string`                                  | -        | Field name              |
-| `value`       | `string`                                  | -        | Field value             |
-| `onChange`    | `(value: string) => void`                 | -        | Change handler          |
-| `options`     | `Array<{ value: string; label: string }>` | -        | Select options          |
-| `placeholder` | `string`                                  | -        | Placeholder text        |
-| `required`    | `boolean`                                 | `false`  | Required indicator (\*) |
-| `disabled`    | `boolean`                                 | `false`  | Disable the field       |
-| `className`   | `string`                                  | `''`     | Additional CSS classes  |
-
-### HamburgerButton
-
-A hamburger menu button.
-
-```tsx
-<HamburgerButton onClick={() => setSidebarOpen(!sidebarOpen)} />
-```
-
-| Prop        | Type         | Default | Description            |
-| ----------- | ------------ | ------- | ---------------------- |
-| `onClick`   | `() => void` | -       | Click handler          |
-| `className` | `string`     | -       | Additional CSS classes |
-
-### IconButton
-
-An icon-only button with variant and aria label.
-
-```tsx
-<IconButton
-  icon={<TrashIcon />}
-  onClick={handleDelete}
-  variant="danger"
-  ariaLabel="Delete"
-/>
-```
-
-| Prop        | Type                                              | Default | Description            |
-| ----------- | ------------------------------------------------- | ------- | ---------------------- |
-| `icon`      | `ReactNode`                                       | -       | Icon to display        |
-| `onClick`   | `() => void`                                      | -       | Click handler          |
-| `variant`   | `'ghost' \| 'secondary' \| 'primary' \| 'danger'` | -       | Visual style           |
-| `size`      | `'sm' \| 'md' \| 'lg'`                            | -       | Button size            |
-| `ariaLabel` | `string`                                          | -       | Accessibility label    |
-| `disabled`  | `boolean`                                         | -       | Disable the button     |
-| `className` | `string`                                          | -       | Additional CSS classes |
-
-### Input
-
-A styled text input extending native `<input>` props (uses `forwardRef`).
-
-```tsx
-<Input placeholder="Search..." error={errors.search} fullWidth />
-```
-
-| Prop        | Type                  | Default | Description               |
-| ----------- | --------------------- | ------- | ------------------------- |
-| `error`     | `string`              | -       | Error message to display  |
-| `fullWidth` | `boolean`             | -       | Full-width mode           |
-| `id`        | `string`              | -       | Input ID                  |
-| ...rest     | `InputHTMLAttributes` | -       | Standard input attributes |
-
-### LinkButton
-
-A styled link-style button.
-
-```tsx
-<LinkButton icon="+" label="Add Item" onClick={handleAdd} active={isActive} />
-```
-
-| Prop        | Type         | Default | Description            |
-| ----------- | ------------ | ------- | ---------------------- |
-| `icon`      | `string`     | -       | Icon text              |
-| `label`     | `string`     | -       | Button label           |
-| `onClick`   | `() => void` | -       | Click handler          |
-| `active`    | `boolean`    | -       | Active/selected state  |
-| `className` | `string`     | -       | Additional CSS classes |
-
-### LoadingSpinner
-
-A CSS-based animated loading spinner.
-
-```tsx
-<LoadingSpinner size="md" text="Loading workflows..." />
-```
-
-| Prop        | Type                   | Default | Description                  |
-| ----------- | ---------------------- | ------- | ---------------------------- |
-| `size`      | `'sm' \| 'md' \| 'lg'` | `'md'`  | Spinner size                 |
-| `className` | `string`               | `''`    | Additional CSS classes       |
-| `text`      | `string`               | -       | Optional label below spinner |
-
-### MarkdownMessage
-
-Renders markdown content with syntax highlighting. Named export (not default).
-
-```tsx
-import { MarkdownMessage } from "$components/MarkdownMessage";
-<MarkdownMessage content={aiResponse} isStreaming={isTyping} />;
-```
-
-| Prop          | Type      | Default | Description             |
-| ------------- | --------- | ------- | ----------------------- |
-| `content`     | `string`  | -       | Markdown text to render |
-| `isStreaming` | `boolean` | -       | Show streaming cursor   |
-
-### MetricCard
-
-A card displaying a metric value with optional trend indicator.
-
-```tsx
-<MetricCard
-  icon="📊"
-  label="Total Executions"
-  value={1234}
-  subtext="Last 30 days"
-  trend={{ direction: "up", value: "+12%" }}
-  color="primary"
-/>
-```
-
-| Prop      | Type                                                                       | Default | Description     |
-| --------- | -------------------------------------------------------------------------- | ------- | --------------- |
-| `icon`    | `string`                                                                   | -       | Icon emoji      |
-| `label`   | `string`                                                                   | -       | Metric label    |
-| `value`   | `number \| string`                                                         | -       | Metric value    |
-| `subtext` | `string`                                                                   | -       | Subtitle text   |
-| `trend`   | `{ direction: 'up' \| 'down' \| 'neutral'; value: string; icon?: string }` | -       | Trend indicator |
-| `color`   | `'primary' \| 'teal' \| 'rose' \| 'blue'`                                  | -       | Color theme     |
-| `loading` | `boolean`                                                                  | -       | Loading state   |
-
-### Modal
-
-A generic modal wrapper with framer-motion animations and glass-morphism styling.
-
-```tsx
-<Modal
-  isOpen={showModal}
-  onClose={() => setShowModal(false)}
-  title="Settings"
-  size="lg"
->
-  <p>Modal content</p>
-</Modal>
-```
-
-| Prop               | Type                           | Default | Description                  |
-| ------------------ | ------------------------------ | ------- | ---------------------------- |
-| `isOpen`           | `boolean`                      | -       | Show/hide the modal          |
-| `onClose`          | `() => void`                   | -       | Close handler                |
-| `children`         | `ReactNode`                    | -       | Modal content                |
-| `title`            | `string`                       | -       | Modal title                  |
-| `className`        | `string`                       | `''`    | Additional CSS classes       |
-| `size`             | `'sm' \| 'md' \| 'lg' \| 'xl'` | `'md'`  | Modal width                  |
-| `animationEnabled` | `boolean`                      | `true`  | Enable/disable framer-motion |
-
-Supports Escape key and locks body scroll when open.
-
-### NavLink
-
-A sidebar navigation link with icon and active state.
-
-```tsx
-<NavLink icon="🏠" label="Home" href="/" active={isHome} />
-```
-
-| Prop      | Type         | Default | Description          |
-| --------- | ------------ | ------- | -------------------- |
-| `icon`    | `string`     | -       | Icon emoji           |
-| `label`   | `string`     | -       | Link label           |
-| `active`  | `boolean`    | -       | Active state styling |
-| `href`    | `string`     | -       | Link URL             |
-| `onClick` | `() => void` | -       | Click handler        |
-
-### NotificationButton
-
-A button with an optional notification badge count.
-
-```tsx
-<NotificationButton badgeCount={3} onClick={handleNotifications} />
-```
-
-| Prop         | Type         | Default | Description                           |
-| ------------ | ------------ | ------- | ------------------------------------- |
-| `badgeCount` | `number`     | -       | Badge count (hidden when 0/undefined) |
-| `onClick`    | `() => void` | -       | Click handler                         |
-
-### PageHeader
-
-A page header with breadcrumbs, optional back button, and right content slot.
-
-```tsx
-<PageHeader
-  breadcrumbs={["Workflows", "My Workflow", "Edit"]}
-  showBackButton
-  onBackClick={() => navigate(-1)}
-  rightContent={<ActionButton label="Save" onClick={handleSave} />}
-/>
-```
-
-| Prop             | Type         | Default | Description         |
-| ---------------- | ------------ | ------- | ------------------- |
-| `breadcrumbs`    | `string[]`   | -       | Breadcrumb trail    |
-| `rightContent`   | `ReactNode`  | -       | Right-side content  |
-| `showBackButton` | `boolean`    | -       | Show back arrow     |
-| `onBackClick`    | `() => void` | -       | Back button handler |
-| `sticky`         | `boolean`    | -       | Sticky positioning  |
-
-### Pagination
-
-A pagination control with page numbers.
-
-```tsx
-<Pagination currentPage={1} totalPages={10} onPageChange={setPage} />
-```
-
-| Prop           | Type                     | Default | Description              |
-| -------------- | ------------------------ | ------- | ------------------------ |
-| `currentPage`  | `number`                 | -       | Current page (1-indexed) |
-| `totalPages`   | `number`                 | -       | Total number of pages    |
-| `onPageChange` | `(page: number) => void` | -       | Page change handler      |
-| `disabled`     | `boolean`                | -       | Disable controls         |
-
-### SearchBar
-
-A search input field.
-
-```tsx
-<SearchBar placeholder="Search workflows..." />
-```
-
-| Prop          | Type     | Default | Description      |
-| ------------- | -------- | ------- | ---------------- |
-| `placeholder` | `string` | -       | Placeholder text |
-
-### SectionHeader
-
-A section title with optional action link and badge.
-
-```tsx
-<SectionHeader
-  title="Recent Executions"
-  actionText="View All"
-  onActionClick={handleViewAll}
-  badge="12"
-/>
-```
-
-| Prop            | Type         | Default | Description            |
-| --------------- | ------------ | ------- | ---------------------- |
-| `title`         | `string`     | -       | Section title          |
-| `actionText`    | `string`     | -       | Action link text       |
-| `onActionClick` | `() => void` | -       | Action click handler   |
-| `badge`         | `string`     | -       | Badge text             |
-| `className`     | `string`     | -       | Additional CSS classes |
-
-### StatusBadge
-
-A colored pill badge for execution status with animated spinner for `running`.
-
-```tsx
-<StatusBadge status="running" size="md" />
-```
-
-| Prop        | Type                                              | Default | Description            |
-| ----------- | ------------------------------------------------- | ------- | ---------------------- |
-| `status`    | `'pending' \| 'running' \| 'success' \| 'failed'` | -       | Execution status       |
-| `size`      | `'sm' \| 'md' \| 'lg'`                            | `'md'`  | Badge size             |
-| `className` | `string`                                          | -       | Additional CSS classes |
-
-### StructuredOutput
-
-Displays structured input/output data (JSON-like).
-
-```tsx
-<StructuredOutput
-  inputs={nodeInputs}
-  outputs={nodeOutputs}
-  loading={isLoading}
-/>
-```
-
-| Prop      | Type                                   | Default | Description   |
-| --------- | -------------------------------------- | ------- | ------------- |
-| `inputs`  | `Record<string, unknown> \| undefined` | -       | Input data    |
-| `outputs` | `Record<string, unknown> \| undefined` | -       | Output data   |
-| `loading` | `boolean`                              | -       | Loading state |
-
-### Table
-
-A generic, typed data table with sorting, row click, loading state, and sticky header.
+`Table<T>` receives `data`, `columns`, and required `getRowKey`. Each column has a stable `id` or `key`, `label`, optional alignment/class, and optional `render(value, row)`. Supply real record IDs; never use row positions as identity.
 
 ```tsx
 <Table
-  columns={[
-    { key: "name", label: "Name" },
-    {
-      key: "status",
-      label: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
-    },
-  ]}
   data={workflows}
-  onRowClick={(row) => navigate(`/workflows/${row.id}/edit`)}
-  loading={isLoading}
-  empty={<EmptyState title="No workflows" />}
+  getRowKey={row => row.id}
+  columns={[
+    { id: 'name', key: 'name', label: 'Name', render: (_value, row) => <Link to={`/workflows/${row.id}/edit`}>{row.name}</Link> },
+    { id: 'actions', key: 'id', label: 'Actions', render: (_value, row) => <Button onClick={() => onRun(row.id)}>Run</Button> },
+  ]}
+  density={density}
+  empty={<EmptyState title="No workflows yet" />}
   stickyHeader
 />
 ```
 
-| Prop             | Type               | Default | Description            |
-| ---------------- | ------------------ | ------- | ---------------------- |
-| `columns`        | `TableColumn<T>[]` | -       | Column definitions     |
-| `data`           | `T[]`              | -       | Row data               |
-| `onRowClick`     | `(row: T) => void` | -       | Row click handler      |
-| `loading`        | `boolean`          | -       | Loading state          |
-| `empty`          | `ReactNode`        | -       | Empty state content    |
-| `className`      | `string`           | -       | Additional CSS classes |
-| `maxHeight`      | `string`           | -       | Max table height       |
-| `stickyHeader`   | `boolean`          | -       | Sticky header          |
-| `glassContainer` | `boolean`          | -       | Glass-morphism styling |
+Filtering, sorting, pagination state, record selection, and navigation callbacks belong to widgets. Table supports `loading`, `error`, `empty`, `maxHeight`, `stickyHeader`, `glassContainer`, and `density="compact" | "comfortable"`.
 
-### Tabs
+Optional pointer row navigation ignores nested links, buttons, inputs, selects, textareas, and relevant interactive roles. Include a keyboard-accessible primary link or button in a cell rather than making every table row a separate tab stop.
 
-A generic tab component with underline or pill variants.
+`TableParts` owns all native table elements (`TableRoot`, `TableHead`, `TableBody`, `TableRow`, `TableHeaderCell`, `TableCell`, and related parts). Both the generic Table and Markdown tables compose these parts.
+
+## Forms
+
+| Control | Contract |
+| --- | --- |
+| Input / Textarea | Native attributes, refs, value/change events, optional inline error |
+| Select | `options`, `value`, `onValueChange`; `onChange(value)` remains supported |
+| Radio | `name`, `options`, `value`, `onChange`; standard/card/chip/segmented presentation |
+| Checkbox | `checked`, `onChange`, label, optional indeterminate state; standard/chip presentation |
+| ToggleSwitch | `checked`, `onChange`, disabled state, accessible label; native switch semantics |
+| Slider | Numeric min/max/step/value, `onChange`, and accessible label |
+
+Select uses `presentation="native"` by default and supports `presentation="rich"` through the same API. Rich options may use `renderOption`. It handles arrow keys, Home/End, selection, Escape, and returning focus. Empty option collections and values absent from the option list remain explicit; widgets decide whether a control should be unavailable.
+
+FormField is a widget composition helper for a label, hint, error, and an existing control. Its child callback supplies the control ID and accessibility attributes:
 
 ```tsx
-<Tabs
-  tabs={[
-    { id: "overview", label: "Overview" },
-    { id: "history", label: "History" },
-  ]}
-  active="overview"
-  onChange={setActiveTab}
-  variant="underline"
+import FormField from '$widgets/FormField'
+
+<FormField label="Name" hint="Visible in this session" error={error} required>
+  {field => <Input {...field} value={name} onChange={event => setName(event.target.value)} />}
+</FormField>
+```
+
+`FormRow` is the row-layout wrapper around FormField. With an explicit control, pass matching `htmlFor`/`id` and `hintId`/`aria-describedby`; groups such as Radio use their own legend. FormGroup composes a titled Card. These helpers do not choose control types or access session records.
+
+A widget owns draft values and validation. Save commits a valid draft, validation errors preserve it, Cancel discards it, and widget unmount discards unsaved values. Settings toggles and choices commit their local session preferences directly.
+
+## Overlays and feedback
+
+`Modal` accepts `isOpen`, `onClose`, optional title/size, and children. It owns the portal, focus containment/restoration, Escape handling, backdrop dismissal, and body scroll lock. `ConfirmDialog` composes Modal and Button with confirm/cancel callbacks.
+
+Popover receives a render callback for its single actual trigger:
+
+```tsx
+<Popover
+  label="Workflow actions"
+  renderTrigger={triggerProps => <Button {...triggerProps}>Actions</Button>}
+  content={<Button onClick={onEdit}>Edit</Button>}
 />
 ```
 
-| Prop        | Type                     | Default | Description                |
-| ----------- | ------------------------ | ------- | -------------------------- |
-| `tabs`      | `Tab<T>[]`               | -       | `{ id: T; label: string }` |
-| `active`    | `T`                      | -       | Active tab ID              |
-| `onChange`  | `(id: T) => void`        | -       | Tab change handler         |
-| `variant`   | `'underline' \| 'pills'` | -       | Visual style               |
-| `className` | `string`                 | -       | Additional CSS classes     |
+Forward all trigger props and its ref. Popover owns outside-pointer dismissal, Escape, and trigger focus restoration. Do not nest a button in an extra element with `role="button"`.
 
-### ToggleSwitch
+Reuse Card, Badge, SectionHeader, Banner, EmptyState, LoadingSpinner, and Toast for presentation. Widgets decide when feedback appears and orchestrate dismissal/actions; components receive those values and callbacks.
 
-A toggle switch for boolean values.
+## Chat, code, and settings presentation
 
-```tsx
-<ToggleSwitch checked={enabled} onChange={setEnabled} label="Enable feature" />
-```
+ChatBubble supports supplied avatar, header, reasoning, content, timestamp, and action slots. ChatComposer is controlled by its widget and preserves Enter/Shift+Enter, IME composition, focus, and textarea resizing behavior.
 
-| Prop        | Type                         | Default | Description            |
-| ----------- | ---------------------------- | ------- | ---------------------- |
-| `checked`   | `boolean`                    | -       | Toggle state           |
-| `onChange`  | `(checked: boolean) => void` | -       | Change handler         |
-| `disabled`  | `boolean`                    | `false` | Disable the toggle     |
-| `label`     | `string`                     | -       | Label text             |
-| `className` | `string`                     | `''`    | Additional CSS classes |
+MarkdownMessage composes CodeBlock and TableParts. StructuredOutput and JsonViewer share code/JSON presentation. Copyable views receive `onCopy(text)`; they never call the clipboard themselves. The widget owns clipboard success/failure feedback.
 
-### UserProfile
+ProfileSummary, ThemePreview, VoiceOption, ApiKeyRow, and KeyReveal are pure settings views. Their widgets supply data, selections, deletion/copy callbacks, and scenario availability. Voice preview playback exists only in the voice widget and only for an explicitly supplied audio asset.
 
-A user profile display with avatar and optional badge.
+## Enforced boundaries and tests
 
-```tsx
-<UserProfile
-  name="John Doe"
-  account="john@example.com"
-  showBadge
-  badgeType="pro"
-/>
-```
+The local ESLint architecture plugin resolves configured aliases, relative imports, and re-export barrels. Components cannot import widgets, pages, sections, app hooks, services, stores, or demo fixtures. Raw button/table rendering is restricted to the canonical modules. Browser I/O belongs to widgets; DOM work needed for focus, layout, and overlays remains valid in components.
 
-| Prop          | Type                          | Default | Description             |
-| ------------- | ----------------------------- | ------- | ----------------------- |
-| `avatar`      | `string`                      | -       | Avatar image URL        |
-| `avatarColor` | `string`                      | -       | Avatar background color |
-| `name`        | `string`                      | -       | Display name            |
-| `account`     | `string`                      | -       | Account/email           |
-| `displayOnly` | `boolean`                     | -       | Read-only mode          |
-| `showBadge`   | `boolean`                     | -       | Show badge              |
-| `badgeType`   | `'pro' \| 'basic' \| 'admin'` | -       | Badge type              |
-
-## Icon Components
-
-The `icons/` subdirectory exports SVG icon components (all accept `{ className?: string }`):
-
-- `MenuIcon`
-- `PlayIcon`
-- `PauseIcon`
-- `StopIcon`
-- `CloseIcon`
-- `TrashIcon`
-- `SettingsIcon`
-
-```tsx
-import { PlayIcon, StopIcon } from "$components/icons";
-```
-
-## Graph Components
-
-The `graph/` subdirectory contains ReactFlow-based components used by `ExecutionFlowGraph`:
-
-- `FlowCanvas` -- ReactFlow canvas wrapper
-- `FlowEdge` -- Custom animated edge
-- `BaseNode` -- Base node component
-- `NodeContent` -- Node content renderer
-
-## Type Definitions
-
-All component prop types are defined in `src/apps/web/frontend/src/types/components.ts` and exported from `$types/components`.
+Tests are organized under `src/apps/web/frontend/src/tests/`, with shared-control, widget, session, architecture, and browser suites. Run `npm test`, `npm run lint`, `npm run type-check`, and `npm run test:browser` from the frontend directory. See [frontend architecture](web-architecture.md) for session behavior and [the consolidation plan](../plan/07-frontend-component-consolidation.md) for the five Archify views.

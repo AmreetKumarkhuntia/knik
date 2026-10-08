@@ -5,6 +5,7 @@ import type { NodeExecutionStep, WorkflowDefinition } from '$types/workflow'
 export interface ExecutionTimelineProps {
   timeline: NodeExecutionStep[] | undefined
   loading?: boolean
+  onCopy?: (text: string) => void
 }
 
 /** Props for an execution flow graph visualization. The workflow definition is

@@ -1,7 +1,7 @@
-import type { DynamicMetric, ExecutionDetailResponse } from '$types/workflow'
+import type { DynamicMetric, ExecutionSnapshot } from '$types/workflow'
 
 /** Builds an array of metric cards for an execution detail view. */
-export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicMetric[] {
+export function calculateMetrics(data: ExecutionSnapshot | null): DynamicMetric[] {
   if (!data) return []
 
   const { execution, timeline } = data
@@ -29,17 +29,6 @@ export function calculateMetrics(data: ExecutionDetailResponse | null): DynamicM
       value: formatDuration(execution.duration_ms),
       icon: 'schedule',
       color: 'primary',
-    })
-  } else if (execution.status === 'running') {
-    const startTime = new Date(execution.started_at).getTime()
-    const now = Date.now()
-    const elapsed = now - startTime
-    metrics.push({
-      id: 'duration',
-      label: 'Elapsed Time',
-      value: formatDuration(elapsed),
-      icon: 'schedule',
-      color: 'blue',
     })
   }
 

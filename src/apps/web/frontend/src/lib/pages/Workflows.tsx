@@ -1,6 +1,5 @@
-import WorkflowHub from '$sections/workflows/WorkflowHub'
+import { WorkflowHubWidget } from '$widgets/workflows'
 
-/** Workflows list page rendering the WorkflowHub section. */
 export default function Workflows() {
-  return <WorkflowHub />
+  return <WorkflowHubWidget />
 }

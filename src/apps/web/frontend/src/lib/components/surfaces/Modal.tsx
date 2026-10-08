@@ -1,10 +1,9 @@
-import { useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Backdrop from './Backdrop'
+import { registerOverlay } from './overlayStack'
+import { useEffect, useRef, useId } from 'react'
+import { createPortal } from 'react-dom'
 import type { ModalProps } from '$types/components'
-import { MODAL_SIZE_CLASSES as sizeClasses } from '$lib/constants'
+import { MODAL_SIZE_CLASSES } from '$lib/constants'
 
-/** Animated modal dialog with backdrop and size variants. */
 export default function Modal({
   isOpen,
   onClose,
@@ -12,47 +11,86 @@ export default function Modal({
   title,
   className = '',
   size = 'md',
-  animationEnabled = true,
 }: ModalProps) {
+  const panel = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onClose)
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose()
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, onClose])
-
+    closeRef.current = onClose
+  }, [onClose])
+  const labelId = useId()
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+    if (!isOpen) return
+    const previous = document.activeElement as HTMLElement | null
+    const overlay = registerOverlay(true)
+    const selector =
+      'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]'
+    const focusable = (): HTMLElement[] =>
+      [...(panel.current?.querySelectorAll<HTMLElement>(selector) ?? [])].filter(
+        el => !el.hidden && el.getAttribute('aria-hidden') !== 'true'
+      )
+    const initialFocus: HTMLElement | undefined = focusable().at(0)
+    if (initialFocus) initialFocus.focus()
+    else panel.current?.focus()
+    const keydown = (event: KeyboardEvent) => {
+      if (!overlay.isTop()) return
+      if (event.key === 'Escape') {
+        event.stopImmediatePropagation()
+        closeRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const items = focusable(),
+        first = items.at(0),
+        last = items.at(-1)
+      if (!first) {
+        event.preventDefault()
+        panel.current?.focus()
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === first || document.activeElement === panel.current)
+      ) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
+    document.addEventListener('keydown', keydown)
     return () => {
-      document.body.style.overflow = ''
+      const wasTop = overlay.isTop()
+      overlay.release()
+      document.removeEventListener('keydown', keydown)
+      if (wasTop && previous?.isConnected) previous.focus()
     }
   }, [isOpen])
-
-  const modalContent = (
-    <div className="fixed inset-0 z-120 flex items-center justify-center pointer-events-none modal-container">
-      <Backdrop visible={true} onClick={onClose} blur="md" />
-      <motion.div
-        initial={animationEnabled ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
-        animate={animationEnabled ? { opacity: 1, scale: 1 } : { opacity: 1, scale: 1 }}
-        exit={animationEnabled ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
-        transition={animationEnabled ? { type: 'spring', stiffness: 300, damping: 30 } : {}}
-        className={`relative knik-glass rounded-xl shadow-knik-3 ${sizeClasses[size]} w-full mx-4 pointer-events-auto ${className}`}
-        style={{ zIndex: 130 }}
+  if (!isOpen) return null
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onMouseDown={event => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <div
+        ref={panel}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? labelId : undefined}
+        aria-label={title ? undefined : 'Dialog'}
+        className={`relative knik-glass rounded-xl shadow-knik-3 ${MODAL_SIZE_CLASSES[size]} w-full mx-4 max-h-[90vh] overflow-auto ${className}`}
       >
         {title && (
-          <div className="px-6 py-4 border-b border-[var(--border-2)] flex items-center justify-between">
-            <h2 className="text-xl font-bold text-fg-1">{title}</h2>
+          <div className="px-6 py-4 border-b border-border-2">
+            <h2 id={labelId} className="text-xl font-bold text-fg-1">
+              {title}
+            </h2>
           </div>
         )}
         <div className="p-6">{children}</div>
-      </motion.div>
-    </div>
+      </div>
+    </div>,
+    document.body
   )
-
-  return <AnimatePresence>{isOpen && modalContent}</AnimatePresence>
 }
