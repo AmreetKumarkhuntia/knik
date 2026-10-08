@@ -1,55 +1,27 @@
-import { MetricCard } from '$components'
 import { formatDuration } from '$utils/format'
 import type { HubMetricStripProps } from '$types'
 
-/** Four-up metric strip for the workflow hub. */
 export default function HubMetricStrip({ metrics, loading }: HubMetricStripProps) {
-  const metricCards: {
-    icon: string
-    label: string
-    value: string | number
-    color: 'primary' | 'teal' | 'rose' | 'blue'
-  }[] = metrics
-    ? [
-        {
-          icon: 'account_tree',
-          label: 'Workflows',
-          value: metrics.totalWorkflows,
-          color: 'primary',
-        },
-        { icon: 'bolt', label: 'Executions today', value: metrics.executionsToday, color: 'teal' },
-        {
-          icon: 'check_circle',
-          label: 'Success rate',
-          value: metrics.totalExecutions === 0 ? '—' : `${metrics.successRate}%`,
-          color: 'blue',
-        },
-        {
-          icon: 'timer',
-          label: 'Avg duration',
-          value: formatDuration(metrics.avgDurationMs),
-          color: 'rose',
-        },
-      ]
-    : []
-
+  const items = [
+    { label: 'Workflows', value: metrics?.totalWorkflows ?? '—' },
+    { label: 'Executions today', value: metrics?.executionsToday ?? '—' },
+    {
+      label: 'Success rate',
+      value: metrics && (metrics.totalExecutions ?? 0) > 0 ? `${metrics.successRate}%` : '—',
+    },
+    { label: 'Avg duration', value: metrics ? formatDuration(metrics.avgDurationMs) : '—' },
+  ]
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 14, marginBottom: 30 }}>
-      {metricCards.map((m, i) => (
-        <MetricCard
-          key={i}
-          icon={m.icon}
-          label={m.label}
-          value={m.value}
-          color={m.color}
-          loading={loading}
-        />
+    <dl
+      className="flex flex-wrap items-center gap-x-8 gap-y-3 py-4 mb-3 border-b border-border"
+      aria-busy={loading}
+    >
+      {items.map(item => (
+        <div key={item.label} className="flex items-baseline gap-2">
+          <dt className="text-sm text-secondary">{item.label}</dt>
+          <dd className="text-sm font-semibold tabular-nums text-foreground">{item.value}</dd>
+        </div>
       ))}
-      {!metrics &&
-        loading &&
-        Array.from({ length: 4 }).map((_, i) => (
-          <MetricCard key={`s${i}`} icon="bolt" label="Loading…" value="—" loading />
-        ))}
-    </div>
+    </dl>
   )
 }

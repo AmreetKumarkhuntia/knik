@@ -1,6 +1,7 @@
 import { registerOverlay } from './overlayStack'
 import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
+import Button from '../buttons/Button'
 import type { ModalProps } from '$types/components'
 import { MODAL_SIZE_CLASSES } from '$lib/constants'
 
@@ -11,6 +12,7 @@ export default function Modal({
   title,
   className = '',
   size = 'md',
+  placement = 'center',
 }: ModalProps) {
   const panel = useRef<HTMLDivElement>(null)
   const closeRef = useRef(onClose)
@@ -67,7 +69,7 @@ export default function Modal({
   if (!isOpen) return null
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className={`fixed inset-0 z-[120] flex bg-black/50 ${placement === 'center' ? 'items-center justify-center' : placement === 'left' ? 'justify-start' : 'justify-end'}`}
       onMouseDown={event => {
         if (event.target === event.currentTarget) onClose()
       }}
@@ -79,16 +81,21 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={title ? labelId : undefined}
         aria-label={title ? undefined : 'Dialog'}
-        className={`relative knik-glass rounded-xl shadow-knik-3 ${MODAL_SIZE_CLASSES[size]} w-full mx-4 max-h-[90vh] overflow-auto ${className}`}
+        className={`relative border border-[var(--border-2)] bg-surface shadow-knik-3 w-full flex flex-col min-h-0 ${placement === 'center' ? `rounded-xl ${MODAL_SIZE_CLASSES[size]} mx-4 max-h-[90dvh]` : `h-dvh max-w-full sm:max-w-[360px] ${placement === 'left' ? 'border-l-0' : 'border-r-0'}`} ${className}`}
       >
         {title && (
-          <div className="px-6 py-4 border-b border-border-2">
-            <h2 id={labelId} className="text-xl font-bold text-fg-1">
+          <div className="px-4 py-3 border-b border-[var(--border-2)] flex items-center justify-between gap-3 shrink-0">
+            <h2 id={labelId} className="text-base font-semibold text-fg-1">
               {title}
             </h2>
+            {placement !== 'center' && (
+              <Button variant="ghost" size="sm" aria-label={`Close ${title}`} onClick={onClose}>
+                ✕
+              </Button>
+            )}
           </div>
         )}
-        <div className="p-6">{children}</div>
+        <div className="p-4 min-h-0 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>,
     document.body

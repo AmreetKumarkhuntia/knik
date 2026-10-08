@@ -8,9 +8,9 @@ export interface ExecutionTimelineProps {
   onCopy?: (text: string) => void
 }
 
-/** Props for an execution flow graph visualization. The workflow definition is
- *  fetched by the consuming page and passed in; `null` renders the loading state. */
+/** The caller supplies the session definition and graph container dimensions. */
 export interface ExecutionFlowGraphProps {
+  className?: string
   definition: WorkflowDefinition | null
   definitionError?: string | null
   timeline: NodeExecutionStep[]

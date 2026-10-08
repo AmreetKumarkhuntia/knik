@@ -5,11 +5,11 @@ The frontend has one implementation for each control family under `src/apps/web/
 Use the `$components` barrel or a concrete component path:
 
 ```tsx
-import Button from '$components/buttons/Button'
-import Table from '$components/display/Table'
-import Input from '$components/forms/Input'
-import Select from '$components/forms/Select'
-import Modal from '$components/surfaces/Modal'
+import Button from "$components/buttons/Button";
+import Table from "$components/display/Table";
+import Input from "$components/forms/Input";
+import Select from "$components/forms/Select";
+import Modal from "$components/surfaces/Modal";
 ```
 
 ## Buttons and navigation
@@ -32,18 +32,32 @@ Variants are `primary`, `secondary`, `danger`, `ghost`, `success`, and `warning`
 ```tsx
 <Table
   data={workflows}
-  getRowKey={row => row.id}
+  getRowKey={(row) => row.id}
   columns={[
-    { id: 'name', key: 'name', label: 'Name', render: (_value, row) => <Link to={`/workflows/${row.id}/edit`}>{row.name}</Link> },
-    { id: 'actions', key: 'id', label: 'Actions', render: (_value, row) => <Button onClick={() => onRun(row.id)}>Run</Button> },
+    {
+      id: "name",
+      key: "name",
+      label: "Name",
+      render: (_value, row) => (
+        <Link to={`/workflows/${row.id}/edit`}>{row.name}</Link>
+      ),
+    },
+    {
+      id: "actions",
+      key: "id",
+      label: "Actions",
+      render: (_value, row) => (
+        <Button onClick={() => onRun(row.id)}>Run</Button>
+      ),
+    },
   ]}
-  density={density}
+  density="compact"
   empty={<EmptyState title="No workflows yet" />}
   stickyHeader
 />
 ```
 
-Filtering, sorting, pagination state, record selection, and navigation callbacks belong to widgets. Table supports `loading`, `error`, `empty`, `maxHeight`, `stickyHeader`, `glassContainer`, and `density="compact" | "comfortable"`.
+Filtering, sorting, pagination and record selections belong to stores; widgets bind their actions and navigation callbacks. Table supports `loading`, `error`, `empty`, `maxHeight`, `stickyHeader`, and `density="compact" | "comfortable"`. Application tables use fixed compact density and one neutral outlined surface.
 
 Optional pointer row navigation ignores nested links, buttons, inputs, selects, textareas, and relevant interactive roles. Include a keyboard-accessible primary link or button in a cell rather than making every table row a separate tab stop.
 
@@ -51,25 +65,31 @@ Optional pointer row navigation ignores nested links, buttons, inputs, selects, 
 
 ## Forms
 
-| Control | Contract |
-| --- | --- |
-| Input / Textarea | Native attributes, refs, value/change events, optional inline error |
-| Select | `options`, `value`, `onValueChange`; `onChange(value)` remains supported |
-| Radio | `name`, `options`, `value`, `onChange`; standard/card/chip/segmented presentation |
-| Checkbox | `checked`, `onChange`, label, optional indeterminate state; standard/chip presentation |
-| ToggleSwitch | `checked`, `onChange`, disabled state, accessible label; native switch semantics |
-| Slider | Numeric min/max/step/value, `onChange`, and accessible label |
+| Control          | Contract                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| Input / Textarea | Native attributes, refs, value/change events, optional inline error                    |
+| Select           | `options`, `value`, `onValueChange`; `onChange(value)` remains supported               |
+| Radio            | `name`, `options`, `value`, `onChange`; standard/card/chip/segmented presentation      |
+| Checkbox         | `checked`, `onChange`, label, optional indeterminate state; standard/chip presentation |
+| ToggleSwitch     | `checked`, `onChange`, disabled state, accessible label; native switch semantics       |
+| Slider           | Numeric min/max/step/value, `onChange`, and accessible label                           |
 
 Select uses `presentation="native"` by default and supports `presentation="rich"` through the same API. Rich options may use `renderOption`. It handles arrow keys, Home/End, selection, Escape, and returning focus. Empty option collections and values absent from the option list remain explicit; widgets decide whether a control should be unavailable.
 
 FormField is a widget composition helper for a label, hint, error, and an existing control. Its child callback supplies the control ID and accessibility attributes:
 
 ```tsx
-import FormField from '$widgets/FormField'
+import FormField from "$widgets/FormField";
 
 <FormField label="Name" hint="Visible in this session" error={error} required>
-  {field => <Input {...field} value={name} onChange={event => setName(event.target.value)} />}
-</FormField>
+  {(field) => (
+    <Input
+      {...field}
+      value={name}
+      onChange={(event) => setName(event.target.value)}
+    />
+  )}
+</FormField>;
 ```
 
 `FormRow` is the row-layout wrapper around FormField. With an explicit control, pass matching `htmlFor`/`id` and `hintId`/`aria-describedby`; groups such as Radio use their own legend. FormGroup composes a titled Card. These helpers do not choose control types or access session records.
@@ -78,14 +98,14 @@ A widget owns draft values and validation. Save commits a valid draft, validatio
 
 ## Overlays and feedback
 
-`Modal` accepts `isOpen`, `onClose`, optional title/size, and children. It owns the portal, focus containment/restoration, Escape handling, backdrop dismissal, and body scroll lock. `ConfirmDialog` composes Modal and Button with confirm/cancel callbacks.
+`Modal` accepts `isOpen`, `onClose`, optional title/size, `placement="center" | "left" | "right"`, and children. Centered dialogs and side drawers share the same implementation. It owns the portal, focus containment/restoration, Escape handling, backdrop dismissal, and body scroll lock. `ConfirmDialog` composes Modal and Button with confirm/cancel callbacks.
 
 Popover receives a render callback for its single actual trigger:
 
 ```tsx
 <Popover
   label="Workflow actions"
-  renderTrigger={triggerProps => <Button {...triggerProps}>Actions</Button>}
+  renderTrigger={(triggerProps) => <Button {...triggerProps}>Actions</Button>}
   content={<Button onClick={onEdit}>Edit</Button>}
 />
 ```
@@ -100,10 +120,16 @@ ChatBubble supports supplied avatar, header, reasoning, content, timestamp, and 
 
 MarkdownMessage composes CodeBlock and TableParts. StructuredOutput and JsonViewer share code/JSON presentation. Copyable views receive `onCopy(text)`; they never call the clipboard themselves. The widget owns clipboard success/failure feedback.
 
-ProfileSummary, ThemePreview, VoiceOption, ApiKeyRow, and KeyReveal are pure settings views. Their widgets supply data, selections, deletion/copy callbacks, and scenario availability. Voice preview playback exists only in the voice widget and only for an explicitly supplied audio asset.
+ProfileSummary, ToolGroupList, VoiceOption, ApiKeyRow, and KeyReveal are pure settings views. Their widgets supply data, selections, deletion/copy callbacks, and scenario availability. Voice preview playback exists only in the voice widget and only for an explicitly supplied audio asset.
 
 ## Enforced boundaries and tests
 
 The local ESLint architecture plugin resolves configured aliases, relative imports, and re-export barrels. Components cannot import widgets, pages, sections, app hooks, services, stores, or demo fixtures. Raw button/table rendering is restricted to the canonical modules. Browser I/O belongs to widgets; DOM work needed for focus, layout, and overlays remains valid in components.
 
 Tests are organized under `src/apps/web/frontend/src/tests/`, with shared-control, widget, session, architecture, and browser suites. Run `npm test`, `npm run lint`, `npm run type-check`, and `npm run test:browser` from the frontend directory. See [frontend architecture](web-architecture.md) for session behavior and [the consolidation plan](../plan/07-frontend-component-consolidation.md) for the five Archify views.
+
+## Fixed visual system
+
+`styles/tokens.css` owns light/dark surfaces, text, borders, teal accent, typography and geometry. Appearance settings expose only color mode. ThemeWidget applies `data-theme`; components do not read stores or theme preferences.
+
+SectionHeader uses `level="page"` for a 24px h1 and `level="section"` for a 16px h2. Controls have 36px desktop and 44px touch targets. Rich Select accepts Popover placement; the bottom-pinned chat composer uses `top-start` so model options remain in view. Code and graph rendering use the same semantic color tokens as the shell.

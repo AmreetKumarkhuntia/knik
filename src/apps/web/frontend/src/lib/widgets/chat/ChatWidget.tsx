@@ -1,6 +1,15 @@
 import { useEffect, useRef } from 'react'
-import { ChatBubble, MarkdownMessage, Avatar, KnikGlyph, AgentThinking, Banner } from '$components'
+import {
+  ChatBubble,
+  MarkdownMessage,
+  Avatar,
+  KnikGlyph,
+  AgentThinking,
+  Banner,
+  Modal,
+} from '$components'
 import ChatComposer from '$components/chat/ChatComposer'
+import ToolGroupList from '$components/settings/ToolGroupList'
 import CompactionDivider from '$components/chat/CompactionDivider'
 import WelcomePrompt from '$components/home/WelcomePrompt'
 import WelcomeContainer from '$components/home/WelcomeContainer'
@@ -9,16 +18,18 @@ import KeyboardShortcuts from '$components/home/KeyboardShortcuts'
 import { useChatStore, useChatScope, useSendMessage } from '$stores/chat'
 import { useSettingsStore } from '$stores/settings'
 import { useFeedbackStore } from '$stores/feedback'
-import { useChatView } from '$stores/views'
+import { useChatView, useProvidersView } from '$stores/views'
 import type { InputPanelRef } from '$types/sections/chat'
 
 function ChatSessionWidget() {
   const activeId = useChatStore(state => state.activeConversationId)
   const { scopeId, scope, patch } = useChatScope(activeId)
-  const { draft, shortcutsOpen } = scope
+  const { draft, shortcutsOpen, toolsOpen } = scope
   const { conversationId, conversation, models, suggestions, model, messages, initials } =
     useChatView()
   const updateSettings = useSettingsStore(state => state.updateSettings)
+  const { tools } = useProvidersView()
+  const toggleTool = useSettingsStore(state => state.toggleTool)
   const sendMessage = useSendMessage()
   const addToast = useFeedbackStore(state => state.addToast)
   const inputRef = useRef<InputPanelRef>(null)
@@ -75,10 +86,10 @@ function ChatSessionWidget() {
   }
 
   return (
-    <div className="relative z-10 flex flex-col h-full px-4 sm:px-6 py-6 gap-5">
+    <div className="flex flex-col h-full min-h-0 px-4 sm:px-6 pb-4 sm:pb-5">
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto scrollbar-hide"
+        className="flex-1 min-h-0 overflow-y-auto"
         onScroll={event => {
           const element = event.currentTarget
           atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 150
@@ -102,7 +113,7 @@ function ChatSessionWidget() {
             )}
           </WelcomeContainer>
         ) : (
-          <div className="max-w-5xl mx-auto py-4 flex flex-col gap-7">
+          <div className="w-full max-w-[800px] mx-auto py-6 flex flex-col gap-6">
             {messages.map((message, index) => {
               const { isUser, steps, modelTag, messageId } = message
               return (
@@ -115,7 +126,7 @@ function ChatSessionWidget() {
                         <Avatar initials={initials} size={30} />
                       ) : (
                         <div className="flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-[var(--acc-soft)] border border-[var(--acc-border)]">
-                          <KnikGlyph size={16} glow={false} />
+                          <KnikGlyph size={16} />
                         </div>
                       )
                     }
@@ -123,13 +134,9 @@ function ChatSessionWidget() {
                       !isUser ? (
                         <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
                           <span className="font-semibold text-fg-1">Knik AI</span>
-                          {modelTag && (
-                            <span className="font-mono text-[10.5px] text-fg-4">{modelTag}</span>
-                          )}
+                          {modelTag && <span className="text-xs text-fg-3">{modelTag}</span>}
                           {message.timestamp && (
-                            <span className="font-mono text-[10.5px] text-fg-5">
-                              {message.timestamp}
-                            </span>
+                            <span className="text-xs text-fg-3">{message.timestampLabel}</span>
                           )}
                         </div>
                       ) : undefined
@@ -148,7 +155,7 @@ function ChatSessionWidget() {
           </div>
         )}
       </div>
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-[800px] mx-auto pt-3 shrink-0">
         <ChatComposer
           ref={inputRef}
           value={draft}
@@ -157,8 +164,22 @@ function ChatSessionWidget() {
           model={model}
           onModel={id => updateSettings({ model: id })}
           models={models}
+          onOpenTools={() => patch({ toolsOpen: true })}
+          toolsOpen={toolsOpen}
         />
       </div>
+      <Modal
+        isOpen={toolsOpen}
+        onClose={() => patch({ toolsOpen: false })}
+        title="Chat tools"
+        placement="right"
+        size="sm"
+      >
+        <p className="text-sm text-fg-3 mb-4">
+          Choose the tool groups available across this session.
+        </p>
+        <ToolGroupList groups={tools} onToggle={toggleTool} />
+      </Modal>
       <KeyboardShortcuts isOpen={shortcutsOpen} onClose={() => patch({ shortcutsOpen: false })} />
     </div>
   )

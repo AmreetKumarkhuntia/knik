@@ -23,7 +23,11 @@ export function createShellActions(set: ShellStore['setState']) {
           ? {
               scopes: {
                 ...state.scopes,
-                [id]: { paletteOpen: !state.scopes[id].paletteOpen, paletteQuery: '' },
+                [id]: {
+                  ...state.scopes[id],
+                  paletteOpen: !state.scopes[id].paletteOpen,
+                  paletteQuery: '',
+                },
               },
             }
           : {}

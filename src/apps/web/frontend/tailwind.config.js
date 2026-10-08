@@ -5,6 +5,12 @@ export default {
     extend: {
       /* ---- Colors mapped from CSS tokens ---- */
       colors: {
+        border: {
+          DEFAULT: 'var(--border-2)',
+          1: 'var(--border-1)',
+          2: 'var(--border-2)',
+          3: 'var(--border-3)',
+        },
         aurora: {
           50: 'var(--aurora-50)',
           100: 'var(--aurora-100)',
@@ -117,8 +123,6 @@ export default {
         'knik-1': 'var(--shadow-1)',
         'knik-2': 'var(--shadow-2)',
         'knik-3': 'var(--shadow-3)',
-        glow: 'var(--glow-primary)',
-        'glow-teal': 'var(--glow-teal)',
       },
 
       /* ---- Transition timing from motion tokens ---- */
@@ -134,47 +138,7 @@ export default {
         slow: 'var(--dur-slow)',
         slower: 'var(--dur-slower)',
       },
-
-      /* ---- Backdrop blur ---- */
-      backdropBlur: {
-        glass: '20px',
-      },
-
-      /* ---- Animations ---- */
-      animation: {
-        'gradient-shift': 'gradient-shift 8s ease infinite',
-        'slide-in-right': 'slide-in-right 0.3s ease-out',
-        'slide-in-left': 'slide-in-left 0.3s ease-out',
-        bounce: 'bounce 1s infinite',
-        blob: 'knik-blob 10s var(--ease-in-out) infinite',
-        'fade-in': 'knik-page-enter var(--dur-base) var(--ease-out)',
-        'edge-dash': 'knik-dash 1s linear infinite',
-      },
-      keyframes: {
-        'gradient-shift': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
-        'slide-in-right': {
-          '0%': { transform: 'translateX(20px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
-        },
-        'slide-in-left': {
-          '0%': { transform: 'translateX(-20px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
-        },
-      },
-      backgroundSize: {
-        200: '200% 200%',
-      },
     },
   },
-  plugins: [
-    function ({ addUtilities }) {
-      addUtilities({
-        '.animation-delay-2000': { 'animation-delay': '2s' },
-        '.animation-delay-4000': { 'animation-delay': '4s' },
-      })
-    },
-  ],
+  plugins: [],
 }

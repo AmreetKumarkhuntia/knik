@@ -1,13 +1,11 @@
 import { MS } from '$components'
 import NavLink from '$components/navigation/NavLink'
-import Eyebrow from '$components/display/Eyebrow'
 import { NAV_ITEMS } from '$lib/constants/navigation'
 import type { SidebarNavProps } from '$types/widgets/chat-shell'
 
-export default function SidebarNav({ collapsed, pathname }: SidebarNavProps) {
+export default function SidebarNav({ collapsed, pathname, onNavigate }: SidebarNavProps) {
   return (
     <>
-      {!collapsed && <Eyebrow>Workspace</Eyebrow>}
       <nav aria-label="Workspace" className="flex flex-col" style={{ gap: 2 }}>
         {NAV_ITEMS.map(item => (
           <NavLink
@@ -17,6 +15,7 @@ export default function SidebarNav({ collapsed, pathname }: SidebarNavProps) {
             label={item.label}
             active={pathname === item.path}
             collapsed={collapsed}
+            onClick={onNavigate}
           />
         ))}
       </nav>

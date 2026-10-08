@@ -1,5 +1,6 @@
 import type { AgentThinkingStep } from '$types/components/chat'
 import { useMemo } from 'react'
+import { formatTime } from '$utils/format'
 import { useChatStore } from '../chat/hooks'
 import { selectActiveConversation, selectRecentConversations } from '../chat/selectors'
 import { useSettingsStore } from '../settings/hooks'
@@ -18,6 +19,7 @@ export function useChatView() {
         .filter(message => message.role === 'user' || message.role === 'assistant')
         .map((message, index) => ({
           ...message,
+          timestampLabel: formatTime(message.timestamp),
           isUser: message.role === 'user',
           steps: Array.isArray(message.metadata.reasoning)
             ? (message.metadata.reasoning as AgentThinkingStep[])

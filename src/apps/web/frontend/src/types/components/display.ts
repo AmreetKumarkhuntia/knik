@@ -32,11 +32,11 @@ export interface TableProps<T = Record<string, unknown>> {
   className?: string
   maxHeight?: string
   stickyHeader?: boolean
-  glassContainer?: boolean
 }
 
 /** Props for a section header with optional action. */
 export interface SectionHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  level?: 'page' | 'section'
   subtitle?: string
   actions?: ReactNode
   right?: ReactNode
@@ -105,7 +105,6 @@ export interface KbdProps {
 
 export interface KnikGlyphProps {
   size?: number
-  glow?: boolean
   className?: string
 }
 

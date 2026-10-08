@@ -10,6 +10,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
     onChange,
     onValueChange,
     presentation = 'native',
+    placement = 'bottom-start',
     renderOption,
     placeholder = 'Select option…',
     disabled,
@@ -58,6 +59,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   return (
     <Popover
       role="listbox"
+      placement={placement}
       label={props['aria-label'] ?? 'Options'}
       autoFocus={false}
       open={open}
@@ -81,6 +83,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
             else if (triggerProps.ref) triggerProps.ref.current = element
           }}
           id={selectId}
+          variant="secondary"
           disabled={disabled || !options.length}
           size={size}
           aria-label={props['aria-label']}

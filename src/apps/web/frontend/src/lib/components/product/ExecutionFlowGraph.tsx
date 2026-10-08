@@ -1,10 +1,12 @@
-import { useMemo } from 'react'
-import { type NodeTypes, type EdgeTypes } from '@xyflow/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Position, type NodeTypes, type EdgeTypes } from '@xyflow/react'
 
 import type { ExecutionFlowGraphProps } from '$types/components'
 import { workflowDefinitionToGraph, type ExecutionNodeData } from '$lib/data-structures'
 import LoadingSpinner from '../feedback/LoadingSpinner'
 import { BaseNode, FlowEdge, FlowCanvas } from '../graph'
+import { GRAPH_NODE_SIZE } from '$lib/constants/graph'
+import { getNodeMetadata } from '$lib/constants/nodes'
 
 const nodeTypes: NodeTypes = {
   FunctionExecutionNode: BaseNode,
@@ -24,7 +26,19 @@ export default function ExecutionFlowGraph({
   definition,
   definitionError,
   timeline,
+  className = 'h-[500px]',
 }: ExecutionFlowGraphProps) {
+  const container = useRef<HTMLDivElement>(null)
+  const [direction, setDirection] = useState<'horizontal' | 'vertical'>('horizontal')
+  useEffect(() => {
+    const element = container.current
+    if (!element) return
+    const observer = new ResizeObserver(([entry]) => {
+      setDirection(entry.contentRect.width < 900 ? 'vertical' : 'horizontal')
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [definition])
   const graphData = useMemo(() => {
     if (!definition) return null
     try {
@@ -44,22 +58,41 @@ export default function ExecutionFlowGraph({
         executionData: executionDataMap,
       })
 
-      return graph.toCanvasNodes({
+      const canvas = graph.toCanvasNodes({
         layout: 'dag',
+        direction,
+        nodeSpacingX: 304,
+        nodeSpacingY: 144,
         width: 900,
         height: 500,
         nodeType: 'default',
         edgeType: 'default',
       })
+      return {
+        ...canvas,
+        nodes: canvas.nodes.map(node => {
+          const terminal = getNodeMetadata(node.type ?? '')?.shape === 'pill'
+          const size = terminal ? GRAPH_NODE_SIZE.terminal : GRAPH_NODE_SIZE.process
+          return {
+            ...node,
+            position: { x: node.position.x - size.width / 2, y: node.position.y - size.height / 2 },
+            initialWidth: size.width,
+            initialHeight: size.height,
+            sourcePosition: direction === 'vertical' ? Position.Bottom : Position.Right,
+            targetPosition: direction === 'vertical' ? Position.Top : Position.Left,
+            data: { ...node.data, direction },
+          }
+        }),
+      }
     } catch (err) {
       console.error('Failed to build execution graph:', err)
       return null
     }
-  }, [definition, timeline])
+  }, [definition, timeline, direction])
 
   if (definitionError) {
     return (
-      <div className="h-[500px] flex items-center justify-center bg-surface-2 rounded-lg">
+      <div className={`${className} flex items-center justify-center bg-surface-2`}>
         <p className="text-[var(--danger)]">{definitionError}</p>
       </div>
     )
@@ -67,7 +100,7 @@ export default function ExecutionFlowGraph({
 
   if (!definition) {
     return (
-      <div className="h-[500px] flex items-center justify-center bg-surface-2 rounded-lg">
+      <div className={`${className} flex items-center justify-center bg-surface-2`}>
         <LoadingSpinner />
       </div>
     )
@@ -75,20 +108,28 @@ export default function ExecutionFlowGraph({
 
   if (!graphData) {
     return (
-      <div className="h-[500px] flex items-center justify-center bg-surface-2 rounded-lg">
+      <div className={`${className} flex items-center justify-center bg-surface-2`}>
         <p className="text-[var(--danger)]">Failed to load execution graph</p>
       </div>
     )
   }
 
   return (
-    <div className="h-[500px] bg-[var(--bg-canvas)] rounded-lg overflow-hidden workflow-grid">
+    <div
+      ref={container}
+      data-flow-direction={direction}
+      className={`${className} bg-[var(--bg-canvas)] overflow-hidden workflow-grid`}
+    >
+      {/* Recreate read-only handle geometry when the entire layout rotates. */}
       <FlowCanvas
+        key={direction}
         nodes={graphData.nodes}
         edges={graphData.edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
+        fitOnResize
+        minZoom={0.1}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}

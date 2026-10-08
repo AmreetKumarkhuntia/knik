@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { getAllNodeTypes } from '$lib/constants/nodes'
 import { MS, Popover } from '$components'
@@ -6,58 +6,54 @@ import Button from '$components/buttons/Button'
 import type { FloatingControlsProps } from '$types'
 
 export default memo(function FloatingControls({ onAddNode }: FloatingControlsProps) {
-  const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition } = useReactFlow()
+  const anchor = useRef<HTMLDivElement>(null)
   const [popoverOpen, setPopoverOpen] = useState(false)
   const handleAdd = (type: string) => {
-    onAddNode?.(type, screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }))
+    const bounds = anchor.current?.closest('.react-flow')?.getBoundingClientRect()
+    if (!bounds) return
+    onAddNode?.(
+      type,
+      screenToFlowPosition({ x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 })
+    )
     setPopoverOpen(false)
   }
+  if (!onAddNode) return null
   return (
-    <>
-      {onAddNode && (
-        <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 z-10">
-          <Popover
-            open={popoverOpen}
-            onOpenChange={setPopoverOpen}
-            placement="top-start"
-            renderTrigger={props => (
-              <Button {...props} variant="primary" size="sm" icon={<MS name="add" size={16} />}>
-                Add Node
+    <div ref={anchor} className="absolute top-4 left-4 z-10 nodrag nopan">
+      <Popover
+        open={popoverOpen}
+        onOpenChange={setPopoverOpen}
+        placement="bottom-start"
+        renderTrigger={props => (
+          <Button {...props} variant="secondary" size="sm" icon={<MS name="add" size={18} />}>
+            Add Node
+          </Button>
+        )}
+        content={
+          <div className="w-60 p-1">
+            <p className="px-3 py-2 text-xs text-secondary">Choose a step</p>
+            {getAllNodeTypes().map(node => (
+              <Button
+                key={node.type}
+                variant="ghost"
+                onClick={() => handleAdd(node.type)}
+                className="!justify-start w-full text-left gap-3 !py-2"
+              >
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${node.colors.iconBg} ${node.colors.iconText}`}
+                >
+                  <MS name={node.icon} size={18} />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">{node.label}</span>
+                  <span className="block text-xs font-normal text-secondary">{node.typeLabel}</span>
+                </span>
               </Button>
-            )}
-            content={
-              <div className="w-52">
-                <p className="px-3 py-2 text-xs font-semibold uppercase text-secondary">Add Node</p>
-                {getAllNodeTypes().map(node => (
-                  <Button
-                    key={node.type}
-                    variant="ghost"
-                    onClick={() => handleAdd(node.type)}
-                    className="!justify-start w-full text-left gap-3"
-                  >
-                    <MS name={node.icon} size={18} />
-                    <span>
-                      <span className="block text-xs font-medium">{node.label}</span>
-                      <span className="block text-[10px] text-muted">{node.typeLabel}</span>
-                    </span>
-                  </Button>
-                ))}
-              </div>
-            }
-          />
-        </div>
-      )}
-      <div className="absolute top-3 right-3 sm:top-auto sm:bottom-6 sm:right-6 flex flex-col gap-2 z-10">
-        <Button variant="secondary" size="sm" aria-label="Zoom In" onClick={() => void zoomIn()}>
-          <MS name="add" size={16} />
-        </Button>
-        <Button variant="secondary" size="sm" aria-label="Zoom Out" onClick={() => void zoomOut()}>
-          <MS name="remove" size={16} />
-        </Button>
-        <Button variant="secondary" size="sm" aria-label="Fit View" onClick={() => void fitView()}>
-          <MS name="center_focus_strong" size={16} />
-        </Button>
-      </div>
-    </>
+            ))}
+          </div>
+        }
+      />
+    </div>
   )
 })

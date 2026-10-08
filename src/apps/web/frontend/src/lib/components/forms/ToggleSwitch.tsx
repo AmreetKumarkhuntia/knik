@@ -32,7 +32,7 @@ export default function ToggleSwitch({
           after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-[18px] after:w-[18px]
           after:rounded-full after:bg-white after:transition-all after:duration-fast
           peer-checked:after:translate-x-[18px]
-          peer-focus-visible:ring-[3px] peer-focus-visible:ring-[rgba(0,217,244,0.18)]
+          peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--border-focus)] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[var(--bg-base)]
           peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
       />
       {label && <span className="ml-3 text-sm text-fg-3">{label}</span>}

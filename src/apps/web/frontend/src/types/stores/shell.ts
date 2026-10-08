@@ -1,5 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla'
 export interface ShellScope {
+  viewport: 'mobile' | 'tablet' | 'desktop'
+  mobileNavigationOpen: boolean
   paletteOpen: boolean
   paletteQuery: string
 }

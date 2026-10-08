@@ -1,41 +1,21 @@
 import Button from '$components/buttons/Button'
-import { motion } from 'framer-motion'
 import { Modal, Kbd } from '$components'
 import type { KeyboardShortcutsProps } from '$types/sections/home'
 import { KEYBOARD_SHORTCUT_ITEMS as shortcuts } from '$lib/constants'
 
-/** Modal listing available keyboard shortcuts. */
 export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcutsProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Keyboard Shortcuts"
-      size="md"
-      animationEnabled={true}
-    >
-      <div className="space-y-3">
-        {shortcuts.map((shortcut, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-surface transition-all duration-200"
-          >
-            <Kbd className="px-3 py-1.5 rounded-lg text-sm font-mono bg-surface border border-border text-text">
-              {shortcut.key}
-            </Kbd>
-            <span className="text-textSecondary text-sm">{shortcut.description}</span>
-          </motion.div>
+    <Modal isOpen={isOpen} onClose={onClose} title="Keyboard Shortcuts" size="md">
+      <div className="divide-y divide-border">
+        {shortcuts.map(shortcut => (
+          <div key={shortcut.key} className="flex items-center justify-between gap-4 py-3">
+            <Kbd>{shortcut.key}</Kbd>
+            <span className="text-fg-3 text-sm">{shortcut.description}</span>
+          </div>
         ))}
       </div>
-
-      <div className="mt-6 pt-6 border-t border-border">
-        <Button
-          onClick={onClose}
-          className="w-full py-3 rounded-lg font-medium transition-all duration-200 hover:bg-surface text-text"
-        >
+      <div className="flex justify-end mt-4">
+        <Button variant="secondary" onClick={onClose}>
           Close
         </Button>
       </div>

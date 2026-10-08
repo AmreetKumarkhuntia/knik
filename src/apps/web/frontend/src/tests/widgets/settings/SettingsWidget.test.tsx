@@ -45,24 +45,19 @@ describe('settings session interactions', () => {
 
   it('retains appearance changes within a provider and resets with a new provider', async () => {
     const user = userEvent.setup()
-    const source: DemoSource = { appearance: { mode: 'dark', density: 'comfortable' } }
+    const source: DemoSource = { appearance: { mode: 'dark' } }
     const first = renderSettings(source)
     await user.click(screen.getByText('Appearance', { exact: true }))
     await user.click(screen.getByRole('radio', { name: 'Light' }))
-    await user.click(screen.getByRole('switch', { name: 'Compact density' }))
     await user.click(screen.getByText('General', { exact: true }))
     await user.click(screen.getByText('Appearance', { exact: true }))
     expect((screen.getByRole('radio', { name: 'Light' }) as HTMLInputElement).checked).toBe(true)
-    expect(
-      (screen.getByRole('switch', { name: 'Compact density' }) as HTMLInputElement).checked
-    ).toBe(true)
+    expect(screen.queryByRole('switch', { name: 'Compact density' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Accent color' })).not.toBeInTheDocument()
     first.unmount()
     renderSettings(source)
     await user.click(screen.getByText('Appearance', { exact: true }))
     expect((screen.getByRole('radio', { name: 'Dark' }) as HTMLInputElement).checked).toBe(true)
-    expect(
-      (screen.getByRole('switch', { name: 'Compact density' }) as HTMLInputElement).checked
-    ).toBe(false)
     expect(source.appearance?.mode).toBe('dark')
   })
 

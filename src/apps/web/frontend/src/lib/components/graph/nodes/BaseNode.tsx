@@ -1,8 +1,8 @@
-import { memo } from 'react'
-import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { memo, useEffect, useRef } from 'react'
+import { Handle, Position, useUpdateNodeInternals, type NodeProps } from '@xyflow/react'
 import { getNodeMetadata } from '$lib/constants/nodes'
-import { darkThemeColors } from '$lib/constants/themes'
-import type { HandleConfig, NodeMetadata } from '$types/node-registry'
+import { GRAPH_NODE_SIZE } from '$lib/constants/graph'
+import type { HandleConfig } from '$types/node-registry'
 import type { BaseNodeData } from '$types/graph'
 import { NodeContent } from './NodeContent'
 
@@ -15,222 +15,148 @@ const POSITION_MAP = {
   right: Position.Right,
 }
 
-/** Renders a single flow node handle at the configured position. */
+const VERTICAL_POSITION_MAP = {
+  top: Position.Left,
+  bottom: Position.Right,
+  left: Position.Top,
+  right: Position.Bottom,
+}
+
+const STATUS_ICONS = {
+  success: 'check_circle',
+  failed: 'error',
+  running: 'progress_activity',
+  pending: 'schedule',
+}
+
 function NodeHandle({
   config,
   type,
-  defaultColor,
+  vertical,
+  showLabel,
 }: {
   config: HandleConfig
   type: 'source' | 'target'
-  defaultColor: string
+  vertical: boolean
+  showLabel: boolean
 }) {
+  const position = vertical ? VERTICAL_POSITION_MAP[config.position] : POSITION_MAP[config.position]
+  const style = { ...config.style }
+  if (vertical && style.top) {
+    style.left = style.top
+    delete style.top
+  }
   return (
     <Handle
       type={type}
-      position={POSITION_MAP[config.position]}
+      position={position}
       id={config.id}
-      className={`!${config.color || defaultColor} !w-2.5 !h-2.5 !border-2`}
-      style={{ ...config.style, borderColor: darkThemeColors.nodeHandleBorder }}
-    />
+      className="graph-node__handle"
+      aria-label={
+        config.label ? `${config.label} ${type === 'source' ? 'output' : 'input'}` : undefined
+      }
+      style={{ ...style, backgroundColor: config.color ?? 'var(--fg-3)' }}
+    >
+      {showLabel && config.label && (
+        <span className={`graph-node__port-label graph-node__port-label--${position}`}>
+          {config.label}
+        </span>
+      )}
+    </Handle>
   )
 }
 
-/** Returns CSS classes for the execution status ring/animation overlay. */
-function getStatusOverlay(status?: string) {
-  switch (status) {
-    case 'success':
-      return 'ring-1 ring-[rgba(16,185,129,0.4)] border-[rgba(16,185,129,0.6)]'
-    case 'failed':
-      return 'ring-1 ring-[rgba(239,68,68,0.4)] border-[rgba(239,68,68,0.6)]'
-    case 'running':
-      return 'animate-pulse border-[rgba(59,130,246,0.6)]'
-    case 'pending':
-      return 'opacity-60'
-    default:
-      return ''
-  }
-}
+export default memo(function BaseNode({ id, data, type, selected }: NodeProps) {
+  const nodeData = data as BaseNodeData
+  const vertical = nodeData.direction === 'vertical'
+  const previousDirection = useRef(vertical)
+  const updateNodeInternals = useUpdateNodeInternals()
+  useEffect(() => {
+    if (previousDirection.current === vertical) return
+    previousDirection.current = vertical
+    // Rotating ports keeps their IDs but changes the edge attachment coordinates.
+    updateNodeInternals(id)
+  }, [id, vertical, updateNodeInternals])
 
-/** Pill-shaped node renderer for start and end nodes. */
-function PillNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
-  const { icon, colors, handles, contentRenderer } = metadata
-  const isStart = contentRenderer === 'start'
-  const isExecution = data.mode === 'execution'
-  const neonClass = isExecution ? (colors.neonBorder ?? '') : ''
-  const statusOverlay = isExecution ? getStatusOverlay(data.status) : ''
-
-  return (
-    <div className="relative">
-      <div
-        className={`flex items-center gap-2 rounded-full border ${colors.border} bg-surface-2 ${isExecution ? 'px-3 py-2' : 'px-5 py-3'} ${neonClass} ${statusOverlay}`}
-      >
-        {!isStart && (
-          <div className={`h-1.5 w-1.5 rounded-full ${colors.iconBg.replace('/10', '/60')}`} />
-        )}
-        <div
-          className={`flex ${isExecution ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full ${colors.iconBg} ${colors.iconText}`}
-        >
-          <span className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'}`}>
-            {icon}
-          </span>
-        </div>
-        <div className={`flex flex-col ${!isStart ? 'text-right' : ''}`}>
-          <h3 className="text-xs font-semibold text-fg-1">{data.label || metadata.label}</h3>
-          {!isExecution && (
-            <p className={`text-[10px] ${colors.iconText} uppercase tracking-wider`}>
-              {metadata.typeLabel}
-            </p>
-          )}
-          {isExecution && data.duration !== undefined && (
-            <span className="text-[9px] text-fg-3">
-              {data.duration < 1000
-                ? `${data.duration}ms`
-                : `${(data.duration / 1000).toFixed(2)}s`}
-            </span>
-          )}
-        </div>
-        {isStart && (
-          <div className={`h-1.5 w-1.5 rounded-full ${colors.iconBg.replace('/10', '/60')}`} />
-        )}
-      </div>
-
-      {handles.inputs.map((handle, i) => (
-        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor={colors.iconText} />
-      ))}
-      {handles.outputs.map((handle, i) => (
-        <NodeHandle key={`out-${i}`} config={handle} type="source" defaultColor={colors.iconText} />
-      ))}
-    </div>
-  )
-}
-
-/** Card-style node renderer for AI execution nodes. */
-function AICardNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
-  const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
-  const isExecution = data.mode === 'execution'
-  const statusOverlay = isExecution ? getStatusOverlay(data.status) : ''
-
-  return (
-    <div className="relative">
-      <div
-        className={`rounded-xl border ${colors.border} bg-surface-2 overflow-hidden ${isExecution ? 'min-w-[160px]' : 'min-w-[200px]'} shadow-md ${statusOverlay}`}
-      >
-        <div className="h-0.5 w-full bg-[var(--primary)]" />
-
-        <div className={`flex items-center gap-2 px-3 ${isExecution ? 'py-2' : 'pt-3 pb-2'}`}>
-          <span
-            className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'} ${colors.iconText}`}
-          >
-            {icon}
-          </span>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xs font-semibold text-fg-1 truncate">{data.label || label}</h3>
-          </div>
-          <span
-            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${colors.iconBg} ${colors.iconText} border ${colors.border}`}
-          >
-            {typeLabel}
-          </span>
-        </div>
-
-        {!isExecution && (
-          <div className="px-3 pb-3">
-            <NodeContent renderer={contentRenderer} data={data} />
-            <div className="flex justify-between mt-2">
-              <span className="text-[9px] uppercase tracking-widest text-fg-4">INPUTS</span>
-              <span className="text-[9px] uppercase tracking-widest text-fg-4">OUTPUTS</span>
-            </div>
-          </div>
-        )}
-
-        {isExecution && data.duration !== undefined && (
-          <div className="px-3 pb-2 text-[10px] text-fg-3">
-            {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
-          </div>
-        )}
-      </div>
-
-      {handles.inputs.map((handle, i) => (
-        <NodeHandle key={`in-${i}`} config={handle} type="target" defaultColor="bg-surface-2" />
-      ))}
-      {handles.outputs.map((handle, i) => (
-        <NodeHandle key={`out-${i}`} config={handle} type="source" defaultColor="bg-surface-2" />
-      ))}
-    </div>
-  )
-}
-
-/** Standard rectangular node renderer for function and merge nodes. */
-function DefaultNode({ metadata, data }: { metadata: NodeMetadata; data: BaseNodeData }) {
-  const { icon, label, typeLabel, colors, handles, contentRenderer } = metadata
-  const isExecution = data.mode === 'execution'
-  const statusOverlay = isExecution ? getStatusOverlay(data.status) : ''
-
-  return (
-    <div className="relative">
-      <div
-        className={`rounded-xl border ${colors.border} bg-surface-2 px-3 ${isExecution ? 'py-2' : 'px-4 py-3'} min-w-[160px] ${statusOverlay}`}
-      >
-        {handles.inputs.map((handle, i) => (
-          <NodeHandle
-            key={`in-${i}`}
-            config={handle}
-            type="target"
-            defaultColor={colors.iconText}
-          />
-        ))}
-
-        <div className={`flex items-center gap-2 ${isExecution ? '' : 'mb-2'}`}>
-          <div
-            className={`flex ${isExecution ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText} flex-shrink-0`}
-          >
-            <span className={`material-symbols-outlined ${isExecution ? 'text-sm' : 'text-base'}`}>
-              {icon}
-            </span>
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-semibold text-fg-1 truncate">{data.label || label}</span>
-            {!isExecution && (
-              <span className="text-[10px] text-fg-3 uppercase tracking-wide">{typeLabel}</span>
-            )}
-          </div>
-        </div>
-
-        {!isExecution && <NodeContent renderer={contentRenderer} data={data} />}
-
-        {isExecution && data.duration !== undefined && (
-          <div className="text-[10px] text-fg-3 mt-1">
-            {data.duration < 1000 ? `${data.duration}ms` : `${(data.duration / 1000).toFixed(2)}s`}
-          </div>
-        )}
-
-        {handles.outputs.map((handle, i) => (
-          <NodeHandle
-            key={`out-${i}`}
-            config={handle}
-            type="source"
-            defaultColor={colors.iconText}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export default memo(function BaseNode({ data, type }: NodeProps) {
   const metadata = getNodeMetadata(type as string)
   if (!metadata) return null
 
-  const nodeData = data as BaseNodeData
+  const isExecution = nodeData.mode === 'execution'
+  const terminal = metadata.shape === 'pill'
+  const dimensions = terminal ? GRAPH_NODE_SIZE.terminal : GRAPH_NODE_SIZE.process
+  const label = nodeData.label || metadata.label
+  const duration = nodeData.duration
+  const status = nodeData.status
+  const classes = [
+    'graph-node',
+    terminal ? 'graph-node--terminal' : 'graph-node--process',
+    isExecution ? 'graph-node--execution' : 'graph-node--editable',
+    selected && 'graph-node--selected',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
-  if (metadata.shape === 'pill') {
-    return <PillNode metadata={metadata} data={nodeData} />
-  }
+  return (
+    <div
+      className={classes}
+      style={{ width: dimensions.width, height: isExecution ? dimensions.height : undefined }}
+    >
+      <div className="graph-node__header">
+        <span className={`graph-node__icon ${metadata.colors.iconBg} ${metadata.colors.iconText}`}>
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {metadata.icon}
+          </span>
+        </span>
+        <div className="graph-node__heading">
+          <h3 className="graph-node__title" title={label}>
+            {label}
+          </h3>
+          {(!terminal || !isExecution) && <p className="graph-node__type">{metadata.typeLabel}</p>}
+        </div>
+      </div>
 
-  if (metadata.contentRenderer === 'ai') {
-    return <AICardNode metadata={metadata} data={nodeData} />
-  }
+      {!isExecution && !terminal && (
+        <div className="graph-node__content">
+          <NodeContent renderer={metadata.contentRenderer} data={nodeData} />
+        </div>
+      )}
 
-  return <DefaultNode metadata={metadata} data={nodeData} />
+      {isExecution && (status || duration !== undefined) && (
+        <div className="graph-node__execution">
+          {status && (
+            <span className={`graph-node__status graph-node__status--${status}`}>
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {STATUS_ICONS[status]}
+              </span>
+              <span>{status}</span>
+            </span>
+          )}
+          {duration !== undefined && (
+            <span className="graph-node__duration">
+              {duration < 1000 ? `${duration}ms` : `${(duration / 1000).toFixed(2)}s`}
+            </span>
+          )}
+        </div>
+      )}
+
+      {metadata.handles.inputs.map((handle, i) => (
+        <NodeHandle
+          key={`in-${handle.id ?? i}`}
+          config={handle}
+          type="target"
+          vertical={vertical}
+          showLabel={false}
+        />
+      ))}
+      {metadata.handles.outputs.map((handle, i) => (
+        <NodeHandle
+          key={`out-${handle.id ?? i}`}
+          config={handle}
+          type="source"
+          vertical={vertical}
+          showLabel={metadata.contentRenderer === 'conditional'}
+        />
+      ))}
+    </div>
+  )
 })

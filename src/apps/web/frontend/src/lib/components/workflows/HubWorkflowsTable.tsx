@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Badge, Card, EmptyState, MS, Table } from '$components'
+import { Badge, EmptyState, MS, Table } from '$components'
 import Button from '$components/buttons/Button'
 import { formatDate } from '$utils/format'
 import type { HubWorkflowsTableProps } from '$types/sections/workflow-hub'
@@ -13,7 +13,6 @@ export default function HubWorkflowsTable({
   isEmpty,
   onRun,
   canRun,
-  density,
 }: HubWorkflowsTableProps) {
   const columns: TableColumn<HubWorkflowRow>[] = [
     {
@@ -65,7 +64,7 @@ export default function HubWorkflowsTable({
           <Link
             to={`/workflows/${encodeURIComponent(row.id)}/edit`}
             aria-label={`Edit ${row.name}`}
-            className="text-secondary"
+            className="inline-flex min-h-9 min-w-9 max-sm:min-h-11 max-sm:min-w-11 items-center justify-center text-secondary"
           >
             <MS name="edit" size={16} />
           </Link>
@@ -84,12 +83,12 @@ export default function HubWorkflowsTable({
     },
   ]
   return (
-    <Card padding="none" className="my-4 mb-8">
+    <div className="my-4 mb-8">
       <Table
         columns={columns}
         data={rows}
         getRowKey={row => row.id}
-        density={density}
+        density="compact"
         loading={loading}
         error={error ?? undefined}
         empty={
@@ -104,6 +103,6 @@ export default function HubWorkflowsTable({
           />
         }
       />
-    </Card>
+    </div>
   )
 }

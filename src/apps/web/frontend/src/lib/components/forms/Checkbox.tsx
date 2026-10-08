@@ -23,9 +23,9 @@ export default function Checkbox({
       } ${className}`}
     >
       <div
-        className={`w-[18px] h-[18px] border-[1.5px] rounded-xs inline-flex items-center justify-center transition-all duration-base focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--primary)_18%,transparent)] ${
+        className={`relative shrink-0 w-[18px] h-[18px] border-[1.5px] rounded-xs inline-flex items-center justify-center transition-all duration-base focus-within:ring-2 focus-within:ring-[var(--border-focus)] ${
           isChecked
-            ? 'bg-[var(--aurora-400)] border-[var(--aurora-400)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_18%,transparent)]'
+            ? 'bg-[var(--primary)] border-[var(--primary)]'
             : 'bg-[var(--bg-surface-2)] border-[var(--border-3)]'
         }`}
       >
@@ -40,15 +40,18 @@ export default function Checkbox({
           }}
           onChange={e => !disabled && onChange(e.target.checked)}
           disabled={disabled}
-          className="sr-only"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-inherit z-10"
         />
         {checked && !indeterminate && (
           <div
+            aria-hidden="true"
             className="w-[10px] h-[5px] border-l-[2px] border-b-[2px] border-[var(--on-primary)]"
             style={{ transform: 'rotate(-45deg) translate(1px, -1px)' }}
           />
         )}
-        {indeterminate && <div className="w-[8px] h-[2px] bg-[var(--on-primary)] rounded-full" />}
+        {indeterminate && (
+          <div aria-hidden="true" className="w-[8px] h-[2px] bg-[var(--on-primary)] rounded-full" />
+        )}
       </div>
       {label && <span className="text-[13px] text-[var(--fg-2)]">{label}</span>}
     </label>

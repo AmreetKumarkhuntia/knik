@@ -2,7 +2,6 @@ import type { CardProps } from '$types/components'
 
 const variants = {
   default: 'knik-card',
-  glass: 'knik-card--glass',
   bordered: 'knik-card',
   elevated: 'knik-card shadow-knik-2',
 }

@@ -1,4 +1,4 @@
-import { Modal } from '$components'
+import { Modal, MS } from '$components'
 import Button from '$components/buttons/Button'
 import { getNodeMetadata } from '$lib/constants/nodes'
 import NodeProperties from '../PropertiesPanel/NodeProperties'
@@ -13,57 +13,41 @@ export default function NodePropertiesPanel({
   fieldDrafts,
   onFieldDraftChange,
 }: NodePropertiesPanelProps) {
-  const metadata = selectedNode ? getNodeMetadata(selectedNode.type ?? '') : null
-
+  if (!selectedNode) return null
+  const metadata = getNodeMetadata(selectedNode.type ?? '')
+  const properties = (
+    <NodeProperties
+      key={selectedNode.id}
+      node={selectedNode}
+      modelOptions={modelOptions}
+      fieldDrafts={fieldDrafts}
+      onFieldDraftChange={onFieldDraftChange}
+      onUpdate={data => onNodeUpdate(selectedNode.id, data)}
+    />
+  )
   if (compact)
-    return selectedNode ? (
-      <Modal isOpen onClose={onClose} title="Node Properties">
-        <NodeProperties
-          key={selectedNode.id}
-          node={selectedNode}
-          modelOptions={modelOptions}
-          fieldDrafts={fieldDrafts}
-          onFieldDraftChange={onFieldDraftChange}
-          onUpdate={data => onNodeUpdate(selectedNode.id, data)}
-        />
-        <div className="flex justify-end">
-          <Button onClick={onClose} aria-label="Close node properties">
-            Done
-          </Button>
-        </div>
+    return (
+      <Modal isOpen placement="right" onClose={onClose} title="Node properties">
+        {properties}
       </Modal>
-    ) : null
-
+    )
   return (
-    <aside className="w-56 sm:w-72 max-w-[45%] border-r border-border bg-surfaceRaised/60 backdrop-blur-xl flex flex-col flex-shrink-0 overflow-hidden">
-      <div className="px-5 py-4 border-b border-border">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">
-          Node Properties
-        </p>
-        <p className="text-xs text-muted mt-0.5 truncate">
-          {metadata ? `Configure your ${metadata.label} node` : 'Select a node to configure'}
-        </p>
+    <aside
+      aria-label="Node properties"
+      className="w-80 border-l border-border bg-surface flex flex-col flex-shrink-0 overflow-hidden"
+    >
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground">Node properties</h2>
+          <p className="text-xs text-secondary mt-1 truncate">
+            {metadata?.label ?? selectedNode.type}
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close node properties">
+          <MS name="close" size={18} />
+        </Button>
       </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {selectedNode ? (
-          <NodeProperties
-            key={selectedNode.id}
-            node={selectedNode}
-            modelOptions={modelOptions}
-            fieldDrafts={fieldDrafts}
-            onFieldDraftChange={onFieldDraftChange}
-            onUpdate={data => onNodeUpdate(selectedNode.id, data)}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full px-6 py-12 text-center gap-3">
-            <span className="material-symbols-outlined text-3xl text-muted">touch_app</span>
-            <p className="text-xs text-muted leading-relaxed">
-              Click a node on the canvas to view and edit its properties
-            </p>
-          </div>
-        )}
-      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto">{properties}</div>
     </aside>
   )
 }

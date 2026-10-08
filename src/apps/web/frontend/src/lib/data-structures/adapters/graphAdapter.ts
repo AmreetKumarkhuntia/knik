@@ -19,6 +19,9 @@ export function graphToCanvasNodes<T>(graph: Graph<T>, options: CanvasOptions = 
     edgeConfig,
     forceStrength,
     linkDistance,
+    direction,
+    nodeSpacingX,
+    nodeSpacingY,
   } = options
 
   const graphNodes = graph.getNodes()
@@ -37,7 +40,13 @@ export function graphToCanvasNodes<T>(graph: Graph<T>, options: CanvasOptions = 
       positions = calculateCircularLayout(nodeIds, { width, height })
       break
     case 'dag':
-      positions = calculateDagLayout(nodeIds, edgeLinks, { width, height })
+      positions = calculateDagLayout(nodeIds, edgeLinks, {
+        width,
+        height,
+        direction,
+        nodeSpacingX,
+        nodeSpacingY,
+      })
       break
     case 'force':
     default:

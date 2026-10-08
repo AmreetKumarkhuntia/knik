@@ -18,6 +18,7 @@ export type FlowMode = 'edit' | 'execution'
 export interface BaseNodeData extends Record<string, unknown> {
   label?: string
   mode?: FlowMode
+  direction?: 'horizontal' | 'vertical'
   status?: ExecutionStatus
   duration?: number
   function_name?: string
@@ -55,9 +56,15 @@ export interface FlowCanvasProps {
   onDrop?: (event: React.DragEvent) => void
   showMiniMap?: boolean
   fitView?: boolean
+  fitOnResize?: boolean
   minZoom?: number
+  showControls?: boolean
   zoomOnScroll?: boolean
   panOnScroll?: boolean
   className?: string
   children?: ReactNode
+}
+
+export interface FlowViewportControlsProps {
+  onFit: () => void
 }

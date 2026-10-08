@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { Input, MS } from '$components'
 import Button from '$components/buttons/Button'
 import type { WorkflowNavbarProps } from '$types/sections/workflow-builder'
@@ -14,21 +13,18 @@ export default function WorkflowNavbar({
   workflowName,
 }: WorkflowNavbarProps) {
   return (
-    <header className="min-h-16 border-b border-border glass flex flex-wrap items-center justify-between gap-3 p-4 sm:px-8 flex-shrink-0 z-20">
-      <div className="flex flex-wrap items-center gap-2 min-w-0">
+    <header className="min-h-[52px] border-b border-border bg-surface flex flex-wrap items-center justify-between gap-2 px-4 py-2 flex-shrink-0 z-20">
+      <div className="flex items-center gap-2 min-w-0">
         <Button variant="ghost" size="sm" onClick={onBack} aria-label="Back to workflows">
           <MS name="arrow_back" size={20} />
         </Button>
-        <Link to="/workflows" className="font-medium text-secondary hover:text-subtle">
-          Workflows
-        </Link>
-        <MS name="chevron_right" size={16} />
         {!readOnly && onNameChange ? (
           <Input
+            fullWidth={false}
             aria-label="Workflow name"
             value={workflowName ?? ''}
             onChange={event => onNameChange(event.target.value)}
-            className="!px-2 !py-1 text-sm max-w-56"
+            className="!px-2 !py-1 text-sm w-56 max-w-full"
           />
         ) : (
           <span className="font-semibold text-foreground">{workflowName ?? 'Create Workflow'}</span>
@@ -65,7 +61,7 @@ export default function WorkflowNavbar({
               icon={<MS name="save" size={16} />}
               onClick={onSave}
             >
-              Save Workflow
+              Save workflow
             </Button>
           )}
         </div>

@@ -14,7 +14,7 @@ export function useShellView(pathname: string, scopeId: string) {
       })).filter(group => group.items.length > 0),
     [query]
   )
-  let crumbs = ['Knik AI', 'Chat']
+  let crumbs = ['Chat']
   if (pathname === ROUTES.settings) crumbs = ['Settings']
   else if (pathname === ROUTES.schedules) crumbs = ['Workflows', 'Schedules']
   else if (pathname === ROUTES.executions) crumbs = ['Workflows', 'Executions']
@@ -24,6 +24,6 @@ export function useShellView(pathname: string, scopeId: string) {
     pathname === ROUTES.builder
   )
     crumbs = ['Workflows', 'Builder']
-  else if (pathname === ROUTES.workflows) crumbs = ['Workflows', 'Hub']
+  else if (pathname === ROUTES.workflows) crumbs = ['Workflows']
   return { commands, crumbs }
 }

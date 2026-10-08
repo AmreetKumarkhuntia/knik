@@ -9,6 +9,8 @@ export default function HubRecentExecutions({ executions, loading }: HubRecentEx
   return (
     <>
       <SectionHeader
+        level="section"
+        className="mb-3"
         title="Recent executions"
         actions={
           <Link

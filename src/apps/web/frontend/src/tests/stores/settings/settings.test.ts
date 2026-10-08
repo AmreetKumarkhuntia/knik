@@ -24,7 +24,8 @@ describe('settings store', () => {
       }),
       store = createSettingsStore(source)
     store.getState().toggleTool('Example', true)
-    store.getState().updateAppearance({ mode: 'light', density: 'compact' })
+    store.getState().updateAppearance({ mode: 'light' })
+    expect(store.getState().appearance).toEqual({ mode: 'light' })
     expect(store.getState().enabledTools.Example).toBe(true)
     expect(source.tools[0].enabled).toBe(false)
     expect(createSettingsStore(source).getState().appearance).toEqual(source.appearance)

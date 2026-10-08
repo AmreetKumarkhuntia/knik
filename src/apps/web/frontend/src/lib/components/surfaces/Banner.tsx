@@ -20,12 +20,7 @@ export default function Banner({
 
   const baseClasses = 'flex items-center gap-3 p-3 rounded-md border text-sm font-medium w-full'
 
-  const variantClasses = {
-    info: 'bg-info/10 text-info border-info/20',
-    warning: 'bg-warning/10 text-warning border-warning/20',
-    danger: 'bg-error/10 text-error border-error/20',
-    success: 'bg-success/10 text-success border-success/20',
-  }
+  const color = `var(--${variant})`
 
   return (
     <AnimatePresence>
@@ -35,7 +30,12 @@ export default function Banner({
           animate={{ opacity: 1, y: 0, height: 'auto' }}
           exit={{ opacity: 0, y: -10, height: 0, marginTop: 0, marginBottom: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+          className={`${baseClasses} ${className}`}
+          style={{
+            color,
+            borderColor: `color-mix(in srgb, ${color} 25%, transparent)`,
+            background: `color-mix(in srgb, ${color} 6%, transparent)`,
+          }}
           role="alert"
         >
           {icon && <span className="flex-shrink-0 flex items-center justify-center">{icon}</span>}

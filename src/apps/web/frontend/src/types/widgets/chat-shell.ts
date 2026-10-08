@@ -1,16 +1,20 @@
 import type { ReactNode } from 'react'
 import type { Conversation } from '$types/conversation'
 import type { DemoSuggestion } from '$types/demo-session'
+import type { ShellScope } from '$types/stores/shell'
 
 export interface MainLayoutWidgetProps {
   children: ReactNode
 }
 export interface SidebarWidgetProps {
   onOpenSearch: () => void
+  viewport?: ShellScope['viewport']
+  mobileOpen?: boolean
+  onCloseMobile?: () => void
 }
 export interface SidebarBrandProps {
   collapsed: boolean
-  onToggle: () => void
+  onToggle?: () => void
 }
 export interface SidebarQuickActionsProps {
   collapsed: boolean
@@ -20,6 +24,7 @@ export interface SidebarQuickActionsProps {
 export interface SidebarNavProps {
   collapsed: boolean
   pathname: string
+  onNavigate?: () => void
 }
 export interface SidebarRecentsProps {
   conversations: Conversation[]
@@ -32,6 +37,7 @@ export interface SidebarAccountProps {
   collapsed: boolean
   name: string
   initials: string
+  onNavigate?: () => void
 }
 export interface TopBarProps {
   crumbs: string[]
@@ -39,6 +45,7 @@ export interface TopBarProps {
   onOpenSearch: () => void
   dark: boolean
   onToggleTheme: () => void
+  onOpenNavigation?: () => void
 }
 export interface SuggestionCardsProps {
   suggestions: DemoSuggestion[]
@@ -50,11 +57,6 @@ export interface FullScreenErrorViewProps {
   onBack?: () => void
   onRetry?: () => void
   layout: 'screen' | 'fill'
-}
-export interface SearchLauncherProps {
-  onClick: () => void
-  label?: string
-  className?: string
 }
 export interface SessionToastProps {
   id: number

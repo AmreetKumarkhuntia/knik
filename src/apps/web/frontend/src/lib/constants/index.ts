@@ -9,3 +9,5 @@ export * from './navigation'
 export * from './nodes'
 export * from './componentMaps'
 export * from './widgets'
+
+export { CODE_SYNTAX_THEME } from './syntax'

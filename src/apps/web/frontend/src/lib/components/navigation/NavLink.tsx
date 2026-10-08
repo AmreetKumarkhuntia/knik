@@ -15,10 +15,10 @@ export default function NavLink({
   const content = (
     <>
       {typeof icon === 'string' ? <MS name={icon} size={19} /> : icon}
-      {!collapsed && <span>{label}</span>}
+      {!collapsed && <span className="truncate min-w-0">{label}</span>}
     </>
   )
-  const classes = `flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all rounded-md ${active ? 'text-[var(--acc-text)] bg-[var(--acc-soft)]' : 'text-fg-3 hover:text-fg-1 hover:bg-surface-3'} ${className}`
+  const classes = `knik-focus min-w-0 min-h-11 md:min-h-9 flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-md ${active ? 'text-[var(--acc-text)] bg-[var(--acc-soft)]' : 'text-fg-3 hover:text-fg-1 hover:bg-surface-3'} ${className}`
   const props = {
     className: classes,
     style,

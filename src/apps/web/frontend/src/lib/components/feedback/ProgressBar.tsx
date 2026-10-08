@@ -22,17 +22,10 @@ export default function ProgressBar({
       className={`w-full bg-surface-3 rounded-full overflow-hidden ${sizeClasses[size]} ${className}`}
     >
       <motion.div
-        className={`h-full rounded-full shadow-glow ${variant === 'running' ? 'bg-[length:24px_100%] animate-[stripe_1s_linear_infinite]' : ''}`}
+        className="h-full rounded-full"
         style={{
           width: `${percentage}%`,
-          ...(variant === 'default'
-            ? {
-                background: 'linear-gradient(90deg, var(--aurora-400), var(--teal-400))',
-              }
-            : {
-                backgroundImage:
-                  'repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0 6px, transparent 6px 12px), linear-gradient(90deg, var(--aurora-400), var(--teal-400))',
-              }),
+          background: variant === 'running' ? 'var(--info)' : 'var(--primary)',
         }}
         initial={animated ? { width: 0 } : false}
         animate={{ width: `${percentage}%` }}

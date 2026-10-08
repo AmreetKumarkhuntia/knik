@@ -12,6 +12,7 @@ export interface ModalProps {
   title?: string
   className?: string
   size?: ModalSize
+  placement?: 'center' | 'left' | 'right'
   animationEnabled?: boolean
 }
 
@@ -19,7 +20,6 @@ export interface ModalProps {
 export interface BackdropProps {
   visible: boolean
   onClick: () => void
-  blur?: 'sm' | 'md' | 'lg'
   opacity?: number
   className?: string
 }
@@ -27,7 +27,7 @@ export interface BackdropProps {
 /** Props for a card container. */
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode
-  variant?: 'default' | 'bordered' | 'elevated' | 'glass'
+  variant?: 'default' | 'bordered' | 'elevated'
   padding?: 'none' | 'sm' | 'md' | 'lg'
   className?: string
 }

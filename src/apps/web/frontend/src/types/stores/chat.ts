@@ -6,6 +6,7 @@ export interface ChatScope {
   resourceId: string | null
   draft: string
   shortcutsOpen: boolean
+  toolsOpen: boolean
   error: string
   editingId: string | null
   deletingId: string | null

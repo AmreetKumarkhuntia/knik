@@ -43,9 +43,9 @@ export default function Canvas({
   fieldDrafts,
   onFieldDraftChange,
 }: CanvasProps) {
-  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 639px)').matches)
+  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 1023px)').matches)
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 639px)')
+    const media = window.matchMedia('(max-width: 1023px)')
     const update = () => setNarrow(media.matches)
     media.addEventListener('change', update)
     return () => media.removeEventListener('change', update)
@@ -63,16 +63,7 @@ export default function Canvas({
         readOnly={readOnly}
       />
       <div className="flex flex-1 overflow-hidden relative">
-        <NodePropertiesPanel
-          selectedNode={selectedNode}
-          onNodeUpdate={onNodeUpdate}
-          compact={narrow}
-          onClose={() => onSelectNode(null)}
-          modelOptions={modelOptions}
-          fieldDrafts={fieldDrafts}
-          onFieldDraftChange={onFieldDraftChange}
-        />
-        <div className="flex-1 relative workflow-grid overflow-hidden">
+        <div className="flex-1 min-w-0 relative workflow-grid overflow-hidden">
           {error && (
             <div className="absolute top-0 left-0 right-0 z-20">
               <Banner variant="danger">
@@ -100,6 +91,15 @@ export default function Canvas({
             <FloatingControls onAddNode={readOnly ? undefined : onAddNode} />
           </FlowCanvas>
         </div>
+        <NodePropertiesPanel
+          selectedNode={selectedNode}
+          onNodeUpdate={onNodeUpdate}
+          compact={narrow}
+          onClose={() => onSelectNode(null)}
+          modelOptions={modelOptions}
+          fieldDrafts={fieldDrafts}
+          onFieldDraftChange={onFieldDraftChange}
+        />
       </div>
     </div>
   )

@@ -19,7 +19,7 @@ export default function SidebarRecents({
   onDelete,
 }: SidebarRecentsProps) {
   return (
-    <div className="flex flex-col min-h-0 flex-1" style={{ marginTop: 18 }}>
+    <div className="flex flex-col min-h-0 flex-1" style={{ marginTop: 24 }}>
       <Eyebrow>Recent chats</Eyebrow>
       <div className="overflow-y-auto flex flex-col scrollbar-hide" style={{ gap: 1 }}>
         {loading ? (
@@ -34,53 +34,47 @@ export default function SidebarRecents({
           conversations.map(conv => (
             <div
               key={conv.id}
-              className="group relative transition-colors"
-              style={{ borderRadius: 'var(--r-btn, 8px)' }}
+              className="group relative transition-colors min-h-12 sm:min-h-9 [@media(pointer:coarse)]:min-h-12"
+              style={{ borderRadius: 'var(--r-btn)' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-surface-3)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
               <Button
                 type="button"
                 onClick={() => onSelect(conv.id)}
-                className="w-full text-left"
+                className="w-full text-left pr-[100px] sm:pr-2 sm:group-hover:pr-20 sm:group-focus-within:pr-20 [@media(pointer:coarse)]:pr-[100px]"
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  padding: '7px 11px',
+                  paddingBlock: '8px',
+                  paddingLeft: '8px',
+                  display: 'block',
                   cursor: 'pointer',
                 }}
               >
                 <div className="flex items-center" style={{ gap: 6 }}>
                   <span
                     className="truncate flex-1"
-                    style={{ fontSize: 12.5, fontWeight: 550, color: 'var(--fg-2)' }}
+                    style={{ fontSize: 13, fontWeight: 400, color: 'var(--fg-2)' }}
                   >
                     {getConversationLabel(conv)}
                   </span>
                   <span
-                    className="font-mono flex-shrink-0 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0"
-                    style={{ fontSize: 10, color: 'var(--fg-5)' }}
+                    className="hidden sm:block font-mono flex-shrink-0 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0"
+                    style={{ fontSize: 11, color: 'var(--fg-3)' }}
                   >
                     {formatRelativeDay(conv.updated_at)}
                   </span>
                 </div>
-                {conv.preview && (
-                  <div
-                    className="truncate"
-                    style={{ fontSize: 11.5, color: 'var(--fg-4)', marginTop: 1 }}
-                  >
-                    {conv.preview}
-                  </div>
-                )}
               </Button>
               <div
-                className="absolute flex items-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-                style={{ top: 4, right: 6, gap: 2 }}
+                className="absolute flex items-center opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100"
+                style={{ top: 0, bottom: 0, right: 2, gap: 2 }}
               >
                 <Button
                   variant="ghost"
-                  size="xs"
-                  style={{ width: 26, height: 26, padding: 0 }}
+                  size="sm"
+                  style={{ width: 36, height: 36, padding: 0 }}
                   icon={<MS name="edit" size={13} />}
                   title="Rename"
                   aria-label="Rename"
@@ -88,8 +82,8 @@ export default function SidebarRecents({
                 />
                 <Button
                   variant="ghost"
-                  size="xs"
-                  style={{ width: 26, height: 26, padding: 0 }}
+                  size="sm"
+                  style={{ width: 36, height: 36, padding: 0 }}
                   icon={<MS name="delete" size={13} />}
                   title="Delete"
                   aria-label="Delete"

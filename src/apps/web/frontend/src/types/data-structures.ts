@@ -37,6 +37,12 @@ export interface LayoutOptions {
   linkDistance?: number
 }
 
+export interface DagLayoutOptions extends LayoutOptions {
+  direction?: 'horizontal' | 'vertical'
+  nodeSpacingX?: number
+  nodeSpacingY?: number
+}
+
 /** Internal d3-force simulation node — used by GraphLayout. */
 export interface SimNode extends SimulationNodeDatum {
   id: string
@@ -49,7 +55,10 @@ export interface SimLink extends SimulationLinkDatum<SimNode> {
 }
 
 /** Options for the canvas graph renderer. */
-export interface CanvasOptions {
+export interface CanvasOptions extends Pick<
+  DagLayoutOptions,
+  'direction' | 'nodeSpacingX' | 'nodeSpacingY'
+> {
   layout?: 'force' | 'grid' | 'circular' | 'dag'
   width?: number
   height?: number

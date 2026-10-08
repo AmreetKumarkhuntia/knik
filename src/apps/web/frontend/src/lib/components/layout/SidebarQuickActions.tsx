@@ -1,43 +1,21 @@
-import SearchLauncher from './SearchLauncher'
 import Button from '$components/buttons/Button'
 import { MS } from '$components'
 import { UI_TEXT } from '$lib/constants'
 import type { SidebarQuickActionsProps } from '$types/widgets/chat-shell'
 
-/** New-chat button and (when expanded) the search launcher. */
-export default function SidebarQuickActions({
-  collapsed,
-  onNewChat,
-  onOpenSearch,
-}: SidebarQuickActionsProps) {
+export default function SidebarQuickActions({ collapsed, onNewChat }: SidebarQuickActionsProps) {
   return (
-    <div className="flex flex-col" style={{ gap: 6, marginBottom: 16 }}>
+    <div className="mb-4">
       <Button
-        type="button"
+        variant="secondary"
         onClick={onNewChat}
+        aria-label={UI_TEXT.nav.newChat}
         title={collapsed ? UI_TEXT.nav.newChat : undefined}
-        className="flex items-center transition-all ease-knik-out"
-        style={{
-          gap: 9,
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          padding: collapsed ? 0 : '9px 12px',
-          height: collapsed ? 44 : undefined,
-          width: collapsed ? 44 : '100%',
-          marginInline: collapsed ? 'auto' : 0,
-          borderRadius: 'var(--r-btn, 8px)',
-          border: '1px solid var(--acc-border, rgba(0,217,244,0.35))',
-          cursor: 'pointer',
-          background: 'var(--acc-soft)',
-          color: 'var(--acc-text, var(--aurora-200))',
-          fontSize: 13.5,
-          fontWeight: 600,
-          letterSpacing: '-0.01em',
-        }}
+        className={`w-full ${collapsed ? 'justify-center px-0' : 'justify-start'}`}
+        icon={<MS name="add" size={18} />}
       >
-        <MS name="add" size={20} />
         {!collapsed && 'New chat'}
       </Button>
-      {!collapsed && <SearchLauncher onClick={onOpenSearch} />}
     </div>
   )
 }

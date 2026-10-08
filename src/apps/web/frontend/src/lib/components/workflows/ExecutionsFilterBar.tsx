@@ -15,7 +15,7 @@ export default function ExecutionsFilterBar({
   totalCount,
 }: ExecutionsFilterBarProps) {
   return (
-    <div className="glass border border-border rounded-xl p-4">
+    <div className="py-3">
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <label htmlFor="workflow-filter" className="text-sm font-medium text-subtle">
