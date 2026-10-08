@@ -97,8 +97,8 @@ h1.display {
 
 .eyebrow {
   font-size: var(--fs-micro);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--fg-3);
   font-weight: 500;
 }
@@ -110,17 +110,15 @@ h1.display {
 }
 
 /* -----------------------------------------------------------------
-   Surfaces & Glass
+   Surfaces
    ----------------------------------------------------------------- */
-.knik-glass {
+.knik-surface {
   background: var(--bg-glass);
-  backdrop-filter: var(--blur-glass);
-  -webkit-backdrop-filter: var(--blur-glass);
   border: 1px solid var(--border-2);
 }
 
 .knik-card {
-  background: var(--bg-surface-2);
+  background: var(--bg-surface);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
   transition:
@@ -129,31 +127,14 @@ h1.display {
     transform var(--dur-base) var(--ease-out);
 }
 
-.knik-card--glass {
-  background: var(--bg-glass);
-  backdrop-filter: var(--blur-glass);
-  -webkit-backdrop-filter: var(--blur-glass);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-lg);
-}
-
 /* Inner highlight for raised surfaces */
 .knik-raised {
-  box-shadow:
-    var(--shadow-1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--bg-surface-2);
 }
 
 /* -----------------------------------------------------------------
    Backgrounds & Grids
    ----------------------------------------------------------------- */
-.mesh-bg {
-  background-color: var(--bg-base);
-  background-image:
-    radial-gradient(at 8% 0%, rgba(0, 217, 244, 0.16) 0px, transparent 50%),
-    radial-gradient(at 95% 100%, rgba(20, 184, 166, 0.1) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(139, 92, 246, 0.06) 0px, transparent 60%);
-}
 
 .dot-grid {
   background-image: radial-gradient(var(--grid-line) 1px, transparent 1px);
@@ -168,48 +149,13 @@ h1.display {
 }
 
 /* -----------------------------------------------------------------
-   Gradients
+   Focus Rings
    ----------------------------------------------------------------- */
-.gradient-text {
-  background: linear-gradient(
-    95deg,
-    var(--aurora-200) 0%,
-    var(--aurora-400) 50%,
-    var(--teal-400) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.gradient-brand {
-  background: linear-gradient(135deg, var(--aurora-400) 0%, var(--teal-500) 100%);
-}
-
-.gradient-primary-teal {
-  background: linear-gradient(90deg, var(--primary), var(--teal-500));
-}
-
-.gradient-sidebar {
-  background: linear-gradient(180deg, rgba(0, 217, 244, 0.08) 0%, rgba(20, 184, 166, 0.04) 100%);
-}
-
-/* -----------------------------------------------------------------
-   Glow / Focus Rings
-   ----------------------------------------------------------------- */
-.glow-ring {
-  box-shadow: var(--glow-primary);
-}
-
-.glow-ring-teal {
-  box-shadow: var(--glow-teal);
-}
 
 /* Focus: 2px ring outside — never inside */
 .knik-focus:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 217, 244, 0.3);
+  box-shadow: 0 0 0 2px var(--border-focus);
 }
 
 /* -----------------------------------------------------------------
@@ -239,13 +185,15 @@ h1.display {
    Buttons
    ----------------------------------------------------------------- */
 .knik-btn {
+  min-height: 36px;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   font-family: var(--font-sans);
   font-weight: 500;
-  border-radius: var(--radius-md);
+  border-radius: var(--r-btn);
   cursor: pointer;
   transition:
     background-color var(--dur-fast) var(--ease-out),
@@ -271,9 +219,6 @@ h1.display {
 
 .knik-btn--primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow:
-    0 0 0 1px rgba(0, 217, 244, 0.35),
-    0 4px 12px -4px rgba(0, 217, 244, 0.4);
 }
 
 .knik-btn--secondary {
@@ -294,7 +239,7 @@ h1.display {
 }
 
 .knik-btn--ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-surface-3);
   color: var(--fg-1);
 }
 
@@ -311,20 +256,22 @@ h1.display {
 
 /* Sizes */
 .knik-btn--xs {
+  min-height: 36px;
   padding: var(--space-1) var(--space-2);
   font-size: var(--fs-micro);
   gap: var(--space-1);
 }
 
 .knik-btn--sm {
+  min-height: 36px;
   padding: var(--space-1) var(--space-3);
-  font-size: var(--fs-caption);
+  font-size: var(--fs-body);
   gap: var(--space-1);
 }
 
 .knik-btn--md {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--fs-body-sm);
+  padding: 6px var(--space-4);
+  font-size: var(--fs-body);
   gap: var(--space-2);
 }
 
@@ -391,14 +338,16 @@ h1.display {
    Form inputs
    ----------------------------------------------------------------- */
 .knik-input {
+  min-height: 36px;
+  max-width: 100%;
   font-family: var(--font-sans);
   font-size: var(--fs-body);
   line-height: var(--lh-base);
   color: var(--fg-1);
   background: var(--bg-surface);
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-btn);
+  padding: 6px var(--space-3);
   outline: none;
   transition:
     border-color var(--dur-fast) var(--ease-out),
@@ -410,8 +359,7 @@ h1.display {
 }
 
 .knik-input:focus {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(0, 217, 244, 0.3);
+  box-shadow: 0 0 0 2px var(--border-focus);
 }
 
 .knik-input:disabled {
@@ -488,139 +436,6 @@ h1.display {
    Animations
    ----------------------------------------------------------------- */
 
-/* Background blob motion — offset with animation-delay */
-@keyframes knik-blob {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.3;
-  }
-  33% {
-    transform: translate(60px, -80px) scale(1.2);
-    opacity: 0.4;
-  }
-  66% {
-    transform: translate(-40px, 60px) scale(0.8);
-    opacity: 0.25;
-  }
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.3;
-  }
-}
-
-/* Page enter transition */
-@keyframes knik-page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Workflow edge dash animation */
-@keyframes knik-dash {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
-/* Redesign motion: fade-up, pulse, directional slides */
-@keyframes knik-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes knik-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes knik-slide-l {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes knik-slide-r {
-  from {
-    opacity: 0;
-    transform: translateX(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.knik-animate-blob {
-  animation: knik-blob 10s var(--ease-in-out) infinite;
-}
-
-.knik-animate-page-enter {
-  animation: knik-page-enter var(--dur-base) var(--ease-out);
-}
-
-.knik-animate-dash {
-  animation: knik-dash 1s linear infinite;
-}
-
-/* Stagger delay utilities */
-.knik-stagger-1 {
-  animation-delay: 100ms;
-}
-.knik-stagger-2 {
-  animation-delay: 200ms;
-}
-.knik-stagger-3 {
-  animation-delay: 300ms;
-}
-.knik-stagger-4 {
-  animation-delay: 400ms;
-}
-.knik-stagger-5 {
-  animation-delay: 500ms;
-}
-.knik-stagger-6 {
-  animation-delay: 600ms;
-}
-.knik-stagger-7 {
-  animation-delay: 700ms;
-}
-.knik-stagger-8 {
-  animation-delay: 800ms;
-}
-.knik-stagger-9 {
-  animation-delay: 900ms;
-}
-.knik-stagger-10 {
-  animation-delay: 1000ms;
-}
-.knik-stagger-11 {
-  animation-delay: 1100ms;
-}
-.knik-stagger-12 {
-  animation-delay: 1200ms;
-}
-
 /* Material Symbols Outlined defaults */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
@@ -648,4 +463,29 @@ h1.display {
 .knik-btn--warning {
   color: var(--warning);
   background: var(--warning-bg);
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .knik-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .knik-input:not(textarea) {
+    min-height: 44px;
+  }
+  label:has(input[type='checkbox']),
+  label:has(input[type='radio']) {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

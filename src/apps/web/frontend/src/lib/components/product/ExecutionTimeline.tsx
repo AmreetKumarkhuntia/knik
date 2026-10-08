@@ -13,7 +13,7 @@ export default function ExecutionTimeline({
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
           <div key={i} className="animate-pulse">
-            <div className="knik-glass rounded-lg p-4 h-20" />
+            <div className="bg-surface border border-border rounded-lg p-4 h-20" />
           </div>
         ))}
       </div>
@@ -22,7 +22,7 @@ export default function ExecutionTimeline({
 
   if (!timeline || timeline.length === 0) {
     return (
-      <div className="knik-glass rounded-lg p-8 text-center">
+      <div className="bg-surface border border-border rounded-lg p-8 text-center">
         <p className="text-fg-3 text-sm">No execution steps available</p>
       </div>
     )
@@ -50,14 +50,15 @@ export default function ExecutionTimeline({
             </span>
           </div>
 
-          <div className="knik-glass rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
+          <div className="bg-surface border border-border rounded-lg p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="material-symbols-outlined text-fg-3">
                   {getNodeIcon(step.node_type)}
                 </span>
-                <h4 className="font-semibold text-fg-1">{step.node_id}</h4>
-                <span className="text-xs text-fg-3">{step.node_type}</span>
+                <h4 className="font-semibold text-fg-1 break-all">{step.node_id}</h4>
+                <span className="text-xs capitalize text-secondary">{step.status}</span>
+                <span className="text-xs text-fg-3 break-all">{step.node_type}</span>
               </div>
               <span className="text-xs text-fg-4">
                 {step.duration_ms !== undefined ? `${step.duration_ms}ms` : 'N/A'}
@@ -65,7 +66,7 @@ export default function ExecutionTimeline({
             </div>
 
             {step.error_message && (
-              <div className="mt-2 p-2 bg-[var(--danger-bg)] border border-[rgba(239,68,68,0.2)] rounded text-xs text-[var(--danger)]">
+              <div className="mt-2 p-2 bg-[var(--danger-bg)] border border-[var(--danger)] rounded text-xs text-[var(--danger)]">
                 {step.error_message}
               </div>
             )}

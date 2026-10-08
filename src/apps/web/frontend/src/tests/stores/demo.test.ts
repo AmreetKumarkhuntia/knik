@@ -4,6 +4,18 @@ import { validateDemoSource } from '$lib/stores/demo/validate'
 import { createStoreBundle } from '$lib/stores/session/createStoreBundle'
 
 describe('canonical demo seed', () => {
+  it('keeps only color mode when adapting appearance data', () => {
+    const appearance = {
+      mode: 'light' as const,
+      accentName: 'purple',
+      density: 'comfortable',
+      radius: 'round',
+    }
+    expect(createDemoSeed({ appearance }).appearance).toEqual({ mode: 'light' })
+    expect(createDemoSeed({}).appearance).toEqual({ mode: 'dark' })
+    expect(appearance.accentName).toBe('purple')
+  })
+
   it('contains complete connected sample workflows, chat scenarios and execution timelines', () => {
     const seed = createDemoSeed()
     expect(() => validateDemoSource(seed)).not.toThrow()

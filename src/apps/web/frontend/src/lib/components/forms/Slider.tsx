@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import type { SliderProps } from '$types'
 /**
- * Slider track with aurora gradient thumb.
+ * Native range control with a visible keyboard focus indicator.
  */
 export default function Slider({
   min,
@@ -20,53 +20,29 @@ export default function Slider({
 }: SliderProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
-  const percentage = Math.max(
-    0,
-    Math.min(100, max === min ? 0 : ((value - min) / (max - min)) * 100)
-  )
 
   return (
     <div className={`flex items-center gap-3.5 w-full ${className}`}>
       {label && (
-        <label
-          htmlFor={inputId}
-          className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--fg-4)] w-[100px] shrink-0"
-        >
+        <label htmlFor={inputId} className="text-xs text-[var(--fg-4)] shrink-0">
           {label}
         </label>
       )}
-      <div className="flex-1 h-[4px] bg-[var(--bg-surface-3)] rounded-full relative">
-        <div
-          className="absolute left-0 top-0 bottom-0 rounded-full"
-          style={{
-            width: `${percentage}%`,
-            background: 'linear-gradient(90deg, var(--aurora-400), var(--teal-400))',
-          }}
-        />
-        <input
-          type="range"
-          id={inputId}
-          name={name}
-          disabled={disabled}
-          aria-label={ariaLabel}
-          aria-describedby={describedBy}
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={e => onChange(Number(e.target.value))}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-        />
-        <div
-          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[16px] h-[16px] rounded-full bg-[var(--fg-1)] border-[3px] border-[var(--aurora-400)] pointer-events-none"
-          style={{
-            left: `${percentage}%`,
-            boxShadow:
-              '0 0 0 4px color-mix(in srgb, var(--primary) 20%, transparent), 0 4px 12px rgba(0, 0, 0, 0.4)',
-          }}
-        />
-      </div>
-      <span className="font-mono text-[12px] text-[var(--aurora-300)] w-[56px] text-right shrink-0">
+      <input
+        type="range"
+        id={inputId}
+        name={name}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-describedby={describedBy}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={event => onChange(Number(event.target.value))}
+        className="knik-slider flex-1 min-w-0 h-9 cursor-pointer accent-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-2 disabled:opacity-50"
+      />
+      <span className="tabular-nums text-sm text-fg-2 w-12 text-right shrink-0">
         {formatValue ? formatValue(value) : value}
       </span>
     </div>

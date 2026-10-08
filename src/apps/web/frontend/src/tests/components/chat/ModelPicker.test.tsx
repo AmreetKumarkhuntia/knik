@@ -27,8 +27,14 @@ describe('ModelPicker', () => {
     trigger.focus()
     await user.keyboard('{ArrowDown}')
     expect(await screen.findByRole('option', { name: 'First' })).toHaveFocus()
+    expect(screen.getByRole('listbox', { name: 'Chat model' })).toHaveClass(
+      'bottom-[calc(100%+8px)]'
+    )
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
     await user.keyboard('{ArrowDown}{Enter}')
     expect(change).toHaveBeenCalledExactlyOnceWith('second')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(trigger).toHaveFocus()
     await user.click(trigger)
     await user.keyboard('{Escape}')

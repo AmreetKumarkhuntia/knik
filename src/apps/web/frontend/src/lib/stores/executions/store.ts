@@ -8,6 +8,7 @@ export function createExecutionStore(seed: DemoSnapshot) {
     timelines: structuredClone(seed.timelines),
     runScenarios: structuredClone(seed.runScenarios),
     scopes: {},
+    detailScopes: {},
     ...executionActions(set, get),
   }))
 }

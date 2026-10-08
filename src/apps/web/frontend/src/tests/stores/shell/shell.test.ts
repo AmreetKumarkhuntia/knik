@@ -6,10 +6,21 @@ describe('shell store', () => {
     const store = createShellStore(normalizeDemoSource())
     store.getState().initializeScope('layout')
     store.getState().patchScope('layout', { paletteOpen: true, paletteQuery: 'settings' })
+    store.getState().patchScope('layout', { viewport: 'mobile', mobileNavigationOpen: true })
+    store.getState().togglePalette('layout')
+    expect(store.getState().scopes.layout).toMatchObject({
+      viewport: 'mobile',
+      mobileNavigationOpen: true,
+    })
     store.getState().setCollapsed(true)
     store.getState().disposeScope('layout')
     store.getState().initializeScope('replacement')
-    expect(store.getState().scopes.replacement).toEqual({ paletteOpen: false, paletteQuery: '' })
+    expect(store.getState().scopes.replacement).toEqual({
+      viewport: 'desktop',
+      mobileNavigationOpen: false,
+      paletteOpen: false,
+      paletteQuery: '',
+    })
     expect(store.getState().collapsed).toBe(true)
   })
 })

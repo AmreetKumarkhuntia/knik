@@ -14,13 +14,12 @@ export default function Table<T>({
   className = '',
   maxHeight,
   stickyHeader = false,
-  glassContainer = false,
-  density = 'comfortable',
+  density = 'compact',
 }: TableProps<T>) {
   const padding = density === 'compact' ? 'px-4 py-2' : 'px-6 py-4'
   return (
     <div
-      className={`${glassContainer ? 'knik-glass rounded-lg overflow-hidden' : ''} ${className}`}
+      className={`min-w-0 rounded-lg border border-[var(--border-2)] bg-surface overflow-hidden ${className}`}
       aria-busy={loading}
     >
       {error && (
@@ -38,7 +37,7 @@ export default function Table<T>({
             <TableHead
               className={
                 stickyHeader
-                  ? 'sticky top-0 bg-surface-2/90 backdrop-blur-sm z-10'
+                  ? 'sticky top-0 bg-surface-2 z-10'
                   : 'border-b border-[var(--border-2)]'
               }
             >
@@ -46,7 +45,7 @@ export default function Table<T>({
                 {columns.map(column => (
                   <TableHeaderCell
                     key={column.id ?? String(column.key)}
-                    className={`${padding} text-xs font-medium text-fg-4 uppercase tracking-wider ${column.className ?? ''}`}
+                    className={`${padding} text-xs font-medium text-fg-3 whitespace-nowrap ${column.className ?? ''}`}
                     style={{ textAlign: column.align }}
                   >
                     {column.label}
@@ -58,7 +57,7 @@ export default function Table<T>({
               {data.map(row => (
                 <TableRow
                   key={getRowKey(row)}
-                  className="hover:bg-surface-3 transition-colors"
+                  className="h-11 hover:bg-surface-2 transition-colors"
                   onClick={event => {
                     if (
                       (event.target as HTMLElement).closest(

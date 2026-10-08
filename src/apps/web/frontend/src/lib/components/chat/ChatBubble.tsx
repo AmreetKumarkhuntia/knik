@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import Button from '../buttons/Button'
 import MS from '../display/MS'
 import type { ChatBubbleProps } from '$types/components/chat'
@@ -16,24 +15,19 @@ export default function ChatBubble({
 }: ChatBubbleProps) {
   const isUser = role === 'user'
   return (
-    <motion.div
-      initial={{ opacity: 0, x: isUser ? 12 : -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-      className={`flex gap-[13px] ${isUser ? 'flex-row-reverse' : ''} ${className}`}
-    >
+    <div className={`flex gap-[13px] ${isUser ? 'flex-row-reverse' : ''} ${className}`}>
       {avatar && <div className="flex-shrink-0">{avatar}</div>}
       <div style={{ maxWidth: isUser ? '78%' : '100%', flex: isUser ? 'none' : 1, minWidth: 0 }}>
         {header}
         {reasoning && <div className="mb-3">{reasoning}</div>}
         <div
           style={{
-            fontSize: 14.5,
+            fontSize: 16,
             lineHeight: 1.6,
-            color: isUser ? 'var(--fg-1)' : 'var(--fg-2)',
+            color: 'var(--fg-1)',
             background: isUser ? 'var(--bg-surface-2)' : 'transparent',
-            border: isUser ? '1px solid var(--border-2)' : 'none',
-            borderRadius: isUser ? 'var(--r-card, 12px)' : 0,
+            border: 'none',
+            borderRadius: isUser ? 10 : 0,
             padding: isUser ? '11px 15px' : 0,
           }}
         >
@@ -81,6 +75,6 @@ export default function ChatBubble({
         )}
         {timestamp && <span className="text-xs text-fg-4 font-mono">{timestamp}</span>}
       </div>
-    </motion.div>
+    </div>
   )
 }

@@ -13,7 +13,7 @@ export default function PageHeader({
 
   return (
     <header
-      className={`h-16 border-b border-[var(--border-2)] knik-glass flex items-center justify-between px-8 ${stickyClasses}`}
+      className={`min-h-[52px] gap-3 border-b border-[var(--border-2)] bg-surface flex flex-wrap items-center justify-between px-4 py-2 ${stickyClasses}`}
     >
       <div className="flex items-center gap-2">
         {showBackButton && (

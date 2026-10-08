@@ -1,6 +1,4 @@
-import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Modal, ConfirmDialog, Input } from '$components'
 import Button from '$components/buttons/Button'
 import SidebarBrand from '$components/layout/SidebarBrand'
@@ -13,7 +11,12 @@ import { useShellStore } from '$stores/shell'
 import { useSidebarView } from '$stores/views'
 import type { SidebarWidgetProps } from '$types/widgets/chat-shell'
 
-export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
+export default function SidebarWidget({
+  onOpenSearch,
+  viewport = 'desktop',
+  mobileOpen = false,
+  onCloseMobile,
+}: SidebarWidgetProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { conversations, accountName, initials } = useSidebarView()
@@ -23,66 +26,73 @@ export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
   const beginRename = useChatStore(state => state.beginRename)
   const cancelRename = useChatStore(state => state.cancelRename)
   const saveRename = useChatStore(state => state.saveRename)
-  const collapsed = useShellStore(state => state.collapsed)
+  const desktopCollapsed = useShellStore(state => state.collapsed)
+  const collapsed = viewport === 'tablet' || (viewport === 'desktop' && desktopCollapsed)
   const setCollapsed = useShellStore(state => state.setCollapsed)
   const { scopeId, scope, patch } = useChatScope()
   const { editingId, deletingId, title, error } = scope
 
-  useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth < 768) setCollapsed(true)
-    }
-    onResize()
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [setCollapsed])
-
   const newChat = () => {
     startConversation()
     void navigate('/')
+    onCloseMobile?.()
   }
 
   const closeEditor = () => cancelRename(scopeId)
 
+  const navigation = (
+    <div className="h-full min-h-0 flex flex-col" style={{ padding: collapsed ? '8px' : '12px' }}>
+      <SidebarBrand
+        collapsed={collapsed}
+        onToggle={viewport === 'desktop' ? () => setCollapsed(!desktopCollapsed) : undefined}
+      />
+      <SidebarQuickActions collapsed={collapsed} onNewChat={newChat} onOpenSearch={onOpenSearch} />
+      <SidebarNav collapsed={collapsed} pathname={location.pathname} onNavigate={onCloseMobile} />
+      {!collapsed ? (
+        <SidebarRecents
+          conversations={conversations}
+          loading={false}
+          onSelect={id => {
+            selectConversation(id)
+            void navigate('/')
+            onCloseMobile?.()
+          }}
+          onRename={conversation => beginRename(scopeId, conversation)}
+          onDelete={conversation => patch({ deletingId: conversation.id })}
+        />
+      ) : (
+        <div className="flex-1" />
+      )}
+      <SidebarAccount
+        collapsed={collapsed}
+        name={accountName}
+        initials={initials}
+        onNavigate={onCloseMobile}
+      />
+    </div>
+  )
+
   return (
     <>
-      <motion.aside
-        aria-label="Workspace sidebar"
-        initial={false}
-        animate={{ width: collapsed ? 76 : 264 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-        className="h-full flex flex-col flex-shrink-0 overflow-hidden"
-        style={{
-          background: 'var(--bg-glass)',
-          backdropFilter: 'blur(20px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(140%)',
-          borderRight: '1px solid var(--border-2)',
-          padding: collapsed ? '16px' : '16px 14px',
-        }}
-      >
-        <SidebarBrand collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-        <SidebarQuickActions
-          collapsed={collapsed}
-          onNewChat={newChat}
-          onOpenSearch={onOpenSearch}
-        />
-        <SidebarNav collapsed={collapsed} pathname={location.pathname} />
-        {!collapsed ? (
-          <SidebarRecents
-            conversations={conversations}
-            loading={false}
-            onSelect={id => {
-              selectConversation(id)
-              void navigate('/')
-            }}
-            onRename={conversation => beginRename(scopeId, conversation)}
-            onDelete={conversation => patch({ deletingId: conversation.id })}
-          />
-        ) : (
-          <div className="flex-1" />
-        )}
-        <SidebarAccount collapsed={collapsed} name={accountName} initials={initials} />
-      </motion.aside>
+      {viewport === 'mobile' ? (
+        <Modal
+          isOpen={mobileOpen}
+          onClose={() => onCloseMobile?.()}
+          title="Navigation"
+          placement="left"
+          size="sm"
+        >
+          {navigation}
+        </Modal>
+      ) : (
+        <aside
+          aria-label="Workspace sidebar"
+          className="h-full flex-shrink-0 overflow-hidden bg-surface border-r border-border"
+          style={{ width: collapsed ? 64 : 232 }}
+        >
+          {navigation}
+        </aside>
+      )}
       <Modal
         isOpen={editingId !== null}
         onClose={closeEditor}

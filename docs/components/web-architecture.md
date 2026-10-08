@@ -78,7 +78,7 @@ The controlled workflow builder reads its name, nodes, edges, selection and erro
 | Clipboard or export                | Widget performs the browser operation and updates store-owned status/feedback                                                          |
 | Missing/deleted route ID           | Show a not-found or empty state                                                                                                        |
 
-ThemeWidget applies CSS variables from the settings store. Audio elements, object URLs, DOM refs and focus mechanics remain browser resources rather than serializable store data. Their owning widgets clean them up. Existing storage keys are neither read nor cleared.
+ThemeWidget applies the light/dark `data-theme` attribute from the settings store. `styles/tokens.css` owns the fixed palette, spacing and corner radii; appearance state contains only `mode`. Audio elements, object URLs, DOM refs and focus mechanics remain browser resources rather than serializable store data. Their owning widgets clean them up. Existing storage keys are neither read nor cleared.
 
 No network fallback, progress simulation, mock API or live/demo switch is present. Static assets and explicitly supplied media may load normally; this architecture does not promise offline packaging.
 
@@ -86,7 +86,7 @@ Chat reply availability never blocks a valid local send. An unmatched message is
 
 ## Controls, routes and verification
 
-Canonical Button, Table/TableParts, form controls, Modal and Popover retain their shared responsibilities. See [component contracts](react-common-components.md). Store consolidation changes state ownership rather than visual design or routes.
+Canonical Button, Table/TableParts, form controls, Modal and Popover retain their shared responsibilities. See [component contracts](react-common-components.md). The compact workspace redesign uses these same controls with solid surfaces and a fixed teal palette. Routes and store ownership remain unchanged.
 
 | Path                    | Feature                                                   |
 | ----------------------- | --------------------------------------------------------- |
@@ -111,3 +111,15 @@ npm run test:browser
 ```
 
 Tests live separately under `src/tests`, including domain store, component, widget, architecture and browser suites. Architecture tests enforce aliases, relative paths, barrels and dynamic imports. Browser tests exercise all routes, themes and narrow layouts while rejecting application transports, persistence and microphone access. The [plan's acceptance checklist](../plan/07-frontend-component-consolidation.md#implementation-and-acceptance) is the verification contract for this migration.
+
+## Compact workspace presentation
+
+The shell uses a 232px desktop sidebar, 64px rail and 52px header. Below 768px navigation opens in a modal drawer; tablet widths use a rail without overwriting the desktop collapse preference. Mobile navigation state belongs to the existing shell scope. Each route owns its primary scroller.
+
+Chat aligns the transcript and composer to an 800px reading column. Model selection remains beside the composer. A tools drawer uses the chat scope's `toolsOpen` state and the same props-driven tool group list as Settings. Tool selections remain session-wide, and opening the drawer keeps the composer draft mounted.
+
+The builder renders a 320px right inspector only for a selected node; below 1024px it uses the shared Modal's drawer presentation. Execution detail tabs and collapse state belong to a route-scoped execution view. Run continues to open the execution route. Schedules, workflows and execution history use the canonical compact Table.
+
+Workflow graphs share one node presentation and viewport toolbar. Execution layouts align node centers and switch to top-to-bottom when the canvas is narrower than 900px; this presentation transform never rewrites builder coordinates. Handle IDs remain stable across orientation changes. The toolbar reserves its own space beside the minimap, and explicit zoom/pan stays unchanged until the canvas resizes or the user chooses Fit View.
+
+Settings uses category navigation beside flat sections and aligned rows. Appearance offers light/dark mode only. Reload restores the seed mode; no browser storage migration or access occurs. The shared Modal handles centered dialogs and left/right drawers through one focus and dismissal implementation.

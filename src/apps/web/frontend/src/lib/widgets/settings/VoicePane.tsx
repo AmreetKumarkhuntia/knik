@@ -92,7 +92,7 @@ export default function VoicePane() {
           <Radio
             name={`${id}-voice`}
             label="Default voice"
-            presentation="card"
+            presentation="standard"
             value={settings.voice}
             onChange={voice => {
               stopPreview()

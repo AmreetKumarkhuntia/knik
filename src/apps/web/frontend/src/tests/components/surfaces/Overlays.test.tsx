@@ -5,12 +5,12 @@ import userEvent from '@testing-library/user-event'
 import Button from '$components/buttons/Button'
 import Modal from '$components/surfaces/Modal'
 import Popover from '$components/surfaces/Popover'
-function DialogExample() {
+function DialogExample({ placement = 'center' }: { placement?: 'center' | 'left' | 'right' }) {
   const [open, setOpen] = useState(false)
   return (
     <>
       <Button onClick={() => setOpen(true)}>Open</Button>
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Edit">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Edit" placement={placement}>
         <Button>First</Button>
         <Button onClick={() => setOpen(false)}>Close</Button>
       </Modal>
@@ -18,6 +18,23 @@ function DialogExample() {
   )
 }
 describe('overlay ownership', () => {
+  it.each(['left', 'right'] as const)(
+    '%s drawer traps focus and restores its trigger',
+    async placement => {
+      const user = userEvent.setup()
+      render(<DialogExample placement={placement} />)
+      await user.click(screen.getByRole('button', { name: 'Open' }))
+      expect(screen.getByRole('button', { name: 'Close Edit' })).toHaveFocus()
+      await user.tab({ shift: true })
+      expect(screen.getByRole('button', { name: /^Close$/ })).toHaveFocus()
+      await user.tab()
+      expect(screen.getByRole('button', { name: 'Close Edit' })).toHaveFocus()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Open' })).toHaveFocus()
+      expect(document.body.style.overflow).toBe('')
+    }
+  )
   it('traps dialog focus, restores it and unlocks scrolling', async () => {
     const user = userEvent.setup()
     render(<DialogExample />)

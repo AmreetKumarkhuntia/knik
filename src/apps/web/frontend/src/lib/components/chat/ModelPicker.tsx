@@ -6,7 +6,9 @@ export default function ModelPicker({ model, onChange, compact, models }: ModelP
   return (
     <Select
       aria-label="Chat model"
+      className="min-w-0 max-w-full"
       presentation="rich"
+      placement="top-start"
       options={models.map(option => ({ value: option.id, label: option.label }))}
       value={model}
       onValueChange={onChange}
@@ -15,18 +17,22 @@ export default function ModelPicker({ model, onChange, compact, models }: ModelP
       renderOption={option => {
         const detail = models.find(item => item.id === option.value)
         return (
-          <span className="inline-flex items-center gap-2 text-left">
+          <span className="inline-flex min-w-0 items-center gap-2 text-left">
             <span
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ background: MODEL_ACCENT_DOT[detail?.badge ?? 'primary'] }}
             />
             <span className="min-w-0">
-              <span className="block text-sm">{option.label}</span>
+              <span className="block truncate max-w-[150px] sm:max-w-[220px] text-sm">
+                {option.label}
+              </span>
               {detail?.vendor && !compact && (
                 <span className="block text-xs text-fg-4">{detail.vendor}</span>
               )}
             </span>
-            {detail?.tag && <span className="font-mono text-[10px] text-fg-4">{detail.tag}</span>}
+            {detail?.tag && !compact && (
+              <span className="font-mono text-[10px] text-fg-4">{detail.tag}</span>
+            )}
           </span>
         )
       }}

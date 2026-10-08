@@ -1,5 +1,5 @@
 import type { DemoSnapshot, DemoSource } from '$types/stores/demo'
-import { DEFAULT_MODE, DEFAULT_THEME, DEFAULT_DENSITY, DEFAULT_RADIUS } from '$lib/constants/themes'
+import { DEFAULT_MODE } from '$lib/constants/themes'
 
 export function normalizeDemoSource(source: DemoSource = {}): DemoSnapshot {
   const snapshot: DemoSnapshot = {
@@ -37,11 +37,7 @@ export function normalizeDemoSource(source: DemoSource = {}): DemoSnapshot {
       ...source.settings,
     },
     appearance: {
-      mode: DEFAULT_MODE,
-      accentName: DEFAULT_THEME,
-      density: DEFAULT_DENSITY,
-      radius: DEFAULT_RADIUS,
-      ...source.appearance,
+      mode: source.appearance?.mode === 'light' ? 'light' : DEFAULT_MODE,
     },
   }
   if (!snapshot.conversations.some(item => item.id === snapshot.activeConversationId)) {

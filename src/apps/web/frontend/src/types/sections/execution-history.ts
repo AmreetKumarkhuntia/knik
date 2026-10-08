@@ -1,9 +1,7 @@
-import type { Density } from '$types/theme'
 import type { DashboardExecution } from '$types/workflow'
 
 /** Props for the execution history data table. */
 export interface HistoryTableProps {
-  density: Density
   executions: DashboardExecution[]
   loading: boolean
   onViewDetail: (execution: DashboardExecution) => void

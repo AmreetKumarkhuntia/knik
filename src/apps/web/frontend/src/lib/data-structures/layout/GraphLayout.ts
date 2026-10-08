@@ -1,5 +1,5 @@
 import { forceSimulation, forceLink, forceManyBody, forceCenter } from 'd3-force'
-import type { LayoutOptions, SimNode, SimLink } from '$types/data-structures'
+import type { LayoutOptions, DagLayoutOptions, SimNode, SimLink } from '$types/data-structures'
 
 export function calculateForceLayout(
   nodes: Array<{ id: string }>,
@@ -61,85 +61,68 @@ export function calculateGridLayout(
   return positions
 }
 
-/**
- * DAG (Directed Acyclic Graph) layered layout — left-to-right flow.
- *
- * Assigns each node a layer equal to its longest path from any root node,
- * then spaces layers evenly along X and nodes within each layer evenly along Y.
- * Produces a clean left-to-right flow that communicates execution order.
- */
 export function calculateDagLayout(
   nodes: Array<{ id: string }>,
   edges: Array<{ source: string; target: string }>,
-  options: LayoutOptions & { nodeSpacingX?: number; nodeSpacingY?: number }
+  options: DagLayoutOptions
 ): Map<string, { x: number; y: number }> {
-  const nodeSpacingX = options.nodeSpacingX ?? 220
-  const nodeSpacingY = options.nodeSpacingY ?? 120
-
-  const successors = new Map<string, string[]>()
-  const inDegree = new Map<string, number>()
-
-  for (const n of nodes) {
-    successors.set(n.id, [])
-    inDegree.set(n.id, 0)
+  if (nodes.length === 0) return new Map()
+  const { nodeSpacingX = 220, nodeSpacingY = 120, direction = 'horizontal' } = options
+  const successors = new Map(nodes.map(node => [node.id, new Set<string>()]))
+  const inDegree = new Map(nodes.map(node => [node.id, 0]))
+  for (const edge of edges) {
+    const targets = successors.get(edge.source)
+    if (!targets || !inDegree.has(edge.target) || targets.has(edge.target)) continue
+    targets.add(edge.target)
+    inDegree.set(edge.target, (inDegree.get(edge.target) ?? 0) + 1)
   }
 
-  for (const e of edges) {
-    successors.get(e.source)?.push(e.target)
-    inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1)
-  }
-
-  const layer = new Map<string, number>()
-  const queue: string[] = []
-
-  for (const n of nodes) {
-    if ((inDegree.get(n.id) ?? 0) === 0) {
-      queue.push(n.id)
-      layer.set(n.id, 0)
+  const layers = new Map<string, number>()
+  const queue = nodes.filter(node => inDegree.get(node.id) === 0).map(node => node.id)
+  for (const id of queue) layers.set(id, 0)
+  const processed = new Set<string>()
+  for (let head = 0; head < queue.length; head++) {
+    const id = queue[head]
+    processed.add(id)
+    const nextLayer = (layers.get(id) ?? 0) + 1
+    for (const next of successors.get(id) ?? []) {
+      layers.set(next, Math.max(layers.get(next) ?? 0, nextLayer))
+      const remaining = (inDegree.get(next) ?? 0) - 1
+      inDegree.set(next, remaining)
+      if (remaining === 0) queue.push(next)
     }
   }
 
-  // If no roots found (cycle), fall back: assign all layer 0
-  if (queue.length === 0) {
-    for (const n of nodes) layer.set(n.id, 0)
-  } else {
-    let head = 0
-    while (head < queue.length) {
-      const current = queue[head++]
-      const currentLayer = layer.get(current) ?? 0
-      for (const next of successors.get(current) ?? []) {
-        const nextLayer = currentLayer + 1
-        if (!layer.has(next) || (layer.get(next) ?? 0) < nextLayer) {
-          layer.set(next, nextLayer)
-        }
-        queue.push(next)
-      }
-    }
+  // Cycle members and nodes blocked behind them share a final, deterministic layer.
+  const fallbackLayer = processed.size
+    ? Math.max(...Array.from(processed, id => layers.get(id) ?? 0)) + 1
+    : 0
+  const groups = new Map<number, string[]>()
+  for (const node of nodes) {
+    const layer = processed.has(node.id) ? (layers.get(node.id) ?? 0) : fallbackLayer
+    const group = groups.get(layer) ?? []
+    group.push(node.id)
+    groups.set(layer, group)
   }
 
-  const layerGroups = new Map<number, string[]>()
-  for (const n of nodes) {
-    const l = layer.get(n.id) ?? 0
-    if (!layerGroups.has(l)) layerGroups.set(l, [])
-    layerGroups.get(l)!.push(n.id)
-  }
-
-  const numLayers = Math.max(...layerGroups.keys()) + 1
-  const totalWidth = (numLayers - 1) * nodeSpacingX
-  const startX = (options.width - totalWidth) / 2
-
+  const lastLayer = Math.max(...groups.keys())
   const positions = new Map<string, { x: number; y: number }>()
-
-  for (const [l, ids] of layerGroups) {
-    const x = startX + l * nodeSpacingX
-    const totalHeight = (ids.length - 1) * nodeSpacingY
-    const startY = (options.height - totalHeight) / 2
-
-    ids.forEach((id, i) => {
-      positions.set(id, { x, y: startY + i * nodeSpacingY })
+  for (const [layer, ids] of groups) {
+    ids.forEach((id, index) => {
+      positions.set(
+        id,
+        direction === 'vertical'
+          ? {
+              x: (options.width - (ids.length - 1) * nodeSpacingX) / 2 + index * nodeSpacingX,
+              y: (options.height - lastLayer * nodeSpacingY) / 2 + layer * nodeSpacingY,
+            }
+          : {
+              x: (options.width - lastLayer * nodeSpacingX) / 2 + layer * nodeSpacingX,
+              y: (options.height - (ids.length - 1) * nodeSpacingY) / 2 + index * nodeSpacingY,
+            }
+      )
     })
   }
-
   return positions
 }
 

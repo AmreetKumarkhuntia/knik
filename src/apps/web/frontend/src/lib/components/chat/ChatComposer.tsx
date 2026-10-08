@@ -4,9 +4,8 @@ import Button from '../buttons/Button'
 import Textarea from '../forms/Textarea'
 import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
-/** Chat composer: glass field with model picker, attach/voice, send, and a hint row. */
 const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
-  ({ value, onChange, onSend, disabled, model, onModel, models }, ref) => {
+  ({ value, onChange, onSend, disabled, model, onModel, models, onOpenTools, toolsOpen }, ref) => {
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const [focused, setFocused] = useState(false)
 
@@ -38,14 +37,11 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
       <div>
         <div
           style={{
-            background: 'var(--bg-glass)',
-            backdropFilter: 'blur(20px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(140%)',
-            border: `1px solid ${focused ? 'var(--acc-border, rgba(0,217,244,0.45))' : 'var(--border-2)'}`,
-            borderRadius: 'var(--r-card, 14px)',
+            background: 'var(--bg-surface)',
+            border: `1px solid ${focused ? 'var(--acc)' : 'var(--border-2)'}`,
+            borderRadius: 12,
             padding: '12px 12px 10px 14px',
-            transition: 'all 200ms var(--ease-out)',
-            boxShadow: focused ? '0 0 0 3px var(--acc-soft)' : 'var(--shadow-1)',
+            transition: 'border-color 120ms ease-out',
           }}
         >
           <Textarea
@@ -64,20 +60,36 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
               minHeight: 26,
               maxHeight: 200,
               color: 'var(--fg-1)',
-              fontSize: 14.5,
+              fontSize: 16,
               lineHeight: 1.5,
               padding: '4px 0',
               boxShadow: 'none',
+              outline: 'none',
+              border: 0,
+              background: 'transparent',
             }}
           />
 
-          <div className="flex items-center" style={{ gap: 6 }}>
+          <div className="flex items-center flex-wrap gap-1 mt-2">
             {model && onModel && models && models.length > 0 && (
               <ModelPicker model={model} onChange={onModel} models={models} compact />
             )}
+            {onOpenTools && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onOpenTools}
+                aria-expanded={toolsOpen}
+                aria-haspopup="dialog"
+                icon={<MS name="tune" size={18} />}
+              >
+                Tools
+              </Button>
+            )}
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
+              className="hidden sm:inline-flex"
               disabled
               aria-label="Attach file"
               title="Attachments are unavailable in this frontend session"
@@ -86,41 +98,30 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
             </Button>
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
+              className="hidden sm:inline-flex"
               disabled
               aria-label="Voice input"
               title="Voice input is unavailable in this frontend session"
             >
               <MS name="mic" size={18} />
             </Button>
-            <div className="flex-1" />
             <Button
               type="button"
               onClick={() => canSend && onSend()}
               disabled={!canSend}
               aria-label="Send message"
-              className="inline-flex items-center justify-center transition-all duration-200 ease-knik-out"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 'var(--r-btn, 10px)',
-                background: 'var(--acc, var(--aurora-400))',
-                color: 'var(--on-primary)',
-                border: 'none',
-                cursor: canSend ? 'pointer' : 'not-allowed',
-                boxShadow: canSend
-                  ? '0 6px 22px -6px var(--acc-glow, rgba(0,217,244,0.65)), 0 1px 0 rgba(255,255,255,0.2) inset'
-                  : 'none',
-                opacity: canSend ? 1 : 0.4,
-              }}
+              variant="primary"
+              size="sm"
+              className="shrink-0 ml-auto"
             >
               <MS name="arrow_upward" size={20} weight={500} />
             </Button>
           </div>
         </div>
         <div
-          className="font-mono"
-          style={{ marginTop: 8, paddingInline: 4, fontSize: 10.5, color: 'var(--fg-5)' }}
+          className="hidden sm:block"
+          style={{ marginTop: 8, paddingInline: 4, fontSize: 11, color: 'var(--fg-3)' }}
         >
           <Kbd>⌘</Kbd> <Kbd>K</Kbd> command · <Kbd>Enter</Kbd> send · <Kbd>⇧ Enter</Kbd> newline
         </div>

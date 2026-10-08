@@ -3,6 +3,7 @@ export const EMPTY_CHAT_SCOPE: ChatScope = {
   resourceId: null,
   draft: '',
   shortcutsOpen: false,
+  toolsOpen: false,
   error: '',
   editingId: null,
   deletingId: null,

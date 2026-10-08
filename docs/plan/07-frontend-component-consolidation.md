@@ -2,7 +2,38 @@
 
 The approved design moves all application state into independent Zustand stores under `src/apps/web/frontend/src/lib/stores`. Widgets consume store hooks and actions; components receive props and emit events. This supersedes the earlier widget-owned session design. Backend code and application API integration remain outside this change.
 
-## Visual design
+## Approved compact workspace redesign (2026-10-09)
+
+Use a fixed visual system with light/dark mode. Remove accent, density and radius preferences from settings, contracts and normalized appearance state. Keep all records, routes, demo response selection, save/cancel behavior and store ownership unchanged. Any nonblank chat message still sends locally regardless of reply availability.
+
+| Foundation     | Dark      | Light     |
+| -------------- | --------- | --------- |
+| Background     | `#18191B` | `#F7F8F8` |
+| Surface        | `#202225` | `#FFFFFF` |
+| Primary text   | `#F1F2F3` | `#1C2024` |
+| Secondary text | `#A5ABB3` | `#59636E` |
+| Divider        | `#363A40` | `#DCE1E5` |
+| Accent         | `#55B8AC` | `#147D73` |
+
+Inter remains the interface font and JetBrains Mono the code font. Page titles are 24px, section titles 16px, interface text 14px and chat text 16px. Use solid surfaces, a 4px spacing scale, 36px desktop controls, 44px touch targets, 6px control corners, 10px panels and a 12px composer. Remove ambient glow, glass, decorative gradients and repeated entrance motion. Preserve a visible focus indicator and reduced-motion support.
+
+| Screen           | Target layout                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| Shell            | 232px sidebar, 64px rail, 52px header; one primary route scroller                                             |
+| Chat             | 800px transcript/composer, compact suggestions, model and Tools beside input; right tools drawer              |
+| Workflow library | Compact heading, inline metrics, filters and canonical table                                                  |
+| Builder          | Flexible canvas; selected-only 320px right inspector; drawer below 1024px                                     |
+| Execution detail | Compact metadata, flexible graph, 280px collapsible Inputs/Outputs/Timeline panel; Outputs initially selected |
+| Schedules        | Canonical table with existing toggle/delete actions                                                           |
+| Settings         | 176px category navigation, content up to 760px, flat titled sections and aligned rows                         |
+
+At 768–1023px navigation uses a rail without changing the desktop preference. Below 768px navigation uses a left drawer, settings tabs become horizontal with matching arrow-key behavior, and execution panels stack. Tables and code scroll within their own containers. Drawers use the available phone width.
+
+Implementation order: unify tokens and mode-only appearance; restyle shared controls and extend Modal placement; migrate shell/chat/settings; migrate workflow screens; remove unused styles, effects and exports. New UI state remains in existing store scopes. Components receive props/events; no parallel controls, new UI framework, backend requests or persistence are introduced.
+
+Verification covers keyboard and focus behavior, Enter/Shift+Enter/IME, draft retention while opening tools, cross-widget tool updates, stable table actions, route scope disposal, seed resets, and all routes at 1440/1024/768/390px in both themes. Run frontend format, lint, type check, tests, build and browser checks; retain transport/storage/media guards. Historical architecture diagrams below are not visual mockups of this redesign.
+
+## Architecture diagrams
 
 Start with [domain ownership](../../.archify/store-architecture/domain-stores/domain-stores.html), then follow the data and interaction views. Each linked HTML file is standalone, static by default, and includes its own dark/light viewer.
 

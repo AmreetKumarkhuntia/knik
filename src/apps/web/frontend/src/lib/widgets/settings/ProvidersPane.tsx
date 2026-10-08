@@ -1,7 +1,6 @@
 import { useId } from 'react'
-import Checkbox from '$components/forms/Checkbox'
+import ToolGroupList from '$components/settings/ToolGroupList'
 import Radio from '$components/forms/Radio'
-import MS from '$components/display/MS'
 import FormGroup from '$widgets/FormGroup'
 import { useSettingsStore } from '$stores/settings'
 import { useProvidersView } from '$stores/views'
@@ -18,7 +17,7 @@ export default function ProvidersPane() {
           <Radio
             name={`${id}-provider`}
             label="Default provider"
-            presentation="card"
+            presentation="standard"
             value={provider}
             onChange={next => updateSettings({ provider: next })}
             options={providers}
@@ -28,26 +27,7 @@ export default function ProvidersPane() {
         )}
       </FormGroup>
       <FormGroup title="MCP tools" sub="Choose the tool groups enabled in this session">
-        <div className="flex flex-wrap gap-2">
-          {tools.map(tool => (
-            <Checkbox
-              key={tool.name}
-              presentation="chip"
-              checked={tool.enabled}
-              onChange={enabled => toggleTool(tool.name, enabled)}
-              label={
-                <span className="inline-flex items-center gap-1.5">
-                  <MS name="extension" size={14} />
-                  <span>{tool.name}</span>
-                  <span className="font-mono text-[10px]">{tool.count}</span>
-                </span>
-              }
-            />
-          ))}
-          {tools.length === 0 && (
-            <p className="text-[12.5px] text-[var(--fg-4)] py-2">No tool groups available.</p>
-          )}
-        </div>
+        <ToolGroupList groups={tools} onToggle={toggleTool} />
       </FormGroup>
     </>
   )

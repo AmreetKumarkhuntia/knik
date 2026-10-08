@@ -3,7 +3,12 @@ import { useShallow } from 'zustand/react/shallow'
 import { useExecutionStore } from '../executions/hooks'
 import { useWorkflowStore } from '../workflows/hooks'
 import { useWidgetScope } from '../session/useWidgetScope'
-import { createExecutionScope, toExecutionSummary } from '../executions/selectors'
+import {
+  createExecutionScope,
+  createExecutionDetailScope,
+  toExecutionSummary,
+} from '../executions/selectors'
+import type { ExecutionDetailTab } from '$types/stores/executions'
 import { calculateMetrics } from '$utils/metricsCalculator'
 export function useExecutionsView() {
   const state = useExecutionStore(
@@ -52,12 +57,21 @@ export function useExecutionsView() {
   }
 }
 export function useExecutionDetailView(executionId?: string) {
+  const actions = useExecutionStore(
+    useShallow(state => ({
+      initDetailScope: state.initDetailScope,
+      disposeDetailScope: state.disposeDetailScope,
+      patchDetailScope: state.patchDetailScope,
+    }))
+  )
+  const scope = useWidgetScope(actions.initDetailScope, actions.disposeDetailScope, executionId)
+  const view = useExecutionStore(state => state.detailScopes[scope]) ?? createExecutionDetailScope()
   const execution = useExecutionStore(state =>
     state.executions.find(item => String(item.id) === executionId)
   )
   const timelines = useExecutionStore(state => state.timelines)
   const workflows = useWorkflowStore(state => state.workflows)
-  return useMemo(() => {
+  const data = useMemo(() => {
     const timeline = execution ? (timelines[String(execution.id)] ?? []) : []
     const workflow = workflows.find(workflow => workflow.id === execution?.workflow_id)
     return {
@@ -68,4 +82,11 @@ export function useExecutionDetailView(executionId?: string) {
       metrics: execution ? calculateMetrics({ execution, timeline }) : [],
     }
   }, [execution, timelines, workflows])
+  return {
+    ...data,
+    tab: view.tab,
+    collapsed: view.collapsed,
+    setTab: (tab: ExecutionDetailTab) => actions.patchDetailScope(scope, { tab, collapsed: false }),
+    togglePanel: () => actions.patchDetailScope(scope, { collapsed: !view.collapsed }),
+  }
 }

@@ -37,7 +37,7 @@ export default function TokenMeter({
       <div className="h-2 w-full bg-surface-3 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${
-            isDanger ? 'bg-error' : isWarning ? 'bg-warning' : 'gradient-brand'
+            isDanger ? 'bg-error' : isWarning ? 'bg-warning' : 'bg-primary'
           }`}
           style={{ width: `${percentage}%` }}
         />

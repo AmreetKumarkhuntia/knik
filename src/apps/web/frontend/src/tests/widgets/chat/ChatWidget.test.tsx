@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StoresProvider } from '$stores'
 import ChatWidget from '$widgets/chat/ChatWidget'
+import { useSettingsStore } from '$stores/settings'
 
 describe('ChatWidget', () => {
   it('sends any message locally without requiring a model or supplied scenario', async () => {
@@ -125,5 +126,45 @@ describe('chat working scope lifecycle', () => {
     view.unmount()
     render(content(true))
     expect(screen.queryByText('Supplied answer')).not.toBeInTheDocument()
+  })
+})
+
+describe('chat tool drawer', () => {
+  it('keeps the composer draft and updates shared tool selections while restoring focus on close', async () => {
+    const user = userEvent.setup()
+    function ToolObserver() {
+      const enabled = useSettingsStore(state => state.enabledTools.browser)
+      return (
+        <output aria-label="Shared browser selection">{enabled ? 'Enabled' : 'Disabled'}</output>
+      )
+    }
+    render(
+      <StoresProvider
+        source={{ tools: [{ name: 'browser', count: 3, category: 'Browser', enabled: false }] }}
+      >
+        <ChatWidget />
+        <ToolObserver />
+      </StoresProvider>
+    )
+    const composer = screen.getByRole('textbox', { name: 'Message' })
+    await user.type(composer, 'Keep this draft')
+    const trigger = screen.getByRole('button', { name: 'Tools' })
+    await user.click(trigger)
+    expect(screen.getByRole('dialog', { name: 'Chat tools' })).toBeInTheDocument()
+    const checkbox = screen.getByRole('checkbox', { name: 'browser' })
+    const initiallyEnabled = (checkbox as HTMLInputElement).checked
+    await user.click(checkbox)
+    expect(screen.getByLabelText('Shared browser selection')).toHaveTextContent(
+      initiallyEnabled ? 'Disabled' : 'Enabled'
+    )
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'Chat tools' })).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+    expect(composer).toHaveValue('Keep this draft')
+    await user.click(trigger)
+    expect(screen.getByRole('checkbox', { name: 'browser' })).toHaveProperty(
+      'checked',
+      !initiallyEnabled
+    )
   })
 })

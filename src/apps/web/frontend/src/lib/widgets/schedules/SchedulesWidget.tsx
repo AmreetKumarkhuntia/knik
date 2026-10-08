@@ -29,7 +29,7 @@ export default function SchedulesWidget() {
   }
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-7 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-8">
         <SectionHeader
           title="Schedules"
           subtitle="Session-only workflow schedules"

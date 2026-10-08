@@ -13,7 +13,7 @@ export default function StructuredOutput({
     <div className="flex flex-col gap-4">
       <h2 className="text-fg-1 text-xl font-bold">Structured Output</h2>
       {loading ? (
-        <div className="flex items-center justify-center py-12 knik-glass rounded-lg">
+        <div className="flex items-center justify-center py-12 knik-surface rounded-lg">
           <LoadingSpinner size="lg" />
         </div>
       ) : (

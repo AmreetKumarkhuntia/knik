@@ -12,6 +12,14 @@ export function formatDate(date: string | undefined): string {
   return new Date(date).toLocaleString()
 }
 
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 /** Formats an ISO timestamp as Today / Yesterday / "Mon D" (empty string if null). */
 export function formatRelativeDay(isoString: string | null): string {
   if (!isoString) return ''

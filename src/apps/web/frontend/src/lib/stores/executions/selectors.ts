@@ -1,5 +1,5 @@
 import type { DashboardExecution, ExecutionDetail, Workflow } from '$types/workflow'
-import type { ExecutionScope } from '$types/stores/executions'
+import type { ExecutionScope, ExecutionDetailScope } from '$types/stores/executions'
 export function createExecutionScope(): ExecutionScope {
   return { page: 1, workflowId: '', status: 'all', sort: 'newest' }
 }
@@ -17,4 +17,8 @@ export function toExecutionSummary(
     startedAt: execution.started_at,
     durationMs: execution.duration_ms,
   }
+}
+
+export function createExecutionDetailScope(): ExecutionDetailScope {
+  return { tab: 'outputs', collapsed: false }
 }

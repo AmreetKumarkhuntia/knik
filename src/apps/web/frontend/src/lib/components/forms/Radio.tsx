@@ -28,7 +28,9 @@ export default function Radio({
               value={option.value}
               checked={value === option.value}
               onChange={() => onChange(option.value)}
-              className={presentation === 'standard' ? 'accent-[var(--acc)]' : 'sr-only'}
+              className={
+                presentation === 'standard' ? 'accent-[var(--acc)] outline-none' : 'sr-only'
+              }
             />
             <span className="text-[13px] text-fg-2">{option.label}</span>
             {option.monoLabel && (

@@ -31,7 +31,7 @@ export function createSettingsActions(
     updateSettings: (patch: Partial<SettingsState['settings']>) =>
       set(state => ({ settings: { ...state.settings, ...patch } })),
     updateAppearance: (patch: Partial<SettingsState['appearance']>) =>
-      set(state => ({ appearance: { ...state.appearance, ...patch } })),
+      set(state => ({ appearance: { mode: patch.mode ?? state.appearance.mode } })),
     toggleTool: (name: string, enabled: boolean) =>
       set(state => ({ enabledTools: { ...state.enabledTools, [name]: enabled } })),
     resetProfile: (scopeId: string) =>

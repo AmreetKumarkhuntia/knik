@@ -1,5 +1,5 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { CODE_SYNTAX_THEME } from '$lib/constants'
 import Button from '../buttons/Button'
 import MS from '../display/MS'
 import type { CodeBlockProps } from '$types/components/chat'
@@ -15,10 +15,8 @@ export default function CodeBlock({
 }: CodeBlockProps) {
   return (
     <div className={`bg-code border border-border-2 rounded-[10px] overflow-hidden ${className}`}>
-      <div className="flex items-center px-3.5 py-1.5 bg-white/[0.03] border-b border-border-1">
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-fg-4">
-          {language}
-        </span>
+      <div className="flex items-center px-3.5 py-1.5 bg-surface-2 border-b border-border-1">
+        <span className="font-mono text-xs text-fg-3">{language}</span>
         {copyable && onCopy && (
           <Button
             variant="ghost"
@@ -31,10 +29,10 @@ export default function CodeBlock({
           </Button>
         )}
       </div>
-      <div className="text-[12.5px] leading-relaxed tracking-[-0.01em] overflow-auto">
+      <div className="text-[13px] leading-relaxed tracking-[-0.01em] overflow-auto">
         <SyntaxHighlighter
           language={language}
-          style={vscDarkPlus}
+          style={CODE_SYNTAX_THEME}
           showLineNumbers={showLineNumbers}
           customStyle={{
             margin: 0,
@@ -45,7 +43,7 @@ export default function CodeBlock({
           lineNumberStyle={{
             minWidth: '28px',
             paddingRight: '14px',
-            color: 'var(--fg-5)',
+            color: 'var(--fg-3)',
             textAlign: 'right',
             userSelect: 'none',
           }}

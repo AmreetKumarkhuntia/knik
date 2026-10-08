@@ -18,23 +18,25 @@ export default function FormField({
   return (
     <div
       className={
-        layout === 'row' ? 'flex flex-wrap items-center gap-4 py-3' : 'flex flex-col gap-2'
+        layout === 'row'
+          ? 'flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-4'
+          : 'flex flex-col gap-2'
       }
       style={
         layout === 'row' ? { borderBottom: last ? 'none' : '1px solid var(--border-1)' } : undefined
       }
     >
-      <div className={layout === 'row' ? 'flex-1 min-w-0' : ''}>
+      <div className={layout === 'row' ? 'min-w-[160px] flex-1' : ''}>
         {htmlFor || typeof children === 'function' ? (
-          <label htmlFor={id} className="text-[13.5px] font-medium text-fg-1">
+          <label htmlFor={id} className="text-sm font-medium text-fg-1">
             {label}
             {required && ' *'}
           </label>
         ) : (
-          <div className="text-[13.5px] font-medium text-fg-1">{label}</div>
+          <div className="text-sm font-medium text-fg-1">{label}</div>
         )}
         {hint && (
-          <p id={descriptionId} className="text-xs text-fg-4 mt-1">
+          <p id={descriptionId} className="text-sm text-fg-3 mt-1">
             {hint}
           </p>
         )}

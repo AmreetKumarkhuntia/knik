@@ -11,7 +11,6 @@ export default function HistoryTable({
   loading,
   onViewDetail,
   maxHeight = '300px',
-  density,
 }: HistoryTableProps) {
   const columns = [
     {
@@ -57,7 +56,7 @@ export default function HistoryTable({
       data={executions}
       getRowKey={row => row.id}
       loading={loading}
-      density={density}
+      density="compact"
       empty={
         <EmptyState
           icon={<History style={{ fontSize: 40 }} />}
@@ -67,7 +66,6 @@ export default function HistoryTable({
       }
       maxHeight={maxHeight}
       stickyHeader={true}
-      glassContainer={true}
     />
   )
 }

@@ -75,7 +75,7 @@ export default function Popover({
           ref={panel}
           role={role}
           aria-label={label}
-          className={`absolute z-50 flex flex-col gap-0.5 p-2 min-w-[200px] knik-glass rounded-[10px] shadow-3 ${placement.startsWith('top') ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]'} ${placement.endsWith('end') ? 'right-0' : 'left-0'}`}
+          className={`absolute z-50 flex flex-col gap-0.5 p-2 min-w-[200px] max-w-[calc(100vw-32px)] max-h-[min(420px,70dvh)] overflow-auto border border-[var(--border-2)] bg-surface rounded-[10px] shadow-knik-2 ${placement.startsWith('top') ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]'} ${placement.endsWith('end') ? 'right-0' : 'left-0'}`}
         >
           {content}
         </div>

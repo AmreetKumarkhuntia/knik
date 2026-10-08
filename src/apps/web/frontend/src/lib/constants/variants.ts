@@ -1,6 +1,6 @@
 /**
  * Style maps for shared component variants, built on the KNIK design-system
- * primitives in `styles/primitives.css`. Aurora cyan is the single accent.
+ * primitives in `styles/primitives.css`. Teal is the fixed accent.
  */
 
 /** Button variant modifiers — pair with the base `knik-btn` class. */

@@ -25,6 +25,8 @@ export interface InputPanelProps {
   model?: string
   onModel?: (id: string) => void
   models?: ChatModelOption[]
+  onOpenTools?: () => void
+  toolsOpen?: boolean
 }
 
 /** Imperative handle exposed by the input panel via ref. */

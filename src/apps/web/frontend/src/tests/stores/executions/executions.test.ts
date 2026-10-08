@@ -75,4 +75,27 @@ describe('execution store scenarios', () => {
     expect(stores.executions.getState().scopes.list).toMatchObject({ page: 1, status: 'all' })
     expect(stores.executions.getState().executions).toHaveLength(1)
   })
+  it('isolates detail tabs and disposes them without altering records', () => {
+    const stores = setup()
+    stores.run('one')
+    const state = stores.executions.getState()
+    state.initDetailScope('first:7')
+    state.initDetailScope('second:7')
+    state.patchDetailScope('first:7', { tab: 'timeline', collapsed: true })
+    expect(stores.executions.getState().detailScopes['first:7']).toEqual({
+      tab: 'timeline',
+      collapsed: true,
+    })
+    expect(stores.executions.getState().detailScopes['second:7']).toEqual({
+      tab: 'outputs',
+      collapsed: false,
+    })
+    state.disposeDetailScope('first:7')
+    state.initDetailScope('first:7')
+    expect(stores.executions.getState().detailScopes['first:7']).toEqual({
+      tab: 'outputs',
+      collapsed: false,
+    })
+    expect(stores.executions.getState().executions).toHaveLength(1)
+  })
 })

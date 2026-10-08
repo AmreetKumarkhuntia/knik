@@ -4,6 +4,7 @@ import type {
   SelectHTMLAttributes,
   ReactNode,
 } from 'react'
+import type { PopoverProps } from './surfaces'
 
 /** Props for a text input field. */
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -71,6 +72,7 @@ export interface SelectProps extends Omit<
   onChange?: (value: string) => void
   onValueChange?: (value: string) => void
   presentation?: 'native' | 'rich'
+  placement?: PopoverProps['placement']
   renderOption?: (option: SelectOption) => ReactNode
   placeholder?: string
   disabled?: boolean

@@ -8,7 +8,7 @@ export default function HamburgerButton({ onClick }: HamburgerButtonProps) {
     <Button
       variant="ghost"
       onClick={onClick}
-      className="fixed top-6 left-6 z-20 w-11 h-11 knik-glass
+      className="fixed top-6 left-6 z-20 w-11 h-11 knik-surface
                  rounded-md flex items-center justify-center text-fg-1 hover:bg-surface-3
                  transition-all duration-base shadow-knik-2 hover:scale-105"
       aria-label="Open sidebar"

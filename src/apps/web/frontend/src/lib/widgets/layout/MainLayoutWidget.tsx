@@ -2,10 +2,8 @@ import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import SidebarWidget from './SidebarWidget'
 import TopBar from '$components/layout/TopBar'
-import BackgroundEffects from '$components/display/BackgroundEffects'
 import ToastWidget from '$widgets/feedback/ToastWidget'
-import { CommandPalette, MS } from '$components'
-import Button from '$components/buttons/Button'
+import { CommandPalette } from '$components'
 import { useChatStore } from '$stores/chat'
 import { useSettingsStore } from '$stores/settings'
 import { useShellStore, useShellScope } from '$stores/shell'
@@ -20,12 +18,28 @@ export default function MainLayoutWidget({ children }: MainLayoutWidgetProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { scopeId, scope, patch } = useShellScope()
-  const { paletteOpen, paletteQuery } = scope
+  const { paletteOpen, paletteQuery, viewport, mobileNavigationOpen } = scope
   const setPaletteQuery = (paletteQuery: string) => patch({ paletteQuery })
-  const openPalette = () => patch({ paletteOpen: true, paletteQuery: '' })
+  const openPalette = () =>
+    patch({ paletteOpen: true, paletteQuery: '', mobileNavigationOpen: false })
   const closePalette = () => patch({ paletteOpen: false, paletteQuery: '' })
   const togglePalette = useShellStore(state => state.togglePalette)
   const { commands: filteredCommands, crumbs } = useShellView(location.pathname, scopeId)
+
+  useEffect(() => {
+    const resize = () => {
+      const viewport =
+        window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop'
+      patch({ viewport, ...(viewport !== 'mobile' ? { mobileNavigationOpen: false } : {}) })
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [patch])
+
+  useEffect(() => {
+    patch({ mobileNavigationOpen: false })
+  }, [location.pathname, patch])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -64,32 +78,27 @@ export default function MainLayoutWidget({ children }: MainLayoutWidgetProps) {
     }
   }
 
-  const rightActions =
-    location.pathname === ROUTES.workflows ? (
-      <Button
-        variant="primary"
-        size="sm"
-        icon={<MS name="add" size={16} />}
-        label="Create workflow"
-        onClick={() => void navigate(ROUTES.builder)}
-      />
-    ) : null
-
   return (
     <>
-      <div className="h-screen bg-background text-foreground relative flex flex-col overflow-hidden">
-        <BackgroundEffects />
+      <div className="h-dvh bg-background text-foreground flex flex-col overflow-hidden">
         <div className="flex flex-1 min-h-0 relative">
-          <SidebarWidget onOpenSearch={openPalette} />
+          <SidebarWidget
+            onOpenSearch={openPalette}
+            viewport={viewport}
+            mobileOpen={mobileNavigationOpen}
+            onCloseMobile={() => patch({ mobileNavigationOpen: false })}
+          />
           <main className="flex-1 min-w-0 flex flex-col">
             <TopBar
               crumbs={crumbs}
-              right={rightActions}
+              onOpenNavigation={
+                viewport === 'mobile' ? () => patch({ mobileNavigationOpen: true }) : undefined
+              }
               onOpenSearch={openPalette}
               dark={mode === 'dark'}
               onToggleTheme={() => updateAppearance({ mode: mode === 'dark' ? 'light' : 'dark' })}
             />
-            <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">{children}</div>
           </main>
         </div>
       </div>

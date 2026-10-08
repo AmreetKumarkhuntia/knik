@@ -10,13 +10,10 @@ import type {
   ApiKeyInfo,
   ApiKeyCreated,
 } from '../sections/settings'
-import type { ThemeMode, ThemeName, Density, Radius } from '../theme'
+import type { ThemeMode } from '../theme'
 
 export interface AppearanceSettings {
   mode: ThemeMode
-  accentName: ThemeName
-  density: Density
-  radius: Radius
 }
 export interface DemoSuggestion {
   id: string

@@ -1,4 +1,3 @@
-import type { Density } from '$types/theme'
 import type { DashboardExecution, HubWorkflowRow, WorkflowMetrics } from '$types/workflow'
 
 /** Props for the hub metric strip. */
@@ -19,7 +18,6 @@ export interface HubToolbarProps {
 
 /** Props for the hub workflows table. */
 export interface HubWorkflowsTableProps {
-  density: Density
   rows: HubWorkflowRow[]
   loading: boolean
   error: string | null

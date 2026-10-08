@@ -18,11 +18,11 @@ export default function SettingsWidget() {
   ]
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="mx-auto max-w-[920px] px-4 py-7 pb-12 sm:px-8">
+      <div className="mx-auto max-w-[1032px] px-4 py-6 pb-12 sm:px-8">
         <SectionHeader
-          className="mb-7"
+          className="mb-6"
           title="Settings"
-          subtitle="Manage your workspace, models, and account"
+          subtitle="Workspace preferences and account"
         />
         <VerticalTabs tabs={tabs} activeTab={scope.tab} onChange={tab => patch({ tab })} />
       </div>

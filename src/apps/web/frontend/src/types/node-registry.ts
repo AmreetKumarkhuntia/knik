@@ -39,7 +39,6 @@ export interface NodeColors {
   iconText: string
   border: string
   hoverBorder: string
-  neonBorder?: string
 }
 
 /** Full metadata describing a registered node type. */
@@ -59,7 +58,6 @@ export interface NodeMetadata {
   defaultData: Record<string, unknown>
   formFields: FormFieldConfig[]
 
-  isGradient?: boolean
   shape?: 'default' | 'pill'
   contentRenderer?: 'function' | 'conditional' | 'merge' | 'ai' | 'start' | 'end'
 }

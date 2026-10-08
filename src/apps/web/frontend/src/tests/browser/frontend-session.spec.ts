@@ -122,7 +122,7 @@ test('workflow and schedule changes persist across navigation and reset on reloa
   await page.goto('/workflows/create', { waitUntil: 'domcontentloaded' })
   await page.getByRole('textbox', { name: 'Workflow name' }).fill('Session workflow')
   await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeDisabled()
-  await page.getByRole('button', { name: 'Save Workflow', exact: true }).click()
+  await page.getByRole('button', { name: 'Save workflow', exact: true }).click()
   await expect(page).toHaveURL('/workflows')
   await expect(page.getByRole('link', { name: 'Session workflow', exact: true })).toBeVisible()
   await expect(
@@ -281,22 +281,20 @@ test('profile and appearance are session-only across navigation and reload', asy
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
   await page.getByRole('radio', { name: 'Light', exact: true }).press('Space')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
-  await page.getByRole('switch', { name: 'Compact density', exact: true }).press('Space')
-  await page.getByRole('radio', { name: 'Round', exact: true }).press('Space')
   await page.locator('aside').getByRole('link', { name: 'Workflows', exact: true }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await page.locator('aside a[href="/settings"]').click()
   await expect(page.getByLabel('Display name', { exact: true })).toHaveValue('Session Person')
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
-  await expect(page.getByRole('switch', { name: 'Compact density', exact: true })).toBeChecked()
-  await expect(page.getByRole('radio', { name: 'Round', exact: true })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Light', exact: true })).toBeChecked()
+  await expect(page.getByRole('switch', { name: 'Compact density', exact: true })).toHaveCount(0)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect(page.getByLabel('Display name', { exact: true })).toHaveValue('Amreet Kumar')
   await expect(page.getByLabel('Username', { exact: true })).toHaveValue('amreet')
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
-  await expect(page.getByRole('switch', { name: 'Compact density', exact: true })).not.toBeChecked()
-  await expect(page.getByRole('radio', { name: 'Default', exact: true })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Round', exact: true })).toHaveCount(0)
 })
 
 test('narrow routes remain usable in dark and light modes without horizontal body overflow', async ({
@@ -343,10 +341,10 @@ test('narrow builder supports node addition, property editing, and dismissal', a
     .click()
   const node = page.locator('.react-flow__node').filter({ hasText: 'new_function' })
   await expect(node).toBeVisible()
-  await expect(page.getByRole('dialog', { name: 'Node Properties' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Node properties' })).toBeVisible()
   await page.getByLabel('Function Name', { exact: true }).fill('session_function')
   await page.getByRole('button', { name: 'Close node properties' }).click()
-  await expect(page.getByRole('dialog', { name: 'Node Properties' })).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: 'Node properties' })).toHaveCount(0)
   await expect(
     page.locator('.react-flow__node').filter({ hasText: 'session_function' })
   ).toBeVisible()
@@ -392,22 +390,23 @@ test('settings catalogs are seeded while actions without secrets or audio stay u
   await expect(page.getByRole('button', { name: 'Chat model' })).toContainText('GPT-4o')
 })
 
-test('composer and static settings cards avoid duplicate focus and hover highlights', async ({
-  page,
-}) => {
+test('composer has one focus border and settings use flat sections', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
   const message = page.getByRole('textbox', { name: 'Message', exact: true })
+  const unfocusedBorder = await message
+    .locator('..')
+    .evaluate(element => getComputedStyle(element).borderColor)
   await message.fill('Keep one clear focus indicator')
   await expect(message).toBeFocused()
   await expect(message).toHaveCSS('box-shadow', 'none')
-  await expect(message.locator('..')).not.toHaveCSS('box-shadow', 'none')
+  await expect(message.locator('..')).toHaveCSS('box-shadow', 'none')
+  await expect(message.locator('..')).not.toHaveCSS('border-color', unfocusedBorder)
   await page.screenshot({ path: 'test-results/review-composer-focus.png', animations: 'disabled' })
   await page.locator('aside a[href="/settings"]').click()
   await page.getByRole('tab', { name: 'API keys', exact: true }).click()
   await expect(page.getByText('Demo · Production', { exact: true })).toBeVisible()
-  const card = page
-    .locator('.knik-card')
-    .filter({ has: page.getByRole('heading', { name: 'API keys', exact: true }) })
+  const card = page.getByRole('region', { name: 'API keys', exact: true })
+  await expect(card).toHaveCSS('box-shadow', 'none')
   const border = await card.evaluate(element => getComputedStyle(element).borderColor)
   await card.hover()
   await card.evaluate(element =>
@@ -439,7 +438,7 @@ test('capture representative frontend views for visual review', async ({ page })
   })
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/workflows/create', { waitUntil: 'domcontentloaded' })
-  await expect(page.getByRole('button', { name: 'Save Workflow', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Save workflow', exact: true })).toBeVisible()
   await noHorizontalOverflow(page)
   await page.screenshot({ path: 'test-results/review-narrow-builder.png', animations: 'disabled' })
 })
@@ -458,7 +457,7 @@ test('workflow drafts cancel on navigation, saved records update shared views, a
   await page.getByRole('link', { name: 'Daily digest', exact: true }).first().click()
   await expect(page.getByRole('textbox', { name: 'Workflow name' })).toHaveValue('Daily digest')
   await page.getByRole('textbox', { name: 'Workflow name' }).fill('Saved digest')
-  await page.getByRole('button', { name: 'Save Workflow', exact: true }).click()
+  await page.getByRole('button', { name: 'Save workflow', exact: true }).click()
   await expect(page.getByRole('link', { name: 'Saved digest', exact: true }).first()).toBeVisible()
   await page.getByRole('link', { name: 'Schedules', exact: true }).click()
   await expect(page.getByRole('switch', { name: 'Enable schedule for Saved digest' })).toBeVisible()
@@ -482,6 +481,226 @@ test('running replays the supplied execution and changed definitions cannot reus
   await functionNode.click()
   await page.getByLabel('Function Name', { exact: true }).fill('changed_function')
   await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeDisabled()
-  await page.getByRole('button', { name: 'Save Workflow', exact: true }).click()
+  await page.getByRole('button', { name: 'Save workflow', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Run Daily digest', exact: true })).toBeDisabled()
 })
+
+test('tools drawer shares selections with settings and preserves the composer draft', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const message = page.getByRole('textbox', { name: 'Message', exact: true })
+  await message.fill('A draft that stays while choosing tools')
+  await page.getByRole('button', { name: 'Tools', exact: true }).click()
+  const drawer = page.getByRole('dialog', { name: 'Chat tools', exact: true })
+  await expect(drawer).toBeVisible()
+  const shell = drawer.getByRole('checkbox', { name: /shell/ })
+  await expect(shell).toBeChecked()
+  await shell.uncheck()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Tools', exact: true })).toBeFocused()
+  await expect(message).toHaveValue('A draft that stays while choosing tools')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(message).toHaveValue('A draft that stays while choosing tools')
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+  await page
+    .getByRole('dialog', { name: 'Navigation', exact: true })
+    .locator('a[href="/settings"]')
+    .click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.getByRole('tab', { name: 'Providers', exact: true }).click()
+  await expect(page.getByRole('checkbox', { name: /shell/ })).not.toBeChecked()
+  const tabs = page.getByRole('tablist')
+  await expect(tabs).toHaveAttribute('aria-orientation', 'horizontal')
+  await page.getByRole('tab', { name: 'Providers', exact: true }).press('ArrowRight')
+  await expect(page.getByRole('tab', { name: 'Voice', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  )
+})
+
+for (const width of [1440, 1024, 768, 390]) {
+  test(`visual workspace matrix at ${width}px in both themes`, async ({ page }) => {
+    test.setTimeout(120_000)
+    await page.setViewportSize({ width, height: width < 768 ? 844 : 1000 })
+    const views = [
+      ['chat', '/'],
+      ['workflows', '/workflows'],
+      ['builder', '/workflows/wf-1/edit'],
+      ['execution', '/executions/9210'],
+      ['schedules', '/schedules'],
+      ['settings', '/settings'],
+    ] as const
+    for (const [name, path] of views) {
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
+      if (name === 'chat') {
+        await page
+          .getByRole('textbox', { name: 'Message', exact: true })
+          .fill('Refactor my Python script')
+        await page.getByRole('textbox', { name: 'Message', exact: true }).press('Enter')
+        await expect(
+          page.getByRole('main').getByText(/Here is a demo refactoring checklist/)
+        ).toBeVisible()
+      }
+      if (name === 'settings')
+        await page.getByRole('tab', { name: 'Providers', exact: true }).click()
+      if (name === 'builder') {
+        await page.locator('.react-flow__node').first().click()
+        await expect(page.getByText('Node properties', { exact: true })).toBeVisible()
+      }
+      for (const mode of ['dark', 'light'] as const) {
+        if (mode === 'light') {
+          if (name === 'builder' && width < 1024) await page.keyboard.press('Escape')
+          await page.getByRole('button', { name: 'Light mode', exact: true }).click()
+          if (name === 'builder' && width < 1024)
+            await page.locator('.react-flow__node').first().click()
+        }
+        await expect(page.locator('html')).toHaveAttribute('data-theme', mode)
+        await noHorizontalOverflow(page)
+        await page.screenshot({
+          path: `test-results/workspace-${name}-${width}-${mode}.png`,
+          animations: 'disabled',
+        })
+      }
+    }
+  })
+}
+
+for (const width of [1440, 390]) {
+  test(`model menu stays above the composer and inside the viewport at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    const model = page.getByRole('button', { name: 'Chat model', exact: true })
+    await model.click()
+    const list = page.getByRole('listbox')
+    await expect(list).toBeVisible()
+    const triggerBounds = await model.boundingBox()
+    const menuBounds = await list.boundingBox()
+    expect(triggerBounds).not.toBeNull()
+    expect(menuBounds).not.toBeNull()
+    expect(menuBounds!.y).toBeGreaterThanOrEqual(0)
+    expect(menuBounds!.y + menuBounds!.height).toBeLessThanOrEqual(triggerBounds!.y)
+    expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(width)
+    await page.getByRole('option', { name: /GPT-4o/ }).click()
+    await expect(model).toContainText('GPT-4o')
+    await expect(model).toBeFocused()
+  })
+}
+
+test('settings scroll within the route and execution panels preserve a usable canvas', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 700 })
+  await page.goto('/settings', { waitUntil: 'domcontentloaded' })
+  const clear = page.getByRole('button', { name: 'Delete conversations', exact: true })
+  await clear.scrollIntoViewIfNeeded()
+  await expect(clear).toBeInViewport()
+  await page.goto('/executions/9210', { waitUntil: 'domcontentloaded' })
+  await expect(page.getByRole('tab', { name: 'Outputs', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  )
+  const canvas = await page.locator('.react-flow').boundingBox()
+  expect(canvas!.height).toBeGreaterThanOrEqual(192)
+  await page.getByRole('tab', { name: 'Outputs', exact: true }).press('ArrowRight')
+  await expect(page.getByRole('tab', { name: 'Timeline', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  )
+  await page.getByRole('button', { name: 'Collapse execution details', exact: true }).click()
+  await expect(page.getByRole('tabpanel')).toHaveCount(0)
+  await expect(
+    page.getByRole('button', { name: 'Expand execution details', exact: true })
+  ).toBeFocused()
+  await page.getByRole('button', { name: 'Expand execution details', exact: true }).click()
+  await expect(page.getByRole('tabpanel')).toBeVisible()
+})
+
+for (const width of [1440, 390]) {
+  test(`empty tables, long names and overflowing code stay contained at ${width}px`, async ({
+    page,
+  }) => {
+    test.setTimeout(60_000)
+    await page.setViewportSize({ width, height: 844 })
+    const longName = 'An exceptionally long workspace account name '.repeat(5).trim()
+    const codeLine = `const sample = "${'readable_demo_value_'.repeat(30)}";`
+    const openNavigation = async () => {
+      if (width < 768) {
+        await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+        return page.getByRole('dialog', { name: 'Navigation', exact: true })
+      }
+      return page.getByRole('complementary', { name: 'Workspace sidebar', exact: true })
+    }
+
+    for (const mode of ['dark', 'light'] as const) {
+      await page.goto('/workflows', { waitUntil: 'domcontentloaded' })
+      if (mode === 'light')
+        await page.getByRole('button', { name: 'Light mode', exact: true }).click()
+      await expect(page.locator('html')).toHaveAttribute('data-theme', mode)
+      await page.getByRole('textbox', { name: 'Search workflows' }).fill('no-matching-workflow')
+      const empty = page.getByText('No matching workflows', { exact: true })
+      await expect(empty).toBeInViewport()
+      await expect(page.getByRole('link', { name: 'New workflow', exact: true })).toBeInViewport()
+      const emptyBounds = await empty.boundingBox()
+      expect(emptyBounds!.x).toBeGreaterThanOrEqual(0)
+      expect(emptyBounds!.x + emptyBounds!.width).toBeLessThanOrEqual(width)
+      await noHorizontalOverflow(page)
+      await page.screenshot({
+        path: `test-results/workspace-edge-empty-${width}-${mode}.png`,
+        animations: 'disabled',
+      })
+
+      await (await openNavigation()).locator('a[href="/settings"]').click()
+      await page.getByLabel('Display name', { exact: true }).fill(longName)
+      await page.getByRole('button', { name: 'Save profile', exact: true }).click()
+      const navigation = await openNavigation()
+      const account = navigation.locator('a[href="/settings"]')
+      const name = account.locator('span.truncate')
+      await expect(name).toHaveText(longName)
+      await expect(name).toHaveCSS('text-overflow', 'ellipsis')
+      const accountBounds = await account.boundingBox()
+      const navigationBounds = await navigation.boundingBox()
+      expect(accountBounds!.x).toBeGreaterThanOrEqual(navigationBounds!.x)
+      expect(accountBounds!.x + accountBounds!.width).toBeLessThanOrEqual(
+        navigationBounds!.x + navigationBounds!.width
+      )
+      expect(await name.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true)
+      await noHorizontalOverflow(page)
+      await page.screenshot({
+        path: `test-results/workspace-edge-name-${width}-${mode}.png`,
+        animations: 'disabled',
+      })
+
+      await navigation.getByRole('link', { name: 'Chat', exact: true }).click()
+      const composer = page.getByRole('textbox', { name: 'Message', exact: true })
+      await composer.fill(`\`\`\`javascript\n${codeLine}\n\`\`\``)
+      await composer.press('Enter')
+      await expect(composer).toHaveValue('')
+      const code = page.getByRole('main').locator('pre').first()
+      await expect(code).toContainText(codeLine)
+      const scrollContainer = code.locator('..')
+      await expect(scrollContainer).toHaveCSS('overflow-x', 'auto')
+      expect(
+        await scrollContainer.evaluate(element => element.scrollWidth > element.clientWidth)
+      ).toBe(true)
+      const codeBounds = await scrollContainer.boundingBox()
+      const mainBounds = await page.getByRole('main').boundingBox()
+      expect(codeBounds!.x).toBeGreaterThanOrEqual(mainBounds!.x)
+      expect(codeBounds!.x + codeBounds!.width).toBeLessThanOrEqual(
+        mainBounds!.x + mainBounds!.width
+      )
+      await expect(scrollContainer).toBeInViewport()
+      await expect(composer).toBeInViewport()
+      await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeInViewport()
+      await noHorizontalOverflow(page)
+      await page.screenshot({
+        path: `test-results/workspace-edge-code-${width}-${mode}.png`,
+        animations: 'disabled',
+      })
+    }
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('main').locator('pre')).toHaveCount(0)
+  })
+}

@@ -1,7 +1,7 @@
 /* =================================================================
    KNIK Design Tokens
    Single source of truth for colors, typography, spacing, motion,
-   shadows, radii, and effects. Dark-first with cyan/aurora primary.
+   shadows and radii. Fixed teal palette with light and dark modes.
 
    Reference: docs/design/colors_and_type.css
    ================================================================= */
@@ -14,23 +14,23 @@
   /* -----------------------------------------------------------------
      Surfaces (dark / default)
      ----------------------------------------------------------------- */
-  --bg-base: #07090d;
-  --bg-surface: #0d1117;
-  --bg-surface-2: #11161f;
-  --bg-surface-3: #161c27;
-  --bg-glass: rgba(15, 20, 28, 0.66);
-  --bg-canvas: #08101a;
-  --bg-code: #0c1118;
+  --bg-base: #18191b;
+  --bg-surface: #202225;
+  --bg-surface-2: #282b2f;
+  --bg-surface-3: #303439;
+  --bg-glass: var(--bg-surface);
+  --bg-canvas: var(--bg-base);
+  --bg-code: #1b1d20;
 
   /* -----------------------------------------------------------------
      Text / Foreground
      ----------------------------------------------------------------- */
-  --fg-1: #f6f8fb;
-  --fg-2: #d6dde7;
-  --fg-3: #9aa6b6;
-  --fg-4: #6a7585;
-  --fg-5: #424c5b;
-  --fg-inverse: #07090d;
+  --fg-1: #f1f2f3;
+  --fg-2: #d7dade;
+  --fg-3: #a5abb3;
+  --fg-4: #a5abb3;
+  --fg-5: #929aa4;
+  --fg-inverse: #18191b;
 
   /* -----------------------------------------------------------------
      Brand: Aurora (KNIK cyan — primary accent)
@@ -38,9 +38,9 @@
   --aurora-50: #e6fbff;
   --aurora-100: #b8f3fd;
   --aurora-200: #79e6f9;
-  --aurora-300: #34d3ee;
-  --aurora-400: #00d9f4;
-  --aurora-500: #00b8d4;
+  --aurora-300: var(--primary-hover);
+  --aurora-400: var(--primary);
+  --aurora-500: #348f85;
   --aurora-600: #008faa;
   --aurora-700: #006a80;
   --aurora-800: #054757;
@@ -50,8 +50,8 @@
      Brand: Deep-teal (workflow / secondary accent)
      ----------------------------------------------------------------- */
   --teal-300: #5eead4;
-  --teal-400: #2dd4bf;
-  --teal-500: #14b8a6;
+  --teal-400: #55b8ac;
+  --teal-500: #348f85;
   --teal-600: #0d9488;
   --teal-700: #0f766e;
 
@@ -77,38 +77,46 @@
   /* -----------------------------------------------------------------
      Borders / dividers — three depths only
      ----------------------------------------------------------------- */
-  --border-1: rgba(255, 255, 255, 0.06);
-  --border-2: rgba(255, 255, 255, 0.1);
-  --border-3: rgba(255, 255, 255, 0.18);
-  --border-focus: var(--aurora-400);
+  --border-1: #2d3136;
+  --border-2: #363a40;
+  --border-3: #555c65;
+  --border-focus: var(--primary);
 
   /* -----------------------------------------------------------------
      Primary semantic aliases (theme-aware — set by ThemeProvider)
      ----------------------------------------------------------------- */
-  --primary: var(--aurora-400);
-  --primary-hover: var(--aurora-300);
-  --primary-soft: rgba(0, 217, 244, 0.12);
-  --primary-soft-2: rgba(0, 217, 244, 0.22);
-  --on-primary: #04141a;
+  --primary: #55b8ac;
+  --primary-hover: #6dc7bc;
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --primary-soft-2: color-mix(in srgb, var(--primary) 18%, transparent);
+  --on-primary: #101c1a;
+  --acc: var(--primary);
+  --acc-text: var(--primary);
+  --acc-soft: var(--primary-soft);
+  --acc-border: color-mix(in srgb, var(--primary) 45%, var(--border-2));
+  --acc-glow: transparent;
+  --r-btn: 6px;
+  --r-card: 10px;
+  --pad-card: 16px;
 
   /* -----------------------------------------------------------------
      Shadows / elevation — three levels + glow
      ----------------------------------------------------------------- */
-  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-1: none;
   --shadow-2: 0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --shadow-3: 0 20px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  --glow-primary: 0 0 0 1px rgba(0, 217, 244, 0.35), 0 10px 30px -10px rgba(0, 217, 244, 0.55);
-  --glow-teal: 0 0 30px -8px rgba(20, 184, 166, 0.45);
+  --glow-primary: none;
+  --glow-teal: none;
 
   /* -----------------------------------------------------------------
      Border radii
      ----------------------------------------------------------------- */
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
   --radius-pill: 999px;
 
   /* -----------------------------------------------------------------
@@ -140,15 +148,15 @@
   --fs-display-2xl: clamp(56px, 7vw, 88px);
   --fs-display-xl: clamp(40px, 5vw, 64px);
   --fs-display-lg: 40px;
-  --fs-h1: 32px;
-  --fs-h2: 24px;
-  --fs-h3: 18px;
+  --fs-h1: 24px;
+  --fs-h2: 16px;
+  --fs-h3: 16px;
   --fs-h4: 16px;
-  --fs-body-lg: 17px;
-  --fs-body: 15px;
+  --fs-body-lg: 16px;
+  --fs-body: 14px;
   --fs-body-sm: 13px;
   --fs-caption: 12px;
-  --fs-micro: 11px;
+  --fs-micro: 12px;
 
   /* -----------------------------------------------------------------
      Line height
@@ -182,7 +190,11 @@
   /* -----------------------------------------------------------------
      Effects
      ----------------------------------------------------------------- */
-  --blur-glass: blur(20px) saturate(140%);
+  --blur-glass: none;
+  --graph-grid: #363a40;
+  --graph-minimap-node: #747e88;
+  --graph-minimap-mask: rgba(24, 25, 27, 0.72);
+  --color-node-handle-border: var(--bg-surface);
   --grid-line: rgba(255, 255, 255, 0.05);
   --grid-line-strong: rgba(255, 255, 255, 0.08);
 
@@ -222,7 +234,7 @@
   --color-shadow: rgba(0, 0, 0, 0.25);
   --color-shadow-subtle: rgba(0, 0, 0, 0.15);
 
-  --color-primary-rgb: 0, 217, 244;
+  --color-primary-rgb: 85, 184, 172;
   --color-accent-purple: var(--violet-500);
   --color-accent-purple-hover: var(--violet-400);
   --color-accent-purple-rgb: 139, 92, 246;
@@ -236,37 +248,46 @@
    Light mode overrides
    ----------------------------------------------------------------- */
 [data-theme='light'] {
-  --bg-base: #fdfdfd;
+  --bg-base: #f7f8f8;
   --bg-surface: #ffffff;
-  --bg-surface-2: #f5f6f8;
-  --bg-surface-3: #eceef2;
-  --bg-glass: rgba(255, 255, 255, 0.7);
-  --bg-canvas: #f0f2f5;
+  --bg-surface-2: #f0f2f3;
+  --bg-surface-3: #e7ebee;
+  --bg-glass: var(--bg-surface);
+  --bg-canvas: var(--bg-base);
   --bg-code: #f1f3f5;
 
-  --fg-1: #0b0f14;
-  --fg-2: #1d2530;
-  --fg-3: #5b6677;
-  --fg-4: #8893a3;
-  --fg-5: #b5bdc8;
+  --fg-1: #1c2024;
+  --fg-2: #30373e;
+  --fg-3: #59636e;
+  --fg-4: #59636e;
+  --fg-5: #68737d;
   --fg-inverse: #ffffff;
 
-  --border-1: rgba(0, 0, 0, 0.05);
-  --border-2: rgba(0, 0, 0, 0.1);
-  --border-3: rgba(0, 0, 0, 0.18);
+  --border-1: #e6e9ec;
+  --border-2: #dce1e5;
+  --border-3: #87929c;
 
-  --primary: var(--aurora-500);
-  --primary-hover: var(--aurora-600);
-  --primary-soft: rgba(0, 184, 212, 0.1);
+  --primary: #147d73;
+  --primary-hover: #10665e;
+  --primary-soft: color-mix(in srgb, var(--primary) 9%, transparent);
+  --on-primary: #ffffff;
+  --success: #167348;
+  --warning: #895600;
+  --danger: #bc3333;
+  --info: #285eaf;
+  --color-primary-rgb: 20, 125, 115;
 
-  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.04) inset, 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-1: none;
   --shadow-2: 0 4px 14px -2px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(0, 0, 0, 0.04) inset;
   --shadow-3: 0 20px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
-  --glow-primary: 0 0 0 1px rgba(0, 184, 212, 0.3), 0 10px 30px -10px rgba(0, 184, 212, 0.25);
+  --glow-primary: none;
 
   --color-shadow: rgba(0, 0, 0, 0.12);
   --color-shadow-subtle: rgba(0, 0, 0, 0.08);
 
+  --graph-grid: #d0d7dc;
+  --graph-minimap-node: #87929c;
+  --graph-minimap-mask: rgba(247, 248, 248, 0.72);
   --grid-line: rgba(0, 0, 0, 0.05);
   --grid-line-strong: rgba(0, 0, 0, 0.08);
 }

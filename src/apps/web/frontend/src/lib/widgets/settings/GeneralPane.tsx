@@ -45,6 +45,7 @@ export default function GeneralPane() {
               onChange={event => patch({ displayName: event.target.value })}
               density="compact"
               fullWidth={false}
+              className="w-full sm:w-[260px]"
             />
           </FormRow>
           <FormRow
@@ -61,6 +62,7 @@ export default function GeneralPane() {
               onChange={event => patch({ username: event.target.value })}
               density="compact"
               fullWidth={false}
+              className="w-full sm:w-[260px]"
             />
           </FormRow>
           <div className="flex justify-end gap-2 mt-3">
@@ -84,6 +86,7 @@ export default function GeneralPane() {
             id={`${id}-model`}
             aria-describedby={`${id}-model-hint`}
             presentation="native"
+            className="w-full sm:w-[260px]"
             options={modelOptions}
             value={settings.model}
             onValueChange={model => updateSettings({ model })}
