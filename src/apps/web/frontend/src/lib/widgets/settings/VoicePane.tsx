@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import Button from '$components/buttons/Button'
 import Radio from '$components/forms/Radio'
 import ToggleSwitch from '$components/forms/ToggleSwitch'
@@ -6,18 +6,20 @@ import Slider from '$components/forms/Slider'
 import VoiceOption from '$components/settings/VoiceOption'
 import FormGroup from '$widgets/FormGroup'
 import FormRow from '$widgets/FormRow'
-import { useDemoSession } from '../session/useDemoSession'
-import { useSettingsCatalog } from '../session/useSettingsCatalog'
+import { useSettingsStore, useSettingsScope } from '$stores/settings'
+import { useFeedbackStore } from '$stores/feedback'
+import { useVoiceView } from '$stores/views'
 
 export default function VoicePane() {
   const id = useId()
-  const voices = useSettingsCatalog('voices')
-  const settings = useDemoSession(s => s.settings)
-  const updateSettings = useDemoSession(s => s.updateSettings)
-  const addToast = useDemoSession(s => s.addToast)
+  const { voices, selected } = useVoiceView()
+  const settings = useSettingsStore(s => s.settings)
+  const updateSettings = useSettingsStore(s => s.updateSettings)
+  const addToast = useFeedbackStore(s => s.addToast)
   const audio = useRef<HTMLAudioElement | null>(null)
-  const [playing, setPlaying] = useState(false)
-  const selected = voices.find(voice => voice.id === settings.voice)
+  const { scope, patch } = useSettingsScope()
+  const playing = scope.playing
+  const setPlaying = (playing: boolean) => patch({ playing })
 
   useEffect(
     () => () => {

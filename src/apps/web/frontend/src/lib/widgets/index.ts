@@ -5,4 +5,3 @@ export { default as FullScreenLoader } from './FullScreenLoader'
 export { default as FullScreenError } from './FullScreenError'
 
 export { default as FormField } from './FormField'
-export { DemoSessionProvider } from './session'

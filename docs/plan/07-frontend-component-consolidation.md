@@ -1,92 +1,153 @@
-# Plan 07: Frontend consolidation with widget-owned data flow
+# Frontend domain stores and component consolidation
 
-**Status:** Implemented and verified — October 8, 2026
-**Baseline:** `refactor/frontend-modularization`, `c0c2281`
-**Scope:** Frontend source, tests, configuration, and documentation. Backend code remains unchanged.
+The approved design moves all application state into independent Zustand stores under `src/apps/web/frontend/src/lib/stores`. Widgets consume store hooks and actions; components receive props and emit events. This supersedes the earlier widget-owned session design. Backend code and application API integration remain outside this change.
 
-## Ownership
+## Visual design
 
-| Layer | Responsibility |
-| --- | --- |
-| App, pages, sections | Routes, route parameters, layout, and widget composition |
-| Widgets | Data selection, actions, drafts, filters, session state, and browser operations |
-| Components | Render props and emit events; intrinsic focus/menu/animation state only |
-| Types, constants, utilities | Shared contracts, tokens, configuration, and pure transformations |
+Start with [domain ownership](../../.archify/store-architecture/domain-stores/domain-stores.html), then follow the data and interaction views. Each linked HTML file is standalone, static by default, and includes its own dark/light viewer.
 
-Dependency direction is App/pages/sections → widgets → components. Widgets cannot import sections or pages. Store and fixture access stays internal to widgets, including aliases, relative paths, and re-exports.
+| View                                                                                         | The question it answers                                                    | Validation receipt                                                                                       |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [Architecture](../../.archify/store-architecture/domain-stores/domain-stores.html)           | Which store owns my ongoing chat, workflow draft, settings, or list state? | [Receipt](../../.archify/store-architecture/domain-stores/review-3/domain-stores.finalize-summary.json)  |
+| [Data flow](../../.archify/store-architecture/store-dataflow/store-dataflow.html)            | How do demo records become store data and component props?                 | [Receipt](../../.archify/store-architecture/store-dataflow/store-dataflow.finalize-summary.json)         |
+| [Interactions](../../.archify/store-architecture/store-interactions/store-interactions.html) | What happens on edit, Save, Send, Run, Cancel, and navigation?             | [Receipt](../../.archify/store-architecture/store-interactions/store-interactions.finalize-summary.json) |
+| [Session lifecycle](../../.archify/store-architecture/store-lifecycle/store-lifecycle.html)  | What survives leaving a page, returning, and reloading?                    | [Receipt](../../.archify/store-architecture/store-lifecycle/store-lifecycle.finalize-summary.json)       |
+| [Migration](../../.archify/store-architecture/store-migration/store-migration.html)          | In what order do state ownership and consumers change?                     | [Receipt](../../.archify/store-architecture/store-migration/store-migration.finalize-summary.json)       |
 
-## Session and interactions
+These diagrams are labeled **proposed** because they specify the approved target behavior. Diagram validation verifies the specification and rendered artifacts; application verification is a separate gate. The [artifact index](../../.archify/store-architecture/README.md) records provenance and reproduction details. Generated outputs live under `.archify/store-architecture/`; timestamped authoring originals also remain under `.archify/`. This directory is ignored by Git, so diagram links are local to this checkout.
 
-- One provider-scoped Zustand store lives in the widget subsystem and remains mounted above all routes.
-- Supplied demo source → widget adapter → immutable seed → cloned session → widget selectors → component props.
-- Component events → widget validation/actions → committed session updates → subscribed widget rerenders.
-- Committed records, global selections, and settings persist across navigation. Reload recreates the initial session.
-- Widget drafts, dialogs, filters, and sorting reset on unmount. Save commits valid drafts, validation errors retain them, and Cancel discards them.
-- Appearance settings share the session; a theme widget projects CSS variables. Remove browser-storage use without clearing existing browser data.
-- Widgets own clipboard, downloads, notifications, and conversation actions. App and sections only compose them.
-- The demo source will be supplied separately. Until then use empty/unavailable states; existing demo modules are not implicitly selected.
-- Send, Run, key generation, and voice preview require supplied scenarios/assets. Never fabricate results, streaming, progress, or secrets.
+The Archify artifacts preserve the earlier proposed design and have not been regenerated for the 2026-10-09 chat clarification. The current Send contract is the chat flow below: save valid user messages independently of reply availability.
 
-## Canonical controls
+## Where each activity lives
 
-- Button: one renderer, native attributes/ref, default type=button, explicit submit, icon/text variants, accessible labels, disabled/loading behavior.
-- Table: typed columns, stable row/column keys, density, scrolling, loading/empty/error states, accessible cell actions, and nested-action isolation. Markdown shares table structure.
-- Forms: Input, Textarea, Slider, Select, Radio, Checkbox, ToggleSwitch. One Select API supports native/rich presentation. Choice card/chip appearances are variants.
-- Modal/Popover own overlay focus and dismissal; edit/confirmation widgets compose them.
-- Consolidate cards, badges, headings, navigation, feedback, chat presentation, and code/JSON rendering. Preserve native link/keyboard semantics.
-- Interfaces live under src/types. Replace remote response/callback contracts with local domain contracts.
+```mermaid
+flowchart TD
+    SOURCE["Demo source"] --> SEED["Validate and clone immutable seed"]
+    SEED --> PROVIDER["StoresProvider creates nine independent stores"]
+    PROVIDER --> CHAT["Chat: conversations, composer and rename drafts"]
+    PROVIDER --> WF["Workflows: records, builder drafts and list filters"]
+    PROVIDER --> SCH["Schedules: records and form drafts"]
+    PROVIDER --> EX["Executions: records, timelines and list state"]
+    PROVIDER --> SUPPORT["Catalogs, settings, credentials, shell and feedback"]
+    CHAT --> HOOKS["Public store hooks and joined views"]
+    WF --> HOOKS
+    SCH --> HOOKS
+    EX --> HOOKS
+    SUPPORT --> HOOKS
+    HOOKS --> WIDGETS["Widgets"] --> COMPONENTS["Components: props and events"]
+```
 
-## Implementation sequence
+| Domain        | Authoritative state                                                                            | Relationship                                                              |
+| ------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `catalogs`    | Provider, model, voice and tool definitions                                                    | Models explicitly reference provider IDs                                  |
+| `chat`        | Conversations, messages, active conversation, reply scenarios and scoped composer/rename state | Chat and sidebar read the same conversation records                       |
+| `workflows`   | Saved definitions, builder drafts, selected node, validation and hub filters                   | One workflow owner serves the list and builder                            |
+| `schedules`   | Schedule records and scoped creation/deletion state                                            | References canonical workflow IDs                                         |
+| `executions`  | Execution records, timelines, run scenarios, filters, sorting and pagination                   | References canonical workflow IDs; execution and timeline commit together |
+| `settings`    | Profile, preferences, appearance, enabled tool IDs and scoped settings state                   | References catalog IDs                                                    |
+| `credentials` | Key metadata, supplied scenarios and create/delete/reveal state                                | No generated secrets                                                      |
+| `shell`       | Sidebar and command palette state                                                              | Shared layout state                                                       |
+| `feedback`    | Toast queue                                                                                    | Shared feedback state                                                     |
 
-1. Update this plan and create the five Archify views.
-2. Establish widget session, canonical control contracts, and dependency rules.
-3. Migrate workflows/schedules/executions, chat/shell, and settings into widgets; preserve routes and visual design.
-4. Remove frontend API clients, endpoints/environment configuration, remote CRUD, streaming, polling, coupled stores, and audio-stream initialization. No live/demo switch or mock API service.
-5. Remove verified unused duplicates, update exports/aliases/docs/lint, and complete verification.
+`views/` combines domains through selectors, deriving workflow metrics, joined rows, available models and recent conversations without storing duplicate records. React Router owns URLs; route IDs are inputs to store selectors.
 
-The integration owner maintains session, shared controls, tests, configuration, and documentation. Domain agents own workflow/schedule/execution widgets, chat/shell widgets, and settings widgets, using agreed contracts.
+## Data, commands and lifetime
 
-## Archify views
+```mermaid
+sequenceDiagram
+    participant C as Component
+    participant W as Widget
+    participant A as Store action / coordinator
+    participant S as Owning domain store
+    participant V as Subscribed view hooks
+    C->>W: Edit or submit event
+    W->>A: Typed action with scope ID
+    A->>S: Read working state and references
+    alt Valid input and action prerequisites
+        A->>S: Commit authoritative update
+        S-->>V: Changed state
+        V-->>W: Updated selected view
+        W-->>C: New props
+    else Invalid input or blocked action
+        A->>S: Retain draft and store explanation
+        S-->>V: Draft and error state
+    end
+```
 
-All views describe the proposed design, distinct from verified current-code observations. Each uses a separate timestamped .archify folder containing candidate JSON, standalone HTML, and validation/delivery/browser evidence. Static showcase presentation is the default.
+Chat separates saving a message from replaying a reply:
 
-| View | Coverage | Gate receipt |
-| --- | --- | --- |
-| [Architecture](../../.archify/architecture-widget-architecture-20261008-191748/widget-architecture.html) | Layer ownership, shared controls, widget session, browser boundary | [Passed](../../.archify/architecture-widget-architecture-20261008-191748/widget-architecture.finalize-summary.json) |
-| [Data flow](../../.archify/dataflow-widget-dataflow-20261008-191748/widget-dataflow.html) | Source adaptation, seed/session separation, selectors, props, events, updates | [Passed](../../.archify/dataflow-widget-dataflow-20261008-191748/widget-dataflow.finalize-summary.json) |
-| [Interaction sequence](../../.archify/sequence-session-interactions-20261008-191748/session-interactions.html) | Edit/validate/save/cancel, cross-widget updates, navigation, scenario availability | [Passed](../../.archify/sequence-session-interactions-20261008-191748/session-interactions.finalize-summary.json) |
-| [Session lifecycle](../../.archify/lifecycle-session-lifecycle-20261008-191748/session-lifecycle.html) | Initialization, edits, drafts, navigation, reload, reseeding | [Passed](../../.archify/lifecycle-session-lifecycle-20261008-191748/session-lifecycle.finalize-summary.json) |
-| [Migration workflow](../../.archify/workflow-frontend-migration-20261008-191748/frontend-migration.html) | Boundaries, controls, transport removal, data source, cleanup, verification | [Passed](../../.archify/workflow-frontend-migration-20261008-191748/frontend-migration.finalize-summary.json) |
+```mermaid
+flowchart TD
+    SEND["Send composer draft"] --> VALID{"Nonblank text and valid conversation?"}
+    VALID -->|No| RETAIN["Retain draft and validation error"]
+    VALID -->|Yes| SAVE["Save user message locally and clear draft"]
+    SAVE --> MATCH{"Matching authored reply scenario?"}
+    MATCH -->|Yes| REPLY["Append supplied replies"]
+    MATCH -->|No| ONLY["Keep only the user message<br/>No warning or fabricated reply"]
+    REPLY --> VIEWS["Chat and sidebar observe updated conversation"]
+    ONLY --> VIEWS
+```
 
-All five candidates passed showcase validation, deterministic delivery, strict artifact/provenance checks, and real Chrome browser checks on October 8, 2026. Each folder retains `candidate.json`, HTML, delivery metadata, full/compact finalization receipts, and the artifact-bound browser receipt. Browser checks cover light/dark themes and desktop containment; no screenshots or perceptual visual review were performed (`visualReview: not-requested`). The lifecycle and migration workflow receipts retain advisory route-readability notes; automated gates passed with zero diagnostics.
+- `StoresProvider` loads bundled demo data when its source is omitted. An explicit `DemoSource` replaces the default, including an explicitly empty source. Initialization completes before consumers mount.
+- Normalize and validate IDs, catalog relationships, workflow graphs and scenario references. Clone source records so mutations cannot affect fixtures or another provider. Provider rerenders and route changes do not reseed.
+- Store factories never import peer domains. `session/commands.ts` receives the bundle, validates cross-domain references, then dispatches an authoritative write to its owning store. Feedback follows the write; no subscriptions copy records between stores.
+- Each widget instance receives an isolated working scope tied to its resource ID. Drafts, filters, sorting, selections, feature dialogs and validation errors live in the corresponding domain. Scope hooks support React StrictMode without writes during render.
+- Save validates and commits. Invalid input retains the draft. Cancel resets or disposes that draft. Unmount/resource changes dispose affected working state. Committed records and appearance survive navigation; reload recreates the stores from the seed.
+- Components keep only intrinsic UI behavior such as focus or control menus. Browser effects such as clipboard, downloads, audio handles and CSS variables remain in widgets, with their application inputs and status supplied by stores.
+- Send saves any nonblank user message locally and clears its composer draft, regardless of model or demo scenario availability. Authored scenarios provide optional local replay: a matching scenario may append its supplied replies; otherwise the conversation retains only the user message with no warning or reply-unavailable status. Never fabricate an assistant message or make an API call. Whitespace-only input and a deleted target conversation retain the draft with a validation error.
+- Run replays authored scenarios only. Edited workflow definitions must match the supplied run scenario. Missing run scenarios remain unavailable; previews require real audio assets and key creation requires a supplied sample-secret scenario.
 
-These are design specifications based on the accepted plan, not a claim that future behavior was already implemented at the baseline commit. Accordingly they do not attach misleading HEAD source citations to proposed nodes.
+## Implementation and acceptance
 
-## Follow-up: session-driven catalogs and highlight correction
+```text
+lib/stores/
+  session/       provider, bundle factory, coordinator, scope lifecycle
+  demo/          canonical samples, normalization, validation
+  catalogs/      read-only store.ts · selectors.ts · hooks.ts · index.ts
+  chat/          store.ts · actions.ts · selectors.ts · hooks.ts · index.ts
+  workflows/     same domain structure; list and builder share this owner
+  schedules/     same domain structure
+  executions/    same domain structure
+  settings/      same domain structure
+  credentials/   same domain structure
+  shell/         same domain structure
+  feedback/      same domain structure
+  views/         cross-domain selectors and view hooks
+```
 
-Dynamic means widgets select provider, model, voice, MCP tool, and key records from the supplied demo source through the provider-scoped session. The internal typed `useSettingsCatalog` selector provides that shared access pattern. Components render supplied props; no catalogs are embedded in presentation code. Empty collections stay empty until source data is supplied. No API client, endpoint configuration, proxy, API fixture, or asynchronous loading simulation is used.
+Contracts belong under `src/types/stores`. App imports the provider through `$stores`; widgets use public domain and view barrels. Raw factories, APIs, `getState`/`setState`, fixtures and store contexts remain internal, with test-only access for focused verification.
 
-The mistakenly added catalog HTTP layer has been removed, and lint/browser guards reject all application data requests again. The original zero-API architecture and all five linked design views remain applicable. Backend code is unchanged.
+1. Establish types, independent factories, bundled seed, provider, commands and scope lifecycle.
+2. Migrate catalogs, settings, chat, shell and feedback; then workflows/builder, schedules and executions.
+3. Control the builder graph through its workflow draft. Remove independent ReactFlow definition state and imperative canvas save reads. Populate model choices from the catalog store.
+4. Remove the old widget session subsystem, local application state and obsolete demo imports. Preserve canonical controls and current routes.
+5. Update aliases, barrels and architecture rules for aliases, relative imports, re-exports and dynamic imports. Publish these diagrams and update architecture documentation.
+6. Run formatting checks, lint, TypeScript, Vitest, production build and browser tests.
 
-The chat composer retains a single outer focus cue, and passive settings cards no longer acquire a cyan hover border or lift. These visual fixes and frontend formatting are preserved.
+Tests stay under `src/tests/`, with domain tests organized in `stores/<domain>`. Acceptance includes provider isolation, seed immutability, shared updates, simultaneous editors, save/invalid/Cancel, cleanup on unmount, navigation retention, reload reset, missing route IDs, valid references, stable subscriptions and dynamic catalogs across chat/settings/builder. Browser checks cover all routes, light/dark appearance and narrow layouts, with zero application API, stream, polling, browser-persistence or microphone requests. Static assets remain allowed.
 
-Correction verified on October 8: 85 unit/integration tests and all 9 Chrome browser cases pass. Tests exercise arbitrary supplied catalog records, widget updates, provider isolation, empty catalogs, and every settings pane. Browser guards observed zero application data or media-capture requests, with no catalog exceptions or API fixtures. Build, lint, TypeScript, source/configuration formatting, and whitespace checks pass; four existing chart warnings remain.
+Chat acceptance covers local sends without a model or matching scenario, cleared drafts after valid sends, optional authored replies only when matched, user-only messages without warnings or fabricated replies when unmatched, and retained drafts for whitespace-only input or deleted conversations. Saved user messages must update subscribed views without backend interaction.
 
-## Original consolidation verification
+## Verified baseline and implementation evidence
 
-Use Vitest, React Testing Library, and user-event for control contracts, validation, table action isolation, session consistency, draft cancellation, navigation retention, refresh reset, provider independence, seed immutability, and missing-route states.
+At baseline `df7069f8e6b1a735849a4bd7d4fecf74f8d3081b`, inspection established:
 
-Run lint, type checking, build, and browser checks for chat, workflows, builder, executions, schedules, and settings, including light/dark and narrow layouts. All actions must work with the backend stopped and make zero application API/provider, stream, polling, or microphone-permission requests. Static asset loading remains allowed.
+- `App.tsx` mounted `DemoSessionProvider` above the router.
+- `widgets/session/DemoSessionProvider.tsx` created one Zustand store per provider lifetime.
+- `widgets/session/seed.ts` cloned an explicitly supplied source and otherwise produced empty collections.
+- `widgets/session/store.ts` combined conversations, workflows, schedules, executions, settings and feedback in one store.
+- `widgets/workflows/WorkflowBuilderWidget.tsx` kept name/error state locally and read the canvas imperatively when saving.
 
-Tests are organized separately under `src/apps/web/frontend/src/tests/`, grouped into components, widgets, session, architecture, and browser suites. See the [test directory guide](../../src/apps/web/frontend/src/tests/README.md), [component reference](../components/react-common-components.md), and [implemented architecture](../components/web-architecture.md).
+Those are historical observations from committed bytes, not claims that the proposed domain-store design already existed at that revision. Final application verification should be recorded with the implementation result; prior consolidation test counts do not certify this migration.
 
-Final verification on October 8, 2026:
+### Implementation verification — 2026-10-08
 
-- Vitest: 17 files and 78 tests passed, including 40 architecture-rule cases.
-- Chrome/Playwright: all 7 browser tests passed. Routes, local CRUD, draft cancellation, cross-route updates, session reload/reset, missing IDs, unavailable actions, light/dark themes, and narrow layouts were exercised.
-- Browser guards observed zero application API/stream or media-capture attempts and zero uncaught page errors. Static assets and Vite development traffic remain allowed.
-- Lint, TypeScript checking, production build, source formatting, and whitespace checks passed. Four existing chart lint warnings remain; the baseline had eight warnings.
-- App screenshots were inspected for desktop dark chat, desktop light settings, and the narrow workflow builder. The builder controls, graph bounds, and narrow properties dialog were corrected and verified. This app visual review is separate from the Archify automated browser checks above.
-- Backend source has no changes.
+At this checkpoint, the working tree implemented the independent stores, scoped drafts, controlled builder, canonical demo bootstrap and public widget hooks described above. The old widget session and duplicate demo modules had been removed. The catalog was read-only after bootstrap, so it had no mutation actions file. The following counts are dated evidence from before the 2026-10-09 chat clarification; they do not verify the revised Send contract.
 
-The application intentionally starts with empty collections and explicit unavailable states until a demo source is supplied. Connecting that source remains a future input, not an implicit selection of historical fixtures. No backend connection, simulated execution, fabricated response, or generated secret is used.
+- Vitest: **135 tests passed across 27 files**, including independent providers, source isolation, simultaneous drafts, StrictMode cleanup, model availability, relationship validation and re-export boundary enforcement.
+- Browser: **11 Playwright checks passed**, covering all routes, missing IDs, chat replay, workflow/schedule changes, navigation and reload, light/dark themes, narrow layouts, and unavailable actions.
+- Request guards observed no application API, streaming, persistence or microphone access. The browser harness narrowly recognizes the third-party `debug` package's startup access to its own debug keys; application storage remains forbidden.
+- Frontend formatting, lint, TypeScript, production build and whitespace checks passed. Lint retains four pre-existing chart warnings and reports no errors.
+- All five Archify artifacts passed showcase, delivery, provenance and browser gates; their published bytes match the reviewed hashes. These gates are separate from the application checks above.
+
+Backend source is unchanged. Default voice previews remain unavailable without an audio asset, and key creation remains unavailable without a supplied sample-secret scenario. Authored chat and workflow results replay locally; no provider or execution service is invoked.

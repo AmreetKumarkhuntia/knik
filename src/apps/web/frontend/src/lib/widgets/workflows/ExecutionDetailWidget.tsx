@@ -8,24 +8,21 @@ import {
   ExecutionTimeline,
 } from '$components'
 import Button from '$components/buttons/Button'
-import { useDemoSession } from '$widgets/session/useDemoSession'
-import { calculateMetrics } from '$utils/metricsCalculator'
+import { useExecutionDetailView } from '$stores/views'
+import { useFeedbackStore } from '$stores/feedback'
 import type { ExecutionDetailWidgetProps } from '$types/sections/workflow-builder'
 
 export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWidgetProps) {
   const navigate = useNavigate()
-  const addToast = useDemoSession(state => state.addToast)
+  const addToast = useFeedbackStore(state => state.addToast)
   const handleCopy = (text: string) => {
     void Promise.resolve()
       .then(() => navigator.clipboard.writeText(text))
       .then(() => addToast('Copied to clipboard.', 'success'))
       .catch(() => addToast('Could not copy to clipboard.', 'error'))
   }
-  const execution = useDemoSession(state =>
-    state.executions.find(item => String(item.id) === executionId)
-  )
-  const timelines = useDemoSession(state => state.timelines)
-  const workflows = useDemoSession(state => state.workflows)
+  const { execution, timeline, definition, workflowName, metrics } =
+    useExecutionDetailView(executionId)
   if (!execution)
     return (
       <EmptyState
@@ -37,16 +34,9 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
         }
       />
     )
-  const timeline = timelines[String(execution.id)] ?? []
-  const definition =
-    workflows.find(workflow => workflow.id === execution.workflow_id)?.definition ?? null
-  const metrics = calculateMetrics({ execution, timeline })
   return (
     <div className="h-full flex flex-col bg-background">
-      <PageHeader
-        breadcrumbs={['Workflows', execution.workflow_name, `Execution #${execution.id}`]}
-        sticky
-      />
+      <PageHeader breadcrumbs={['Workflows', workflowName, `Execution #${execution.id}`]} sticky />
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 sm:p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">

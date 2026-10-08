@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { DemoSessionProvider } from '$widgets/session'
+import { StoresProvider } from '$stores'
 import AppearancePane from '$widgets/settings/AppearancePane'
 import WorkflowHubWidget from '$widgets/workflows/WorkflowHubWidget'
 import AllExecutionsWidget from '$widgets/workflows/AllExecutionsWidget'
@@ -12,7 +12,7 @@ describe('shared session density', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DemoSessionProvider
+        <StoresProvider
           source={{
             workflows: [
               { id: 'one', name: 'Supplied workflow', definition: { nodes: {}, connections: [] } },
@@ -33,7 +33,7 @@ describe('shared session density', () => {
           <AppearancePane />
           <WorkflowHubWidget />
           <AllExecutionsWidget />
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     const headers = screen.getAllByRole('columnheader', { name: 'Workflow' })

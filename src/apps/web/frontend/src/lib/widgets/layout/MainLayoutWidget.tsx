@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import SidebarWidget from './SidebarWidget'
 import TopBar from '$components/layout/TopBar'
@@ -6,57 +6,37 @@ import BackgroundEffects from '$components/display/BackgroundEffects'
 import ToastWidget from '$widgets/feedback/ToastWidget'
 import { CommandPalette, MS } from '$components'
 import Button from '$components/buttons/Button'
-import { useDemoSession } from '$widgets/session/useDemoSession'
-import { COMMAND_GROUPS, ROUTES } from '$lib/constants/navigation'
+import { useChatStore } from '$stores/chat'
+import { useSettingsStore } from '$stores/settings'
+import { useShellStore, useShellScope } from '$stores/shell'
+import { useShellView } from '$stores/views'
+import { ROUTES } from '$lib/constants/navigation'
 import type { MainLayoutWidgetProps } from '$types/widgets/chat-shell'
 
-function crumbsFor(pathname: string): string[] {
-  if (pathname === ROUTES.settings) return ['Settings']
-  if (pathname === ROUTES.schedules) return ['Workflows', 'Schedules']
-  if (pathname === ROUTES.executions) return ['Workflows', 'Executions']
-  if (pathname.startsWith('/executions/')) return ['Executions', 'Detail']
-  if (pathname.startsWith('/workflows/') && pathname.endsWith('/edit'))
-    return ['Workflows', 'Builder']
-  if (pathname === ROUTES.builder) return ['Workflows', 'Builder']
-  if (pathname === ROUTES.workflows) return ['Workflows', 'Hub']
-  return ['Knik AI', 'Chat']
-}
-
 export default function MainLayoutWidget({ children }: MainLayoutWidgetProps) {
-  const mode = useDemoSession(state => state.appearance.mode)
-  const updateAppearance = useDemoSession(state => state.updateAppearance)
-  const startConversation = useDemoSession(state => state.startConversation)
+  const mode = useSettingsStore(state => state.appearance.mode)
+  const updateAppearance = useSettingsStore(state => state.updateAppearance)
+  const startConversation = useChatStore(state => state.startConversation)
   const location = useLocation()
   const navigate = useNavigate()
-  const [paletteOpen, setPaletteOpen] = useState(false)
-  const [paletteQuery, setPaletteQuery] = useState('')
-  const filteredCommands = COMMAND_GROUPS.map(group => ({
-    ...group,
-    items: group.items.filter(item =>
-      item.label.toLowerCase().includes(paletteQuery.trim().toLowerCase())
-    ),
-  })).filter(group => group.items.length > 0)
-  const openPalette = () => {
-    setPaletteQuery('')
-    setPaletteOpen(true)
-  }
-  const closePalette = () => {
-    setPaletteQuery('')
-    setPaletteOpen(false)
-  }
-  const crumbs = useMemo(() => crumbsFor(location.pathname), [location.pathname])
+  const { scopeId, scope, patch } = useShellScope()
+  const { paletteOpen, paletteQuery } = scope
+  const setPaletteQuery = (paletteQuery: string) => patch({ paletteQuery })
+  const openPalette = () => patch({ paletteOpen: true, paletteQuery: '' })
+  const closePalette = () => patch({ paletteOpen: false, paletteQuery: '' })
+  const togglePalette = useShellStore(state => state.togglePalette)
+  const { commands: filteredCommands, crumbs } = useShellView(location.pathname, scopeId)
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setPaletteQuery('')
-        setPaletteOpen(value => !value)
+        togglePalette(scopeId)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [togglePalette, scopeId])
 
   const runCommand = (id: string) => {
     closePalette()

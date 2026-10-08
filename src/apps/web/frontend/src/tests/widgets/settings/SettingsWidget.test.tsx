@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DemoSessionProvider } from '$widgets/session/DemoSessionProvider'
+import { StoresProvider } from '$stores'
 import SettingsWidget from '$widgets/settings/SettingsWidget'
 import type { DemoSource } from '$types/demo-session'
 
@@ -12,11 +12,11 @@ afterEach(() => {
 
 function renderSettings(source?: DemoSource) {
   return render(
-    <DemoSessionProvider
+    <StoresProvider
       source={{ models: [], providers: [], tools: [], voices: [], apiKeys: [], ...source }}
     >
       <SettingsWidget />
-    </DemoSessionProvider>
+    </StoresProvider>
   )
 }
 

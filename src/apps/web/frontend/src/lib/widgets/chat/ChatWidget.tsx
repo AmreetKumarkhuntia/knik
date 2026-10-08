@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { ChatBubble, MarkdownMessage, Avatar, KnikGlyph, AgentThinking, Banner } from '$components'
 import ChatComposer from '$components/chat/ChatComposer'
 import CompactionDivider from '$components/chat/CompactionDivider'
@@ -6,51 +6,25 @@ import WelcomePrompt from '$components/home/WelcomePrompt'
 import WelcomeContainer from '$components/home/WelcomeContainer'
 import SuggestionCards from '$components/home/SuggestionCards'
 import KeyboardShortcuts from '$components/home/KeyboardShortcuts'
-import { useDemoSession } from '$widgets/session/useDemoSession'
-import { useSettingsCatalog } from '$widgets/session/useSettingsCatalog'
-import type { AgentThinkingStep } from '$types/components/chat'
+import { useChatStore, useChatScope, useSendMessage } from '$stores/chat'
+import { useSettingsStore } from '$stores/settings'
+import { useFeedbackStore } from '$stores/feedback'
+import { useChatView } from '$stores/views'
 import type { InputPanelRef } from '$types/sections/chat'
 
 function ChatSessionWidget() {
-  const conversationId = useDemoSession(state => state.activeConversationId)
-  const conversation = useDemoSession(state =>
-    state.conversations.find(item => item.id === state.activeConversationId)
-  )
-  const models = useSettingsCatalog('models')
-  const suggestions = useDemoSession(state => state.suggestions)
-  const scenarios = useDemoSession(state => state.chatScenarios)
-  const settings = useDemoSession(state => state.settings)
-  const updateSettings = useDemoSession(state => state.updateSettings)
-  const sendMessage = useDemoSession(state => state.sendMessage)
-  const addToast = useDemoSession(state => state.addToast)
-  const [draft, setDraft] = useState('')
-  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const activeId = useChatStore(state => state.activeConversationId)
+  const { scopeId, scope, patch } = useChatScope(activeId)
+  const { draft, shortcutsOpen } = scope
+  const { conversationId, conversation, models, suggestions, model, messages, initials } =
+    useChatView()
+  const updateSettings = useSettingsStore(state => state.updateSettings)
+  const sendMessage = useSendMessage()
+  const addToast = useFeedbackStore(state => state.addToast)
   const inputRef = useRef<InputPanelRef>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const atBottom = useRef(true)
-  const model = settings.model || models[0]?.id || ''
-  const messages =
-    conversation?.messages.filter(
-      message => message.role === 'user' || message.role === 'assistant'
-    ) ?? []
-  const initials =
-    (settings.display_name || settings.username || '')
-      .trim()
-      .split(/\s+/)
-      .map(part => part[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || '?'
-  const matchingScenario = scenarios.some(
-    scenario =>
-      scenario.prompt.trim() === draft.trim() && (!scenario.modelId || scenario.modelId === model)
-  )
-  const unavailable =
-    scenarios.length === 0
-      ? 'Chat replies are unavailable until a demo scenario is supplied.'
-      : !matchingScenario
-        ? 'No supplied demo reply matches this message and model.'
-        : undefined
+  const setDraft = (draft: string) => patch({ draft, error: '' })
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -63,17 +37,17 @@ function ChatSessionWidget() {
         (event.key === '?' && !editing)
       ) {
         event.preventDefault()
-        setShortcutsOpen(value => !value)
+        patch({ shortcutsOpen: !shortcutsOpen })
       }
       if (
         event.key === 'Escape' &&
         element === scrollRef.current?.parentElement?.querySelector('textarea')
       )
-        setDraft('')
+        patch({ draft: '', error: '' })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [patch, shortcutsOpen])
 
   useEffect(() => {
     if (atBottom.current && scrollRef.current)
@@ -93,7 +67,7 @@ function ChatSessionWidget() {
   }
 
   const send = () => {
-    const result = sendMessage(draft.trim(), model || undefined)
+    const result = sendMessage(scopeId)
     if (result.ok) {
       setDraft('')
       atBottom.current = true
@@ -126,26 +100,11 @@ function ChatSessionWidget() {
                 }}
               />
             )}
-            {scenarios.length === 0 && (
-              <p className="text-sm text-fg-4 text-center max-w-lg mt-5">
-                Demo conversations and replies have not been supplied. You can edit this draft and
-                explore the frontend; sending becomes available for supplied scenarios.
-              </p>
-            )}
           </WelcomeContainer>
         ) : (
           <div className="max-w-5xl mx-auto py-4 flex flex-col gap-7">
             {messages.map((message, index) => {
-              const isUser = message.role === 'user'
-              const steps = Array.isArray(message.metadata.reasoning)
-                ? (message.metadata.reasoning as AgentThinkingStep[])
-                : []
-              const modelTag =
-                typeof message.metadata.model === 'string' ? message.metadata.model : undefined
-              const messageId =
-                typeof message.metadata.message_id === 'string'
-                  ? message.metadata.message_id
-                  : `${conversationId}:${index}`
+              const { isUser, steps, modelTag, messageId } = message
               return (
                 <div key={`${message.id || messageId}:${index}`}>
                   <ChatBubble
@@ -198,15 +157,14 @@ function ChatSessionWidget() {
           model={model}
           onModel={id => updateSettings({ model: id })}
           models={models}
-          sendDisabledReason={unavailable}
         />
       </div>
-      <KeyboardShortcuts isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <KeyboardShortcuts isOpen={shortcutsOpen} onClose={() => patch({ shortcutsOpen: false })} />
     </div>
   )
 }
 
 export default function ChatWidget() {
-  const conversationId = useDemoSession(state => state.activeConversationId)
+  const conversationId = useChatStore(state => state.activeConversationId)
   return <ChatSessionWidget key={conversationId || 'new-chat'} />
 }

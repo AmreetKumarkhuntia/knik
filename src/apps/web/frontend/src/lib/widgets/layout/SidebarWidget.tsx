@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Modal, ConfirmDialog, Input } from '$components'
@@ -8,52 +8,41 @@ import SidebarQuickActions from '$components/layout/SidebarQuickActions'
 import SidebarNav from '$components/layout/SidebarNav'
 import SidebarRecents from '$components/layout/SidebarRecents'
 import SidebarAccount from '$components/layout/SidebarAccount'
-import { useDemoSession } from '$widgets/session/useDemoSession'
+import { useChatStore, useChatScope } from '$stores/chat'
+import { useShellStore } from '$stores/shell'
+import { useSidebarView } from '$stores/views'
 import type { SidebarWidgetProps } from '$types/widgets/chat-shell'
-import type { Conversation } from '$types/conversation'
 
 export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const conversations = useDemoSession(state => state.conversations)
-  const settings = useDemoSession(state => state.settings)
-  const startConversation = useDemoSession(state => state.startConversation)
-  const selectConversation = useDemoSession(state => state.selectConversation)
-  const renameConversation = useDemoSession(state => state.renameConversation)
-  const deleteConversation = useDemoSession(state => state.deleteConversation)
-  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 768)
-  const [editing, setEditing] = useState<Conversation | null>(null)
-  const [deleting, setDeleting] = useState<Conversation | null>(null)
-  const [title, setTitle] = useState('')
-  const [error, setError] = useState('')
-  const accountName = settings.display_name || settings.username || ''
-  const initials =
-    accountName
-      .trim()
-      .split(/\s+/)
-      .map(part => part[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || '?'
+  const { conversations, accountName, initials } = useSidebarView()
+  const startConversation = useChatStore(state => state.startConversation)
+  const selectConversation = useChatStore(state => state.selectConversation)
+  const deleteConversation = useChatStore(state => state.deleteConversation)
+  const beginRename = useChatStore(state => state.beginRename)
+  const cancelRename = useChatStore(state => state.cancelRename)
+  const saveRename = useChatStore(state => state.saveRename)
+  const collapsed = useShellStore(state => state.collapsed)
+  const setCollapsed = useShellStore(state => state.setCollapsed)
+  const { scopeId, scope, patch } = useChatScope()
+  const { editingId, deletingId, title, error } = scope
 
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth < 768) setCollapsed(true)
     }
+    onResize()
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [])
+  }, [setCollapsed])
 
   const newChat = () => {
     startConversation()
     void navigate('/')
   }
 
-  const closeEditor = () => {
-    setEditing(null)
-    setTitle('')
-    setError('')
-  }
+  const closeEditor = () => cancelRename(scopeId)
 
   return (
     <>
@@ -71,7 +60,7 @@ export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
           padding: collapsed ? '16px' : '16px 14px',
         }}
       >
-        <SidebarBrand collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
+        <SidebarBrand collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
         <SidebarQuickActions
           collapsed={collapsed}
           onNewChat={newChat}
@@ -86,28 +75,24 @@ export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
               selectConversation(id)
               void navigate('/')
             }}
-            onRename={conversation => {
-              setEditing(conversation)
-              setTitle(conversation.title || '')
-              setError('')
-            }}
-            onDelete={setDeleting}
+            onRename={conversation => beginRename(scopeId, conversation)}
+            onDelete={conversation => patch({ deletingId: conversation.id })}
           />
         ) : (
           <div className="flex-1" />
         )}
         <SidebarAccount collapsed={collapsed} name={accountName} initials={initials} />
       </motion.aside>
-      <Modal isOpen={editing !== null} onClose={closeEditor} title="Rename conversation" size="sm">
+      <Modal
+        isOpen={editingId !== null}
+        onClose={closeEditor}
+        title="Rename conversation"
+        size="sm"
+      >
         <form
           onSubmit={event => {
             event.preventDefault()
-            if (!title.trim()) {
-              setError('Enter a conversation title.')
-              return
-            }
-            if (editing) renameConversation(editing.id, title.trim())
-            closeEditor()
+            saveRename(scopeId)
           }}
         >
           <label htmlFor="conversation-title" className="block text-sm text-fg-2 mb-2">
@@ -117,8 +102,7 @@ export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
             id="conversation-title"
             value={title}
             onChange={event => {
-              setTitle(event.target.value)
-              setError('')
+              patch({ title: event.target.value, error: '' })
             }}
             error={error}
             required
@@ -133,14 +117,14 @@ export default function SidebarWidget({ onOpenSearch }: SidebarWidgetProps) {
         </form>
       </Modal>
       <ConfirmDialog
-        isOpen={deleting !== null}
+        isOpen={deletingId !== null}
         title="Delete conversation"
         message="Remove this conversation from the current session? Reloading restores the supplied demo source."
         confirmLabel="Delete"
-        onCancel={() => setDeleting(null)}
+        onCancel={() => patch({ deletingId: null })}
         onConfirm={() => {
-          if (deleting) deleteConversation(deleting.id)
-          setDeleting(null)
+          if (deletingId) deleteConversation(deletingId)
+          patch({ deletingId: null })
         }}
       />
     </>

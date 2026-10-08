@@ -43,7 +43,7 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 ### Architecture Plans
 
-- [Frontend Component Consolidation](plan/07-frontend-component-consolidation.md) - Canonical UI controls and frontend migration plan
+- [Frontend Component Consolidation](plan/07-frontend-component-consolidation.md) - Centralized domain stores, canonical controls and visual migration plan
 - [Web Backend Refactor](plan/04-web-backend-refactor.md) - Backend state management refactor (mostly complete)
 - [Fix Workflow Create Page](plan/02-fix-workflow-create-page.md) - Backend workflow create endpoint
 - [Settings Page](plan/03-settings-page-browser.md) - Browser and app settings UI
@@ -53,7 +53,7 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 ### Components
 
-- [Web Architecture](components/web-architecture.md) - React + FastAPI architecture
+- [Web Architecture](components/web-architecture.md) - Frontend domain stores, widgets and component ownership
 - [React Frontend](components/react-frontend.md) - React + Vite + TypeScript setup
 - [React Common Components](components/react-common-components.md) - Reusable UI components
 - [Electron Assets](components/electron-assets.md) - Desktop app icons and resources
@@ -64,10 +64,7 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 ### Design
 
-- [Design](design.md) - UI/screen designs from Stitch project
-
-### Design
-
+- [Frontend Store Diagrams](../.archify/store-architecture/README.md) - Ownership, data flow, interactions, session lifecycle and migration
 - [Design](design.md) - UI/screen designs from Stitch project
 
 ```mermaid

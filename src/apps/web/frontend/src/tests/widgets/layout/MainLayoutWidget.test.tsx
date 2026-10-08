@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { DemoSessionProvider } from '$widgets/session'
+import { StoresProvider } from '$stores'
 import MainLayoutWidget from '$widgets/layout/MainLayoutWidget'
 
 describe('MainLayoutWidget command data', () => {
@@ -10,11 +10,11 @@ describe('MainLayoutWidget command data', () => {
     const user = userEvent.setup()
     const content = (
       <MemoryRouter>
-        <DemoSessionProvider>
+        <StoresProvider source={{}}>
           <MainLayoutWidget>
             <p>Route content</p>
           </MainLayoutWidget>
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     const view = render(content)
@@ -27,9 +27,9 @@ describe('MainLayoutWidget command data', () => {
     ).not.toBeInTheDocument()
     view.rerender(
       <MemoryRouter>
-        <DemoSessionProvider>
+        <StoresProvider source={{}}>
           <p>Different layout</p>
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     view.rerender(content)

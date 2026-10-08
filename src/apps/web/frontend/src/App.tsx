@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { DemoSessionProvider } from '$widgets/session'
+import { StoresProvider } from '$stores'
 import { ThemeWidget } from '$widgets/theme'
 import { MainLayoutWidget } from '$widgets/layout'
 import { ErrorBoundaryWidget } from '$widgets/feedback'
@@ -16,7 +16,7 @@ import {
 export default function App() {
   return (
     <ErrorBoundaryWidget>
-      <DemoSessionProvider>
+      <StoresProvider>
         <ThemeWidget>
           <BrowserRouter>
             <MainLayoutWidget>
@@ -33,7 +33,7 @@ export default function App() {
             </MainLayoutWidget>
           </BrowserRouter>
         </ThemeWidget>
-      </DemoSessionProvider>
+      </StoresProvider>
     </ErrorBoundaryWidget>
   )
 }

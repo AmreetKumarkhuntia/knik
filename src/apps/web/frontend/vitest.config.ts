@@ -5,6 +5,7 @@ export default defineConfig({
     alias: {
       $types: path.resolve(import.meta.dirname, 'src/types'),
       $components: path.resolve(import.meta.dirname, 'src/lib/components'),
+      $stores: path.resolve(import.meta.dirname, 'src/lib/stores'),
       $widgets: path.resolve(import.meta.dirname, 'src/lib/widgets'),
       $sections: path.resolve(import.meta.dirname, 'src/lib/sections'),
       $pages: path.resolve(import.meta.dirname, 'src/lib/pages'),

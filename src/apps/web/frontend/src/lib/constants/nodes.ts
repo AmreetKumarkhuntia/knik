@@ -176,7 +176,7 @@ export const NODE_REGISTRY: NodeRegistry = {
     defaultData: {
       type: 'AIExecutionNode',
       agentName: 'AI Agent',
-      model: 'gpt-4o',
+      model: '',
       systemPrompt: '',
       temperature: 0.7,
       maxTokens: 2048,
@@ -193,14 +193,7 @@ export const NODE_REGISTRY: NodeRegistry = {
         field: 'model',
         label: 'Model Selection',
         type: 'select',
-        options: [
-          { value: 'gpt-4o', label: 'GPT-4o (Omni)' },
-          { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-          { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-          { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-          { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
-          { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-        ],
+        options: [],
       },
       {
         field: 'systemPrompt',

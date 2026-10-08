@@ -22,7 +22,6 @@ export interface InputPanelProps {
   onChange: (value: string) => void
   onSend: () => void
   disabled?: boolean
-  sendDisabledReason?: string
   model?: string
   onModel?: (id: string) => void
   models?: ChatModelOption[]

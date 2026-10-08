@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId } from 'react'
 import Button from '$components/buttons/Button'
 import MS from '$components/display/MS'
 import Input from '$components/forms/Input'
@@ -8,26 +8,23 @@ import ConfirmDialog from '$components/surfaces/ConfirmDialog'
 import ProfileSummary from '$components/settings/ProfileSummary'
 import FormGroup from '$widgets/FormGroup'
 import FormRow from '$widgets/FormRow'
-import { useDemoSession } from '../session/useDemoSession'
-import { useSettingsCatalog } from '../session/useSettingsCatalog'
+import { useSettingsStore, useSettingsScope } from '$stores/settings'
+import { useChatStore } from '$stores/chat'
+import { useFeedbackStore } from '$stores/feedback'
+import { useProfileView } from '$stores/views'
 
 export default function GeneralPane() {
-  const settings = useDemoSession(s => s.settings)
-  const models = useSettingsCatalog('models')
-  const updateSettings = useDemoSession(s => s.updateSettings)
-  const clearConversations = useDemoSession(s => s.clearConversations)
-  const conversationCount = useDemoSession(s => s.conversations.length)
-  const addToast = useDemoSession(s => s.addToast)
-  const [displayName, setDisplayName] = useState(settings.display_name ?? '')
-  const [username, setUsername] = useState(settings.username ?? '')
-  const [confirmClear, setConfirmClear] = useState(false)
+  const { scopeId, scope, patch } = useSettingsScope()
+  const { displayName, username, confirmClear } = scope
+  const { settings, dirty, modelOptions } = useProfileView(scopeId)
+  const updateSettings = useSettingsStore(s => s.updateSettings)
+  const resetProfile = useSettingsStore(s => s.resetProfile)
+  const saveProfile = useSettingsStore(s => s.saveProfile)
+  const clearConversations = useChatStore(s => s.clearConversations)
+  const conversationCount = useChatStore(s => s.conversations.length)
+  const addToast = useFeedbackStore(s => s.addToast)
   const id = useId()
-  const dirty =
-    displayName !== (settings.display_name ?? '') || username !== (settings.username ?? '')
-  const resetDraft = () => {
-    setDisplayName(settings.display_name ?? '')
-    setUsername(settings.username ?? '')
-  }
+  const resetDraft = () => resetProfile(scopeId)
 
   return (
     <>
@@ -36,9 +33,8 @@ export default function GeneralPane() {
         <form
           onSubmit={event => {
             event.preventDefault()
-            updateSettings({ display_name: displayName.trim(), username: username.trim() })
-            setDisplayName(displayName.trim())
-            setUsername(username.trim())
+            const result = saveProfile(scopeId)
+            if (!result.ok) return
             addToast('Profile saved for this session.', 'success')
           }}
         >
@@ -46,7 +42,7 @@ export default function GeneralPane() {
             <Input
               id={`${id}-display-name`}
               value={displayName}
-              onChange={event => setDisplayName(event.target.value)}
+              onChange={event => patch({ displayName: event.target.value })}
               density="compact"
               fullWidth={false}
             />
@@ -62,7 +58,7 @@ export default function GeneralPane() {
               id={`${id}-username`}
               aria-describedby={`${id}-username-hint`}
               value={username}
-              onChange={event => setUsername(event.target.value)}
+              onChange={event => patch({ username: event.target.value })}
               density="compact"
               fullWidth={false}
             />
@@ -88,11 +84,11 @@ export default function GeneralPane() {
             id={`${id}-model`}
             aria-describedby={`${id}-model-hint`}
             presentation="native"
-            options={models.map(model => ({ value: model.id, label: model.label }))}
+            options={modelOptions}
             value={settings.model}
             onValueChange={model => updateSettings({ model })}
-            placeholder={models.length ? 'Select a model' : 'No models available'}
-            disabled={models.length === 0}
+            placeholder={modelOptions.length ? 'Select a model' : 'No models available'}
+            disabled={modelOptions.length === 0}
           />
         </FormRow>
         <FormRow label="Stream responses" hint="Preference for supplied chat scenarios">
@@ -126,7 +122,7 @@ export default function GeneralPane() {
             aria-label="Delete conversations"
             icon={<MS name="delete_forever" size={15} />}
             disabled={conversationCount === 0}
-            onClick={() => setConfirmClear(true)}
+            onClick={() => patch({ confirmClear: true })}
           >
             Delete
           </Button>
@@ -137,10 +133,10 @@ export default function GeneralPane() {
         title="Delete all conversations?"
         message="This removes conversations from the current session. Reloading restores the supplied demo source."
         confirmLabel="Delete conversations"
-        onCancel={() => setConfirmClear(false)}
+        onCancel={() => patch({ confirmClear: false })}
         onConfirm={() => {
           clearConversations()
-          setConfirmClear(false)
+          patch({ confirmClear: false })
           addToast('Conversations removed from this session.', 'success')
         }}
       />

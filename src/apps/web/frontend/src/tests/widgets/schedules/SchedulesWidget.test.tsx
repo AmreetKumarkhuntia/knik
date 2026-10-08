@@ -2,7 +2,7 @@ import { render, screen, within, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import { DemoSessionProvider } from '$widgets/session/DemoSessionProvider'
+import { StoresProvider } from '$stores'
 import SchedulesWidget from '$widgets/schedules/SchedulesWidget'
 import WorkflowHubWidget from '$widgets/workflows/WorkflowHubWidget'
 
@@ -19,10 +19,10 @@ describe('session schedule interactions', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DemoSessionProvider source={source}>
+        <StoresProvider source={source}>
           <SchedulesWidget />
           <WorkflowHubWidget />
-        </DemoSessionProvider>
+        </StoresProvider>
       </MemoryRouter>
     )
     await user.click(screen.getByRole('button', { name: 'New schedule' }))
@@ -51,9 +51,9 @@ describe('session schedule interactions', () => {
   it('retains invalid drafts and does not add a schedule', async () => {
     const user = userEvent.setup()
     render(
-      <DemoSessionProvider source={source}>
+      <StoresProvider source={source}>
         <SchedulesWidget />
-      </DemoSessionProvider>
+      </StoresProvider>
     )
     await user.click(screen.getByRole('button', { name: 'New schedule' }))
     await user.selectOptions(screen.getByLabelText('Target Workflow'), 'workflow-one')

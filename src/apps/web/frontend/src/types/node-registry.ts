@@ -68,6 +68,8 @@ export interface NodeMetadata {
 export type NodeRegistry = Partial<Record<string, NodeMetadata>>
 
 export interface NodeFieldProps {
+  draft?: string
+  onDraftChange?: (value: string) => void
   field: FormFieldConfig
   value: unknown
   onChange: (value: unknown) => void

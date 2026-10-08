@@ -6,12 +6,12 @@ import FormGroup from '$widgets/FormGroup'
 import FormRow from '$widgets/FormRow'
 import { SETTINGS_ACCENTS } from '$lib/constants/themes'
 import type { Radius, ThemeMode, ThemeName } from '$types/theme'
-import { useDemoSession } from '../session/useDemoSession'
+import { useSettingsStore } from '$stores/settings'
 
 export default function AppearancePane() {
   const id = useId()
-  const appearance = useDemoSession(s => s.appearance)
-  const updateAppearance = useDemoSession(s => s.updateAppearance)
+  const appearance = useSettingsStore(s => s.appearance)
+  const updateAppearance = useSettingsStore(s => s.updateAppearance)
   return (
     <>
       <FormGroup title="Theme" sub="Appearance changes last for this session">
