@@ -6,6 +6,10 @@ Tests live here rather than beside implementation files.
 - `widgets/`: domain interactions with session-only test fixtures, grouped by feature.
 - `stores/`: independent providers, seed validation, scoped drafts, shared updates, resets, and unsupported scenarios, grouped by domain.
 - `architecture/`: dependency resolution, re-export escapes, forbidden browser integration, and canonical control rules.
+- `app/`: lazy route chunks, route search params, and app-level motion settings.
+- `hooks/`: shared hooks such as `useViewport` and `useKeyboardShortcuts`; `hooks/matchMedia.ts` is the width-driven `matchMedia` shim jsdom lacks.
+- `styles/`: token contrast, reduced motion, and checks that rendered Tailwind classes resolve to real CSS.
+- `constants/`, `utils/`, `data-structures/`: pure navigation constants, formatting helpers, and graph/workflow adapters.
 - `browser/`: Chrome route/interaction/appearance checks, including request and microphone guards.
 - `setup.ts`: shared Vitest DOM setup and cleanup.
 

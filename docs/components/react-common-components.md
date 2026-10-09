@@ -92,7 +92,7 @@ import FormField from "$widgets/FormField";
 </FormField>;
 ```
 
-`FormRow` is the row-layout wrapper around FormField. With an explicit control, pass matching `htmlFor`/`id` and `hintId`/`aria-describedby`; groups such as Radio use their own legend. FormGroup composes a titled Card. These helpers do not choose control types or access session records.
+`FormRow` is the row-layout wrapper around FormField. With an explicit control, pass matching `htmlFor`/`id` and `hintId`/`aria-describedby`; groups such as Radio use their own legend (`hideLabel` keeps it for screen readers only when the row already shows the label, and `aria-describedby` takes the row's `hintId`). FormGroup composes a titled Card. These helpers do not choose control types or access session records.
 
 A widget owns draft values and validation. Save commits a valid draft, validation errors preserve it, Cancel discards it, and widget unmount discards unsaved values. Settings toggles and choices commit their local session preferences directly.
 

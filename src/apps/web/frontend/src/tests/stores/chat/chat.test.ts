@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createChatStore } from '$stores/chat/store'
 import { normalizeDemoSource } from '$stores/demo/normalize'
 import { selectRecentConversations } from '$stores/chat/selectors'
@@ -22,6 +22,9 @@ const seed = () =>
     ],
   })
 describe('chat store', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   it('keeps simultaneous drafts isolated and retains invalid drafts', () => {
     const store = createChatStore(seed())
     store.getState().initializeScope('left')
@@ -82,11 +85,11 @@ describe('chat store', () => {
   })
   it('sorts recents by latest activity without mutating stored order', () => {
     const store = createChatStore(seed()),
-      first = store.getState().startConversation(),
-      second = store.getState().startConversation()
+      first = store.getState().startConversation()
     store.getState().initializeScope('composer', first)
     store.getState().patchScope('composer', { draft: 'Hello' })
     store.getState().sendMessage('composer', 'demo')
+    const second = store.getState().startConversation()
     store.setState(state => ({
       conversations: state.conversations.map(c => ({
         ...c,
@@ -95,6 +98,34 @@ describe('chat store', () => {
     }))
     expect(selectRecentConversations(store.getState()).map(c => c.id)).toEqual([first, second])
     expect(store.getState().conversations.map(c => c.id)).toEqual([second, first])
+  })
+  it('reuses an untouched blank conversation instead of adding another to recents', () => {
+    const store = createChatStore(seed())
+    const blank = store.getState().startConversation()
+    expect(store.getState().startConversation()).toBe(blank)
+    expect(store.getState().conversations.map(c => c.id)).toEqual([blank])
+    store.getState().renameConversation(blank, 'Named but empty')
+    const fresh = store.getState().startConversation()
+    expect(fresh).not.toBe(blank)
+    store.getState().initializeScope('composer', fresh)
+    store.getState().patchScope('composer', { draft: 'Hello' })
+    store.getState().sendMessage('composer', 'demo')
+    const next = store.getState().startConversation()
+    expect([blank, fresh]).not.toContain(next)
+    expect(store.getState().startConversation()).toBe(next)
+    expect(store.getState().activeConversationId).toBe(next)
+    expect(store.getState().conversations.map(c => c.id)).toEqual([next, fresh, blank])
+  })
+  it('stamps supplied replies with the send time rather than the authored fixture time', () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-02T15:45:00Z') })
+    const store = createChatStore(seed())
+    store.getState().initializeScope('composer')
+    store.getState().patchScope('composer', { draft: 'Hello' })
+    store.getState().sendMessage('composer', 'demo')
+    expect(store.getState().conversations[0].messages.map(m => [m.role, m.timestamp])).toEqual([
+      ['user', '2026-11-02T15:45:00.000Z'],
+      ['assistant', '2026-11-02T15:45:00.000Z'],
+    ])
   })
   it('seeds independent sessions and resets committed chats on recreation', () => {
     const source = seed(),

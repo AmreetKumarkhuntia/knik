@@ -2,6 +2,7 @@ import { registerOverlay } from './overlayStack'
 import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '../buttons/Button'
+import MS from '../display/MS'
 import type { ModalProps } from '$types/components'
 import { MODAL_SIZE_CLASSES } from '$lib/constants'
 
@@ -90,7 +91,7 @@ export default function Modal({
             </h2>
             {placement !== 'center' && (
               <Button variant="ghost" size="sm" aria-label={`Close ${title}`} onClick={onClose}>
-                ✕
+                <MS name="close" size={18} />
               </Button>
             )}
           </div>

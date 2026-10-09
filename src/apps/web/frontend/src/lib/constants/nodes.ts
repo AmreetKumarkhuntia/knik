@@ -252,6 +252,12 @@ export function getAllNodeTypes(): NodeMetadata[] {
   return Object.values(NODE_REGISTRY).filter((node): node is NodeMetadata => node !== undefined)
 }
 
+/** Returns the title a node shows on the canvas: its own label, else its type's label. */
+export function getNodeTitle(node: { type?: string; data: Record<string, unknown> }): string {
+  const { label } = node.data
+  return typeof label === 'string' && label ? label : getNodeLabel(node.type ?? '')
+}
+
 /** Returns the human-readable label for a node type. */
 export function getNodeLabel(type: string): string {
   const node = NODE_REGISTRY[type]

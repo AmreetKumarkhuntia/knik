@@ -1,4 +1,5 @@
 import Button from '../buttons/Button'
+import MS from '../display/MS'
 import { useId, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AgentThinkingStep, AgentThinkingProps } from '$types'
@@ -27,7 +28,7 @@ export default function AgentThinking({
           className="flex items-center gap-2.5 px-3 py-2.5 bg-surface-2 border border-border-2 rounded-[10px] text-[13px] text-fg-2"
         >
           <span className="w-[22px] h-[22px] rounded-full inline-flex items-center justify-center bg-emerald-500/15 text-emerald-500 shrink-0">
-            <span className="material-symbols-outlined text-[14px]">check</span>
+            <MS name="check" size={14} />
           </span>
           <span className="font-mono text-[11.5px]">{step.content}</span>
         </div>
@@ -69,11 +70,10 @@ export default function AgentThinking({
       >
         <div className="flex-1 h-px bg-border-2 group-hover:bg-border-3 transition-colors" />
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-border-2 rounded-full bg-surface-2 text-fg-3 font-sans group-hover:text-fg-1 group-hover:border-border-3 transition-colors">
-          <span className="material-symbols-outlined text-[13px]">
-            {expanded ? 'unfold_less' : 'compress'}
-          </span>
+          <MS name={expanded ? 'unfold_less' : 'compress'} size={13} />
           Thinking trace
           <motion.span
+            aria-hidden="true"
             animate={{ rotate: expanded ? 180 : 0 }}
             className="material-symbols-outlined text-[14px]"
           >
@@ -85,8 +85,10 @@ export default function AgentThinking({
 
       <AnimatePresence initial={false}>
         {expanded && (
+          // Opened on request inside the chat's live log, which would otherwise read it all out.
           <motion.div
             id={id}
+            aria-live="off"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

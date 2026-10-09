@@ -1,4 +1,5 @@
 import type * as React from 'react'
+import type { DemoToast } from '../stores/demo'
 
 /** Supported toast notification types. */
 export type ToastType = 'success' | 'error' | 'info'
@@ -36,8 +37,4 @@ export interface TooltipProps {
 }
 
 /** Internal state for a toast notification. */
-export interface ToastState {
-  id: number
-  message: string
-  type: ToastType
-}
+export type ToastState = DemoToast

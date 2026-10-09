@@ -54,6 +54,8 @@ export interface VerticalTabsProps {
   tabs: VerticalTab[]
   activeTab?: string
   onChange?: (id: string) => void
+  /** 'horizontal' below the tablet breakpoint, where the md: classes stack tabs above the panel. */
+  orientation?: 'vertical' | 'horizontal'
   className?: string
 }
 
@@ -84,6 +86,8 @@ export interface CommandItem {
   label: string
   shortcut?: string
   icon?: string
+  /** Route a navigation command opens; commands without one are handled by id. */
+  path?: string
 }
 
 export interface CommandGroup {

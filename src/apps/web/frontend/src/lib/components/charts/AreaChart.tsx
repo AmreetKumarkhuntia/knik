@@ -1,7 +1,7 @@
 import type { AreaChartProps } from '$types'
 
 export default function AreaChart({ data, yKey, gradient = true, className = '' }: AreaChartProps) {
-  if (!data || data.length === 0) return null
+  if (data.length === 0) return null
 
   const width = 100
   const height = 40

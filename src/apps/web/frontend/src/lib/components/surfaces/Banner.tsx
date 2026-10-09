@@ -1,6 +1,7 @@
 import Button from '$components/buttons/Button'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BANNER_ROLE } from '$lib/constants'
 import type { BannerProps } from '$types'
 
 export default function Banner({
@@ -36,7 +37,7 @@ export default function Banner({
             borderColor: `color-mix(in srgb, ${color} 25%, transparent)`,
             background: `color-mix(in srgb, ${color} 6%, transparent)`,
           }}
-          role="alert"
+          role={BANNER_ROLE[variant]}
         >
           {icon && <span className="flex-shrink-0 flex items-center justify-center">{icon}</span>}
           <div className="flex-1">{children}</div>
@@ -47,7 +48,9 @@ export default function Banner({
               className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors"
               aria-label="Dismiss banner"
             >
-              <span className="material-symbols-outlined text-[20px]">close</span>
+              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                close
+              </span>
             </Button>
           )}
         </motion.div>

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Conversation, ConversationMessage } from '../conversation'
 import type { McpTool } from '../components/product'
+import type { ToastType } from '../components/feedback'
 import type { ChatModelOption } from '../components/chat'
 import type { Workflow, Schedule, ExecutionDetail, NodeExecutionStep } from '../workflow'
 import type {
@@ -64,10 +65,11 @@ export type DemoSource = Partial<Omit<DemoSnapshot, 'settings' | 'appearance'>> 
   appearance?: Partial<AppearanceSettings>
 }
 export type DemoActionResult = { ok: true; id?: string | number } | { ok: false; error: string }
+/** A queued toast notification; the canonical toast record. */
 export interface DemoToast {
   id: number
   message: string
-  type: 'success' | 'error' | 'info'
+  type: ToastType
 }
 export interface ScheduleDraft {
   target_workflow_id: string

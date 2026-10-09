@@ -9,10 +9,11 @@ import SidebarAccount from '$components/layout/SidebarAccount'
 import { useChatStore, useChatScope } from '$stores/chat'
 import { useShellStore } from '$stores/shell'
 import { useSidebarView } from '$stores/views'
+import { LAYOUT } from '$lib/constants/dimensions'
+import { ROUTES } from '$lib/constants/navigation'
 import type { SidebarWidgetProps } from '$types/widgets/chat-shell'
 
 export default function SidebarWidget({
-  onOpenSearch,
   viewport = 'desktop',
   mobileOpen = false,
   onCloseMobile,
@@ -20,6 +21,7 @@ export default function SidebarWidget({
   const location = useLocation()
   const navigate = useNavigate()
   const { conversations, accountName, initials } = useSidebarView()
+  const activeConversationId = useChatStore(state => state.activeConversationId)
   const startConversation = useChatStore(state => state.startConversation)
   const selectConversation = useChatStore(state => state.selectConversation)
   const deleteConversation = useChatStore(state => state.deleteConversation)
@@ -34,7 +36,7 @@ export default function SidebarWidget({
 
   const newChat = () => {
     startConversation()
-    void navigate('/')
+    void navigate(ROUTES.home)
     onCloseMobile?.()
   }
 
@@ -46,15 +48,16 @@ export default function SidebarWidget({
         collapsed={collapsed}
         onToggle={viewport === 'desktop' ? () => setCollapsed(!desktopCollapsed) : undefined}
       />
-      <SidebarQuickActions collapsed={collapsed} onNewChat={newChat} onOpenSearch={onOpenSearch} />
+      <SidebarQuickActions collapsed={collapsed} onNewChat={newChat} />
       <SidebarNav collapsed={collapsed} pathname={location.pathname} onNavigate={onCloseMobile} />
       {!collapsed ? (
         <SidebarRecents
           conversations={conversations}
           loading={false}
+          activeConversationId={location.pathname === ROUTES.home ? activeConversationId : null}
           onSelect={id => {
             selectConversation(id)
-            void navigate('/')
+            void navigate(ROUTES.home)
             onCloseMobile?.()
           }}
           onRename={conversation => beginRename(scopeId, conversation)}
@@ -88,7 +91,9 @@ export default function SidebarWidget({
         <aside
           aria-label="Workspace sidebar"
           className="h-full flex-shrink-0 overflow-hidden bg-surface border-r border-border"
-          style={{ width: collapsed ? 64 : 232 }}
+          style={{
+            width: collapsed ? LAYOUT.sidebarWidth.collapsed : LAYOUT.sidebarWidth.expanded,
+          }}
         >
           {navigation}
         </aside>

@@ -191,3 +191,47 @@ describe('settings session interactions', () => {
     expect(pause).toHaveBeenCalledOnce()
   })
 })
+
+describe('settings layout', () => {
+  it('nests settings group headings directly under the page heading', () => {
+    renderSettings()
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Profile' })).toBeInTheDocument()
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0)
+  })
+
+  it('lays the pane tabs out horizontally at mobile widths', () => {
+    const width = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
+    try {
+      renderSettings()
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal')
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
+    }
+  })
+})
+
+describe('settings deep links', () => {
+  it('opens the requested pane once and reports it as applied', () => {
+    const applied = vi.fn()
+    render(
+      <StoresProvider source={{ models: [], providers: [], tools: [], voices: [], apiKeys: [] }}>
+        <SettingsWidget requestedTab="keys" onRequestedTabApplied={applied} />
+      </StoresProvider>
+    )
+    expect(screen.getByRole('tab', { name: 'API keys' })).toHaveAttribute('aria-selected', 'true')
+    expect(applied).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores an unknown pane', () => {
+    const applied = vi.fn()
+    render(
+      <StoresProvider source={{ models: [], providers: [], tools: [], voices: [], apiKeys: [] }}>
+        <SettingsWidget requestedTab="missing" onRequestedTabApplied={applied} />
+      </StoresProvider>
+    )
+    expect(screen.getByRole('tab', { name: 'General' })).toHaveAttribute('aria-selected', 'true')
+    expect(applied).not.toHaveBeenCalled()
+  })
+})

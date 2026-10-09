@@ -24,6 +24,8 @@ export interface CanvasProps extends BuilderFieldStateProps {
   onBack?: () => void
   canRun?: boolean
   onExportJson?: () => void
+  /** True below the desktop breakpoint: lower minimum zoom, no minimap, drawer inspector. */
+  narrow?: boolean
 }
 
 /** Props for the node properties sidebar panel. */
@@ -64,6 +66,16 @@ export interface NodePropertiesPanelProps extends BuilderFieldStateProps {
   onClose: () => void
   selectedNode: Node | null
   onNodeUpdate: (nodeId: string, data: Record<string, unknown>) => void
+  /** With both set, the panel offers a keyboard way to connect the selected node. */
+  nodes?: Node[]
+  onConnect?: OnConnect
+}
+
+/** Props for the keyboard alternative to dragging a connection between node handles. */
+export interface ConnectionFormProps {
+  node: Node
+  nodes: Node[]
+  onConnect: OnConnect
 }
 
 /** A single line in the builder run-bar log stream. */

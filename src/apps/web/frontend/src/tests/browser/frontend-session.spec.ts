@@ -82,6 +82,9 @@ test.afterEach(async ({ page }) => {
 })
 
 async function noHorizontalOverflow(page: Page) {
+  // The dev server applies the app stylesheet a few frames after navigation, and the unstyled
+  // page (default body margin) briefly overflows narrow viewports.
+  await expect(page.locator('body')).toHaveCSS('margin', '0px')
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     html: document.documentElement.scrollWidth,
@@ -245,14 +248,14 @@ test('edited suggestions send through Enter and button without requiring an auth
   await message.pressSequentially('vasca')
   await expect(message).toHaveValue(edited)
   await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeEnabled()
-  await expect(page.getByRole('status')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Notifications' })).toHaveText('')
   await expect(
     page.getByText('No supplied demo reply matches this message and model.', { exact: true })
   ).toHaveCount(0)
   await message.press('Enter')
   await expect(message).toHaveValue('')
   await expect(conversation.getByText(edited, { exact: true })).toHaveCount(1)
-  await expect(page.getByRole('status')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Notifications' })).toHaveText('')
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(conversation.getByRole('button', { name: 'Copy message', exact: true })).toHaveCount(
     0
@@ -572,7 +575,7 @@ for (const width of [1440, 390]) {
   }) => {
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/', { waitUntil: 'domcontentloaded' })
-    const model = page.getByRole('button', { name: 'Chat model', exact: true })
+    const model = page.getByRole('button', { name: /^Chat model/ })
     await model.click()
     const list = page.getByRole('listbox')
     await expect(list).toBeVisible()

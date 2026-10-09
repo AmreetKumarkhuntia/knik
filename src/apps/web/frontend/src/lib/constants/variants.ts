@@ -37,10 +37,10 @@ export const spinnerSizes = {
 
 /** Confirm-dialog variants — icon + confirm-button styling per severity. */
 export const confirmDialogVariants = {
-  danger: { icon: '⚠', confirmBtn: 'bg-[var(--danger)] text-white hover:opacity-90' },
+  danger: { icon: '⚠', confirmBtn: 'bg-[var(--danger)] text-[var(--fg-inverse)] hover:opacity-90' },
   warning: {
     icon: '⚡',
     confirmBtn: 'bg-[var(--warning)] text-[var(--fg-inverse)] hover:opacity-90',
   },
-  info: { icon: 'ℹ', confirmBtn: 'bg-[var(--info)] text-white hover:opacity-90' },
+  info: { icon: 'ℹ', confirmBtn: 'bg-[var(--info)] text-[var(--fg-inverse)] hover:opacity-90' },
 }

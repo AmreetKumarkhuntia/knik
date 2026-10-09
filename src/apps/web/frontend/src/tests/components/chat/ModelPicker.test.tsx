@@ -6,7 +6,7 @@ import ModelPicker from '$components/chat/ModelPicker'
 describe('ModelPicker', () => {
   it('renders safely when models have not been supplied', () => {
     render(<ModelPicker model="" models={[]} onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: 'Chat model' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^Chat model/ })).toBeDisabled()
     expect(screen.getByText('No models available')).toBeInTheDocument()
   })
 
@@ -23,7 +23,7 @@ describe('ModelPicker', () => {
         onChange={change}
       />
     )
-    const trigger = screen.getByRole('button', { name: 'Chat model' })
+    const trigger = screen.getByRole('button', { name: /^Chat model/ })
     trigger.focus()
     await user.keyboard('{ArrowDown}')
     expect(await screen.findByRole('option', { name: 'First' })).toHaveFocus()

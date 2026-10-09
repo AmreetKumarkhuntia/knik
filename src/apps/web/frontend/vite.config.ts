@@ -14,7 +14,15 @@ export default defineConfig({
     }),
   ],
   build: {
-    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      // The always-mounted layout imports the $components barrel. Unless app modules count as
+      // side-effect free, every module that barrel re-exports (FlowCanvas pulls in xyflow CSS,
+      // CodeBlock registers grammars) and its vendors stay in the entry chunk, which defeats the
+      // lazy routes. Nothing under src/lib is imported for side effects alone; CSS is unaffected.
+      treeshake: {
+        moduleSideEffects: id => (/\/src\/lib\/.+\.tsx?$/.test(id) ? false : undefined),
+      },
+    },
   },
   resolve: {
     alias: {

@@ -31,7 +31,11 @@ export function normalizeNodes(nodes: Node[]): Node[] {
   return nodes.map(node => {
     const data: Record<string, unknown> = { ...node.data, type: node.type }
     delete data.mode
-    if (node.type === 'AIExecutionNode') data.prompt = data.systemPrompt ?? data.prompt ?? ''
+    if (node.type === 'AIExecutionNode') {
+      data.prompt = data.systemPrompt ?? data.prompt ?? ''
+      // systemPrompt is the editor's field name; the workflow contract only defines prompt.
+      delete data.systemPrompt
+    }
     if (node.type === 'FunctionExecutionNode' && typeof data.params === 'string') {
       try {
         const params: unknown = JSON.parse(data.params || '{}')
@@ -44,6 +48,32 @@ export function normalizeNodes(nodes: Node[]): Node[] {
     }
     return { ...node, data }
   })
+}
+// A definition keeps one connection per node pair, so a second one would be dropped on save.
+export function duplicateConnectionError({ source, target }: Pick<Edge, 'source' | 'target'>) {
+  return `Node ${source}: only one connection to ${target} is allowed.`
+}
+export function duplicateConnectionErrors(edges: Edge[]) {
+  return edges
+    .filter(
+      (edge, index) =>
+        edges.findIndex(other => other.source === edge.source && other.target === edge.target) !==
+        index
+    )
+    .map(duplicateConnectionError)
+}
+/** Moving, resizing or selecting a node keeps its data object, so none of them alter the definition. */
+export function sameDefinitionNodes(a?: Node[], b?: Node[]) {
+  return (
+    a === b ||
+    (!!a &&
+      !!b &&
+      a.length === b.length &&
+      a.every(
+        (node, index) =>
+          node.id === b[index].id && node.type === b[index].type && node.data === b[index].data
+      ))
+  )
 }
 export function selectWorkflow(state: WorkflowStore, id?: string) {
   return state.workflows.find(workflow => workflow.id === id)

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ToggleSwitch, EmptyState, MS, Badge, Table } from '$components'
 import Button from '$components/buttons/Button'
 import { formatDate } from '$utils/format'
+import { ROUTE_PATHS } from '$lib/constants/navigation'
 import type { TableColumn } from '$types/components'
 import type { Schedule } from '$types/workflow'
 import type { ScheduleListPanelProps } from '$types/sections/schedules'
@@ -23,7 +24,7 @@ export default function ScheduleListPanel({
       render: (_, schedule) =>
         workflowNames[schedule.target_workflow_id] ? (
           <Link
-            to={`/workflows/${encodeURIComponent(schedule.target_workflow_id)}/edit`}
+            to={ROUTE_PATHS.workflowEdit(schedule.target_workflow_id)}
             className="font-medium text-foreground hover:underline"
           >
             {workflowName(schedule)}

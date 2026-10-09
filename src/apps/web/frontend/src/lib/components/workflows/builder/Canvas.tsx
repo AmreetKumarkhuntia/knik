@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { type NodeTypes, type EdgeTypes } from '@xyflow/react'
 import NodePropertiesPanel from './NodePropertiesPanel/NodePropertiesPanel'
 import FloatingControls from './CanvasControls/FloatingControls'
@@ -42,14 +41,8 @@ export default function Canvas({
   modelOptions,
   fieldDrafts,
   onFieldDraftChange,
+  narrow = false,
 }: CanvasProps) {
-  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 1023px)').matches)
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 1023px)')
-    const update = () => setNarrow(media.matches)
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
-  }, [])
   return (
     <div className="h-full min-h-0 w-full flex flex-col">
       <WorkflowNavbar
@@ -63,33 +56,42 @@ export default function Canvas({
         readOnly={readOnly}
       />
       <div className="flex flex-1 overflow-hidden relative">
-        <div className="flex-1 min-w-0 relative workflow-grid overflow-hidden">
+        <div className="flex-1 min-w-0 relative flex flex-col workflow-grid overflow-hidden">
+          {/* In flow rather than overlaid, so the canvas and its Add Node trigger sit below it. */}
           {error && (
-            <div className="absolute top-0 left-0 right-0 z-20">
+            // Focusable so keyboard users can scroll a long error list; the banner has no controls.
+            <div
+              tabIndex={0}
+              role="region"
+              aria-label="Validation errors"
+              className="knik-focus shrink-0 max-h-40 overflow-y-auto"
+            >
               <Banner variant="danger">
                 <pre className="whitespace-pre-wrap font-mono">{error}</pre>
               </Banner>
             </div>
           )}
-          <FlowCanvas
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={readOnly ? undefined : onNodesChange}
-            onEdgesChange={readOnly ? undefined : onEdgesChange}
-            onConnect={readOnly ? undefined : onConnect}
-            onNodeClick={(_event, node) => onSelectNode(node.id)}
-            onPaneClick={() => onSelectNode(null)}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            minZoom={narrow ? 0.2 : 0.5}
-            nodesDraggable={!readOnly}
-            nodesConnectable={!readOnly}
-            elementsSelectable={!readOnly}
-            showMiniMap={!narrow}
-          >
-            <FloatingControls onAddNode={readOnly ? undefined : onAddNode} />
-          </FlowCanvas>
+          <div className="relative flex-1 min-h-0">
+            <FlowCanvas
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={readOnly ? undefined : onNodesChange}
+              onEdgesChange={readOnly ? undefined : onEdgesChange}
+              onConnect={readOnly ? undefined : onConnect}
+              onNodeClick={(_event, node) => onSelectNode(node.id)}
+              onPaneClick={() => onSelectNode(null)}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              fitView
+              minZoom={narrow ? 0.2 : 0.5}
+              nodesDraggable={!readOnly}
+              nodesConnectable={!readOnly}
+              elementsSelectable={!readOnly}
+              showMiniMap={!narrow}
+            >
+              <FloatingControls onAddNode={readOnly ? undefined : onAddNode} />
+            </FlowCanvas>
+          </div>
         </div>
         <NodePropertiesPanel
           selectedNode={selectedNode}
@@ -99,6 +101,8 @@ export default function Canvas({
           modelOptions={modelOptions}
           fieldDrafts={fieldDrafts}
           onFieldDraftChange={onFieldDraftChange}
+          nodes={nodes}
+          onConnect={readOnly ? undefined : onConnect}
         />
       </div>
     </div>

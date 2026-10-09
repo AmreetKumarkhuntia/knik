@@ -2,7 +2,7 @@
  * Static lookup maps for design-system components, relocated from co-located
  * .tsx files to satisfy the configs-live-in-constants/ boundary (eslint.config.js).
  */
-import type { ModalSize } from '$types'
+import type { BannerProps, ModalSize } from '$types'
 import type { AccentBadge } from '$types/components/chat'
 import type { ExecutionStatus } from '$types/workflow'
 
@@ -26,6 +26,14 @@ export const MODEL_ACCENT_DOT: Record<AccentBadge, string> = {
 export const HUB_EXEC_ICON: Record<ExecutionStatus, { name: string; color: string }> = {
   success: { name: 'check_circle', color: 'var(--success)' },
   failed: { name: 'cancel', color: 'var(--danger)' },
-  running: { name: 'pending', color: 'var(--info)' },
-  pending: { name: 'pending', color: 'var(--info)' },
+  running: { name: 'progress_activity', color: 'var(--info)' },
+  pending: { name: 'schedule', color: 'var(--warning)' },
+}
+
+/** Live-region role per banner variant; only urgent variants interrupt (Banner). */
+export const BANNER_ROLE: Record<NonNullable<BannerProps['variant']>, 'alert' | 'status'> = {
+  danger: 'alert',
+  warning: 'alert',
+  info: 'status',
+  success: 'status',
 }

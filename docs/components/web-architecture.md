@@ -8,12 +8,13 @@ The Archify files preserve the earlier proposed design. The chat behavior clarif
 
 ## Ownership
 
-| Layer                | Owns                                                                                                                         | Public dependencies                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| App, pages, sections | Routing, route parameters, layout and composition                                                                            | Provider entry point, widgets, presentation components        |
-| Stores               | Committed records, settings, selections, drafts, feature dialogs, errors, filters, sorting, derived views and domain actions | Shared types, constants and pure transformations              |
-| Widgets              | Bind store state/actions to component props/events; perform browser effects                                                  | Public store/domain/view barrels, components and pure helpers |
-| Components           | Supplied props/events and intrinsic focus/menu/layout behavior                                                               | Other components, types, tokens and pure helpers              |
+| Layer                          | Owns                                                                                                                         | Public dependencies                                           |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| App, pages, sections           | Routing, route parameters, layout and composition                                                                            | Provider entry point, widgets, presentation components        |
+| Stores                         | Committed records, settings, selections, drafts, feature dialogs, errors, filters, sorting, derived views and domain actions | Shared types, constants and pure transformations              |
+| Widgets                        | Bind store state/actions to component props/events; perform browser effects                                                  | Public store/domain/view barrels, components and pure helpers |
+| Shared hooks (`src/lib/hooks`) | Browser subscriptions shared by widgets, such as the viewport breakpoint and keyboard shortcuts                              | Public store hooks, types, constants and pure helpers         |
+| Components                     | Supplied props/events and intrinsic focus/menu/layout behavior                                                               | Other components, types, tokens and pure helpers              |
 
 ```text
 DemoSource → validate + clone → independent domain stores
@@ -25,7 +26,7 @@ Routes compose widgets → widgets supply component props
                         store actions ← component events
 ```
 
-Store factories do not import peer domains. The session coordinator receives the store bundle and handles cross-domain commands. Joined views read multiple owners without copying records. Widgets cannot import store internals, raw Zustand APIs or demo modules. Pages/sections/components cannot select application state directly. A widget must not import a page or section.
+Store factories do not import peer domains. The session coordinator receives the store bundle and handles cross-domain commands. Joined views read multiple owners without copying records. Widgets cannot import store internals, raw Zustand APIs or demo modules. Pages/sections/components cannot select application state directly. A widget must not import a page or section. Shared hooks serve widgets only: they cannot import widgets, pages, sections or App, and components, stores, types and constants cannot import them.
 
 ## Domain relationships
 

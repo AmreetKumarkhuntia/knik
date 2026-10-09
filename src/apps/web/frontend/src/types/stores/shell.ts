@@ -1,6 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla'
+export type Viewport = 'mobile' | 'tablet' | 'desktop'
 export interface ShellScope {
-  viewport: 'mobile' | 'tablet' | 'desktop'
   mobileNavigationOpen: boolean
   paletteOpen: boolean
   paletteQuery: string

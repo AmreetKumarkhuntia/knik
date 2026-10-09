@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { Banner, EmptyState } from '$components'
+import { useViewport } from '$hooks'
 import Button from '$components/buttons/Button'
 import { useWorkflowBuilderView } from '$stores/views'
 import { useFeedbackStore } from '$stores/feedback'
+import { ROUTE_PATHS, ROUTES } from '$lib/constants/navigation'
 import type { WorkflowBuilderWidgetProps } from '$types/sections/workflow-builder'
 import Canvas from '$components/workflows/builder/Canvas'
 
@@ -10,13 +12,14 @@ export default function WorkflowBuilderWidget({ workflowId }: WorkflowBuilderWid
   const navigate = useNavigate()
   const view = useWorkflowBuilderView(workflowId)
   const addToast = useFeedbackStore(state => state.addToast)
+  const viewport = useViewport()
   if (workflowId && !view.workflow)
     return (
       <EmptyState
         icon="search_off"
         title="Workflow not found"
         description="This workflow is not available in the current demo session."
-        action={<Button onClick={() => void navigate('/workflows')}>View workflows</Button>}
+        action={<Button onClick={() => void navigate(ROUTES.workflows)}>View workflows</Button>}
       />
     )
   const { draft } = view
@@ -25,13 +28,13 @@ export default function WorkflowBuilderWidget({ workflowId }: WorkflowBuilderWid
     const result = view.save()
     if (result.ok) {
       addToast('Workflow saved for this session.', 'success')
-      void navigate('/workflows')
+      void navigate(ROUTES.workflows)
     }
   }
   const run = () => {
     const result = view.run()
     if (!result.ok) addToast(result.error, 'info')
-    else if (result.id !== undefined) void navigate(`/executions/${result.id}`)
+    else if (result.id !== undefined) void navigate(ROUTE_PATHS.executionDetail(result.id))
   }
   const exportJson = () => {
     const result = view.validate()
@@ -66,7 +69,7 @@ export default function WorkflowBuilderWidget({ workflowId }: WorkflowBuilderWid
         onSelectNode={view.selectNode}
         onNodeUpdate={view.updateNode}
         onAddNode={view.addNode}
-        onBack={() => void navigate('/workflows')}
+        onBack={() => void navigate(ROUTES.workflows)}
         onSave={save}
         onExecute={run}
         canRun={view.canRun}
@@ -74,6 +77,7 @@ export default function WorkflowBuilderWidget({ workflowId }: WorkflowBuilderWid
         modelOptions={view.modelOptions}
         fieldDrafts={draft.fieldDrafts}
         onFieldDraftChange={view.setFieldDraft}
+        narrow={viewport !== 'desktop'}
       />
     </div>
   )

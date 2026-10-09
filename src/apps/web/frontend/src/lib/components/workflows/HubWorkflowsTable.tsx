@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Badge, EmptyState, MS, Table } from '$components'
 import Button from '$components/buttons/Button'
 import { formatDate } from '$utils/format'
+import { ROUTE_PATHS } from '$lib/constants/navigation'
 import type { HubWorkflowsTableProps } from '$types/sections/workflow-hub'
 import type { TableColumn } from '$types/components'
 import type { HubWorkflowRow } from '$types/workflow'
@@ -24,7 +25,7 @@ export default function HubWorkflowsTable({
           <div className="min-w-0">
             <Link
               className="text-sm font-semibold text-foreground hover:underline"
-              to={`/workflows/${encodeURIComponent(row.id)}/edit`}
+              to={ROUTE_PATHS.workflowEdit(row.id)}
             >
               {row.name}
             </Link>
@@ -62,7 +63,7 @@ export default function HubWorkflowsTable({
       render: (_, row) => (
         <div className="flex items-center gap-2">
           <Link
-            to={`/workflows/${encodeURIComponent(row.id)}/edit`}
+            to={ROUTE_PATHS.workflowEdit(row.id)}
             aria-label={`Edit ${row.name}`}
             className="inline-flex min-h-9 min-w-9 max-sm:min-h-11 max-sm:min-w-11 items-center justify-center text-secondary"
           >

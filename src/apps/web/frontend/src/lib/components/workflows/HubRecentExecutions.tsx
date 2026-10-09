@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { EmptyState, MS, Card, SectionHeader } from '$components'
 import { formatDuration, formatDate } from '$utils/format'
-import { HUB_EXEC_ICON as EXEC_ICON } from '$lib/constants'
+import { HUB_EXEC_ICON as EXEC_ICON, executionStatusConfig } from '$lib/constants'
+import { ROUTE_PATHS, ROUTES } from '$lib/constants/navigation'
 import type { HubRecentExecutionsProps } from '$types'
 
 /** Recent executions feed with a "View all" link. */
@@ -14,7 +15,7 @@ export default function HubRecentExecutions({ executions, loading }: HubRecentEx
         title="Recent executions"
         actions={
           <Link
-            to="/workflows/executions"
+            to={ROUTES.executions}
             className="inline-flex items-center"
             style={{
               gap: 4,
@@ -57,8 +58,9 @@ export default function HubRecentExecutions({ executions, loading }: HubRecentEx
                   fill={1}
                   style={{ color: icon.color, flexShrink: 0 }}
                 />
+                <span className="sr-only">{executionStatusConfig[ex.status].label}</span>
                 <Link
-                  to={`/executions/${ex.id}`}
+                  to={ROUTE_PATHS.executionDetail(ex.id)}
                   aria-label={`View execution ${ex.id}`}
                   className="font-mono"
                   style={{

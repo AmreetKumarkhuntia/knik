@@ -3,13 +3,17 @@ import type { StatStripProps } from '$types'
 
 export default function StatStrip({ stats, className = '' }: StatStripProps) {
   return (
-    <div className={`flex flex-wrap items-center gap-4 p-4 knik-card bg-surface-2/50 ${className}`}>
+    <div
+      className={`flex flex-wrap items-center gap-4 p-4 knik-card bg-[color-mix(in_srgb,var(--bg-surface-2)_50%,transparent)] ${className}`}
+    >
       {stats.map((stat, i) => (
         <React.Fragment key={i}>
           <div className="flex flex-col gap-1 min-w-[120px]">
             <div className="flex items-center gap-2 text-fg-3 text-sm">
               {stat.icon && (
-                <span className="material-symbols-outlined text-[16px]">{stat.icon}</span>
+                <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                  {stat.icon}
+                </span>
               )}
               <span>{stat.label}</span>
             </div>

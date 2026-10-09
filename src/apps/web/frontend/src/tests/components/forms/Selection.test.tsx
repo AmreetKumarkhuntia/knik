@@ -23,16 +23,16 @@ function RichChoice() {
 it('rich selection supports arrows, Enter, Escape and empty choices', async () => {
   const user = userEvent.setup(),
     view = render(<RichChoice />)
-  await user.click(screen.getByRole('button', { name: 'Model' }))
+  await user.click(screen.getByRole('button', { name: /^Model\b/ }))
   await user.keyboard('{ArrowDown}{Enter}')
-  expect(screen.getByRole('button', { name: 'Model' })).toHaveTextContent('Two')
+  expect(screen.getByRole('button', { name: /^Model\b/ })).toHaveTextContent('Two')
   expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Model' }))
+  await user.click(screen.getByRole('button', { name: /^Model\b/ }))
   await user.keyboard('{Escape}')
-  expect(screen.getByRole('button', { name: 'Model' })).toHaveFocus()
+  expect(screen.getByRole('button', { name: /^Model\b/ })).toHaveFocus()
   view.rerender(<Select presentation="rich" value="unknown" options={[]} aria-label="Empty" />)
-  expect(screen.getByRole('button', { name: 'Empty' })).toBeDisabled()
-  expect(screen.getByRole('button', { name: 'Empty' })).toHaveTextContent('unknown')
+  expect(screen.getByRole('button', { name: /^Empty\b/ })).toBeDisabled()
+  expect(screen.getByRole('button', { name: /^Empty\b/ })).toHaveTextContent('unknown')
 })
 
 function Choices() {

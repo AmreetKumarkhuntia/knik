@@ -82,6 +82,8 @@ export function validateDemoSource(seed: DemoSnapshot) {
   for (const scenario of seed.chatScenarios)
     if (scenario.modelId && !seed.models.some(model => model.id === scenario.modelId))
       throw new Error(`Invalid demo source: chat scenario references a missing model.`)
+  if (seed.settings.model && !seed.models.some(model => model.id === seed.settings.model))
+    throw new Error(`Invalid demo source: settings select a missing model.`)
 }
 
 export function freezeSeed<T>(value: T): T {

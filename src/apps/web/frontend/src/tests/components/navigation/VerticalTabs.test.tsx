@@ -1,33 +1,25 @@
-import { act, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import VerticalTabs from '$components/navigation/VerticalTabs'
 
-afterEach(() => vi.unstubAllGlobals())
+const tabs = [
+  { id: 'general', label: 'General', content: 'General content' },
+  { id: 'appearance', label: 'Appearance', content: 'Appearance content' },
+  { id: 'providers', label: 'Providers', content: 'Providers content' },
+]
 
 describe('responsive settings navigation', () => {
-  it('updates keyboard orientation when switching from a sidebar to horizontal tabs', async () => {
-    vi.stubGlobal('innerWidth', 1024)
+  it('updates keyboard orientation when its widget switches from a sidebar to horizontal tabs', async () => {
     const user = userEvent.setup()
-    render(
-      <VerticalTabs
-        tabs={[
-          { id: 'general', label: 'General', content: 'General content' },
-          { id: 'appearance', label: 'Appearance', content: 'Appearance content' },
-          { id: 'providers', label: 'Providers', content: 'Providers content' },
-        ]}
-      />
-    )
+    const view = render(<VerticalTabs tabs={tabs} />)
     expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical')
     screen.getByRole('tab', { name: 'General' }).focus()
     await user.keyboard('{ArrowDown}')
     expect(screen.getByRole('tab', { name: 'Appearance' })).toHaveFocus()
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Appearance content')
 
-    act(() => {
-      vi.stubGlobal('innerWidth', 390)
-      window.dispatchEvent(new Event('resize'))
-    })
+    view.rerender(<VerticalTabs tabs={tabs} orientation="horizontal" />)
     expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal')
     await user.keyboard('{ArrowRight}')
     expect(screen.getByRole('tab', { name: 'Providers' })).toHaveFocus()

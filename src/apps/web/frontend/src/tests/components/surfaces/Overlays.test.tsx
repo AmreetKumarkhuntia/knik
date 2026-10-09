@@ -35,6 +35,14 @@ describe('overlay ownership', () => {
       expect(document.body.style.overflow).toBe('')
     }
   )
+  it('draws the drawer close control with a hidden Material Symbols icon', async () => {
+    const user = userEvent.setup()
+    render(<DialogExample placement="right" />)
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    const close = screen.getByRole('button', { name: 'Close Edit' })
+    expect(close).toHaveTextContent(/^close$/)
+    expect(close.firstElementChild).toHaveAttribute('aria-hidden', 'true')
+  })
   it('traps dialog focus, restores it and unlocks scrolling', async () => {
     const user = userEvent.setup()
     render(<DialogExample />)

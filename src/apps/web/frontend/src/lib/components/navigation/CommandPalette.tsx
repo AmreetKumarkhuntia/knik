@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { CommandPaletteProps } from '$types'
 import Modal from '../surfaces/Modal'
 import Input from '../forms/Input'
@@ -13,7 +13,9 @@ function CommandList({
   onClose,
 }: Omit<CommandPaletteProps, 'open'>) {
   const [active, setActive] = useState(0)
+  const listboxId = useId()
   const items = commands.flatMap(group => group.items)
+  const optionId = (index: number) => `${listboxId}-option-${index}`
   const choose = (id: string) => {
     onSelect(id)
     onClose()
@@ -22,7 +24,12 @@ function CommandList({
     <div>
       <Input
         autoFocus
+        role="combobox"
         aria-label="Search commands"
+        aria-expanded="true"
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={items.length ? optionId(active) : undefined}
         value={query}
         density="compact"
         placeholder="Type a command or search…"
@@ -44,12 +51,20 @@ function CommandList({
           }
         }}
       />
-      <div className="mt-3 max-h-[300px] overflow-y-auto flex flex-col gap-1">
+      <div
+        id={listboxId}
+        role="listbox"
+        aria-label="Commands"
+        className="mt-3 max-h-[300px] overflow-y-auto flex flex-col gap-1"
+      >
         {items.map((item, index) => (
           <Button
             key={item.id}
+            id={optionId(index)}
+            role="option"
+            aria-selected={active === index}
             variant="ghost"
-            className={`justify-start ${active === index ? 'bg-surface-3' : ''}`}
+            className={`justify-start ${active === index ? 'text-[var(--acc-text)] bg-[var(--acc-soft)] border-[var(--acc-border)]' : ''}`}
             onClick={() => choose(item.id)}
             icon={item.icon && <MS name={item.icon} />}
           >
@@ -57,8 +72,8 @@ function CommandList({
             {item.shortcut && <span className="ml-auto text-xs text-fg-4">{item.shortcut}</span>}
           </Button>
         ))}
-        {!items.length && <p className="text-sm text-fg-4 p-3">No matching commands.</p>}
       </div>
+      {!items.length && <p className="text-sm text-fg-4 p-3">No matching commands.</p>}
     </div>
   )
 }

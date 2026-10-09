@@ -3,7 +3,8 @@
    Single source of truth for colors, typography, spacing, motion,
    shadows and radii. Fixed teal palette with light and dark modes.
 
-   Reference: docs/design/colors_and_type.css
+   Approved palette: docs/plan/07-frontend-component-consolidation.md
+   Design-system copy: docs/design/colors_and_type.css
    ================================================================= */
 
 @import url('https://rsms.me/inter/inter.css');
@@ -33,18 +34,20 @@
   --fg-inverse: #18191b;
 
   /* -----------------------------------------------------------------
-     Brand: Aurora (KNIK cyan — primary accent)
+     Brand: Aurora (KNIK teal — primary accent)
+     300/400 follow the active theme's primary so accent text keeps
+     its contrast in light mode; the rest of the ladder shares its hue.
      ----------------------------------------------------------------- */
-  --aurora-50: #e6fbff;
-  --aurora-100: #b8f3fd;
-  --aurora-200: #79e6f9;
+  --aurora-50: #edf8f7;
+  --aurora-100: #d3eeeb;
+  --aurora-200: #a8dcd6;
   --aurora-300: var(--primary-hover);
   --aurora-400: var(--primary);
   --aurora-500: #348f85;
-  --aurora-600: #008faa;
-  --aurora-700: #006a80;
-  --aurora-800: #054757;
-  --aurora-900: #082b36;
+  --aurora-600: #276d65;
+  --aurora-700: #1c544e;
+  --aurora-800: #123b36;
+  --aurora-900: #0b2825;
 
   /* -----------------------------------------------------------------
      Brand: Deep-teal (workflow / secondary accent)
@@ -64,26 +67,31 @@
 
   /* -----------------------------------------------------------------
      Semantic status colors
+     Text tones stay >= 4.5:1 on surface and surface-2 in both themes,
+     including over their own -bg tint (enforced by tests/styles).
      ----------------------------------------------------------------- */
   --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.16);
+  --success-bg: rgba(16, 185, 129, 0.12);
   --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.16);
-  --danger: #ef4444;
-  --danger-bg: rgba(239, 68, 68, 0.16);
-  --info: #3b82f6;
-  --info-bg: rgba(59, 130, 246, 0.16);
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --danger: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --info: #60a5fa;
+  --info-bg: rgba(59, 130, 246, 0.12);
 
   /* -----------------------------------------------------------------
      Borders / dividers — three depths only
+     --border-3 also outlines form controls, so it keeps >= 3:1 against
+     the surfaces they sit on (WCAG 1.4.11).
      ----------------------------------------------------------------- */
   --border-1: #2d3136;
   --border-2: #363a40;
-  --border-3: #555c65;
+  --border-3: #707881;
   --border-focus: var(--primary);
 
   /* -----------------------------------------------------------------
-     Primary semantic aliases (theme-aware — set by ThemeProvider)
+     Primary semantic aliases (theme-aware — overridden by the
+     [data-theme='light'] block below)
      ----------------------------------------------------------------- */
   --primary: #55b8ac;
   --primary-hover: #6dc7bc;
@@ -100,7 +108,7 @@
   --pad-card: 16px;
 
   /* -----------------------------------------------------------------
-     Shadows / elevation — three levels + glow
+     Shadows / elevation — three levels; glow tokens stay none
      ----------------------------------------------------------------- */
   --shadow-1: none;
   --shadow-2: 0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
@@ -265,15 +273,17 @@
 
   --border-1: #e6e9ec;
   --border-2: #dce1e5;
-  --border-3: #87929c;
+  --border-3: #7c8791;
 
   --primary: #147d73;
   --primary-hover: #10665e;
   --primary-soft: color-mix(in srgb, var(--primary) 9%, transparent);
+  /* Selected rows set --acc-text on --acc-soft, where light --primary stays under 4.5:1. */
+  --acc-text: var(--primary-hover);
   --on-primary: #ffffff;
   --success: #167348;
   --warning: #895600;
-  --danger: #bc3333;
+  --danger: #b42f2f;
   --info: #285eaf;
   --color-primary-rgb: 20, 125, 115;
 

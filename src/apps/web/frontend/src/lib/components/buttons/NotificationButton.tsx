@@ -19,7 +19,7 @@ export default function NotificationButton({
     >
       <MS name="notifications" size={20} />
       {badgeCount > 0 && (
-        <span className="absolute -top-1 -right-1 rounded-full bg-[var(--danger)] px-1 text-[10px] text-white">
+        <span className="absolute -top-1 -right-1 rounded-full bg-[var(--danger)] px-1 text-[10px] text-[var(--fg-inverse)]">
           {badgeCount}
         </span>
       )}

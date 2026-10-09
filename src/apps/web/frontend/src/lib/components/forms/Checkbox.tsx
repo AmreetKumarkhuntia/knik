@@ -40,7 +40,7 @@ export default function Checkbox({
           }}
           onChange={e => !disabled && onChange(e.target.checked)}
           disabled={disabled}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-inherit z-10"
+          className="absolute inset-0 w-full h-full opacity-0 [cursor:inherit] z-10"
         />
         {checked && !indeterminate && (
           <div
