@@ -1,7 +1,11 @@
-export { default as Home } from './Home'
-export { default as Workflows } from './Workflows'
-export { default as WorkflowBuilder } from './WorkflowBuilder'
-export { default as ExecutionDetail } from './ExecutionDetail'
-export { default as AllExecutions } from './AllExecutions'
-export { default as Schedules } from './Schedules'
-export { default as Settings } from './Settings'
+import { lazy } from 'react'
+
+// Routes load on first visit so page-only code (workflow canvas, chat markdown and
+// syntax highlighting) stays out of the entry chunk.
+export const Home = lazy(() => import('./Home'))
+export const Workflows = lazy(() => import('./Workflows'))
+export const WorkflowBuilder = lazy(() => import('./WorkflowBuilder'))
+export const ExecutionDetail = lazy(() => import('./ExecutionDetail'))
+export const AllExecutions = lazy(() => import('./AllExecutions'))
+export const Schedules = lazy(() => import('./Schedules'))
+export const Settings = lazy(() => import('./Settings'))

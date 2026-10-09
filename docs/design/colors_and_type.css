@@ -1,6 +1,8 @@
 /* =================================================================
    KNIK — Colors & Type
-   Dark-first system with teal/cyan accents and Linear-style type.
+   Fixed teal palette with dark and light modes, solid surfaces and
+   Linear-style type. Mirrors src/apps/web/frontend/src/styles/tokens.css
+   (approved in docs/plan/07-frontend-component-consolidation.md).
    ================================================================= */
 
 @import url("https://rsms.me/inter/inter.css");
@@ -12,38 +14,39 @@
    ----------------------------------------------------------------- */
 :root {
   /* ---- Surfaces (dark / default) ------------------------------- */
-  --bg-base: #07090d; /* outermost canvas, ink-black with a hint of blue */
-  --bg-surface: #0d1117; /* page surface */
-  --bg-surface-2: #11161f; /* raised: cards, table rows */
-  --bg-surface-3: #161c27; /* hover / pressed surface */
-  --bg-glass: rgba(15, 20, 28, 0.66); /* sidebar, sticky bars */
-  --bg-canvas: #08101a; /* workflow / chat canvas */
-  --bg-code: #0c1118; /* code blocks */
+  --bg-base: #18191b; /* outermost canvas, neutral graphite */
+  --bg-surface: #202225; /* page surface */
+  --bg-surface-2: #282b2f; /* raised: cards, table rows */
+  --bg-surface-3: #303439; /* hover / pressed surface */
+  --bg-glass: var(--bg-surface); /* sidebar, sticky bars (solid) */
+  --bg-canvas: var(--bg-base); /* workflow / chat canvas */
+  --bg-code: #1b1d20; /* code blocks */
 
   /* ---- Text ---------------------------------------------------- */
-  --fg-1: #f6f8fb; /* primary heading, hi-emphasis */
-  --fg-2: #d6dde7; /* body text */
-  --fg-3: #9aa6b6; /* secondary */
-  --fg-4: #6a7585; /* muted, helper text */
-  --fg-5: #424c5b; /* placeholder, disabled */
-  --fg-inverse: #07090d; /* on bright accents */
+  --fg-1: #f1f2f3; /* primary heading, hi-emphasis */
+  --fg-2: #d7dade; /* body text */
+  --fg-3: #a5abb3; /* secondary */
+  --fg-4: #a5abb3; /* muted, helper text */
+  --fg-5: #929aa4; /* placeholder, disabled */
+  --fg-inverse: #18191b; /* on bright accents */
 
-  /* ---- Brand: KNIK cyan / aurora ------------------------------- */
-  --aurora-50: #e6fbff;
-  --aurora-100: #b8f3fd;
-  --aurora-200: #79e6f9;
-  --aurora-300: #34d3ee;
-  --aurora-400: #00d9f4; /* primary accent — KNIK cyan */
-  --aurora-500: #00b8d4;
-  --aurora-600: #008faa;
-  --aurora-700: #006a80;
-  --aurora-800: #054757;
-  --aurora-900: #082b36;
+  /* ---- Brand: KNIK teal / aurora ------------------------------- */
+  /* 300/400 follow the active theme's primary; one hue throughout. */
+  --aurora-50: #edf8f7;
+  --aurora-100: #d3eeeb;
+  --aurora-200: #a8dcd6;
+  --aurora-300: var(--primary-hover);
+  --aurora-400: var(--primary); /* primary accent — KNIK teal */
+  --aurora-500: #348f85;
+  --aurora-600: #276d65;
+  --aurora-700: #1c544e;
+  --aurora-800: #123b36;
+  --aurora-900: #0b2825;
 
   /* ---- Brand: deep-teal (workflow / secondary) ----------------- */
   --teal-300: #5eead4;
-  --teal-400: #2dd4bf;
-  --teal-500: #14b8a6;
+  --teal-400: #55b8ac;
+  --teal-500: #348f85;
   --teal-600: #0d9488;
   --teal-700: #0f766e;
 
@@ -53,47 +56,46 @@
   --violet-600: #7c3aed;
 
   /* ---- Semantic ------------------------------------------------ */
+  /* Text tones keep >= 4.5:1 on surface/surface-2, also over the tint. */
   --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.16);
+  --success-bg: rgba(16, 185, 129, 0.12);
   --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.16);
-  --danger: #ef4444;
-  --danger-bg: rgba(239, 68, 68, 0.16);
-  --info: #3b82f6;
-  --info-bg: rgba(59, 130, 246, 0.16);
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --danger: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --info: #60a5fa;
+  --info-bg: rgba(59, 130, 246, 0.12);
 
   /* ---- Borders / dividers -------------------------------------- */
-  --border-1: rgba(255, 255, 255, 0.06); /* hairline */
-  --border-2: rgba(255, 255, 255, 0.1); /* default */
-  --border-3: rgba(255, 255, 255, 0.18); /* emphasized */
-  --border-focus: var(--aurora-400);
+  --border-1: #2d3136; /* hairline */
+  --border-2: #363a40; /* default */
+  --border-3: #707881; /* emphasized + control outlines, >= 3:1 on surfaces */
+  --border-focus: var(--primary);
 
   /* ---- Primary semantic aliases -------------------------------- */
-  --primary: var(--aurora-400);
-  --primary-hover: var(--aurora-300);
-  --primary-soft: rgba(0, 217, 244, 0.12);
-  --primary-soft-2: rgba(0, 217, 244, 0.22);
-  --on-primary: #04141a;
+  --primary: #55b8ac;
+  --primary-hover: #6dc7bc;
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --primary-soft-2: color-mix(in srgb, var(--primary) 18%, transparent);
+  --on-primary: #101c1a;
 
   /* ---- Shadows / elevation ------------------------------------- */
-  --shadow-1:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-1: none;
   --shadow-2:
     0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --shadow-3:
     0 20px 50px -12px rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  --glow-primary:
-    0 0 0 1px rgba(0, 217, 244, 0.35), 0 10px 30px -10px rgba(0, 217, 244, 0.55);
-  --glow-teal: 0 0 30px -8px rgba(20, 184, 166, 0.45);
+  --glow-primary: none; /* ambient glow is retired */
+  --glow-teal: none;
 
   /* ---- Radii --------------------------------------------------- */
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-md: 6px; /* controls */
+  --radius-lg: 10px; /* panels, cards */
+  --radius-xl: 12px; /* composer, modals */
+  --radius-2xl: 12px;
   --radius-pill: 999px;
 
   /* ---- Spacing scale (4px base) -------------------------------- */
@@ -119,20 +121,21 @@
   --font-mono:
     "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
 
-  /* ---- Type scale (Linear-ish) -------------------------------- */
-  /* Display + heading sizes lean LARGE with tightened tracking.   */
+  /* ---- Type scale (compact) ----------------------------------- */
+  /* Page titles 24px, section titles 16px, interface text 14px,   */
+  /* chat text 16px. Display sizes are for marketing only.         */
   --fs-display-2xl: clamp(56px, 7vw, 88px);
   --fs-display-xl: clamp(40px, 5vw, 64px);
   --fs-display-lg: 40px;
-  --fs-h1: 32px;
-  --fs-h2: 24px;
-  --fs-h3: 18px;
+  --fs-h1: 24px;
+  --fs-h2: 16px;
+  --fs-h3: 16px;
   --fs-h4: 16px;
-  --fs-body-lg: 17px;
-  --fs-body: 15px;
+  --fs-body-lg: 16px;
+  --fs-body: 14px;
   --fs-body-sm: 13px;
   --fs-caption: 12px;
-  --fs-micro: 11px;
+  --fs-micro: 12px;
 
   --lh-tight: 1.05;
   --lh-snug: 1.2;
@@ -156,35 +159,40 @@
   --dur-slower: 700ms;
 
   /* ---- Effects ------------------------------------------------- */
-  --blur-glass: blur(20px) saturate(140%);
+  --blur-glass: none; /* surfaces are solid; no backdrop blur */
   --grid-line: rgba(255, 255, 255, 0.05);
   --grid-line-strong: rgba(255, 255, 255, 0.08);
 }
 
-/* Light mode (rare — KNIK is dark-first) */
+/* Light mode — same structure, retuned for contrast on white */
 [data-theme="light"] {
-  --bg-base: #fdfdfd;
+  --bg-base: #f7f8f8;
   --bg-surface: #ffffff;
-  --bg-surface-2: #f5f6f8;
-  --bg-surface-3: #eceef2;
-  --bg-glass: rgba(255, 255, 255, 0.7);
-  --bg-canvas: #f0f2f5;
+  --bg-surface-2: #f0f2f3;
+  --bg-surface-3: #e7ebee;
+  --bg-glass: var(--bg-surface);
+  --bg-canvas: var(--bg-base);
   --bg-code: #f1f3f5;
 
-  --fg-1: #0b0f14;
-  --fg-2: #1d2530;
-  --fg-3: #5b6677;
-  --fg-4: #8893a3;
-  --fg-5: #b5bdc8;
+  --fg-1: #1c2024;
+  --fg-2: #30373e;
+  --fg-3: #59636e;
+  --fg-4: #59636e;
+  --fg-5: #68737d;
   --fg-inverse: #ffffff;
 
-  --border-1: rgba(0, 0, 0, 0.05);
-  --border-2: rgba(0, 0, 0, 0.1);
-  --border-3: rgba(0, 0, 0, 0.18);
+  --border-1: #e6e9ec;
+  --border-2: #dce1e5;
+  --border-3: #7c8791;
 
-  --primary: var(--aurora-500);
-  --primary-hover: var(--aurora-600);
-  --primary-soft: rgba(0, 184, 212, 0.1);
+  --primary: #147d73;
+  --primary-hover: #10665e;
+  --primary-soft: color-mix(in srgb, var(--primary) 9%, transparent);
+  --on-primary: #ffffff;
+  --success: #167348;
+  --warning: #895600;
+  --danger: #b42f2f;
+  --info: #285eaf;
 }
 
 /* -----------------------------------------------------------------
@@ -309,17 +317,14 @@ code,
 }
 
 .card {
-  background: var(--bg-surface-2);
+  background: var(--bg-surface);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
 }
 
+/* Retired: decorative mesh gradients. Kept as a solid base for old mocks. */
 .mesh-bg {
   background-color: var(--bg-base);
-  background-image:
-    radial-gradient(at 8% 0%, rgba(0, 217, 244, 0.16) 0px, transparent 50%),
-    radial-gradient(at 95% 100%, rgba(20, 184, 166, 0.1) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(139, 92, 246, 0.06) 0px, transparent 60%);
 }
 
 .dot-grid {
@@ -334,28 +339,16 @@ code,
   background-size: 40px 40px;
 }
 
+/* Retired: decorative gradients resolve to the solid accent. */
 .gradient-text {
-  background: linear-gradient(
-    95deg,
-    var(--aurora-200) 0%,
-    var(--aurora-400) 50%,
-    var(--teal-400) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--primary);
 }
 
 .gradient-brand {
-  background: linear-gradient(
-    135deg,
-    var(--aurora-400) 0%,
-    var(--teal-500) 100%
-  );
+  background: var(--primary);
 }
 
-/* Glow rings for active / focused states */
+/* Retired: glow rings resolve to none; use the 2px focus ring instead. */
 .glow-ring {
   box-shadow: var(--glow-primary);
 }

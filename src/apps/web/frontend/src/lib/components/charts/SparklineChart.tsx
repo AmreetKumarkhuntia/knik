@@ -9,7 +9,7 @@ export default function SparklineChart({
   className = '',
 }: SparklineChartProps) {
   const points = useMemo(() => {
-    if (!data || data.length === 0) return ''
+    if (data.length === 0) return ''
     const min = Math.min(...data)
     const max = Math.max(...data)
     const range = max - min || 1
@@ -30,7 +30,7 @@ export default function SparklineChart({
   // Stable unique ID for the gradient to prevent conflicts if multiple sparklines exist
   const gradientId = `sp-grad-${useId().replace(/:/g, '')}`
 
-  if (!data || data.length < 2) return null
+  if (data.length < 2) return null
 
   const pathD = `M${points}`
   const areaD = `${pathD} L280,64 L0,64 Z`

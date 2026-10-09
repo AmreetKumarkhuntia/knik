@@ -14,8 +14,8 @@ If the user invokes this skill without any other guidance, ask them what they wa
 
 Key constants to remember:
 
-- **Dark-first.** Render every output on `--bg-base` (#07090D). Light mode is a fallback, not the canvas.
-- **Primary accent is cyan/teal** (`--aurora-400` = #00D9F4). Use sparingly, mostly for the _one_ primary action on a screen.
+- **Dark-first.** Render every output on `--bg-base` (#18191B graphite) with solid surfaces. Light mode (#F7F8F8) is a fallback, not the canvas.
+- **Primary accent is teal** (`--aurora-400` = `--primary` = #55B8AC dark, #147D73 light). Use sparingly, mostly for the _one_ primary action on a screen. No glow, glass or decorative gradients.
 - **Type** is Inter Variable (display 600 / body 400) with **tight tracking** (`-0.025em` for headings, `-0.04em` for display). Mono is JetBrains Mono.
 - **Easing** is `cubic-bezier(0.16, 1, 0.3, 1)`. Use springs only for chat / node enter-exit.
 - **Iconography** is Material Symbols Outlined (wght 400 / opsz 24). Don’t hand-draw SVG icons unless the system requires it.

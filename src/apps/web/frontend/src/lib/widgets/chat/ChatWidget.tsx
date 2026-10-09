@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import {
   ChatBubble,
   MarkdownMessage,
@@ -19,7 +19,66 @@ import { useChatStore, useChatScope, useSendMessage } from '$stores/chat'
 import { useSettingsStore } from '$stores/settings'
 import { useFeedbackStore } from '$stores/feedback'
 import { useChatView, useProvidersView } from '$stores/views'
+import { useCopyToClipboard } from '$widgets/feedback/useCopyToClipboard'
 import type { InputPanelRef } from '$types/sections/chat'
+import type { ChatTranscriptProps } from '$types/widgets/chat-shell'
+
+// Memoized apart from the composer so typing a draft never re-renders or re-parses the transcript.
+// The log stays mounted while empty so the first reply is announced too.
+const ChatTranscript = memo(function ChatTranscript({
+  messages,
+  initials,
+  summaryMessageId,
+  onCopy,
+}: ChatTranscriptProps) {
+  return (
+    <div
+      role="log"
+      aria-live="polite"
+      aria-label="Conversation"
+      className={
+        messages.length > 0 ? 'w-full max-w-[800px] mx-auto py-6 flex flex-col gap-6' : undefined
+      }
+    >
+      {messages.map((message, index) => {
+        const { isUser, steps, modelTag, messageId } = message
+        return (
+          <div key={`${message.id || messageId}:${index}`}>
+            <ChatBubble
+              role={isUser ? 'user' : 'assistant'}
+              content={<MarkdownMessage content={message.content} onCopy={onCopy} />}
+              avatar={
+                isUser ? (
+                  <Avatar initials={initials} size={30} />
+                ) : (
+                  <div className="flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-[var(--acc-soft)] border border-[var(--acc-border)]">
+                    <KnikGlyph size={16} />
+                  </div>
+                )
+              }
+              header={
+                !isUser ? (
+                  <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
+                    <span className="font-semibold text-fg-1">Knik AI</span>
+                    {modelTag && <span className="text-xs text-fg-3">{modelTag}</span>}
+                    {message.timestamp && (
+                      <span className="text-xs text-fg-3">{message.timestampLabel}</span>
+                    )}
+                  </div>
+                ) : undefined
+              }
+              reasoning={!isUser && steps.length > 0 ? <AgentThinking steps={steps} /> : undefined}
+              actions={!isUser ? { copy: () => onCopy(message.content) } : undefined}
+            />
+            {summaryMessageId === messageId && (
+              <CompactionDivider summaryContent={message.content} onCopy={onCopy} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+})
 
 function ChatSessionWidget() {
   const activeId = useChatStore(state => state.activeConversationId)
@@ -32,6 +91,7 @@ function ChatSessionWidget() {
   const toggleTool = useSettingsStore(state => state.toggleTool)
   const sendMessage = useSendMessage()
   const addToast = useFeedbackStore(state => state.addToast)
+  const copy = useCopyToClipboard()
   const inputRef = useRef<InputPanelRef>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const atBottom = useRef(true)
@@ -64,18 +124,6 @@ function ChatSessionWidget() {
     if (atBottom.current && scrollRef.current)
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [conversation?.messages.length])
-
-  const copy = (text: string) => {
-    const clipboard = Reflect.get(navigator, 'clipboard') as Clipboard | undefined
-    if (!clipboard) {
-      addToast('Clipboard is unavailable in this browser.', 'error')
-      return
-    }
-    void clipboard
-      .writeText(text)
-      .then(() => addToast('Copied to clipboard.'))
-      .catch(() => addToast('Could not copy to the clipboard.', 'error'))
-  }
 
   const send = () => {
     const result = sendMessage(scopeId)
@@ -112,48 +160,13 @@ function ChatSessionWidget() {
               />
             )}
           </WelcomeContainer>
-        ) : (
-          <div className="w-full max-w-[800px] mx-auto py-6 flex flex-col gap-6">
-            {messages.map((message, index) => {
-              const { isUser, steps, modelTag, messageId } = message
-              return (
-                <div key={`${message.id || messageId}:${index}`}>
-                  <ChatBubble
-                    role={isUser ? 'user' : 'assistant'}
-                    content={<MarkdownMessage content={message.content} onCopy={copy} />}
-                    avatar={
-                      isUser ? (
-                        <Avatar initials={initials} size={30} />
-                      ) : (
-                        <div className="flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-[var(--acc-soft)] border border-[var(--acc-border)]">
-                          <KnikGlyph size={16} />
-                        </div>
-                      )
-                    }
-                    header={
-                      !isUser ? (
-                        <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
-                          <span className="font-semibold text-fg-1">Knik AI</span>
-                          {modelTag && <span className="text-xs text-fg-3">{modelTag}</span>}
-                          {message.timestamp && (
-                            <span className="text-xs text-fg-3">{message.timestampLabel}</span>
-                          )}
-                        </div>
-                      ) : undefined
-                    }
-                    reasoning={
-                      !isUser && steps.length > 0 ? <AgentThinking steps={steps} /> : undefined
-                    }
-                    actions={!isUser ? { copy: () => copy(message.content) } : undefined}
-                  />
-                  {conversation?.summary_message_id === messageId && (
-                    <CompactionDivider summaryContent={message.content} onCopy={copy} />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
+        ) : null}
+        <ChatTranscript
+          messages={messages}
+          initials={initials}
+          summaryMessageId={conversation?.summary_message_id}
+          onCopy={copy}
+        />
       </div>
       <div className="w-full max-w-[800px] mx-auto pt-3 shrink-0">
         <ChatComposer
@@ -187,5 +200,19 @@ function ChatSessionWidget() {
 
 export default function ChatWidget() {
   const conversationId = useChatStore(state => state.activeConversationId)
-  return <ChatSessionWidget key={conversationId || 'new-chat'} />
+  // sendMessage binds the welcome screen's scope to the conversation its first send creates.
+  const createdBySession = useChatStore(state =>
+    Object.values(state.scopes).some(
+      scope => conversationId !== null && scope?.resourceId === conversationId
+    )
+  )
+  // Switching conversations remounts the session, but the first send keeps it mounted so the
+  // live log announces the reply and the composer keeps focus.
+  const [session, setSession] = useState({ conversationId, generation: 0 })
+  if (session.conversationId !== conversationId)
+    setSession({
+      conversationId,
+      generation: session.generation + (createdBySession ? 0 : 1),
+    })
+  return <ChatSessionWidget key={session.generation} />
 }

@@ -32,7 +32,7 @@ export const STYLE_CONFIG = {
   cardVariants: {
     default: 'knik-card',
     elevated: 'knik-card shadow-knik-2',
-    glass: 'knik-card--glass',
+    glass: 'knik-card',
   },
 
   cardPadding: {
@@ -48,7 +48,7 @@ export const STYLE_CONFIG = {
     },
     admin: {
       bg: 'bg-[var(--danger)]',
-      text: 'text-white',
+      text: 'text-[var(--fg-inverse)]',
     },
     basic: {
       bg: 'bg-surface-3',

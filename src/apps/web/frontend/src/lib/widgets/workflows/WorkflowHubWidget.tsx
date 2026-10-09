@@ -5,6 +5,7 @@ import HubRecentExecutions from '$components/workflows/HubRecentExecutions'
 import HubWorkflowsTable from '$components/workflows/HubWorkflowsTable'
 import { useWorkflowHubView } from '$stores/views'
 import { useFeedbackStore } from '$stores/feedback'
+import { ROUTE_PATHS, ROUTES } from '$lib/constants/navigation'
 
 export default function WorkflowHubWidget() {
   const {
@@ -24,7 +25,7 @@ export default function WorkflowHubWidget() {
   const handleRun = (id: string) => {
     const result = runWorkflow(id)
     if (!result.ok) addToast(result.error, 'info')
-    else if (result.id !== undefined) void navigate(`/executions/${result.id}`)
+    else if (result.id !== undefined) void navigate(ROUTE_PATHS.executionDetail(result.id))
   }
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
@@ -34,7 +35,7 @@ export default function WorkflowHubWidget() {
           subtitle={`${rows.length} of ${count} shown`}
           actions={
             <Link
-              to="/workflows/create"
+              to={ROUTES.builder}
               className="inline-flex min-h-9 max-sm:min-h-11 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-[var(--on-primary)] whitespace-nowrap"
             >
               <MS name="add" size={16} />

@@ -4,20 +4,15 @@ import { EmptyState, ExecutionFlowGraph, ExecutionTimeline, MS, Tabs } from '$co
 import Button from '$components/buttons/Button'
 import JsonViewer from '$components/chat/JsonViewer'
 import { useExecutionDetailView } from '$stores/views'
-import { useFeedbackStore } from '$stores/feedback'
+import { useCopyToClipboard } from '$widgets/feedback/useCopyToClipboard'
+import { ROUTES } from '$lib/constants/navigation'
 import type { ExecutionDetailWidgetProps } from '$types/sections/workflow-builder'
 import type { ExecutionDetailTab } from '$types/stores/executions'
 
 export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWidgetProps) {
   const navigate = useNavigate()
   const panelId = useId()
-  const addToast = useFeedbackStore(state => state.addToast)
-  const handleCopy = (text: string) => {
-    void Promise.resolve()
-      .then(() => navigator.clipboard.writeText(text))
-      .then(() => addToast('Copied to clipboard.', 'success'))
-      .catch(() => addToast('Could not copy to clipboard.', 'error'))
-  }
+  const handleCopy = useCopyToClipboard()
   const {
     execution,
     timeline,
@@ -35,9 +30,7 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
         icon="search_off"
         title="Execution not found"
         description="This execution is not available in the current demo session."
-        action={
-          <Button onClick={() => void navigate('/workflows/executions')}>View executions</Button>
-        }
+        action={<Button onClick={() => void navigate(ROUTES.executions)}>View executions</Button>}
       />
     )
   return (
@@ -56,7 +49,7 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
           ))}
         </dl>
       </div>
-      <div
+      <section
         className="h-[580px] shrink-0 md:h-auto md:flex-1 md:min-h-48 relative"
         aria-label="Execution flow"
       >
@@ -68,7 +61,7 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
           timeline={timeline}
           className="h-full w-full"
         />
-      </div>
+      </section>
       <section
         aria-label="Execution details"
         className={`shrink-0 flex flex-col border-t border-border bg-surface ${collapsed ? '' : 'md:h-[280px]'}`}

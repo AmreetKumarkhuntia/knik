@@ -250,6 +250,151 @@ describe('frontend dependency ownership', () => {
     ).toHaveLength(0)
   })
 
+  it.each(['actions.ts', 'selectors.ts', 'hooks.ts', 'index.ts', 'graphChanges.ts'])(
+    'rejects peer-domain runtime imports from every domain file: schedules/%s',
+    file => {
+      const from = `src/lib/stores/schedules/${file}`
+      expect(lint("import { createWorkflowStore } from '../workflows/store'", from)).toHaveLength(1)
+      expect(lint("import { useWorkflowStore } from '$stores/workflows'", from)).toHaveLength(1)
+      expect(lint("const store = import('../workflows/store')", from)).toHaveLength(1)
+    }
+  )
+
+  it.each([
+    [
+      'a same-domain helper',
+      {
+        'src/lib/stores/schedules/actions.ts':
+          "import { createWorkflowStore } from '../workflows/store'\nexport const scheduleActions = () => createWorkflowStore()",
+      },
+    ],
+    [
+      'a lazy import in a same-domain helper',
+      {
+        'src/lib/stores/schedules/actions.ts':
+          "export const scheduleActions = () => import('../workflows/store')",
+      },
+    ],
+    [
+      'a non-store helper',
+      {
+        'src/lib/stores/schedules/actions.ts':
+          "import { helper } from '$utils/helper'\nexport const scheduleActions = helper",
+        'src/lib/utils/helper.ts':
+          "import { createWorkflowStore } from '../stores/workflows/store'\nexport const helper = () => createWorkflowStore()",
+      },
+    ],
+    [
+      'the session coordinator',
+      {
+        'src/lib/stores/schedules/actions.ts':
+          "import { createSessionCommands } from '../session/commands'\nexport const scheduleActions = createSessionCommands",
+        'src/lib/stores/session/commands.ts':
+          "import { createRunWorkflowCommand } from '../executions/actions'\nexport const createSessionCommands = createRunWorkflowCommand",
+      },
+    ],
+  ])('follows plain imports to peer domains through %s', (_, files) => {
+    const virtual = {
+      ...files,
+      'src/lib/stores/workflows/store.ts': 'export const createWorkflowStore = () => null',
+      'src/lib/stores/executions/actions.ts': 'export const createRunWorkflowCommand = () => null',
+    }
+    expect(
+      lint(
+        "import { scheduleActions } from './actions'",
+        'src/lib/stores/schedules/store.ts',
+        virtual
+      )
+    ).toHaveLength(1)
+  })
+
+  it('rejects domain imports of cross-domain views and demo seeds', () => {
+    expect(
+      lint("import { useChatView } from '$stores/views'", 'src/lib/stores/chat/hooks.ts')
+    ).toHaveLength(1)
+    expect(
+      lint("import { createDemoSeed } from '../demo'", 'src/lib/stores/chat/actions.ts')
+    ).toHaveLength(1)
+  })
+
+  it('allows domain files to read the session bundle and peer types', () => {
+    const files = {
+      'src/lib/stores/session/useStoreBundle.ts':
+        "import { useContext } from 'react'; import { StoresContext } from './context'; export const useStoreBundle = () => useContext(StoresContext)",
+      'src/lib/stores/session/context.ts':
+        "import { createContext } from 'react'; import type { StoreBundle } from '$types/stores/session'; export const StoresContext = createContext<StoreBundle | null>(null)",
+      'src/lib/stores/schedules/actions.ts':
+        "import type { WorkflowStore } from '../workflows/store'; import { type WorkflowState } from '../workflows/hooks'; export type { WorkflowView } from '../workflows/selectors'; export const scheduleActions = (store: WorkflowStore, state: WorkflowState) => [store, state]",
+    }
+    expect(
+      lint(
+        "import { useStoreBundle } from '../session/useStoreBundle'",
+        'src/lib/stores/chat/hooks.ts',
+        files
+      )
+    ).toHaveLength(0)
+    expect(
+      lint(
+        "import { scheduleActions } from './actions'",
+        'src/lib/stores/schedules/store.ts',
+        files
+      )
+    ).toHaveLength(0)
+    expect(
+      lint(
+        "import { useWorkflowStore } from '../workflows/hooks'",
+        'src/lib/stores/views/schedules.ts'
+      )
+    ).toHaveLength(0)
+    expect(
+      lint(
+        "import { createScheduleCommand } from '../schedules/actions'",
+        'src/lib/stores/session/commands.ts'
+      )
+    ).toHaveLength(0)
+  })
+
+  it.each([
+    '$widgets/layout/MainLayoutWidget',
+    '$pages/Home',
+    '$sections/layout/MainLayout',
+    '../../App',
+    '$stores/chat/store',
+    '$stores/session/useStoreBundle',
+    '$constants/demoData',
+  ])('rejects shared hook imports of %s', target => {
+    expect(
+      lint(`import value from '${target}'`, 'src/lib/hooks/useExample.ts', {
+        'src/App.tsx': 'export default function App() { return null }',
+      })
+    ).toHaveLength(1)
+  })
+
+  it('lets widgets use shared hooks and shared hooks use public store hooks', () => {
+    const files = {
+      'src/lib/hooks/index.ts': "export { useViewport } from './useViewport'",
+      'src/lib/hooks/useViewport.ts':
+        "import { BREAKPOINTS } from '$lib/constants/dimensions'; export const useViewport = () => BREAKPOINTS",
+    }
+    expect(
+      lint(
+        "import { useViewport } from '$hooks'",
+        'src/lib/widgets/layout/MainLayoutWidget.tsx',
+        files
+      )
+    ).toHaveLength(0)
+    expect(
+      lint(
+        "import { useChatStore } from '$stores/chat'; import { BREAKPOINTS } from '$lib/constants/dimensions'; import { useViewport } from './useViewport'",
+        'src/lib/hooks/useExample.ts',
+        files
+      )
+    ).toHaveLength(0)
+    expect(
+      lint("import { useViewport } from '$hooks'", 'src/lib/stores/shell/hooks.ts', files)
+    ).toHaveLength(1)
+  })
+
   it('keeps utilities below stores and checks dynamic/require imports', () => {
     expect(
       lint("import { useChatStore } from '$stores/chat'", 'src/lib/utils/format.ts')

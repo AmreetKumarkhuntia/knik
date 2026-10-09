@@ -14,4 +14,18 @@ describe('MarkdownMessage', () => {
     expect(screen.getByRole('table')).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument()
   })
+
+  it('keeps code blocks mounted when the copy handler changes and copies through the latest one', async () => {
+    const user = userEvent.setup()
+    const first = vi.fn()
+    const latest = vi.fn()
+    const markdown = '```ts\nconst ok = true\n```'
+    const view = render(<MarkdownMessage content={markdown} onCopy={first} />)
+    const block = screen.getByText('ts').parentElement
+    view.rerender(<MarkdownMessage content={markdown} onCopy={latest} />)
+    expect(screen.getByText('ts').parentElement).toBe(block)
+    await user.click(screen.getByRole('button', { name: 'Copy code' }))
+    expect(first).not.toHaveBeenCalled()
+    expect(latest).toHaveBeenCalledExactlyOnceWith('const ok = true')
+  })
 })

@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
-import type { Conversation } from '$types/conversation'
+import type { Conversation, ConversationMessage } from '$types/conversation'
+import type { AgentThinkingStep } from '$types/components/chat'
 import type { DemoSuggestion } from '$types/demo-session'
-import type { ShellScope } from '$types/stores/shell'
+import type { Viewport } from '$types/stores/shell'
 
 export interface MainLayoutWidgetProps {
   children: ReactNode
 }
 export interface SidebarWidgetProps {
-  onOpenSearch: () => void
-  viewport?: ShellScope['viewport']
+  viewport?: Viewport
   mobileOpen?: boolean
   onCloseMobile?: () => void
 }
@@ -19,7 +19,6 @@ export interface SidebarBrandProps {
 export interface SidebarQuickActionsProps {
   collapsed: boolean
   onNewChat: () => void
-  onOpenSearch: () => void
 }
 export interface SidebarNavProps {
   collapsed: boolean
@@ -32,6 +31,7 @@ export interface SidebarRecentsProps {
   onSelect: (id: string) => void
   onRename: (conversation: Conversation) => void
   onDelete: (conversation: Conversation) => void
+  activeConversationId?: string | null
 }
 export interface SidebarAccountProps {
   collapsed: boolean
@@ -41,7 +41,6 @@ export interface SidebarAccountProps {
 }
 export interface TopBarProps {
   crumbs: string[]
-  right?: ReactNode
   onOpenSearch: () => void
   dark: boolean
   onToggleTheme: () => void
@@ -58,12 +57,20 @@ export interface FullScreenErrorViewProps {
   onRetry?: () => void
   layout: 'screen' | 'fill'
 }
-export interface SessionToastProps {
-  id: number
-  message: string
-  type: 'success' | 'error' | 'info'
-}
 export interface CompactionDividerProps {
   summaryContent?: string
   onCopy?: (text: string) => void
+}
+export interface ChatTranscriptMessage extends ConversationMessage {
+  timestampLabel: string
+  isUser: boolean
+  steps: AgentThinkingStep[]
+  modelTag?: string
+  messageId: string
+}
+export interface ChatTranscriptProps {
+  messages: ChatTranscriptMessage[]
+  initials: string
+  summaryMessageId?: string | null
+  onCopy: (text: string) => void
 }

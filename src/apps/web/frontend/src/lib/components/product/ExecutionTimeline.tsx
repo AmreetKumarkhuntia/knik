@@ -45,7 +45,7 @@ export default function ExecutionTimeline({
                   : 'bg-[var(--info-bg)] text-[var(--info)]'
             }`}
           >
-            <span className="material-symbols-outlined text-sm">
+            <span className="material-symbols-outlined text-sm" aria-hidden="true">
               {step.status === 'success' ? 'check' : step.status === 'failed' ? 'close' : 'pending'}
             </span>
           </div>
@@ -53,10 +53,10 @@ export default function ExecutionTimeline({
           <div className="bg-surface border border-border rounded-lg p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="material-symbols-outlined text-fg-3">
+                <span className="material-symbols-outlined text-fg-3" aria-hidden="true">
                   {getNodeIcon(step.node_type)}
                 </span>
-                <h4 className="font-semibold text-fg-1 break-all">{step.node_id}</h4>
+                <h2 className="font-semibold text-fg-1 break-all">{step.node_id}</h2>
                 <span className="text-xs capitalize text-secondary">{step.status}</span>
                 <span className="text-xs text-fg-3 break-all">{step.node_type}</span>
               </div>

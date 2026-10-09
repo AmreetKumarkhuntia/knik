@@ -3,6 +3,7 @@ import { Pagination, SectionHeader } from '$components'
 import HistoryTable from '$components/workflows/HistoryTable'
 import ExecutionsFilterBar from '$components/workflows/ExecutionsFilterBar'
 import { useExecutionsView } from '$stores/views'
+import { ROUTE_PATHS } from '$lib/constants/navigation'
 
 export default function AllExecutionsWidget() {
   const navigate = useNavigate()
@@ -40,7 +41,7 @@ export default function AllExecutionsWidget() {
           <HistoryTable
             executions={executions}
             loading={false}
-            onViewDetail={execution => void navigate(`/executions/${execution.id}`)}
+            onViewDetail={execution => void navigate(ROUTE_PATHS.executionDetail(execution.id))}
             maxHeight="none"
           />
           {totalPages > 1 && (

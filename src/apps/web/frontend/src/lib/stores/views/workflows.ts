@@ -1,15 +1,16 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import type { HubWorkflowRow, WorkflowMetrics } from '$types/workflow'
 import { useWorkflowStore } from '../workflows/hooks'
 import { useScheduleStore } from '../schedules/hooks'
 import { useExecutionStore } from '../executions/hooks'
 import { useCatalogStore } from '../catalogs/hooks'
+import { effectiveModelId } from '../catalogs/selectors'
 import { useSettingsStore } from '../settings/hooks'
 import { useStoreBundle } from '../session/useStoreBundle'
 import { useWidgetScope } from '../session/useWidgetScope'
 import { toExecutionSummary } from '../executions/selectors'
-import { normalizeNodes } from '../workflows/selectors'
+import { normalizeNodes, sameDefinitionNodes } from '../workflows/selectors'
 import { definitionsMatch } from '$utils/workflowDefinition'
 import { canvasNodesToGraph, graphToWorkflowDefinition } from '$lib/data-structures'
 
@@ -133,23 +134,30 @@ export function useWorkflowBuilderView(workflowId?: string) {
     () => models.map(model => ({ value: model.id, label: model.label })),
     [models]
   )
+  const savedMatchesScenario = useMemo(
+    () =>
+      !!workflow &&
+      !!scenarios[workflow.id] &&
+      definitionsMatch(workflow.definition, scenarioDefinition),
+    [workflow, scenarios, scenarioDefinition]
+  )
+  // Dragging re-creates the nodes array every frame; only id, type and data changes need a recheck.
+  const [definitionNodes, setDefinitionNodes] = useState(draft?.nodes)
+  if (!sameDefinitionNodes(draft?.nodes, definitionNodes)) setDefinitionNodes(draft?.nodes)
+  const definitionEdges = draft?.edges
   const canRun = useMemo(() => {
-    if (
-      !draft ||
-      !workflow ||
-      !scenarios[workflow.id] ||
-      !definitionsMatch(workflow.definition, scenarioDefinition)
-    )
-      return false
+    if (!savedMatchesScenario || !workflow || !definitionNodes || !definitionEdges) return false
     try {
       return definitionsMatch(
-        graphToWorkflowDefinition(canvasNodesToGraph(normalizeNodes(draft.nodes), draft.edges)),
+        graphToWorkflowDefinition(
+          canvasNodesToGraph(normalizeNodes(definitionNodes), definitionEdges)
+        ),
         workflow.definition
       )
     } catch {
       return false
     }
-  }, [draft, workflow, scenarios, scenarioDefinition])
+  }, [savedMatchesScenario, workflow, definitionNodes, definitionEdges])
   return {
     draft,
     workflow,
@@ -164,12 +172,7 @@ export function useWorkflowBuilderView(workflowId?: string) {
       state.changeEdges(scope, changes),
     connect: (connection: Parameters<typeof state.connect>[1]) => state.connect(scope, connection),
     addNode: (type: string, position: { x: number; y: number }) =>
-      state.addNode(
-        scope,
-        type,
-        position,
-        models.find(model => model.id === selectedModel)?.id ?? models.at(0)?.id
-      ),
+      state.addNode(scope, type, position, effectiveModelId(selectedModel, models)),
     updateNode: (id: string, data: Record<string, unknown>) => state.updateNode(scope, id, data),
     setFieldDraft: (field: string, value: string) => state.setFieldDraft(scope, field, value),
     save: () => state.saveBuilder(scope),

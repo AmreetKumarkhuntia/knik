@@ -1,13 +1,19 @@
 import type { StoreApi } from 'zustand/vanilla'
-import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { WorkflowStore, DefinitionResult } from '$types/stores/workflows'
 import {
   canvasNodesToGraph,
   graphToWorkflowDefinition,
   validateWorkflowGraph,
 } from '$lib/data-structures'
-import { definitionToCanvas, normalizeNodes } from './selectors'
+import {
+  definitionToCanvas,
+  duplicateConnectionError,
+  duplicateConnectionErrors,
+  normalizeNodes,
+} from './selectors'
 import { getDefaultNodeData } from '$lib/constants/nodes'
+import { generateId } from '$utils/uuid'
+import { addEdge, applyEdgeChanges, applyNodeChanges } from './graphChanges'
 
 export function workflowActions(
   set: StoreApi<WorkflowStore>['setState'],
@@ -29,8 +35,11 @@ export function workflowActions(
     if (!draft) return { ok: false, error: 'The workflow editor is no longer open.' }
     try {
       const graph = canvasNodesToGraph(normalizeNodes(draft.nodes), draft.edges)
-      const validation = validateWorkflowGraph(graph)
-      if (validation.errors.length) throw new Error(validation.errors.join('\n'))
+      const errors = [
+        ...duplicateConnectionErrors(draft.edges),
+        ...validateWorkflowGraph(graph).errors,
+      ]
+      if (errors.length) throw new Error(errors.join('\n'))
       patch(scope, { error: null })
       return { ok: true, definition: graphToWorkflowDefinition(graph) }
     } catch (error) {
@@ -78,7 +87,14 @@ export function workflowActions(
     },
     connect: (scope, connection) => {
       const draft = get().builderScopes[scope]
-      if (draft)
+      if (!draft) return
+      if (
+        draft.edges.some(
+          edge => edge.source === connection.source && edge.target === connection.target
+        )
+      )
+        patch(scope, { error: duplicateConnectionError(connection) })
+      else
         patch(scope, {
           edges: addEdge({ ...connection, type: 'custom', data: { mode: 'edit' } }, draft.edges),
         })
@@ -87,7 +103,7 @@ export function workflowActions(
       const draft = get().builderScopes[scope]
       if (!draft) return
       const node = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         type,
         position,
         data: {
@@ -127,7 +143,7 @@ export function workflowActions(
       }
       const result = validate(scope)
       if (!result.ok) return result
-      const id = draft.workflowId ?? crypto.randomUUID()
+      const id = draft.workflowId ?? generateId()
       const now = new Date().toISOString()
       const record = {
         ...existing,

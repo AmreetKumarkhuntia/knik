@@ -1,21 +1,21 @@
 # KNIK Design System
 
 > **Multi-interface AI assistant with voice, workflows, and tooling.**
-> Dark, fast, cyan-on-ink.
+> Dark, fast, teal-on-graphite.
 
 KNIK is a multi-modal AI assistant. The product surfaces a chat thread, a DAG-based workflow builder, scheduled jobs, and a Kokoro-82M TTS engine across four interfaces — GUI (Tk), Console, Web (React + FastAPI), and Electron — backed by 7 AI providers and 31 MCP tools. This design system captures the visual + interaction language of the **Web/Electron** surface (the canonical product UI) and packages it so designers can spin up KNIK-branded mocks, prototypes, slides, and production code.
 
 ## Sources used to build this system
 
 - **GitHub** — [`AmreetKumarkhuntia/knik`](https://github.com/AmreetKumarkhuntia/knik) — primary source-of-truth. Code lives under `src/apps/web/frontend/`.
-  - `src/apps/web/frontend/src/index.css` — root CSS variables (dark + light)
-  - `src/apps/web/frontend/src/lib/constants/themes.ts` — theme presets (purple / blue / teal)
+  - `src/apps/web/frontend/src/styles/tokens.css` — root CSS variables (dark + light)
+  - `src/apps/web/frontend/src/lib/constants/themes.ts` — default mode and graph/canvas overlay colours (no theme presets)
   - `src/apps/web/frontend/src/lib/constants/variants.ts` — button / size variants
   - `src/apps/web/frontend/src/lib/components/*` — atomic UI primitives
   - `src/apps/web/frontend/src/lib/sections/*` — composed screens (Sidebar, ChatPanel, WorkflowHub, …)
 - **README** — KNIK is _“Multi-Interface AI Assistant with TTS”_, built on **Kokoro-82M**, exposing 9 voices, 10 languages, 31 MCP tools across 7 categories, DAG workflows, conversation history.
 
-Explore the repo above for deeper component code — this design system is a **distillation** of it, lightly recoloured to lean into the cyan/teal aurora that the user asked for as the new primary accent.
+Explore the repo above for deeper component code — this design system is a **distillation** of it. The palette, type scale and surface rules follow the approved compact workspace redesign in [`docs/plan/07-frontend-component-consolidation.md`](../plan/07-frontend-component-consolidation.md); `colors_and_type.css` mirrors `src/apps/web/frontend/src/styles/tokens.css`.
 
 ---
 
@@ -26,12 +26,12 @@ Explore the repo above for deeper component code — this design system is a **d
 | **Name**           | KNIK                                                            |
 | **Product**        | Multi-interface AI assistant (chat, voice, workflows)           |
 | **Personality**    | Technical, fast, dark, future-leaning. _Linear-meets-terminal._ |
-| **Primary accent** | `#00D9F4` (KNIK cyan / aurora)                                  |
-| **Secondary**      | `#14B8A6` deep teal · `#8B5CF6` violet (legacy)                 |
-| **Base**           | Ink black `#07090D`                                             |
+| **Primary accent** | `#55B8AC` dark · `#147D73` light (KNIK teal / aurora)           |
+| **Secondary**      | `#348F85` deep teal · `#8B5CF6` violet (legacy)                 |
+| **Base**           | Graphite `#18191B` dark · `#F7F8F8` light                       |
 | **Type**           | Inter Variable + JetBrains Mono                                 |
 | **Icon system**    | Material Symbols Outlined (300-wght)                            |
-| **Density**        | Compact, IDE-adjacent. Generous radii, hairline borders.        |
+| **Density**        | Compact, IDE-adjacent. Modest radii, hairline borders.          |
 
 ---
 
@@ -87,27 +87,27 @@ Copy is **short**. The longest sentence in product chrome is the welcome sub-hea
 
 ## VISUAL FOUNDATIONS
 
-KNIK’s look is **dark IDE plus aurora glow**. Imagine VSCode at midnight with a cyan particle accelerator humming in the corner.
+KNIK’s look is a **compact dark IDE**: solid graphite surfaces, hairline dividers and one teal accent. No ambient glow, glass or decorative gradients.
 
 ### Color
 
-- **Dark-first.** The light theme exists (because Electron users), but every screenshot, every marketing surface, and every brand asset is rendered on `#07090D` ink black with a faint blue undertone.
-- **One accent, two siblings.** The aurora cyan (`#00D9F4`) is the only colour that should ever feel **bright**. Teal (`#14B8A6`) and violet (`#8B5CF6`) sit beside it for graph nodes and legacy theme presets — they should never **outshine** the primary.
-- **Soft accent fills.** Buttons and active states use `rgba(0,217,244,0.12)` over the accent, not solid blocks — keeps the UI feeling like a glass overlay.
-- **Semantic always borrowed from Tailwind.** Success `#10B981`, warning `#F59E0B`, danger `#EF4444`, info `#3B82F6`. These are recognisable to engineers, which is the audience.
+- **Dark-first, fixed palette.** Dark mode renders on `#18191B` graphite with `#202225` surfaces; light mode on `#F7F8F8` with `#FFFFFF` surfaces. There are no accent, density or radius presets — only the light/dark mode switch.
+- **One accent.** The aurora teal (`#55B8AC` dark, `#147D73` light) is the only colour that should ever feel **bright**. Deep teal (`#348F85`) and violet (`#8B5CF6`) sit beside it for graph nodes and legacy accents — they should never **outshine** the primary.
+- **Soft accent fills.** Selected and active states use `--primary-soft` (`color-mix` of the primary at 12% dark / 9% light), not solid blocks.
+- **Semantic colours are Tailwind-derived, tuned for contrast.** Dark: success `#10B981`, warning `#F59E0B`, danger `#F87171`, info `#60A5FA`. Light: `#167348`, `#895600`, `#B42F2F`, `#285EAF`. Tints (`--*-bg`) are 12%. Status text must stay at 4.5:1 on `--bg-surface` and `--bg-surface-2`, including over its tint; `src/apps/web/frontend/src/tests/styles/token-contrast.test.ts` enforces this.
 
 ### Backgrounds
 
-- Page surface uses a **soft mesh gradient** — `radial-gradient` plumes of cyan top-left and teal bottom-right at very low opacity. Slow `animate-blob` motion (10s loop).
+- Page surface is solid `--bg-base`. No mesh gradients and no animated background blobs.
 - The workflow canvas uses a **dotted / lined grid** at 20–40px pitch with `rgba(255,255,255,0.05–0.08)` lines.
-- Glass surfaces (sidebar, top bar, modals) are `rgba(15,20,28,0.66)` with `backdrop-filter: blur(20px) saturate(140%)`.
+- Sidebar, top bar and modals use solid surface tokens (`--bg-glass` resolves to `--bg-surface`; `--blur-glass` is `none`).
 - **No** stock photos, no hand-drawn illustrations, no organic shapes. Imagery is graph nodes, terminal traces, and waveform visualisations.
 
 ### Typography
 
-- **Inter Variable** is the workhorse, used for everything from `11px` micro labels to `88px` display headings.
+- **Inter Variable** is the workhorse, used for everything from `12px` micro labels to `88px` display headings.
 - Display & headings use **tightened tracking** (`-0.025em` to `-0.04em`) to match the Linear / Vercel / Stripe feel.
-- Body copy at **15px / 1.5** for screens, **13px** for dense table rows.
+- Interface text at **14px / 1.5**, chat text at **16px**, **13px** for dense table rows. Page titles are **24px**, section titles **16px**.
 - Mono is **JetBrains Mono** for code, model names, IDs, durations (`12.4s`), and TTS voice tokens (`af_heart`).
 - Numbers use **tabular figures** in tables (`font-variant-numeric: tabular-nums`).
 
@@ -118,56 +118,57 @@ KNIK’s look is **dark IDE plus aurora glow**. Imagine VSCode at midnight with 
 - **Stagger** children by 100ms on lists; never animate more than 12 items.
 - Page transitions: 200ms fade + 8px y-offset.
 - Workflow edge dashes animate `stroke-dashoffset: -20` over 1s linear.
-- Background blobs translate 10s ease-in-out, offset by 2s / 4s siblings.
-- **Hover** scales by 1.05 on cards, 1.1 on icon buttons. Never above 1.1.
+- No ambient or repeated entrance motion. `prefers-reduced-motion: reduce` collapses CSS animations and transitions.
+- **Hover** never scales cards; small round triggers (avatar, hamburger) may scale, never above 1.1.
 - **Press** scales to 0.95 / 0.9.
 
 ### States
 
-| State                  | What changes                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| Hover (filled btn)     | `background-color` lifts to `--primary-hover` + soft `box-shadow` cyan glow           |
-| Hover (ghost btn)      | `background-color` -> `rgba(255,255,255,0.06)`, no scale                              |
-| Hover (card)           | `border-color` shifts to `--primary` + 1px cyan glow + `translateY(-2px)`             |
-| Focus                  | 2px ring `rgba(0,217,244,0.30)` outside, never inside the input                       |
-| Pressed                | `scale(0.97)` + nothing else — never go dark                                          |
-| Disabled               | `opacity: 0.5`, `cursor: not-allowed`. No greyscale filter.                           |
-| Loading                | Replace label with a spinning circle (`border-2 border-current border-t-transparent`) |
-| Selected (sidebar nav) | `bg: primary-soft`, `text: primary`                                                   |
+| State                  | What changes                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Hover (filled btn)     | `background-color` lifts to `--primary-hover`; no glow                                                           |
+| Hover (ghost btn)      | `background-color` -> `--bg-surface-3`, text -> `--fg-1`, no scale                                               |
+| Hover (card)           | Nothing changes: the border stays `--border-2`, no lift, no glow                                                 |
+| Focus                  | 2px `--border-focus` (= `--primary`) ring outside; the chat composer only recolours its single border to `--acc` |
+| Pressed                | `scale(0.97)` + nothing else — never go dark                                                                     |
+| Disabled               | `opacity: 0.5`, `cursor: not-allowed`. No greyscale filter.                                                      |
+| Loading                | Replace label with a spinning circle (`border-2 border-current border-t-transparent`)                            |
+| Selected (sidebar nav) | `bg: --acc-soft`, `text: --acc-text` (`--primary-hover` in light mode for 4.5:1)                                 |
 
 ### Borders & dividers
 
-- **Hairline borders are the rule.** `1px solid rgba(255,255,255,0.10)` everywhere. The system has three depths only (`--border-1/2/3`).
-- Border radius scale is **modest** — `6` (badges), `8` (buttons), `12` (cards), `16` (modals). No fully-rounded UI except pills/avatars.
+- **Hairline borders are the rule.** `1px solid var(--border-2)` (`#363A40` dark, `#DCE1E5` light) everywhere. The system has three depths only (`--border-1/2/3`).
+- `--border-3` (`#707881` dark, `#7C8791` light) also outlines form controls — inputs, checkbox boxes and the off switch track — and must keep **3:1** against the surfaces they sit on.
+- Border radius scale is **modest** — `6` (controls, badges), `10` (cards, panels), `12` (composer, modals). No fully-rounded UI except pills/avatars.
 - Dividers in tables use `border-bottom` of the hairline; never thicker.
 
 ### Shadows & elevation
 
 - KNIK does **not** use heavy drop-shadows.
 - Three shadow tokens only:
-  - `--shadow-1` — sticky bars, raised buttons.
-  - `--shadow-2` — popovers, cards on hover.
+  - `--shadow-1` — `none`; sticky bars and buttons sit flat.
+  - `--shadow-2` — popovers, toasts and the elevated card variant.
   - `--shadow-3` — modals, fullscreen sheets.
-- A separate `--glow-primary` exists for **glow rings** around the primary action (Send, Create, Confirm).
+- `--glow-primary` and `--glow-teal` remain as tokens but resolve to `none`. There are no glow rings.
 - **Inner highlight** (top-edge `inset 1px rgba(255,255,255,0.04)`) appears on every raised surface to mimic OLED bezel lift.
 
 ### Transparency, blur, glass
 
-- Blur is **structural**, not decorative — it’s reserved for the sidebar (`backdrop-blur-3xl`), the top bar, modals, and the chat input panel. Everywhere else uses solid surface tokens.
-- Translucency uses **two opacity bands**: 10% (faint fill) and 60–70% (glass). Avoid in-between values.
+- **No blur, no glass.** Every surface, including the sidebar, top bar, modals and the chat composer, uses solid surface tokens (`--blur-glass: none`).
+- Translucency is limited to soft fills: the accent at 9–18% (`--primary-soft`, `--primary-soft-2`) and 12% status tints. Write opacity variants as `color-mix()` (Tailwind 3 drops `/NN` modifiers on `var()` colours).
 
 ### Cards
 
-- Default: `bg-surface-2`, `border-1px`, `radius-12`. No shadow.
-- Hover: cyan border + lift, no shadow.
-- Glass card: same shape but with `--bg-glass` + blur — used for popovers and metric tiles.
-- **Never** a left-border accent stripe. KNIK cards lift via border + glow.
+- Default (`.knik-card`): `bg-surface`, 1px `--border-2`, `radius-10`. No shadow.
+- Hover: no change — the border stays `--border-2`, no lift, no shadow.
+- There is no glass card; popovers and metric tiles use the default card.
+- **Never** a left-border accent stripe. KNIK cards separate via border, not glow.
 
 ### Layout rules
 
-- Sidebar is **fixed left**, 80px collapsed, 320px expanded (animates on hover with `framer-motion` spring).
-- Top bar is **80px** tall, sticky, glass.
-- Content max-width is `1280px` for tables/dashboards, `768px` for chat (`max-w-3xl`), no max for the workflow canvas.
+- Sidebar is **fixed left**, 232px expanded, 64px rail (768–1023px uses the rail; below 768px a left drawer).
+- Header is **52px** tall, sticky, solid.
+- Content max-width is `1280px` for tables/dashboards, `800px` for the chat transcript and composer, `760px` for settings content, no max for the workflow canvas.
 - Page padding is `32–48px` desktop, `16px` mobile.
 - Workflow canvas runs **full bleed**, edge-to-edge.
 - 8-pt grid; 4-pt sub-grid for icons and badges.
@@ -181,11 +182,11 @@ KNIK’s look is **dark IDE plus aurora glow**. Imagine VSCode at midnight with 
 
 - KNIK is a **terminal-flavoured** product. No photography. No people. No hands.
 - When marketing surfaces need a hero, use **graph snapshots** (workflow nodes with animated edges) or **waveform/audio renders** (TTS scrubbers, level meters).
-- All imagery sits on the ink-black base and **never** uses outer drop-shadows.
+- All imagery sits on the graphite base and **never** uses outer drop-shadows.
 
 ### Motion / vibe of brand colour
 
-- Imagery is **cool** — cyan-to-teal-to-violet, never warm.
+- Imagery is **cool** — teal-led, violet as the only secondary hue, never warm.
 - Avoid sepia, B&W, grain, or filmic LUTs. KNIK is digital, sharp, lit-from-within.
 
 ---
@@ -281,7 +282,7 @@ KNIK-Design-System/
 ## Substitutions & caveats
 
 - **Fonts:** the upstream KNIK repo uses Inter loaded as a system fallback. This design system pulls **Inter Variable** from `rsms.me/inter` and **JetBrains Mono** from Google Fonts. If you want the exact same Inter that ships in production, drop a `.woff2` into `fonts/`.
-- **Primary accent shift:** the production app defaults to **violet `#8B5CF6`** as primary, with theme presets for blue/teal. Per the brief, this design system **promotes the cyan/teal aurora to primary** and treats violet as a legacy/optional accent. All UI kit recreations show the cyan variant.
+- **Primary accent:** the production app uses the fixed teal palette above (no theme presets); violet is a legacy accent. Some `preview/` cards and `ui_kits/web/` recreations predate the redesign and still hard-code the earlier cyan (`#00D9F4`); `colors_and_type.css` is authoritative where they disagree.
 - **Logos:** KNIK does not ship a public brand mark in the repo (`assets/icon.png` is referenced for Electron builds but isn’t in the open tree). The marks in `assets/` here are **brand-derived** from the in-product `SmartToy` + `AutoAwesome` motifs.
 
 ---
@@ -311,7 +312,7 @@ Open the **Design System** tab to browse each card. They're grouped here by area
 **Chat & content**
 
 - `components-chat-bubbles` — user / assistant messages with actions
-- `components-message-input` — glass composer (attach / mic / send)
+- `components-message-input` — composer (attach / mic / send)
 - `components-suggestions` — welcome prompt cards
 - `components-markdown` — headings, lists, code fence, quote
 - `components-agent-thinking` — compaction divider · tool call · diff block

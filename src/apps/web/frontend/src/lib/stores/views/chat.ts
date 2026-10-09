@@ -6,13 +6,14 @@ import { selectActiveConversation, selectRecentConversations } from '../chat/sel
 import { useSettingsStore } from '../settings/hooks'
 import { accountInitials } from '../settings/selectors'
 import { useCatalog } from '../catalogs/hooks'
+import { effectiveModelId } from '../catalogs/selectors'
 export function useChatView() {
   const conversationId = useChatStore(s => s.activeConversationId)
   const conversation = useChatStore(selectActiveConversation)
   const settings = useSettingsStore(s => s.settings)
   const models = useCatalog('models'),
     suggestions = useCatalog('suggestions')
-  const model = settings.model || models[0]?.id || ''
+  const model = effectiveModelId(settings.model, models) ?? ''
   const messages = useMemo(
     () =>
       (conversation?.messages ?? [])

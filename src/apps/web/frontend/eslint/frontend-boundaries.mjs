@@ -15,6 +15,10 @@ const storeHookModule = module =>
   /^src\/lib\/stores\/(?:catalogs|chat|workflows|schedules|executions|settings|credentials|shell|feedback)\/hooks$/.test(
     module
   ) || /^src\/lib\/stores\/views\/[^/]+$/.test(module)
+const storeDomainOf = relative =>
+  relative.match(
+    /^src\/lib\/stores\/(catalogs|chat|workflows|schedules|executions|settings|credentials|shell|feedback)\//
+  )?.[1]
 const aliases = {
   $types: 'src/types',
   $lib: 'src/lib',
@@ -51,6 +55,7 @@ function tier(relative) {
   if (/^src\/lib\/(?:constants|utils|data-structures)(?:\/|$)/.test(relative)) return 'lower'
   if (within(relative, 'src/lib/components')) return 'components'
   if (within(relative, 'src/lib/stores')) return 'stores'
+  if (within(relative, 'src/lib/hooks')) return 'hooks'
   if (within(relative, 'src/lib/widgets')) return 'widgets'
   if (
     /^src\/lib\/(?:pages|sections)(?:\/|$)/.test(relative) ||
@@ -183,6 +188,81 @@ export function createFrontendArchitecture({
     }
     return edges
   }
+  const importCache = new Map()
+  /** Modules a file loads at runtime: value imports, re-exports and dynamic/require calls. */
+  function runtimeImportsOf(file) {
+    if (importCache.has(file)) return importCache.get(file)
+    const specifiers = []
+    importCache.set(file, specifiers)
+    if (!/\.[cm]?[jt]sx?$/.test(file)) return specifiers
+    let code
+    try {
+      code = readFile(file)
+    } catch {
+      return specifiers
+    }
+    const allTypes = elements => elements.length > 0 && elements.every(item => item.isTypeOnly)
+    const typeOnly = node => {
+      if (ts.isExportDeclaration(node))
+        return (
+          node.isTypeOnly ||
+          Boolean(
+            node.exportClause &&
+            ts.isNamedExports(node.exportClause) &&
+            allTypes(node.exportClause.elements)
+          )
+        )
+      const clause = node.importClause
+      return Boolean(
+        clause?.isTypeOnly ||
+        (clause &&
+          !clause.name &&
+          clause.namedBindings &&
+          ts.isNamedImports(clause.namedBindings) &&
+          allTypes(clause.namedBindings.elements))
+      )
+    }
+    const visit = node => {
+      if (
+        (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+        node.moduleSpecifier &&
+        ts.isStringLiteral(node.moduleSpecifier)
+      ) {
+        if (!typeOnly(node)) specifiers.push(node.moduleSpecifier.text)
+      } else if (
+        ts.isCallExpression(node) &&
+        (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+          (ts.isIdentifier(node.expression) && node.expression.text === 'require')) &&
+        node.arguments[0] &&
+        ts.isStringLiteral(node.arguments[0])
+      )
+        specifiers.push(node.arguments[0].text)
+      ts.forEachChild(node, visit)
+    }
+    visit(ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true))
+    return specifiers
+  }
+  /** Follows every runtime import, since a helper's plain import couples its domain as much as a re-export. */
+  function findPeerStore(domain, resolved, visited = new Set()) {
+    if (!resolved.file || visited.has(resolved.file)) return null
+    visited.add(resolved.file)
+    const target = relative(resolved.file)
+    if (target.startsWith('src/types/')) return null
+    const folder = withoutExtension(target)
+      .replace(/\/index$/, '')
+      .match(/^src\/lib\/stores\/([^/]+)/)?.[1]
+    if (folder && folder !== domain && folder !== 'session')
+      return {
+        reason:
+          'Domain stores cannot import peer domains, views or demo seeds; use the session coordinator.',
+        target,
+      }
+    for (const specifier of runtimeImportsOf(resolved.file)) {
+      const found = findPeerStore(domain, resolve(specifier, resolved.file), visited)
+      if (found) return found
+    }
+    return null
+  }
   function violation(origin, resolved, names, typeOnly, publicHooks = false) {
     if (resolved.external) {
       if (!typeOnly && networkPackages.test(resolved.external))
@@ -207,6 +287,8 @@ export function createFrontendArchitecture({
       return 'Components render props and emit events; stores own data and actions; widgets own browser operations.'
     if (origin === 'widgets' && targetTier === 'composition')
       return 'Widgets may compose components and widgets, but cannot import pages, sections or App.'
+    if (origin === 'hooks' && ['widgets', 'composition'].includes(targetTier))
+      return 'Shared hooks serve widgets; they cannot import widgets, pages, sections or App.'
     if (
       ['types', 'lower'].includes(origin) &&
       !typeOnly &&
@@ -225,11 +307,12 @@ export function createFrontendArchitecture({
       typeOnly || (names.length > 0 && names.every(name => name === '*' || /^use[A-Z]/.test(name)))
     if (
       origin === 'stores' &&
-      ['components', 'widgets', 'composition'].includes(targetTier) &&
+      ['components', 'hooks', 'widgets', 'composition'].includes(targetTier) &&
       !typeOnly
     )
-      return 'Stores cannot depend on components, widgets, pages or sections.'
-    if (origin === 'widgets') {
+      return 'Stores cannot depend on components, shared hooks, widgets, pages or sections.'
+    // Only widgets consume shared hooks, so hooks get the widget store boundary.
+    if (origin === 'widgets' || origin === 'hooks') {
       if (isFixture(target)) return 'Widgets read application data only through public store hooks.'
       if (
         targetTier === 'stores' &&
@@ -258,15 +341,8 @@ export function createFrontendArchitecture({
     names,
     typeOnly,
     visited = new Set(),
-    { factoryDomain, publicHooks = false } = {}
+    publicHooks = false
   ) {
-    const targetDomain =
-      resolved.file && relative(resolved.file).match(/^src\/lib\/stores\/([^/]+)\//)?.[1]
-    if (!typeOnly && factoryDomain && targetDomain && factoryDomain !== targetDomain)
-      return {
-        reason: 'Domain factories cannot import other stores; use the session coordinator.',
-        target: relative(resolved.file),
-      }
     const direct = violation(origin, resolved, names, typeOnly, publicHooks)
     if (direct)
       return { reason: direct, target: resolved.file ? relative(resolved.file) : resolved.external }
@@ -285,10 +361,7 @@ export function createFrontendArchitecture({
         nextNames,
         false,
         visited,
-        {
-          factoryDomain,
-          publicHooks: publicHooks || (origin === 'widgets' && publicStoreModule(module)),
-        }
+        publicHooks || (['widgets', 'hooks'].includes(origin) && publicStoreModule(module))
       )
       if (found) return found
     }
@@ -307,13 +380,14 @@ export function createFrontendArchitecture({
           const from = relative(file)
           if (!from.startsWith('src/') || isTest(from)) return {}
           const origin = tier(from)
+          // Peer isolation covers every file of a domain, not only its store.ts factory.
+          const domain = storeDomainOf(from)
           const check = (node, source, names = ['*'], typeOnly = false) => {
             if (typeof source !== 'string') return
             const resolved = resolve(source, file)
-            const factoryDomain = from.match(/^src\/lib\/stores\/([^/]+)\/store\.ts$/)?.[1]
-            const found = findViolation(origin, resolved, names, typeOnly, new Set(), {
-              factoryDomain,
-            })
+            const found =
+              findViolation(origin, resolved, names, typeOnly) ??
+              (domain && !typeOnly ? findPeerStore(domain, resolved) : null)
             if (found) context.report({ node, messageId: 'boundary', data: found })
           }
           return {

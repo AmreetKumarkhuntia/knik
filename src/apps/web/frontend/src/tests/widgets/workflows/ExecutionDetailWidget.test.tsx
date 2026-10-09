@@ -3,15 +3,49 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Link, MemoryRouter, Route, Routes, useParams } from 'react-router-dom'
 import { StoresProvider } from '$stores'
+import { useWorkflowStore } from '$stores/workflows'
 import ExecutionDetailWidget from '$widgets/workflows/ExecutionDetailWidget'
+import type { ExecutionFlowGraphProps } from '$types/components'
 
 vi.mock('$components/product/ExecutionFlowGraph', () => ({
-  default: () => <div>Execution graph</div>,
+  default: ({ definition }: ExecutionFlowGraphProps) => (
+    <output aria-label="Execution graph nodes">
+      {Object.keys(definition?.nodes ?? {}).join(', ')}
+    </output>
+  ),
 }))
 
 function ExecutionRoute() {
   const { id } = useParams()
   return <ExecutionDetailWidget executionId={id} />
+}
+
+function DigestEditor() {
+  const store = useWorkflowStore(state => state)
+  const saved = store.workflows.find(workflow => workflow.id === 'wf-1')
+  const removeSummarize = () => {
+    store.initBuilder('editor', 'wf-1')
+    store.changeNodes('editor', [{ type: 'remove', id: 'summarize' }])
+    store.changeEdges('editor', [
+      { type: 'remove', id: 'edge-1-prepare-summarize' },
+      { type: 'remove', id: 'edge-2-summarize-end' },
+    ])
+    store.connect('editor', {
+      source: 'prepare',
+      target: 'end',
+      sourceHandle: null,
+      targetHandle: null,
+    })
+    store.saveBuilder('editor')
+  }
+  return (
+    <>
+      <button onClick={removeSummarize}>Remove summarize step</button>
+      <output aria-label="Saved workflow nodes">
+        {Object.keys(saved?.definition.nodes ?? {}).join(', ')}
+      </output>
+    </>
+  )
 }
 
 describe('execution detail workspace', () => {
@@ -60,5 +94,42 @@ describe('execution detail workspace', () => {
     await user.click(screen.getByRole('link', { name: 'First execution' }))
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Supplied output 1')
     expect(screen.getByRole('button', { name: 'Collapse execution details' })).toBeInTheDocument()
+  })
+
+  it('keeps drawing the definition an execution ran after its workflow is edited', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <StoresProvider>
+          <DigestEditor />
+          <ExecutionDetailWidget executionId="9210" />
+        </StoresProvider>
+      </MemoryRouter>
+    )
+    const graph = screen.getByRole('status', { name: 'Execution graph nodes' })
+    expect(screen.getByRole('region', { name: 'Execution flow' })).toContainElement(graph)
+    expect(graph).toHaveTextContent('start, prepare, summarize, end')
+    await user.click(screen.getByRole('button', { name: 'Remove summarize step' }))
+    expect(screen.getByRole('status', { name: 'Saved workflow nodes' })).toHaveTextContent(
+      /^start, prepare, end$/
+    )
+    expect(graph).toHaveTextContent('start, prepare, summarize, end')
+  })
+
+  it('hides timeline icon ligatures from assistive technology', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <StoresProvider>
+          <ExecutionDetailWidget executionId="9210" />
+        </StoresProvider>
+      </MemoryRouter>
+    )
+    await user.click(screen.getByRole('tab', { name: 'Timeline' }))
+    const panel = screen.getByRole('tabpanel')
+    expect(screen.getByRole('heading', { level: 2, name: 'summarize' })).toBeInTheDocument()
+    const icons = panel.querySelectorAll('.material-symbols-outlined')
+    expect(icons.length).toBeGreaterThan(0)
+    for (const icon of icons) expect(icon).toHaveAttribute('aria-hidden', 'true')
   })
 })

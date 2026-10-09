@@ -2,6 +2,7 @@ import { forwardRef, useId, useState, useRef, useEffect } from 'react'
 import type { SelectProps } from '$types/components/forms'
 import Button from '../buttons/Button'
 import Popover from '../surfaces/Popover'
+import MS from '../display/MS'
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   {
@@ -28,6 +29,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const selected = options.find(option => option.value === value)
+  // aria-label alone would replace the trigger's content, hiding the selected value from its name.
+  const labelId = props['aria-label'] && !props['aria-labelledby'] ? `${selectId}-label` : undefined
+  const valueId = `${selectId}-value`
+  const labelledBy = props['aria-labelledby'] ?? labelId
   const change = (next: string) => (onValueChange ?? onChange)?.(next)
   useEffect(() => {
     if (open) optionRefs.current[active]?.focus()
@@ -86,8 +91,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           variant="secondary"
           disabled={disabled || !options.length}
           size={size}
-          aria-label={props['aria-label']}
-          aria-labelledby={props['aria-labelledby']}
+          aria-labelledby={labelledBy && `${labelledBy} ${valueId}`}
           aria-describedby={props['aria-describedby']}
           onKeyDown={event => {
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -102,8 +106,15 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
             }
           }}
         >
-          {selected ? (renderOption?.(selected) ?? selected.label) : value || placeholder}
-          <span aria-hidden="true">⌄</span>
+          {labelId && (
+            <span id={labelId} className="sr-only">
+              {props['aria-label']}
+            </span>
+          )}
+          <span id={valueId} className="min-w-0">
+            {selected ? (renderOption?.(selected) ?? selected.label) : value || placeholder}
+          </span>
+          <MS name="expand_more" size={18} />
         </Button>
       )}
       content={

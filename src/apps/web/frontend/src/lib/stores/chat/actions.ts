@@ -1,5 +1,6 @@
 import type { ChatStore, ChatState, ChatScope } from '$types/stores/chat'
 import { EMPTY_CHAT_SCOPE } from './selectors'
+import { generateId } from '$utils/uuid'
 export function createChatActions(set: ChatStore['setState'], get: ChatStore['getState']) {
   return {
     initializeScope: (id: string, resourceId: string | null = null) =>
@@ -17,7 +18,10 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
           : {}
       ),
     startConversation: () => {
-      const id = crypto.randomUUID(),
+      const { conversations, autoTitles } = get()
+      // Reuse an untouched blank chat so repeated "New chat" clicks don't pile up empty Recents.
+      const blank = conversations.find(c => c.messages.length === 0 && autoTitles[c.id])
+      const id = blank?.id ?? generateId(),
         now = new Date().toISOString()
       set(state => ({
         conversations: [
@@ -31,10 +35,17 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
             compacted_count: 0,
             total_tokens: 0,
           },
-          ...state.conversations,
+          ...state.conversations.filter(c => c.id !== id),
         ],
         activeConversationId: id,
         autoTitles: { ...state.autoTitles, [id]: true },
+        // Reusing the open blank chat keeps its session mounted, so reset the composer bound to it.
+        scopes: Object.fromEntries(
+          Object.entries(state.scopes).map(([key, scope]) => [
+            key,
+            scope?.resourceId === id ? { ...EMPTY_CHAT_SCOPE, resourceId: id } : scope,
+          ])
+        ),
       }))
       return id
     },
@@ -92,7 +103,7 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
       )
       const replies = scenario?.replies ?? []
       const previousId = scope.resourceId ?? get().activeConversationId
-      const id = previousId ?? crypto.randomUUID()
+      const id = previousId ?? generateId()
       const timestamp = new Date().toISOString()
       set(state => {
         const existing = state.conversations.find(c => c.id === id)
@@ -112,7 +123,7 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
           messages: [
             ...conversation.messages,
             {
-              id: crypto.randomUUID(),
+              id: generateId(),
               role: 'user' as const,
               content: prompt,
               timestamp,
@@ -120,7 +131,8 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
             },
             ...structuredClone(replies).map(reply => ({
               ...reply,
-              id: crypto.randomUUID(),
+              id: generateId(),
+              timestamp,
             })),
           ],
           updated_at: timestamp,

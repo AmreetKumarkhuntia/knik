@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Position, type NodeTypes, type EdgeTypes } from '@xyflow/react'
 
 import type { ExecutionFlowGraphProps } from '$types/components'
@@ -30,12 +30,14 @@ export default function ExecutionFlowGraph({
 }: ExecutionFlowGraphProps) {
   const container = useRef<HTMLDivElement>(null)
   const [direction, setDirection] = useState<'horizontal' | 'vertical'>('horizontal')
-  useEffect(() => {
+  // Measure before paint so narrow containers never show the horizontal layout first.
+  useLayoutEffect(() => {
     const element = container.current
     if (!element) return
-    const observer = new ResizeObserver(([entry]) => {
-      setDirection(entry.contentRect.width < 900 ? 'vertical' : 'horizontal')
-    })
+    const update = (width: number) => setDirection(width < 900 ? 'vertical' : 'horizontal')
+    const { width } = element.getBoundingClientRect()
+    if (width > 0) update(width)
+    const observer = new ResizeObserver(([entry]) => update(entry.contentRect.width))
     observer.observe(element)
     return () => observer.disconnect()
   }, [definition])
@@ -120,7 +122,7 @@ export default function ExecutionFlowGraph({
       data-flow-direction={direction}
       className={`${className} bg-[var(--bg-canvas)] overflow-hidden workflow-grid`}
     >
-      {/* Recreate read-only handle geometry when the entire layout rotates. */}
+      {/* Rotating the layout remounts the canvas so xyflow re-measures every rotated handle. */}
       <FlowCanvas
         key={direction}
         nodes={graphData.nodes}

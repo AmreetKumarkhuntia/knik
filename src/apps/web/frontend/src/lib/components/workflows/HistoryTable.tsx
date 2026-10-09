@@ -3,7 +3,6 @@ import Button from '$components/buttons/Button'
 import { formatDuration, formatDate } from '$lib/utils/format'
 import type { DashboardExecution, ExecutionStatus } from '$types/workflow'
 import type { HistoryTableProps } from '$types/sections/execution-history'
-import { History } from '@mui/icons-material'
 
 /** Table of execution history records with status, duration, and actions. */
 export default function HistoryTable({
@@ -44,7 +43,13 @@ export default function HistoryTable({
       label: 'Actions',
       render: (_: unknown, row: DashboardExecution) => (
         <div className="flex gap-2">
-          <Button label="View" variant="ghost" size="sm" onClick={() => onViewDetail(row)} />
+          <Button
+            label="View"
+            aria-label={`View execution #${row.id}`}
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewDetail(row)}
+          />
         </div>
       ),
     },
@@ -59,7 +64,7 @@ export default function HistoryTable({
       density="compact"
       empty={
         <EmptyState
-          icon={<History style={{ fontSize: 40 }} />}
+          icon="history"
           title="No execution history yet"
           description="Execution records appear when a demo source or run scenario is supplied."
         />

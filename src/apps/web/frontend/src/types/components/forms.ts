@@ -53,6 +53,9 @@ export interface RadioProps {
   name: string
   presentation?: 'standard' | 'card' | 'chip' | 'segmented'
   label?: string
+  /** Keeps the legend for assistive tech only, when the surrounding row already shows the label. */
+  hideLabel?: boolean
+  'aria-describedby'?: string
   disabled?: boolean
   className?: string
 }

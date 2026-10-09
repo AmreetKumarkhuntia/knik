@@ -22,8 +22,11 @@ export default function PageHeader({
             onClick={onBackClick}
             className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-surface-3 transition-colors"
             title="Back"
+            aria-label="Back"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-outlined" aria-hidden="true">
+              arrow_back
+            </span>
           </Button>
         )}
         {breadcrumbs.map((crumb, index) => {
@@ -34,7 +37,9 @@ export default function PageHeader({
                 {crumb}
               </span>
               {!isLast && (
-                <span className="material-symbols-outlined text-fg-4 text-sm">chevron_right</span>
+                <span className="material-symbols-outlined text-fg-4 text-sm" aria-hidden="true">
+                  chevron_right
+                </span>
               )}
             </div>
           )

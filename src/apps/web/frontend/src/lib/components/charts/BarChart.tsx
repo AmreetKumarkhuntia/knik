@@ -6,7 +6,7 @@ export default function BarChart({
   horizontal = false,
   className = '',
 }: BarChartProps) {
-  if (!data || data.length === 0) return null
+  if (data.length === 0) return null
 
   const max = Math.max(...data.map(d => Number(d[yKey]) || 0)) || 1
 
@@ -25,7 +25,7 @@ export default function BarChart({
               className="w-full h-full relative group bg-surface-2 rounded-sm overflow-hidden flex-1"
             >
               <div
-                className="absolute top-0 bottom-0 left-0 bg-aurora-400/50 group-hover:bg-aurora-400 transition-colors rounded-sm"
+                className="absolute top-0 bottom-0 left-0 bg-[color-mix(in_srgb,var(--aurora-400)_50%,transparent)] group-hover:bg-aurora-400 transition-colors rounded-sm"
                 style={{ width: `${percentage}%` }}
               />
             </div>
@@ -38,7 +38,7 @@ export default function BarChart({
             className="h-full flex-1 relative group bg-surface-2 rounded-t-sm overflow-hidden flex items-end"
           >
             <div
-              className="w-full bg-aurora-400/50 group-hover:bg-aurora-400 transition-colors rounded-t-sm"
+              className="w-full bg-[color-mix(in_srgb,var(--aurora-400)_50%,transparent)] group-hover:bg-aurora-400 transition-colors rounded-t-sm"
               style={{ height: `${percentage}%` }}
             />
           </div>

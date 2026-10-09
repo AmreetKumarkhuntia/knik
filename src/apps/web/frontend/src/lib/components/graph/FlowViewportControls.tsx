@@ -15,12 +15,12 @@ export default function FlowViewportControls({ onFit }: FlowViewportControlsProp
       <Button variant="ghost" size="sm" aria-label="Zoom Out" onClick={() => void zoomOut()}>
         <MS name="remove" size={18} />
       </Button>
-      <span
+      <output
         className="w-12 text-center text-xs text-secondary tabular-nums"
         aria-label="Zoom level"
       >
         {Math.round(zoom * 100)}%
-      </span>
+      </output>
       <Button variant="ghost" size="sm" aria-label="Zoom In" onClick={() => void zoomIn()}>
         <MS name="add" size={18} />
       </Button>

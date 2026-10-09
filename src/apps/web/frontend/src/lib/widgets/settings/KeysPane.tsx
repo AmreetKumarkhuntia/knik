@@ -10,6 +10,7 @@ import FormGroup from '$widgets/FormGroup'
 import { useCredentialsStore, useCredentialsScope } from '$stores/credentials'
 import { useFeedbackStore } from '$stores/feedback'
 import { useCredentialsView } from '$stores/views'
+import { useCopyToClipboard } from '$widgets/feedback/useCopyToClipboard'
 
 export default function KeysPane() {
   const { scopeId, scope, patch } = useCredentialsScope()
@@ -19,24 +20,16 @@ export default function KeysPane() {
   const deleteKey = useCredentialsStore(s => s.deleteKey)
   const closeCredentialEditor = useCredentialsStore(s => s.closeEditor)
   const addToast = useFeedbackStore(s => s.addToast)
+  const copy = useCopyToClipboard('Demo key copied.')
   const id = useId()
   const closeEditor = () => closeCredentialEditor(scopeId)
-  const copyKey = async () => {
-    if (!created) return
-    try {
-      await navigator.clipboard.writeText(created.key)
-      addToast('Demo key copied.', 'success')
-    } catch {
-      addToast('The demo key could not be copied.', 'error')
-    }
-  }
 
   return (
     <FormGroup title="API keys" sub="Demo keys are managed locally for this session">
       {created && (
         <KeyReveal
           value={created.key}
-          onCopy={() => void copyKey()}
+          onCopy={() => copy(created.key)}
           onDismiss={() => patch({ created: null })}
         />
       )}

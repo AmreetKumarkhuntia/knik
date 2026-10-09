@@ -71,17 +71,20 @@ export function useExecutionDetailView(executionId?: string) {
   )
   const timelines = useExecutionStore(state => state.timelines)
   const workflows = useWorkflowStore(state => state.workflows)
+  const scenarioDefinitions = useWorkflowStore(state => state.scenarioDefinitions)
   const data = useMemo(() => {
     const timeline = execution ? (timelines[String(execution.id)] ?? []) : []
     const workflow = workflows.find(workflow => workflow.id === execution?.workflow_id)
     return {
       execution,
       timeline,
-      definition: workflow?.definition ?? null,
+      // Runs only commit while a workflow matches its scenario definition, so later builder
+      // edits must not redraw the graph an execution actually ran.
+      definition: execution ? (scenarioDefinitions[execution.workflow_id] ?? null) : null,
       workflowName: workflow?.name ?? 'Unavailable workflow',
       metrics: execution ? calculateMetrics({ execution, timeline }) : [],
     }
-  }, [execution, timelines, workflows])
+  }, [execution, timelines, workflows, scenarioDefinitions])
   return {
     ...data,
     tab: view.tab,

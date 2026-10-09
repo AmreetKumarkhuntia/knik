@@ -1,24 +1,15 @@
-import { useId, useState, useSyncExternalStore } from 'react'
+import { useId, useState } from 'react'
 import type { VerticalTabsProps } from '$types'
 import Tabs from './Tabs'
-
-function subscribeToLayout(onChange: () => void) {
-  window.addEventListener('resize', onChange)
-  return () => window.removeEventListener('resize', onChange)
-}
-
-function isWideLayout() {
-  return window.innerWidth >= 768
-}
 
 export default function VerticalTabs({
   tabs,
   activeTab: controlled,
   onChange,
+  orientation = 'vertical',
   className = '',
 }: VerticalTabsProps) {
   const [internal, setInternal] = useState(tabs[0]?.id ?? '')
-  const wide = useSyncExternalStore(subscribeToLayout, isWideLayout, () => true)
   const active = controlled ?? internal,
     id = useId()
   return (
@@ -27,7 +18,7 @@ export default function VerticalTabs({
         tabs={tabs}
         active={active}
         idPrefix={id}
-        orientation={wide ? 'vertical' : 'horizontal'}
+        orientation={orientation}
         variant="pills"
         className="w-full shrink-0 overflow-x-auto pb-1 md:w-[176px] md:self-start"
         onChange={value => {

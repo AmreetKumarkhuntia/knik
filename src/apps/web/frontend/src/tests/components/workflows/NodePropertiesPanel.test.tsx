@@ -42,4 +42,41 @@ describe('node inspector', () => {
     await user.keyboard('{Escape}')
     expect(actions.onClose).toHaveBeenCalledOnce()
   })
+  it('connects the selected node from the keyboard, since node handles only follow the pointer', async () => {
+    const user = userEvent.setup()
+    const onConnect = vi.fn()
+    const check = {
+      id: 'check',
+      type: 'ConditionalBranchNode',
+      position: { x: 0, y: 0 },
+      data: { label: 'Check' },
+    }
+    const end = { id: 'end', type: 'EndNode', position: { x: 0, y: 0 }, data: {} }
+    render(
+      <NodePropertiesPanel
+        {...props()}
+        selectedNode={check}
+        nodes={[node, check, end]}
+        onConnect={onConnect}
+      />
+    )
+    const target = screen.getByLabelText('Connect to')
+    expect(
+      Array.from(target.querySelectorAll('option'), option => option.textContent).slice(1)
+    ).toEqual(['True → End', 'False → End'])
+    const connect = screen.getByRole('button', { name: 'Connect' })
+    expect(connect).toBeDisabled()
+    await user.selectOptions(target, 'False → End')
+    await user.click(connect)
+    expect(onConnect).toHaveBeenCalledWith({
+      source: 'check',
+      sourceHandle: 'false',
+      target: 'end',
+      targetHandle: null,
+    })
+  })
+  it('offers no keyboard connection without a connect handler, as in read-only views', () => {
+    render(<NodePropertiesPanel {...props()} nodes={[node]} />)
+    expect(screen.queryByLabelText('Connect to')).not.toBeInTheDocument()
+  })
 })

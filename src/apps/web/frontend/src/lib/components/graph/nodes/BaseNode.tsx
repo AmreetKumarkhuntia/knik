@@ -1,5 +1,5 @@
-import { memo, useEffect, useRef } from 'react'
-import { Handle, Position, useUpdateNodeInternals, type NodeProps } from '@xyflow/react'
+import { memo } from 'react'
+import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { getNodeMetadata } from '$lib/constants/nodes'
 import { GRAPH_NODE_SIZE } from '$lib/constants/graph'
 import type { HandleConfig } from '$types/node-registry'
@@ -66,18 +66,9 @@ function NodeHandle({
   )
 }
 
-export default memo(function BaseNode({ id, data, type, selected }: NodeProps) {
+export default memo(function BaseNode({ data, type, selected }: NodeProps) {
   const nodeData = data as BaseNodeData
   const vertical = nodeData.direction === 'vertical'
-  const previousDirection = useRef(vertical)
-  const updateNodeInternals = useUpdateNodeInternals()
-  useEffect(() => {
-    if (previousDirection.current === vertical) return
-    previousDirection.current = vertical
-    // Rotating ports keeps their IDs but changes the edge attachment coordinates.
-    updateNodeInternals(id)
-  }, [id, vertical, updateNodeInternals])
-
   const metadata = getNodeMetadata(type as string)
   if (!metadata) return null
 

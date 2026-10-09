@@ -40,7 +40,7 @@ export default function Slider({
         step={step}
         value={value}
         onChange={event => onChange(Number(event.target.value))}
-        className="knik-slider flex-1 min-w-0 h-9 cursor-pointer accent-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-2 disabled:opacity-50"
+        className="flex-1 min-w-0 h-9 cursor-pointer accent-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-2 disabled:opacity-50"
       />
       <span className="tabular-nums text-sm text-fg-2 w-12 text-right shrink-0">
         {formatValue ? formatValue(value) : value}

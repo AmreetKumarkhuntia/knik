@@ -9,11 +9,15 @@ export default function Radio({
   className = '',
   presentation = 'standard',
   label,
+  hideLabel = false,
+  'aria-describedby': describedBy,
 }: RadioProps) {
   const id = useId()
   return (
-    <fieldset disabled={disabled} className={`min-w-0 ${className}`}>
-      {label && <legend className="mb-2 text-sm text-fg-2">{label}</legend>}
+    <fieldset disabled={disabled} aria-describedby={describedBy} className={`min-w-0 ${className}`}>
+      {label && (
+        <legend className={hideLabel ? 'sr-only' : 'mb-2 text-sm text-fg-2'}>{label}</legend>
+      )}
       <div className={presentation === 'standard' ? 'flex flex-col gap-3' : 'flex flex-wrap gap-2'}>
         {options.map((option, index) => (
           <label

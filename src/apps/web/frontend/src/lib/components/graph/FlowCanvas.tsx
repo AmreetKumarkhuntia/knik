@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   ReactFlowProvider,
   ReactFlow,
@@ -7,13 +7,56 @@ import {
   BackgroundVariant,
   useReactFlow,
   getViewportForBounds,
+  type Edge,
+  type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import type { FlowCanvasProps } from '$types/graph'
+import type { BaseNodeData, FlowCanvasProps } from '$types/graph'
 import { CANVAS_OVERLAY_COLORS } from '$lib/constants/themes'
+import { getNodeMetadata, getNodeTitle } from '$lib/constants/nodes'
 import FlowViewportControls from './FlowViewportControls'
 
 export type { FlowCanvasProps }
+
+// Cached per source node so unchanged nodes keep their identity and xyflow skips re-adopting them.
+const labelledNodes = new WeakMap<Node, Node>()
+
+/** xyflow names a focusable node only through `ariaLabel`; otherwise it is announced as "node". */
+function withAccessibleName(node: Node): Node {
+  if (node.ariaLabel) return node
+  const cached = labelledNodes.get(node)
+  if (cached) return cached
+  const metadata = getNodeMetadata(node.type ?? '')
+  if (!metadata) return node
+  const { label, status } = node.data as BaseNodeData
+  const labelled = {
+    ...node,
+    ariaLabel: [label || metadata.label, metadata.typeLabel, status].filter(Boolean).join(', '),
+  }
+  labelledNodes.set(node, labelled)
+  return labelled
+}
+
+const labelledEdges = new WeakMap<Edge, Edge>()
+
+/** Without `ariaLabel`, xyflow announces an edge by its internal node ids. */
+function withEdgeName(edge: Edge, nodesById: Map<string, Node>): Edge {
+  if (edge.ariaLabel) return edge
+  const title = (id: string) => {
+    const node = nodesById.get(id)
+    return node ? getNodeTitle(node) : id
+  }
+  const source = nodesById.get(edge.source)
+  const branch = getNodeMetadata(source?.type ?? '')?.handles.outputs.find(
+    handle => handle.id !== undefined && handle.id === edge.sourceHandle
+  )?.label
+  const ariaLabel = `Connection from ${title(edge.source)}${branch ? ` (${branch})` : ''} to ${title(edge.target)}`
+  const cached = labelledEdges.get(edge)
+  if (cached?.ariaLabel === ariaLabel) return cached
+  const labelled = { ...edge, ariaLabel }
+  labelledEdges.set(edge, labelled)
+  return labelled
+}
 
 /** Inner ReactFlow canvas with background and optional mini-map. */
 function FlowCanvasContent({
@@ -44,6 +87,11 @@ function FlowCanvasContent({
   children,
 }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
+  const accessibleNodes = useMemo(() => nodes.map(withAccessibleName), [nodes])
+  const accessibleEdges = useMemo(() => {
+    const nodesById = new Map(nodes.map(node => [node.id, node]))
+    return edges.map(edge => withEdgeName(edge, nodesById))
+  }, [nodes, edges])
   const { setViewport, getNodesBounds, getNodes } = useReactFlow()
   const fitGraph = useCallback(() => {
     const canvas = canvasRef.current
@@ -79,8 +127,8 @@ function FlowCanvasContent({
   return (
     <ReactFlow
       ref={canvasRef}
-      nodes={nodes}
-      edges={edges}
+      nodes={accessibleNodes}
+      edges={accessibleEdges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}

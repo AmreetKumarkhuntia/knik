@@ -13,22 +13,25 @@ export default function Chip({
 
   switch (variant) {
     case 'tag':
-      variantClasses = 'text-aurora-300 border-aurora-300/30 bg-aurora-300/10'
+      variantClasses =
+        'text-aurora-300 border-[color-mix(in_srgb,var(--aurora-300)_30%,transparent)] bg-[color-mix(in_srgb,var(--aurora-300)_10%,transparent)]'
       break
     case 'voice':
-      variantClasses = 'text-teal-300 border-teal-300/30 bg-teal-300/10'
+      variantClasses =
+        'text-teal-300 border-[color-mix(in_srgb,var(--teal-300)_30%,transparent)] bg-[color-mix(in_srgb,var(--teal-300)_10%,transparent)]'
       break
     case 'lang':
       variantClasses = 'border-border-2 bg-surface-2 text-fg-2'
       break
     case 'team':
-      variantClasses = 'text-violet-400 border-violet-400/30 bg-violet-400/10'
+      variantClasses =
+        'text-violet-400 border-[color-mix(in_srgb,var(--violet-400)_30%,transparent)] bg-[color-mix(in_srgb,var(--violet-400)_10%,transparent)]'
       break
     case 'input':
       variantClasses = 'text-fg-1 border-dashed border-border-3 bg-transparent'
       break
     case 'kbd':
-      variantClasses = 'bg-base text-fg-3 border-border-2'
+      variantClasses = 'bg-[var(--bg-base)] text-fg-3 border-border-2'
       break
     default:
       break
@@ -62,8 +65,8 @@ export default function Chip({
               onRemove()
             }
           }}
-          className="w-3.5 h-3.5 rounded-full inline-flex items-center justify-center text-[9px] bg-current/10 hover:bg-current/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-          aria-label="Remove"
+          className="w-3.5 h-3.5 rounded-full inline-flex items-center justify-center text-[9px] bg-[color-mix(in_srgb,currentColor_10%,transparent)] hover:bg-[color-mix(in_srgb,currentColor_20%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_50%,transparent)]"
+          aria-label={typeof label === 'string' ? `Remove ${label}` : 'Remove'}
         >
           ×
         </span>

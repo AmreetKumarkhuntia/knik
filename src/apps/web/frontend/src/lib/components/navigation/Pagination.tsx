@@ -59,7 +59,10 @@ export default function Pagination({
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 py-4 px-6 border-t border-[var(--border-2)]">
+    <nav
+      aria-label="Pagination"
+      className="flex items-center justify-between gap-4 py-4 px-6 border-t border-[var(--border-2)]"
+    >
       <div className="text-sm text-fg-3">
         Page <span className="font-semibold text-fg-1">{currentPage}</span> of{' '}
         <span className="font-semibold text-fg-1">{totalPages}</span>
@@ -94,6 +97,7 @@ export default function Pagination({
                 key={pageNum}
                 onClick={() => handlePageClick(pageNum)}
                 disabled={disabled}
+                aria-current={isActive ? 'page' : undefined}
                 className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
                   isActive
                     ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
@@ -115,6 +119,6 @@ export default function Pagination({
           Next
         </Button>
       </div>
-    </div>
+    </nav>
   )
 }

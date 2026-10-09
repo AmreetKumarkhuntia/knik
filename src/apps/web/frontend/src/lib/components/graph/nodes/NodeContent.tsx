@@ -1,7 +1,19 @@
+// The builder keeps edited params as raw JSON text until save, so count keys only once it parses.
+function countParameters(params: unknown): number {
+  let value = params
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value)
+    } catch {
+      return 0
+    }
+  }
+  return value && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value).length : 0
+}
+
 export function FunctionContent({ data }: { data: Record<string, unknown> }) {
   const functionName = data.function_name as string
-  const params = data.params as Record<string, unknown> | undefined
-  const parameterCount = params ? Object.keys(params).length : 0
+  const parameterCount = countParameters(data.params)
 
   return (
     <>

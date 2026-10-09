@@ -34,7 +34,7 @@ export default function MetricCard({
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 p-6 knik-card--glass animate-pulse">
+      <div className="flex flex-col gap-4 p-6 knik-card animate-pulse">
         <div className="flex justify-between items-start">
           <div className="p-2 rounded-md w-12 h-12 bg-surface-2" />
           <div className="w-16 h-6 rounded-full bg-surface-3" />
@@ -52,11 +52,13 @@ export default function MetricCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4, boxShadow: '0 8px 20px -6px rgba(0, 217, 244, 0.4)' }}
-      className="flex flex-col gap-4 p-6 knik-card--glass"
+      className="flex flex-col gap-4 p-6 knik-card"
     >
       <div className="flex justify-between items-start">
         <div className={`p-2 rounded-md ${colors.bg} ${colors.text}`}>
-          <span className="material-symbols-outlined text-2xl">{icon}</span>
+          <span className="material-symbols-outlined text-2xl" aria-hidden="true">
+            {icon}
+          </span>
         </div>
         {trend && (
           <span
@@ -68,7 +70,11 @@ export default function MetricCard({
                   : 'text-fg-3'
             }`}
           >
-            {trend.icon && <span className="material-symbols-outlined text-xs">{trend.icon}</span>}
+            {trend.icon && (
+              <span className="material-symbols-outlined text-xs" aria-hidden="true">
+                {trend.icon}
+              </span>
+            )}
             {trend.value}
           </span>
         )}
