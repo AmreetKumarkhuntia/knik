@@ -80,4 +80,14 @@ describe('graph node responsive ports', () => {
     expect(input).toHaveAttribute('data-handle-position', 'top')
     expect(output).toHaveAttribute('data-handle-position', 'bottom')
   })
+
+  it('pulses only execution nodes that are running', () => {
+    const { container, rerender } = render(
+      <BaseNode {...nodeProps} data={{ ...nodeProps.data, status: 'running' }} />
+    )
+    expect(container.querySelector('.graph-node')).toHaveClass('graph-node--running')
+
+    rerender(<BaseNode {...nodeProps} />)
+    expect(container.querySelector('.graph-node')).not.toHaveClass('graph-node--running')
+  })
 })

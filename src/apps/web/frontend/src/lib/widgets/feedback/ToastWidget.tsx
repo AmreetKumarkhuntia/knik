@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import Toast from '$components/feedback/Toast'
 import { useFeedbackStore } from '$stores/feedback'
 import type { DemoToast } from '$types/demo-session'
@@ -21,7 +22,11 @@ function SessionToast({ id, message, type }: DemoToast) {
     }
   }, [hideToast, id, paused])
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: 12 }}
+      animate={{ opacity: 1, x: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
+      exit={{ opacity: 0, x: 8, transition: { duration: 0.12, ease: 'easeIn' } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
@@ -30,7 +35,7 @@ function SessionToast({ id, message, type }: DemoToast) {
       }}
     >
       <Toast message={message} type={type} onClose={() => hideToast(id)} />
-    </div>
+    </motion.div>
   )
 }
 
@@ -44,11 +49,13 @@ export default function ToastWidget() {
       aria-live={assertive ? 'assertive' : 'polite'}
       className="flex flex-col gap-3 empty:absolute"
     >
-      {toasts
-        .filter(toast => (toast.type === 'error') === assertive)
-        .map(toast => (
-          <SessionToast key={toast.id} {...toast} />
-        ))}
+      <AnimatePresence>
+        {toasts
+          .filter(toast => (toast.type === 'error') === assertive)
+          .map(toast => (
+            <SessionToast key={toast.id} {...toast} />
+          ))}
+      </AnimatePresence>
     </div>
   )
   return (

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { StoresProvider } from '$stores'
 import { useFeedbackStore } from '$stores/feedback'
 import Toast from '$components/feedback/Toast'
@@ -58,7 +58,7 @@ describe('ToastWidget', () => {
     ).toHaveLength(0)
   })
 
-  it('pauses auto-dismiss while the toast is hovered or focused', () => {
+  it('pauses auto-dismiss while the toast is hovered or focused', async () => {
     vi.useFakeTimers()
     const region = renderToasts()
     fireEvent.click(screen.getByRole('button', { name: 'Notify Saved' }))
@@ -88,6 +88,8 @@ describe('ToastWidget', () => {
     act(() => {
       vi.advanceTimersByTime(1)
     })
-    expect(region).toBeEmptyDOMElement()
+    // framer-motion's frame loop runs on real time, so let the exit animation finish unmounting it.
+    vi.useRealTimers()
+    await waitFor(() => expect(region).toBeEmptyDOMElement())
   })
 })

@@ -193,3 +193,45 @@
   left: 50%;
   transform: translateX(-50%);
 }
+
+/* Execution status motion: ambient only while running; reduced-motion handled globally. */
+.graph-node--execution {
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.graph-node--running {
+  border-color: color-mix(in srgb, var(--info) 60%, var(--border-2));
+  animation: graph-node-pulse 1.6s var(--ease-in-out) infinite;
+}
+
+.graph-node__status,
+.graph-node__status .material-symbols-outlined {
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+@keyframes graph-node-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 22%, transparent);
+  }
+}
+
+.graph-edge {
+  transition: stroke var(--dur-base) var(--ease-out);
+}
+
+.graph-edge--running {
+  stroke-dasharray: 5 5;
+  animation: graph-edge-flow 1s linear infinite;
+}
+
+@keyframes graph-edge-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}

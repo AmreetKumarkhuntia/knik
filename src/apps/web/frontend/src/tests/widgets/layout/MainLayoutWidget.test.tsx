@@ -1,6 +1,6 @@
 import { Profiler } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { StoresProvider } from '$stores'
@@ -164,14 +164,15 @@ describe('responsive workspace navigation', () => {
     )
     const sidebar = screen.getByRole('complementary', { name: 'Workspace sidebar' })
     expect(sidebar).toHaveStyle({ width: '232px' })
+    // The width animates, so each check waits for it to settle.
     resize(900)
-    expect(sidebar).toHaveStyle({ width: '64px' })
+    await waitFor(() => expect(sidebar).toHaveStyle({ width: '64px' }))
     resize(1440)
-    expect(sidebar).toHaveStyle({ width: '232px' })
+    await waitFor(() => expect(sidebar).toHaveStyle({ width: '232px' }))
     await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
     resize(900)
     resize(1440)
-    expect(sidebar).toHaveStyle({ width: '64px' })
+    await waitFor(() => expect(sidebar).toHaveStyle({ width: '64px' }))
   })
 
   it('keeps the chat draft across viewport changes and closes mobile navigation after selecting a route', async () => {
@@ -194,8 +195,10 @@ describe('responsive workspace navigation', () => {
     await user.click(trigger)
     expect(screen.getAllByRole('navigation', { name: 'Workspace' })).toHaveLength(1)
     await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument()
+    )
     expect(composer).toHaveValue('A draft to keep')
     await user.click(trigger)
     await user.click(
@@ -203,7 +206,9 @@ describe('responsive workspace navigation', () => {
         name: 'Workflows',
       })
     )
-    expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument()
+    )
     resize(1440)
     expect(composer).toHaveValue('A draft to keep')
   })

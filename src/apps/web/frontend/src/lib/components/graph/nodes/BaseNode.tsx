@@ -83,6 +83,7 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
     terminal ? 'graph-node--terminal' : 'graph-node--process',
     isExecution ? 'graph-node--execution' : 'graph-node--editable',
     selected && 'graph-node--selected',
+    isExecution && status === 'running' && 'graph-node--running',
   ]
     .filter(Boolean)
     .join(' ')

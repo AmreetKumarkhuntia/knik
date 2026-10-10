@@ -29,7 +29,8 @@ export default function ProgressBar({
         }}
         initial={animated ? { width: 0 } : false}
         animate={{ width: `${percentage}%` }}
-        transition={{ ease: 'easeOut', duration: 0.5 }}
+        // matches --ease-out token
+        transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
       />
     </div>
   )
