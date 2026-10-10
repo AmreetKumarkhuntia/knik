@@ -12,9 +12,7 @@ export default function ExecutionTimeline({
     return (
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="animate-pulse">
-            <div className="bg-surface border border-border rounded-lg p-4 h-20" />
-          </div>
+          <div key={i} className="knik-shimmer border border-border rounded-lg p-4 h-20" />
         ))}
       </div>
     )

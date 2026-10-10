@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Modal, ConfirmDialog, Input } from '$components'
 import Button from '$components/buttons/Button'
 import SidebarBrand from '$components/layout/SidebarBrand'
@@ -88,15 +89,17 @@ export default function SidebarWidget({
           {navigation}
         </Modal>
       ) : (
-        <aside
+        <motion.aside
           aria-label="Workspace sidebar"
           className="h-full flex-shrink-0 overflow-hidden bg-surface border-r border-border"
-          style={{
+          initial={false}
+          animate={{
             width: collapsed ? LAYOUT.sidebarWidth.collapsed : LAYOUT.sidebarWidth.expanded,
           }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         >
           {navigation}
-        </aside>
+        </motion.aside>
       )}
       <Modal
         isOpen={editingId !== null}

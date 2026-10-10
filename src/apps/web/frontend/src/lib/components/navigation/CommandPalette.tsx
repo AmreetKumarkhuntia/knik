@@ -80,7 +80,7 @@ function CommandList({
 export default function CommandPalette({ open, className, ...props }: CommandPaletteProps) {
   return (
     <Modal isOpen={open} onClose={props.onClose} title="Commands" className={className}>
-      {open && <CommandList {...props} />}
+      <CommandList {...props} />
     </Modal>
   )
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Button from '$components/buttons/Button'
 import Modal from '$components/surfaces/Modal'
@@ -30,8 +30,8 @@ describe('overlay ownership', () => {
       await user.tab()
       expect(screen.getByRole('button', { name: 'Close Edit' })).toHaveFocus()
       await user.keyboard('{Escape}')
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Open' })).toHaveFocus()
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
       expect(document.body.style.overflow).toBe('')
     }
   )
@@ -96,7 +96,9 @@ it('Escape closes only the top dialog and keeps the lower dialog scroll lock', a
   await user.click(screen.getByRole('button', { name: 'Open first' }))
   await user.click(screen.getByRole('button', { name: 'Open second' }))
   await user.keyboard('{Escape}')
-  expect(screen.queryByRole('dialog', { name: 'Second dialog' })).not.toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog', { name: 'Second dialog' })).not.toBeInTheDocument()
+  )
   expect(screen.getByRole('dialog', { name: 'First dialog' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Open second' })).toHaveFocus()
   expect(document.body.style.overflow).toBe('hidden')

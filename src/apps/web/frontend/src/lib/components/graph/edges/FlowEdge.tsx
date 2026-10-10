@@ -40,6 +40,7 @@ export default memo(function FlowEdge({
     <BaseEdge
       id={id}
       path={edgePath}
+      className={status === 'running' ? 'graph-edge graph-edge--running' : 'graph-edge'}
       style={{ ...style, stroke: color, strokeWidth: 1.75 }}
       markerEnd={markerEnd}
     />

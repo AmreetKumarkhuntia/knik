@@ -34,14 +34,14 @@ export default function MetricCard({
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 p-6 knik-card animate-pulse">
+      <div className="flex flex-col gap-4 p-6 knik-card">
         <div className="flex justify-between items-start">
-          <div className="p-2 rounded-md w-12 h-12 bg-surface-2" />
-          <div className="w-16 h-6 rounded-full bg-surface-3" />
+          <div className="p-2 rounded-md w-12 h-12 knik-shimmer" />
+          <div className="w-16 h-6 rounded-full knik-shimmer" />
         </div>
         <div>
-          <div className="w-24 h-4 bg-surface-3 rounded mb-2" />
-          <div className="w-16 h-8 bg-surface-2 rounded" />
+          <div className="w-24 h-4 knik-shimmer rounded mb-2" />
+          <div className="w-16 h-8 knik-shimmer rounded" />
         </div>
       </div>
     )
