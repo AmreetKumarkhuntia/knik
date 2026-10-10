@@ -18,10 +18,11 @@ export default function TokenMeter({
 
   return (
     <div className={`flex flex-col gap-2 p-3 knik-card bg-surface-2 ${className}`}>
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between text-body">
         <span className="text-fg-2 font-medium flex items-center gap-1.5">
           <span
-            className="material-symbols-outlined text-[16px] text-aurora-400"
+            className="material-symbols-outlined text-aurora-400"
+            style={{ fontSize: 16 }}
             aria-hidden="true"
           >
             database

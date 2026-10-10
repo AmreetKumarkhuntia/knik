@@ -9,19 +9,23 @@ export default function StatStrip({ stats, className = '' }: StatStripProps) {
       {stats.map((stat, i) => (
         <React.Fragment key={i}>
           <div className="flex flex-col gap-1 min-w-[120px]">
-            <div className="flex items-center gap-2 text-fg-3 text-sm">
+            <div className="flex items-center gap-2 text-fg-3 text-body">
               {stat.icon && (
-                <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 16 }}
+                  aria-hidden="true"
+                >
                   {stat.icon}
                 </span>
               )}
               <span>{stat.label}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-semibold text-fg-1">{stat.value}</span>
+              <span className="text-h2 text-fg-1">{stat.value}</span>
               {stat.trend && (
                 <span
-                  className={`text-xs font-medium flex items-center ${
+                  className={`text-caption font-medium flex items-center ${
                     stat.trend.direction === 'up'
                       ? 'text-success'
                       : stat.trend.direction === 'down'

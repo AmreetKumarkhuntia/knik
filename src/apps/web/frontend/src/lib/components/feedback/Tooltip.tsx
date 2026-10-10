@@ -37,7 +37,7 @@ export default function Tooltip({
     <div className={`relative inline-flex group ${className}`}>
       {children}
       <div
-        className={`absolute z-50 pointer-events-none whitespace-nowrap px-2 py-1 bg-surface-3 text-fg-1 font-mono text-[11px] border border-border-2 rounded-[5px] shadow-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${placementClasses}`}
+        className={`absolute z-50 pointer-events-none whitespace-nowrap px-2 py-1 bg-surface-3 text-fg-1 font-mono text-mono-sm border border-border-2 rounded-[5px] shadow-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${placementClasses}`}
         style={{ transitionDelay: `${delay}ms` }}
         role="tooltip"
       >

@@ -31,7 +31,7 @@ export default function ConnectionForm({ node, nodes, onConnect }: ConnectionFor
   const selected = candidates.find(candidate => candidate.value === choice)
   return (
     <div className="px-5 pb-5 space-y-2">
-      <label htmlFor={id} className="text-xs font-medium text-secondary uppercase tracking-wide">
+      <label htmlFor={id} className="text-micro text-secondary uppercase tracking-wide">
         Connect to
       </label>
       <div className="flex gap-2">
@@ -41,7 +41,7 @@ export default function ConnectionForm({ node, nodes, onConnect }: ConnectionFor
           onChange={setChoice}
           options={candidates}
           placeholder="Choose a node…"
-          className="flex-1 min-w-0 text-xs"
+          className="flex-1 min-w-0 text-label"
         />
         <Button
           variant="secondary"

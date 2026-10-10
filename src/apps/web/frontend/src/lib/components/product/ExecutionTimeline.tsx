@@ -23,7 +23,7 @@ export default function ExecutionTimeline({
   if (!timeline || timeline.length === 0) {
     return (
       <div className="bg-surface border border-border rounded-lg p-8 text-center">
-        <p className="text-fg-3 text-sm">No execution steps available</p>
+        <p className="text-fg-3 text-body">No execution steps available</p>
       </div>
     )
   }
@@ -45,7 +45,7 @@ export default function ExecutionTimeline({
                   : 'bg-[var(--info-bg)] text-[var(--info)]'
             }`}
           >
-            <span className="material-symbols-outlined text-sm" aria-hidden="true">
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">
               {step.status === 'success' ? 'check' : step.status === 'failed' ? 'close' : 'pending'}
             </span>
           </div>
@@ -57,27 +57,27 @@ export default function ExecutionTimeline({
                   {getNodeIcon(step.node_type)}
                 </span>
                 <h2 className="font-semibold text-fg-1 break-all">{step.node_id}</h2>
-                <span className="text-xs capitalize text-secondary">{step.status}</span>
-                <span className="text-xs text-fg-3 break-all">{step.node_type}</span>
+                <span className="text-caption capitalize text-secondary">{step.status}</span>
+                <span className="text-caption text-fg-3 break-all">{step.node_type}</span>
               </div>
-              <span className="text-xs text-fg-4">
+              <span className="text-caption text-fg-4">
                 {step.duration_ms !== undefined ? `${step.duration_ms}ms` : 'N/A'}
               </span>
             </div>
 
             {step.error_message && (
-              <div className="mt-2 p-2 bg-[var(--danger-bg)] border border-[var(--danger)] rounded text-xs text-[var(--danger)]">
+              <div className="mt-2 p-2 bg-[var(--danger-bg)] border border-[var(--danger)] rounded text-caption text-[var(--danger)]">
                 {step.error_message}
               </div>
             )}
 
             <details className="mt-3">
-              <summary className="text-xs text-fg-3 cursor-pointer hover:text-[var(--primary)] transition-colors">
+              <summary className="text-caption text-fg-3 cursor-pointer hover:text-[var(--primary)] transition-colors">
                 View inputs/outputs
               </summary>
               <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
-                  <div className="text-xs text-fg-4 mb-1">Inputs:</div>
+                  <div className="text-caption text-fg-4 mb-1">Inputs:</div>
                   <CodeBlock
                     code={JSON.stringify(step.inputs, null, 2)}
                     language="json"
@@ -86,7 +86,7 @@ export default function ExecutionTimeline({
                   />
                 </div>
                 <div>
-                  <div className="text-xs text-fg-4 mb-1">Outputs:</div>
+                  <div className="text-caption text-fg-4 mb-1">Outputs:</div>
                   <CodeBlock
                     code={JSON.stringify(step.outputs, null, 2)}
                     language="json"

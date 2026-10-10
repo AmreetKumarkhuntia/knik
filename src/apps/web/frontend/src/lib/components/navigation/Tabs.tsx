@@ -50,7 +50,7 @@ export default function Tabs<T extends string>({
           className={`justify-start ${active === tab.id ? 'text-[var(--acc-text)] bg-[var(--acc-soft)]' : 'text-fg-3'}`}
         >
           {tab.icon && (
-            <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }} aria-hidden="true">
               {tab.icon}
             </span>
           )}

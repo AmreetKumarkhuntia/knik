@@ -18,7 +18,7 @@ export default function ExecutionsFilterBar({
     <div className="py-3">
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <label htmlFor="workflow-filter" className="text-sm font-medium text-subtle">
+          <label htmlFor="workflow-filter" className="text-label text-subtle">
             Workflow:
           </label>
           <Select
@@ -33,7 +33,7 @@ export default function ExecutionsFilterBar({
           />
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="status-filter" className="text-sm font-medium text-subtle">
+          <label htmlFor="status-filter" className="text-label text-subtle">
             Status:
           </label>
           <Select
@@ -55,7 +55,7 @@ export default function ExecutionsFilterBar({
             Clear Filters
           </Button>
         )}
-        <div className="ml-auto text-sm text-secondary">
+        <div className="ml-auto text-body-sm text-secondary">
           {loading ? 'Loading…' : `Showing ${shownCount} of ${totalCount} executions`}
         </div>
       </div>

@@ -23,7 +23,7 @@ export default function ProvidersPane() {
             options={providers}
           />
         ) : (
-          <p className="text-[12.5px] text-[var(--fg-4)] py-2">No providers available.</p>
+          <p className="text-body-sm text-[var(--fg-4)] py-2">No providers available.</p>
         )}
       </FormGroup>
       <FormGroup title="MCP tools" sub="Choose the tool groups enabled in this session">

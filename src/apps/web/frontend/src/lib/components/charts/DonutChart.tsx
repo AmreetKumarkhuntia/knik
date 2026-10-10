@@ -55,8 +55,8 @@ export default function DonutChart({ segments, size = 120, className = '' }: Don
       </svg>
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-        <span className="text-xl font-bold text-fg-1">{total}</span>
-        <span className="text-xs text-fg-3">Total</span>
+        <span className="text-h2 font-bold text-fg-1">{total}</span>
+        <span className="text-caption text-fg-3">Total</span>
       </div>
     </div>
   )

@@ -86,7 +86,7 @@ export default function Modal({
       >
         {title && (
           <div className="px-4 py-3 border-b border-[var(--border-2)] flex items-center justify-between gap-3 shrink-0">
-            <h2 id={labelId} className="text-base font-semibold text-fg-1">
+            <h2 id={labelId} className="text-h3 text-fg-1">
               {title}
             </h2>
             {placement !== 'center' && (

@@ -17,7 +17,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         }
       />
       {error && (
-        <p id={errorId} role="alert" className="mt-1 text-sm text-[var(--danger)]">
+        <p id={errorId} role="alert" className="mt-1 text-caption text-[var(--danger)]">
           {error}
         </p>
       )}

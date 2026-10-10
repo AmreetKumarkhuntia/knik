@@ -23,15 +23,15 @@ export default function ModelPicker({ model, onChange, compact, models }: ModelP
               style={{ background: MODEL_ACCENT_DOT[detail?.badge ?? 'primary'] }}
             />
             <span className="min-w-0">
-              <span className="block truncate max-w-[150px] sm:max-w-[220px] text-sm">
+              <span className="block truncate max-w-[150px] sm:max-w-[220px] text-label">
                 {option.label}
               </span>
               {detail?.vendor && !compact && (
-                <span className="block text-xs text-fg-4">{detail.vendor}</span>
+                <span className="block text-caption text-fg-4">{detail.vendor}</span>
               )}
             </span>
             {detail?.tag && !compact && (
-              <span className="font-mono text-[10px] text-fg-4">{detail.tag}</span>
+              <span className="font-mono text-mono-sm text-fg-4">{detail.tag}</span>
             )}
           </span>
         )

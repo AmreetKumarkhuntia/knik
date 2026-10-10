@@ -69,11 +69,11 @@ function CommandList({
             icon={item.icon && <MS name={item.icon} />}
           >
             {item.label}
-            {item.shortcut && <span className="ml-auto text-xs text-fg-4">{item.shortcut}</span>}
+            {item.shortcut && <span className="ml-auto text-micro text-fg-4">{item.shortcut}</span>}
           </Button>
         ))}
       </div>
-      {!items.length && <p className="text-sm text-fg-4 p-3">No matching commands.</p>}
+      {!items.length && <p className="text-body text-fg-4 p-3">No matching commands.</p>}
     </div>
   )
 }

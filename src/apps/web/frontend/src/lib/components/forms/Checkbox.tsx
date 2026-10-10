@@ -53,7 +53,7 @@ export default function Checkbox({
           <div aria-hidden="true" className="w-[8px] h-[2px] bg-[var(--on-primary)] rounded-full" />
         )}
       </div>
-      {label && <span className="text-[13px] text-[var(--fg-2)]">{label}</span>}
+      {label && <span className="text-label text-[var(--fg-2)]">{label}</span>}
     </label>
   )
 }

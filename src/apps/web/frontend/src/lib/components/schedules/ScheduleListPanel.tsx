@@ -51,7 +51,7 @@ export default function ScheduleListPanel({
       key: 'timezone',
       label: 'Timezone',
       render: (_, schedule) => (
-        <span className="font-mono text-xs">{schedule.timezone || 'UTC'}</span>
+        <span className="font-mono text-mono-sm">{schedule.timezone || 'UTC'}</span>
       ),
     },
     {

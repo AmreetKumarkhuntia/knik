@@ -63,7 +63,7 @@ export default function Pagination({
       aria-label="Pagination"
       className="flex items-center justify-between gap-4 py-4 px-6 border-t border-[var(--border-2)]"
     >
-      <div className="text-sm text-fg-3">
+      <div className="text-body-sm text-fg-3">
         Page <span className="font-semibold text-fg-1">{currentPage}</span> of{' '}
         <span className="font-semibold text-fg-1">{totalPages}</span>
       </div>
@@ -73,7 +73,7 @@ export default function Pagination({
           variant="ghost"
           onClick={handlePrevious}
           disabled={disabled || currentPage === 1}
-          className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="px-3 py-1.5 text-label rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           Previous
         </Button>
@@ -98,7 +98,7 @@ export default function Pagination({
                 onClick={() => handlePageClick(pageNum)}
                 disabled={disabled}
                 aria-current={isActive ? 'page' : undefined}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-all ${
+                className={`px-3 py-1.5 text-label rounded-md border transition-all ${
                   isActive
                     ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
                     : 'border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1'
@@ -114,7 +114,7 @@ export default function Pagination({
           variant="ghost"
           onClick={handleNext}
           disabled={disabled || currentPage === totalPages}
-          className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="px-3 py-1.5 text-label rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           Next
         </Button>

@@ -8,7 +8,7 @@ export default function LoadingSpinner({ size = 'md', className = '', text }: Lo
       className={`flex flex-col items-center justify-center gap-2 text-[var(--primary)] ${className}`}
     >
       <div className={`knik-spinner ${spinnerSizes[size]}`} />
-      {text && <p className="text-sm text-fg-4">{text}</p>}
+      {text && <p className="text-body text-fg-4">{text}</p>}
     </div>
   )
 }

@@ -24,7 +24,7 @@ export default function WorkflowNavbar({
             aria-label="Workflow name"
             value={workflowName ?? ''}
             onChange={event => onNameChange(event.target.value)}
-            className="!px-2 !py-1 text-sm w-56 max-w-full"
+            className="!px-2 !py-1 text-label w-56 max-w-full"
           />
         ) : (
           <span className="font-semibold text-foreground">{workflowName ?? 'Create Workflow'}</span>

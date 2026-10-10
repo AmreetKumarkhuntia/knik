@@ -16,7 +16,7 @@ export default function Radio({
   return (
     <fieldset disabled={disabled} aria-describedby={describedBy} className={`min-w-0 ${className}`}>
       {label && (
-        <legend className={hideLabel ? 'sr-only' : 'mb-2 text-sm text-fg-2'}>{label}</legend>
+        <legend className={hideLabel ? 'sr-only' : 'mb-2 text-label text-fg-2'}>{label}</legend>
       )}
       <div className={presentation === 'standard' ? 'flex flex-col gap-3' : 'flex flex-wrap gap-2'}>
         {options.map((option, index) => (
@@ -36,9 +36,9 @@ export default function Radio({
                 presentation === 'standard' ? 'accent-[var(--acc)] outline-none' : 'sr-only'
               }
             />
-            <span className="text-[13px] text-fg-2">{option.label}</span>
+            <span className="text-label text-fg-2">{option.label}</span>
             {option.monoLabel && (
-              <span className="font-mono text-[10px] text-fg-4">{option.monoLabel}</span>
+              <span className="font-mono text-mono-sm text-fg-4">{option.monoLabel}</span>
             )}
           </label>
         ))}

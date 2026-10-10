@@ -104,14 +104,14 @@ export default function VoicePane() {
             }))}
           />
         ) : (
-          <p className="text-[12.5px] text-[var(--fg-4)] py-2">No voices available.</p>
+          <p className="text-body-sm text-[var(--fg-4)] py-2">No voices available.</p>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button size="sm" disabled={!selected?.audioSrc} onClick={() => void preview()}>
             {playing ? 'Stop preview' : 'Preview voice'}
           </Button>
           {!selected?.audioSrc && (
-            <p className="text-xs text-[var(--fg-4)]">
+            <p className="text-caption text-[var(--fg-4)]">
               Select a voice with a preview recording to listen.
             </p>
           )}

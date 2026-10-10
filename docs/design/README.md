@@ -105,9 +105,28 @@ KNIK’s look is a **compact dark IDE**: solid graphite surfaces, hairline divid
 
 ### Typography
 
-- **Inter Variable** is the workhorse, used for everything from `12px` micro labels to `88px` display headings.
+- **Inter Variable** is the workhorse, used for everything from `11px` micro labels to `88px` display headings.
 - Display & headings use **tightened tracking** (`-0.025em` to `-0.04em`) to match the Linear / Vercel / Stripe feel.
-- Interface text at **14px / 1.5**, chat text at **16px**, **13px** for dense table rows. Page titles are **24px**, section titles **16px**.
+- The type scale below is the **only** set of sizes. Tailwind's default sizes (`text-xs` … `text-4xl`) are removed from `tailwind.config.js`, and arbitrary sizes (`text-[13px]`) are banned; `src/tests/architecture/type-scale.test.ts` fails the build on either. In CSS use `var(--fs-*)`, never a raw `px` (icon glyph sizes excepted). Pick the token by **role**, not by the old pixel size.
+
+| Token (Tailwind / CSS)                | Size / line-height | Weight | Use                                                                 |
+| ------------------------------------- | ------------------ | ------ | ------------------------------------------------------------------- |
+| `text-display-lg` / `--fs-display-lg` | 40 / 44            | –      | hero / welcome only                                                 |
+| `text-h1` / `--fs-h1`                 | 24 / 32            | 600    | page titles                                                         |
+| `text-h2` / `--fs-h2`                 | 20 / 28            | 600    | section titles                                                      |
+| `text-h3` / `--fs-h3`                 | 16 / 24            | 600    | panel and dialog titles                                             |
+| `text-h4` / `--fs-h4`                 | 14 / 20            | 600    | card titles, group headers                                          |
+| `text-body-lg` / `--fs-body-lg`       | 16 / 26            | –      | chat message body and composer only                                 |
+| `text-body` / `--fs-body`             | 14 / 20            | –      | default UI text, dialogs, paragraphs, form values                   |
+| `text-body-sm` / `--fs-body-sm`       | 13 / 20            | –      | table cells, descriptions, dense secondary text                     |
+| `text-label` / `--fs-label`           | 13 / 18            | 500    | buttons, tabs, nav items, inputs, chips, table headers, form labels |
+| `text-caption` / `--fs-caption`       | 12 / 16            | –      | timestamps, helper text, metadata, status                           |
+| `text-micro` / `--fs-micro`           | 11 / 16            | 500    | badge counts, kbd hints, overlines; the floor, nothing smaller      |
+| `text-mono` / `--fs-mono`             | 13 / 20            | –      | code blocks, JSON viewer (with `font-mono`)                         |
+| `text-mono-sm` / `--fs-mono-sm`       | 12 / 16            | –      | IDs, model tags, durations (with `font-mono`)                       |
+
+- Heading, label and micro classes bake in their weight; don't restate it with `font-semibold` / `font-medium`.
+- Chat transcript and composer are capped at `max-w-[720px]` (about 70 characters of 16px text; `ch` would resolve against the 14px container).
 - Mono is **JetBrains Mono** for code, model names, IDs, durations (`12.4s`), and TTS voice tokens (`af_heart`).
 - Numbers use **tabular figures** in tables (`font-variant-numeric: tabular-nums`).
 

@@ -18,8 +18,8 @@ export default function HubMetricStrip({ metrics, loading }: HubMetricStripProps
     >
       {items.map(item => (
         <div key={item.label} className="flex items-baseline gap-2">
-          <dt className="text-sm text-secondary">{item.label}</dt>
-          <dd className="text-sm font-semibold tabular-nums text-foreground">{item.value}</dd>
+          <dt className="text-body text-secondary">{item.label}</dt>
+          <dd className="text-h4 tabular-nums text-foreground">{item.value}</dd>
         </div>
       ))}
     </dl>

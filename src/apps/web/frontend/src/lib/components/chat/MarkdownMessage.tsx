@@ -34,32 +34,33 @@ const components: Components = {
   code({ children, className }) {
     return (
       <code
-        className={`px-1.5 py-0.5 rounded-md bg-surface-2 text-fg-2 font-mono text-sm ${className || ''}`}
+        className={`px-1.5 py-0.5 rounded-md bg-surface-2 text-fg-2 font-mono ${className || ''}`}
+        style={{ fontSize: '0.9em' }}
       >
         {children}
       </code>
     )
   },
   p({ children }) {
-    return <p className="mb-4 last:mb-0 leading-relaxed text-base">{children}</p>
+    return <p className="mb-4 last:mb-0 text-body-lg">{children}</p>
   },
   ul({ children }) {
-    return <ul className="list-disc list-inside mb-4 space-y-2 text-base">{children}</ul>
+    return <ul className="list-disc list-inside mb-4 space-y-2 text-body-lg">{children}</ul>
   },
   ol({ children }) {
-    return <ol className="list-decimal list-inside mb-4 space-y-2 text-base">{children}</ol>
+    return <ol className="list-decimal list-inside mb-4 space-y-2 text-body-lg">{children}</ol>
   },
   li({ children }) {
     return <li className="leading-relaxed">{children}</li>
   },
   h1({ children }) {
-    return <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0">{children}</h1>
+    return <h1 className="text-h2 font-bold mb-4 mt-6 first:mt-0">{children}</h1>
   },
   h2({ children }) {
-    return <h2 className="text-xl font-bold mb-3 mt-5 first:mt-0">{children}</h2>
+    return <h2 className="text-h3 font-bold mb-3 mt-5 first:mt-0">{children}</h2>
   },
   h3({ children }) {
-    return <h3 className="text-lg font-bold mb-2 mt-4 first:mt-0">{children}</h3>
+    return <h3 className="text-h4 font-bold mb-2 mt-4 first:mt-0">{children}</h3>
   },
   a({ children, href }) {
     return (
@@ -101,14 +102,14 @@ const components: Components = {
   },
   th({ children }) {
     return (
-      <TableHeaderCell className="px-4 py-2 text-left text-sm font-semibold text-fg-2">
+      <TableHeaderCell className="px-4 py-2 text-left text-body-sm font-semibold text-fg-2">
         {children}
       </TableHeaderCell>
     )
   },
   td({ children }) {
     return (
-      <TableCell className="px-4 py-2 text-sm border-t border-[var(--border-2)]">
+      <TableCell className="px-4 py-2 text-body-sm border-t border-[var(--border-2)]">
         {children}
       </TableCell>
     )

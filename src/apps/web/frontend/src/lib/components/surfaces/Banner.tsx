@@ -19,7 +19,7 @@ export default function Banner({
     onDismiss?.()
   }
 
-  const baseClasses = 'flex items-center gap-3 p-3 rounded-md border text-sm font-medium w-full'
+  const baseClasses = 'flex items-center gap-3 p-3 rounded-md border text-body font-medium w-full'
 
   const color = `var(--${variant})`
 
@@ -48,7 +48,11 @@ export default function Banner({
               className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors"
               aria-label="Dismiss banner"
             >
-              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 20 }}
+                aria-hidden="true"
+              >
                 close
               </span>
             </Button>

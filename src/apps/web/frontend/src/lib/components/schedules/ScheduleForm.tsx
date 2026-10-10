@@ -21,7 +21,7 @@ export default function ScheduleForm({
         }}
       >
         <div>
-          <label htmlFor="schedule-workflow" className="block text-sm mb-2">
+          <label htmlFor="schedule-workflow" className="block text-label mb-2">
             Target Workflow
           </label>
           <Select
@@ -37,7 +37,7 @@ export default function ScheduleForm({
           />
         </div>
         <div>
-          <label htmlFor="schedule-description" className="block text-sm mb-2">
+          <label htmlFor="schedule-description" className="block text-label mb-2">
             Schedule
           </label>
           <Input
@@ -51,7 +51,7 @@ export default function ScheduleForm({
           />
         </div>
         <div>
-          <label htmlFor="schedule-timezone" className="block text-sm mb-2">
+          <label htmlFor="schedule-timezone" className="block text-label mb-2">
             Timezone
           </label>
           <Input

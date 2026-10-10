@@ -51,8 +51,8 @@ export default function NodePropertiesPanel({
     >
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-foreground">Node properties</h2>
-          <p className="text-xs text-secondary mt-1 truncate">
+          <h2 className="text-h3 text-foreground">Node properties</h2>
+          <p className="text-caption text-secondary mt-1 truncate">
             {metadata?.label ?? selectedNode.type}
           </p>
         </div>
