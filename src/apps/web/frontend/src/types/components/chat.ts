@@ -1,4 +1,5 @@
 import type * as React from 'react'
+import type { ToolCall } from '$types/conversation'
 
 export type AccentBadge = 'primary' | 'teal' | 'violet' | 'success'
 
@@ -112,4 +113,18 @@ export interface StructuredOutputProps {
   loading: boolean
   onCopy?: (text: string) => void
   copied?: boolean
+}
+
+export interface ToolCallCardProps {
+  call: ToolCall
+  /** Error cards open by default. */
+  defaultExpanded?: boolean
+  className?: string
+}
+
+export interface ToolCallListProps {
+  calls: ToolCall[]
+  /** A live reply keeps every card visible instead of folding them into a summary. */
+  isStreaming?: boolean
+  className?: string
 }

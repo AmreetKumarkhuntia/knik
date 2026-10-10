@@ -176,9 +176,21 @@ test('chat replays supplied scenarios and preserves committed messages across ro
     'Refactor my Python script'
   )
   await page.getByRole('button', { name: 'Send message', exact: true }).click()
+  const skill = page.getByRole('main').getByRole('button', { name: /python-refactor/ })
+  await expect(skill).toBeVisible()
   const response =
-    'Here is a demo refactoring checklist: extract pure functions, name each transformation, and test the result with a small input.'
+    'The behaviour is unchanged, and memory use no longer grows with the size of the input.'
   await expect(page.getByRole('main').getByText(response, { exact: true })).toBeVisible()
+  await expect(page.getByRole('log', { name: 'Conversation' })).toHaveAttribute(
+    'aria-busy',
+    'false'
+  )
+  await expect(skill).toHaveAttribute('aria-expanded', 'false')
+  await skill.click()
+  await expect(skill).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('main').getByText(/## Refactor plan/)).toBeVisible()
+  await page.getByRole('main').getByRole('tab', { name: 'Inputs', exact: true }).click()
+  await expect(page.getByRole('main').getByText(/"file": "pipeline.py"/)).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toHaveValue('')
   await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Keep this local')
   await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeEnabled()
@@ -196,6 +208,26 @@ test('chat replays supplied scenarios and preserves committed messages across ro
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.getByRole('main').getByText(response, { exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'How can I help you today?' })).toBeVisible()
+})
+
+test('Stop ends a streaming reply and marks the running tool as stopped', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
+  const message = page.getByRole('textbox', { name: 'Message', exact: true })
+  await message.fill('Find the bug in this hook')
+  await message.press('Enter')
+  const tool = page.getByRole('main').getByRole('button', { name: /run_tests.*Running/ })
+  await expect(tool).toBeVisible()
+  await expect(page.getByRole('log', { name: 'Conversation' })).toHaveAttribute('aria-busy', 'true')
+  await page.getByRole('button', { name: 'Stop generating', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeVisible()
+  await expect(page.getByRole('log', { name: 'Conversation' })).toHaveAttribute(
+    'aria-busy',
+    'false'
+  )
+  const stopped = page.getByRole('main').getByRole('button', { name: /run_tests.*Failed/ })
+  await expect(stopped).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('main').getByText('Stopped', { exact: true })).toBeVisible()
+  await expect(page.getByRole('main').getByText(/dependency list is empty/)).toHaveCount(0)
 })
 
 test('Enter sends once and Shift+Enter composes a multiline message before sending', async ({
@@ -541,9 +573,7 @@ for (const width of [1440, 1024, 768, 390]) {
           .getByRole('textbox', { name: 'Message', exact: true })
           .fill('Refactor my Python script')
         await page.getByRole('textbox', { name: 'Message', exact: true }).press('Enter')
-        await expect(
-          page.getByRole('main').getByText(/Here is a demo refactoring checklist/)
-        ).toBeVisible()
+        await expect(page.getByRole('main').getByText(/The behaviour is unchanged/)).toBeVisible()
       }
       if (name === 'settings')
         await page.getByRole('tab', { name: 'Providers', exact: true }).click()

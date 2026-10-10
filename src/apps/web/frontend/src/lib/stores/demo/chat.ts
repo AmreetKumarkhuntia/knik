@@ -23,6 +23,16 @@ export const demoChat = {
           timestamp: '2026-10-08T09:00:01Z',
           metadata: {
             demo: true,
+            tool_calls: [
+              {
+                id: 'demo-call-history-read',
+                kind: 'tool',
+                tool_name: 'read_file',
+                tool_args: { path: 'pipeline.py' },
+                tool_result: { path: 'pipeline.py', lines: 142 },
+                duration_ms: 600,
+              },
+            ],
           },
         },
       ],
@@ -172,10 +182,33 @@ export const demoChat = {
           id: 'demo-suggestion-0',
           role: 'assistant',
           content:
-            'Here is a demo refactoring checklist: extract pure functions, name each transformation, and test the result with a small input.',
+            'I ran the **python-refactor** skill over `pipeline.py` and read the file to check its plan.\n\n' +
+            '1. **Extract pure functions.** `load_rows` and `clean_row` no longer touch globals, so each can be tested alone.\n' +
+            '2. **Name each transformation.** The nested loop becomes `normalize_prices`, a generator that yields one row at a time.\n' +
+            '3. **Test with a small input.** A five-row fixture covers the empty, duplicate and malformed cases.\n\n' +
+            'The behaviour is unchanged, and memory use no longer grows with the size of the input.',
           timestamp: '2026-10-08T09:00:01Z',
           metadata: {
             demo: true,
+            tool_calls: [
+              {
+                id: 'demo-call-refactor-skill',
+                kind: 'skill',
+                tool_name: 'python-refactor',
+                tool_args: { file: 'pipeline.py' },
+                tool_result:
+                  '## Refactor plan\n\n- Extract `load_rows` and `clean_row` as pure functions\n- Replace the nested loop with a `normalize_prices` generator\n- Add a five-row fixture test',
+                duration_ms: 1200,
+              },
+              {
+                id: 'demo-call-refactor-read',
+                kind: 'tool',
+                tool_name: 'read_file',
+                tool_args: { path: 'pipeline.py' },
+                tool_result: { path: 'pipeline.py', lines: 142, functions: ['main', 'load_rows'] },
+                duration_ms: 450,
+              },
+            ],
           },
         },
       ],
@@ -187,10 +220,29 @@ export const demoChat = {
           id: 'demo-suggestion-1',
           role: 'assistant',
           content:
-            'Demo outline: introduce on-device speech, explain local inference, discuss latency and privacy, then finish with practical examples.',
+            'I found two related drafts in Notion and built on them.\n\n' +
+            '- **Why on-device speech.** Start with latency and privacy, the two things users notice first.\n' +
+            '- **How local inference works.** Cover model size, quantization and the audio pipeline.\n' +
+            '- **Trade-offs.** Compare accuracy and battery use with a cloud service.\n' +
+            '- **Practical examples.** Close with voice notes, dictation and offline commands.',
           timestamp: '2026-10-08T09:00:01Z',
           metadata: {
             demo: true,
+            tool_calls: [
+              {
+                id: 'demo-call-outline-notion',
+                kind: 'mcp',
+                tool_name: 'notion.search',
+                tool_args: { query: 'on-device speech', limit: 5 },
+                tool_result: {
+                  results: [
+                    { title: 'Local inference notes', updated: '2026-09-30' },
+                    { title: 'Speech latency benchmarks', updated: '2026-09-12' },
+                  ],
+                },
+                duration_ms: 900,
+              },
+            ],
           },
         },
       ],
@@ -202,10 +254,31 @@ export const demoChat = {
           id: 'demo-suggestion-2',
           role: 'assistant',
           content:
-            'Demo debugging checklist: check the effect dependencies, use functional state updates, and verify cleanup on unmount.',
+            'The first test run failed in `useCounter`, so I read the hook.\n\n' +
+            'The effect reads `count` but its dependency list is empty, so the interval keeps the first value forever. ' +
+            'Use a functional update, `setCount(c => c + 1)`, and clear the interval in the cleanup so it stops on unmount.',
           timestamp: '2026-10-08T09:00:01Z',
           metadata: {
             demo: true,
+            tool_calls: [
+              {
+                id: 'demo-call-hook-tests',
+                kind: 'tool',
+                tool_name: 'run_tests',
+                tool_args: { pattern: 'useCounter' },
+                error:
+                  '2 failed, 4 passed: useCounter › increments every second, useCounter › stops on unmount',
+                duration_ms: 1400,
+              },
+              {
+                id: 'demo-call-hook-read',
+                kind: 'tool',
+                tool_name: 'read_file',
+                tool_args: { path: 'src/hooks/useCounter.ts' },
+                tool_result: { path: 'src/hooks/useCounter.ts', lines: 18 },
+                duration_ms: 400,
+              },
+            ],
           },
         },
       ],

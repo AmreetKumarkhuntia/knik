@@ -1,10 +1,12 @@
 import { memo, useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChatBubble,
   MarkdownMessage,
   Avatar,
   KnikGlyph,
   AgentThinking,
+  ToolCallList,
   Banner,
   Modal,
 } from '$components'
@@ -29,53 +31,90 @@ const ChatTranscript = memo(function ChatTranscript({
   messages,
   initials,
   summaryMessageId,
+  isStreaming,
   onCopy,
 }: ChatTranscriptProps) {
   return (
     <div
       role="log"
       aria-live="polite"
+      aria-busy={isStreaming}
       aria-label="Conversation"
       className={
         messages.length > 0 ? 'w-full max-w-[720px] mx-auto py-6 flex flex-col gap-6' : undefined
       }
     >
-      {messages.map((message, index) => {
-        const { isUser, steps, modelTag, messageId } = message
-        return (
-          <div key={`${message.id || messageId}:${index}`}>
-            <ChatBubble
-              role={isUser ? 'user' : 'assistant'}
-              content={<MarkdownMessage content={message.content} onCopy={onCopy} />}
-              avatar={
-                isUser ? (
-                  <Avatar initials={initials} size={30} />
-                ) : (
-                  <div className="flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-[var(--acc-soft)] border border-[var(--acc-border)]">
-                    <KnikGlyph size={16} />
-                  </div>
-                )
-              }
-              header={
-                !isUser ? (
-                  <div className="flex flex-wrap items-center gap-2 text-label mb-2">
-                    <span className="font-semibold text-fg-1">Knik AI</span>
-                    {modelTag && <span className="text-caption text-fg-3">{modelTag}</span>}
-                    {message.timestamp && (
-                      <span className="text-caption text-fg-3">{message.timestampLabel}</span>
-                    )}
-                  </div>
-                ) : undefined
-              }
-              reasoning={!isUser && steps.length > 0 ? <AgentThinking steps={steps} /> : undefined}
-              actions={!isUser ? { copy: () => onCopy(message.content) } : undefined}
-            />
-            {summaryMessageId === messageId && (
-              <CompactionDivider summaryContent={message.content} onCopy={onCopy} />
-            )}
-          </div>
-        )
-      })}
+      {/* initial={false}: history already on screen stays put; only newly appended messages enter. */}
+      <AnimatePresence initial={false}>
+        {messages.map((message, index) => {
+          const { isUser, steps, modelTag, messageId, toolCalls } = message
+          const typing =
+            message.isStreaming && !message.content && !toolCalls.some(c => c.status === 'running')
+          return (
+            <motion.div
+              key={`${message.id || messageId}:${index}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ease: 'easeOut', duration: 0.2 }}
+            >
+              <ChatBubble
+                role={isUser ? 'user' : 'assistant'}
+                content={
+                  typing ? (
+                    <span className="knik-typing" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  ) : (
+                    <MarkdownMessage
+                      content={message.content}
+                      isStreaming={message.isStreaming}
+                      onCopy={onCopy}
+                    />
+                  )
+                }
+                avatar={
+                  isUser ? (
+                    <Avatar initials={initials} size={30} />
+                  ) : (
+                    <div className="flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-[var(--acc-soft)] border border-[var(--acc-border)]">
+                      <KnikGlyph size={16} />
+                    </div>
+                  )
+                }
+                header={
+                  !isUser ? (
+                    <div className="flex flex-wrap items-center gap-2 text-label mb-2">
+                      <span className="font-semibold text-fg-1">Knik AI</span>
+                      {modelTag && <span className="text-caption text-fg-3">{modelTag}</span>}
+                      {message.timestamp && (
+                        <span className="text-caption text-fg-3">{message.timestampLabel}</span>
+                      )}
+                    </div>
+                  ) : undefined
+                }
+                reasoning={
+                  !isUser && (steps.length > 0 || toolCalls.length > 0) ? (
+                    <div className="flex flex-col gap-3">
+                      {steps.length > 0 && <AgentThinking steps={steps} />}
+                      <ToolCallList calls={toolCalls} isStreaming={message.isStreaming} />
+                    </div>
+                  ) : undefined
+                }
+                actions={
+                  !isUser && !message.isStreaming
+                    ? { copy: () => onCopy(message.content) }
+                    : undefined
+                }
+              />
+              {summaryMessageId === messageId && (
+                <CompactionDivider summaryContent={message.content} onCopy={onCopy} />
+              )}
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
     </div>
   )
 })
@@ -84,8 +123,17 @@ function ChatSessionWidget() {
   const activeId = useChatStore(state => state.activeConversationId)
   const { scopeId, scope, patch } = useChatScope(activeId)
   const { draft, shortcutsOpen, toolsOpen } = scope
-  const { conversationId, conversation, models, suggestions, model, messages, initials } =
-    useChatView()
+  const {
+    conversationId,
+    conversation,
+    models,
+    suggestions,
+    model,
+    messages,
+    isStreaming,
+    stop,
+    initials,
+  } = useChatView()
   const updateSettings = useSettingsStore(state => state.updateSettings)
   const { tools } = useProvidersView()
   const toggleTool = useSettingsStore(state => state.toggleTool)
@@ -120,10 +168,12 @@ function ChatSessionWidget() {
     return () => window.removeEventListener('keydown', onKey)
   }, [patch, shortcutsOpen])
 
+  // A streaming reply grows in place, so follow its text and tool cards as well as new messages.
+  const last = messages.at(-1)
   useEffect(() => {
     if (atBottom.current && scrollRef.current)
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [conversation?.messages.length])
+  }, [messages.length, last?.content.length, last?.toolCalls.length])
 
   const send = () => {
     const result = sendMessage(scopeId)
@@ -137,7 +187,8 @@ function ChatSessionWidget() {
     <div className="flex flex-col h-full min-h-0 px-4 sm:px-6 pb-4 sm:pb-5">
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto"
+        // scroll-smooth eases auto-scroll; the global reduced-motion rule turns it back to instant.
+        className="flex-1 min-h-0 overflow-y-auto scroll-smooth"
         onScroll={event => {
           const element = event.currentTarget
           atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 150
@@ -165,6 +216,7 @@ function ChatSessionWidget() {
           messages={messages}
           initials={initials}
           summaryMessageId={conversation?.summary_message_id}
+          isStreaming={isStreaming}
           onCopy={copy}
         />
       </div>
@@ -174,6 +226,8 @@ function ChatSessionWidget() {
           value={draft}
           onChange={setDraft}
           onSend={send}
+          isStreaming={isStreaming}
+          onStop={stop}
           model={model}
           onModel={id => updateSettings({ model: id })}
           models={models}

@@ -5,7 +5,22 @@ import Textarea from '../forms/Textarea'
 import type { InputPanelProps, InputPanelRef } from '$types/sections/chat'
 
 const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
-  ({ value, onChange, onSend, disabled, model, onModel, models, onOpenTools, toolsOpen }, ref) => {
+  (
+    {
+      value,
+      onChange,
+      onSend,
+      disabled,
+      isStreaming,
+      onStop,
+      model,
+      onModel,
+      models,
+      onOpenTools,
+      toolsOpen,
+    },
+    ref
+  ) => {
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const [focused, setFocused] = useState(false)
 
@@ -25,7 +40,7 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
       clear: () => onChange(''),
     }))
 
-    const canSend = !!value.trim() && !disabled
+    const canSend = !!value.trim() && !disabled && !isStreaming
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
@@ -104,17 +119,30 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
             >
               <MS name="mic" size={18} />
             </Button>
-            <Button
-              type="button"
-              onClick={() => canSend && onSend()}
-              disabled={!canSend}
-              aria-label="Send message"
-              variant="primary"
-              size="sm"
-              className="shrink-0 ml-auto"
-            >
-              <MS name="arrow_upward" size={20} weight={500} />
-            </Button>
+            {isStreaming ? (
+              <Button
+                type="button"
+                onClick={onStop}
+                aria-label="Stop generating"
+                variant="primary"
+                size="sm"
+                className="shrink-0 ml-auto"
+              >
+                <MS name="stop" size={20} fill={1} />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => canSend && onSend()}
+                disabled={!canSend}
+                aria-label="Send message"
+                variant="primary"
+                size="sm"
+                className="shrink-0 ml-auto"
+              >
+                <MS name="arrow_upward" size={20} weight={500} />
+              </Button>
+            )}
           </div>
         </div>
         <div

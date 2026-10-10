@@ -2,9 +2,10 @@
  * Static lookup maps for design-system components, relocated from co-located
  * .tsx files to satisfy the configs-live-in-constants/ boundary (eslint.config.js).
  */
-import type { BannerProps, ModalSize } from '$types'
+import type { BadgeProps, BannerProps, ModalSize } from '$types'
 import type { AccentBadge } from '$types/components/chat'
 import type { ExecutionStatus } from '$types/workflow'
+import type { ToolCallKind, ToolCallStatus } from '$types/conversation'
 
 /** Modal max-width class per size (Modal). */
 export const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
@@ -36,4 +37,21 @@ export const BANNER_ROLE: Record<NonNullable<BannerProps['variant']>, 'alert' | 
   warning: 'alert',
   info: 'status',
   success: 'status',
+}
+
+/** Icon, label and badge per tool call kind (ToolCallCard). */
+export const TOOL_CALL_KINDS: Record<
+  ToolCallKind,
+  { icon: string; label: string; badge: BadgeProps['variant']; nouns: [string, string] }
+> = {
+  tool: { icon: 'build', label: 'Tool', badge: 'default', nouns: ['tool', 'tools'] },
+  skill: { icon: 'auto_awesome', label: 'Skill', badge: 'primary', nouns: ['skill', 'skills'] },
+  mcp: { icon: 'hub', label: 'MCP', badge: 'info', nouns: ['MCP call', 'MCP calls'] },
+}
+
+/** Screen-reader status per tool call state (ToolCallCard). */
+export const TOOL_CALL_STATUS_LABELS: Record<ToolCallStatus, string> = {
+  running: 'Running',
+  success: 'Done',
+  error: 'Failed',
 }

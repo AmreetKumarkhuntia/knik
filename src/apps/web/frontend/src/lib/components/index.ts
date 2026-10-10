@@ -50,6 +50,8 @@ export { default as AgentThinking } from './chat/AgentThinking'
 export { default as ChatBubble } from './chat/ChatBubble'
 export { default as CodeBlock } from './chat/CodeBlock'
 export { default as JsonViewer } from './chat/JsonViewer'
+export { default as ToolCallCard } from './chat/ToolCallCard'
+export { default as ToolCallList } from './chat/ToolCallList'
 
 // Phase 4 Data Viz
 export { default as StatStrip } from './charts/StatStrip'
