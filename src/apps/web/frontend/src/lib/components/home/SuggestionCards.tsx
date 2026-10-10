@@ -14,8 +14,10 @@ export default function SuggestionCards({ suggestions, onSelectPrompt }: Suggest
         >
           <MS name={suggestion.icon} size={18} className="text-fg-3 shrink-0" />
           <span className="min-w-0">
-            <span className="block text-sm font-medium text-fg-1">{suggestion.title}</span>
-            <span className="block mt-1 text-xs font-normal text-fg-3">{suggestion.subtitle}</span>
+            <span className="block text-h4 text-fg-1">{suggestion.title}</span>
+            <span className="block mt-1 text-caption font-normal text-fg-3">
+              {suggestion.subtitle}
+            </span>
           </span>
         </Button>
       ))}

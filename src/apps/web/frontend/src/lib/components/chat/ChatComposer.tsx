@@ -55,13 +55,11 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
             placeholder="Type your message…  (Shift+Enter for new line)"
             disabled={disabled}
             rows={1}
-            className="w-full resize-none outline-none border-none bg-transparent font-sans"
+            className="w-full resize-none outline-none border-none bg-transparent font-sans text-body-lg"
             style={{
               minHeight: 26,
               maxHeight: 200,
               color: 'var(--fg-1)',
-              fontSize: 16,
-              lineHeight: 1.5,
               padding: '4px 0',
               boxShadow: 'none',
               outline: 'none',

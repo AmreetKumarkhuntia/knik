@@ -26,7 +26,7 @@ export default function SidebarBrand({ collapsed, onToggle }: SidebarBrandProps)
   return (
     <div className="flex items-center h-9 mb-4 gap-2 px-2">
       <KnikGlyph size={22} />
-      <span className="flex-1 text-sm font-semibold text-fg-1">Knik</span>
+      <span className="flex-1 text-h4 text-fg-1">Knik</span>
       {onToggle && (
         <Button
           variant="ghost"

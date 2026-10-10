@@ -24,12 +24,12 @@ export default function HubWorkflowsTable({
           <MS name="account_tree" size={18} />
           <div className="min-w-0">
             <Link
-              className="text-sm font-semibold text-foreground hover:underline"
+              className="text-body font-semibold text-foreground hover:underline"
               to={ROUTE_PATHS.workflowEdit(row.id)}
             >
               {row.name}
             </Link>
-            <p className="text-xs text-secondary truncate max-w-80">{row.description}</p>
+            <p className="text-caption text-secondary truncate max-w-80">{row.description}</p>
           </div>
         </div>
       ),
@@ -38,7 +38,7 @@ export default function HubWorkflowsTable({
       key: 'lastExecutedAt',
       label: 'Last run',
       render: (_, row) => (
-        <span className="font-mono text-xs text-secondary">
+        <span className="font-mono text-mono-sm text-secondary">
           {row.lastExecutedAt ? formatDate(row.lastExecutedAt) : '—'}
         </span>
       ),

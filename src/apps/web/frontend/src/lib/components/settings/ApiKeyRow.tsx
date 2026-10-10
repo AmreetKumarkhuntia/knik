@@ -14,21 +14,21 @@ export default function ApiKeyRow({ apiKey, last, onDelete }: ApiKeyRowProps) {
       <IconTile bg="var(--bg-surface-3)" color="var(--fg-3)" icon={<MS name="key" size={17} />} />
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13.5px] font-semibold text-[var(--fg-1)]">{apiKey.label}</span>
+          <span className="text-h4 text-[var(--fg-1)]">{apiKey.label}</span>
           {apiKey.scopes.map(scope => (
             <Chip key={scope} label={scope} />
           ))}
         </div>
-        <code className="font-mono text-xs text-[var(--fg-4)]">
+        <code className="font-mono text-mono-sm text-[var(--fg-4)]">
           {apiKey.key_prefix}••••••••••••
         </code>
       </div>
       <div className="text-right">
-        <div className="text-xs text-[var(--fg-3)]">
+        <div className="text-caption text-[var(--fg-3)]">
           {apiKey.last_used_at ? `Used ${formatDate(apiKey.last_used_at)}` : 'Never used'}
         </div>
         {apiKey.created_at && (
-          <div className="font-mono text-[10.5px] text-[var(--fg-5)]">
+          <div className="font-mono text-mono-sm text-[var(--fg-5)]">
             {formatDate(apiKey.created_at)}
           </div>
         )}

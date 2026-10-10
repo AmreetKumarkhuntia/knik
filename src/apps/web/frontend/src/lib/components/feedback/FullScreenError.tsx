@@ -13,8 +13,8 @@ export default function FullScreenError({
       role="alert"
       className={`flex flex-col items-center justify-center gap-4 p-6 ${layout === 'screen' ? 'min-h-screen' : 'flex-1'}`}
     >
-      <h1 className="text-2xl font-semibold text-fg-1">{title}</h1>
-      <p className="text-error text-lg max-w-lg text-center">{message}</p>
+      <h1 className="text-h1 text-fg-1">{title}</h1>
+      <p className="text-error text-body-lg max-w-lg text-center">{message}</p>
       {onRetry && <Button onClick={onRetry}>Try again</Button>}
       {onBack && <Button onClick={onBack}>Go back</Button>}
     </div>

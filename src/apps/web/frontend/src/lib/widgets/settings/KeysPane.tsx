@@ -46,7 +46,7 @@ export default function KeysPane() {
         </Button>
       </div>
       {!available && (
-        <p className="text-xs text-[var(--fg-4)] mb-3">
+        <p className="text-caption text-[var(--fg-4)] mb-3">
           Key creation is unavailable without an unused supplied demo key scenario.
         </p>
       )}
@@ -60,7 +60,7 @@ export default function KeysPane() {
           />
         ))
       ) : (
-        <p className="text-[12.5px] text-[var(--fg-4)] py-2.5">No API keys available.</p>
+        <p className="text-body-sm text-[var(--fg-4)] py-2.5">No API keys available.</p>
       )}
       <Modal isOpen={creating} onClose={closeEditor} title="Create demo key" size="sm">
         <form
@@ -71,7 +71,7 @@ export default function KeysPane() {
             addToast('Demo key added to this session.', 'success')
           }}
         >
-          <label htmlFor={`${id}-label`} className="block text-sm font-medium mb-2">
+          <label htmlFor={`${id}-label`} className="block text-label mb-2">
             Key name
           </label>
           <Input
@@ -85,7 +85,7 @@ export default function KeysPane() {
             autoFocus
             density="compact"
           />
-          <p className="text-xs text-[var(--fg-4)] mt-2">
+          <p className="text-caption text-[var(--fg-4)] mt-2">
             Use a label from the supplied demo scenarios.
           </p>
           <div className="flex justify-end gap-2 mt-5">

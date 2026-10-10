@@ -48,13 +48,13 @@ export default function UserProfile({
 
       {account && (
         <div className="flex flex-col">
-          <span className="text-fg-1 font-medium text-sm">{name}</span>
-          <span className="text-fg-3 text-xs">{account}</span>
+          <span className="text-fg-1 font-medium text-body">{name}</span>
+          <span className="text-fg-3 text-caption">{account}</span>
         </div>
       )}
 
       {showBadge && (
-        <span className={`px-2 py-0.5 rounded text-xs font-bold ${getBadgeColor()}`}>
+        <span className={`px-2 py-0.5 rounded text-caption font-bold ${getBadgeColor()}`}>
           {getBadgeText()}
         </span>
       )}

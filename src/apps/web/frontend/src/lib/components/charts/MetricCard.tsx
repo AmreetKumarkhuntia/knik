@@ -56,13 +56,13 @@ export default function MetricCard({
     >
       <div className="flex justify-between items-start">
         <div className={`p-2 rounded-md ${colors.bg} ${colors.text}`}>
-          <span className="material-symbols-outlined text-2xl" aria-hidden="true">
+          <span className="material-symbols-outlined" style={{ fontSize: 24 }} aria-hidden="true">
             {icon}
           </span>
         </div>
         {trend && (
           <span
-            className={`text-xs font-bold bg-surface-3 px-2 py-1 rounded-full flex items-center gap-1 ${
+            className={`text-caption font-bold bg-surface-3 px-2 py-1 rounded-full flex items-center gap-1 ${
               trend.direction === 'up'
                 ? 'text-[var(--success)]'
                 : trend.direction === 'down'
@@ -71,7 +71,11 @@ export default function MetricCard({
             }`}
           >
             {trend.icon && (
-              <span className="material-symbols-outlined text-xs" aria-hidden="true">
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 12 }}
+                aria-hidden="true"
+              >
                 {trend.icon}
               </span>
             )}
@@ -80,12 +84,12 @@ export default function MetricCard({
         )}
       </div>
       <div>
-        <p className="text-fg-3 text-sm font-medium">{label}</p>
+        <p className="text-fg-3 text-label">{label}</p>
         <div className="flex items-end gap-2">
-          <span className="text-fg-1 text-3xl font-bold mt-1">
+          <span className="text-fg-1 text-h1 font-bold mt-1">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </span>
-          {subtext && <span className="text-sm text-fg-3 mb-1">{subtext}</span>}
+          {subtext && <span className="text-body-sm text-fg-3 mb-1">{subtext}</span>}
         </div>
       </div>
     </motion.div>

@@ -2,6 +2,37 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    /* ---- Font size: the type scale is the only option (no Tailwind defaults) ---- */
+    fontSize: {
+      'display-2xl': [
+        'var(--fs-display-2xl)',
+        { lineHeight: 'var(--lh-tight)', letterSpacing: '-0.04em' },
+      ],
+      'display-xl': [
+        'var(--fs-display-xl)',
+        { lineHeight: 'var(--lh-tight)', letterSpacing: '-0.035em' },
+      ],
+      'display-lg': ['var(--fs-display-lg)', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
+      h1: ['var(--fs-h1)', { lineHeight: '2rem', letterSpacing: '-0.019em', fontWeight: '600' }],
+      h2: ['var(--fs-h2)', { lineHeight: '1.75rem', letterSpacing: '-0.017em', fontWeight: '600' }],
+      h3: ['var(--fs-h3)', { lineHeight: '1.5rem', letterSpacing: '-0.011em', fontWeight: '600' }],
+      h4: ['var(--fs-h4)', { lineHeight: '1.25rem', letterSpacing: '-0.006em', fontWeight: '600' }],
+      'body-lg': ['var(--fs-body-lg)', { lineHeight: '1.625rem', letterSpacing: '-0.011em' }],
+      body: ['var(--fs-body)', { lineHeight: '1.25rem', letterSpacing: '-0.006em' }],
+      'body-sm': ['var(--fs-body-sm)', { lineHeight: '1.25rem', letterSpacing: '-0.003em' }],
+      label: [
+        'var(--fs-label)',
+        { lineHeight: '1.125rem', letterSpacing: '-0.003em', fontWeight: '500' },
+      ],
+      caption: ['var(--fs-caption)', { lineHeight: '1rem', letterSpacing: '0.005em' }],
+      micro: [
+        'var(--fs-micro)',
+        { lineHeight: '1rem', letterSpacing: '0.01em', fontWeight: '500' },
+      ],
+      mono: ['var(--fs-mono)', { lineHeight: '1.25rem', letterSpacing: '0' }],
+      'mono-sm': ['var(--fs-mono-sm)', { lineHeight: '1rem', letterSpacing: '0' }],
+    },
+
     extend: {
       /* ---- Colors mapped from CSS tokens ---- */
       colors: {
@@ -90,22 +121,6 @@ export default {
         sans: 'var(--font-sans)',
         display: 'var(--font-display)',
         mono: 'var(--font-mono)',
-      },
-
-      /* ---- Font size from type scale ---- */
-      fontSize: {
-        'display-2xl': ['var(--fs-display-2xl)', { lineHeight: 'var(--lh-tight)' }],
-        'display-xl': ['var(--fs-display-xl)', { lineHeight: 'var(--lh-tight)' }],
-        'display-lg': ['var(--fs-display-lg)', { lineHeight: 'var(--lh-tight)' }],
-        h1: ['var(--fs-h1)', { lineHeight: 'var(--lh-snug)' }],
-        h2: ['var(--fs-h2)', { lineHeight: 'var(--lh-snug)' }],
-        h3: ['var(--fs-h3)', { lineHeight: '1.3' }],
-        h4: ['var(--fs-h4)', { lineHeight: '1.35' }],
-        'body-lg': ['var(--fs-body-lg)', { lineHeight: 'var(--lh-relaxed)' }],
-        body: ['var(--fs-body)', { lineHeight: 'var(--lh-base)' }],
-        'body-sm': ['var(--fs-body-sm)', { lineHeight: 'var(--lh-base)' }],
-        caption: ['var(--fs-caption)', { lineHeight: 'var(--lh-base)' }],
-        micro: ['var(--fs-micro)', { lineHeight: 'var(--lh-base)' }],
       },
 
       /* ---- Letter spacing from tracking tokens ---- */

@@ -15,14 +15,16 @@ export default function EmptyState({
   return (
     <div className={`text-center py-20 text-fg-4 ${className}`}>
       {isReactNode ? (
-        <div className="flex justify-center mb-4 text-4xl text-fg-4">{icon}</div>
+        <div className="flex justify-center mb-4 text-fg-4" style={{ fontSize: 36 }}>
+          {icon}
+        </div>
       ) : (
-        <p className="text-4xl mb-4" aria-hidden="true">
+        <p className="mb-4" style={{ fontSize: 36 }} aria-hidden="true">
           {/^[a-z_]+$/.test(icon) ? <MS name={icon} size={36} /> : icon}
         </p>
       )}
       <p className="text-fg-2 font-medium">{title}</p>
-      {description && <p className="text-sm mt-2 text-fg-4">{description}</p>}
+      {description && <p className="text-body mt-2 text-fg-4">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )

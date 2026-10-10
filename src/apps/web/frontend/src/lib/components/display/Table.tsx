@@ -45,7 +45,7 @@ export default function Table<T>({
                 {columns.map(column => (
                   <TableHeaderCell
                     key={column.id ?? String(column.key)}
-                    className={`${padding} text-xs font-medium text-fg-3 whitespace-nowrap ${column.className ?? ''}`}
+                    className={`${padding} text-label text-fg-3 whitespace-nowrap ${column.className ?? ''}`}
                     style={{ textAlign: column.align }}
                   >
                     {column.label}
@@ -71,7 +71,7 @@ export default function Table<T>({
                   {columns.map(column => (
                     <TableCell
                       key={column.id ?? String(column.key)}
-                      className={`${padding} text-sm text-fg-2 ${column.className ?? ''}`}
+                      className={`${padding} text-body-sm text-fg-2 ${column.className ?? ''}`}
                       style={{ textAlign: column.align }}
                     >
                       {column.render

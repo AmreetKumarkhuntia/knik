@@ -35,7 +35,7 @@ export default function ToggleSwitch({
           peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--border-focus)] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[var(--bg-base)]
           peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
       />
-      {label && <span className="ml-3 text-sm text-fg-3">{label}</span>}
+      {label && <span className="ml-3 text-label text-fg-3">{label}</span>}
     </label>
   )
 }

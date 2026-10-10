@@ -15,7 +15,7 @@ export default function AgentThinking({
   const renderStep = (step: AgentThinkingStep, i: number) => {
     if (step.type === 'thinking') {
       return (
-        <div key={i} className="text-sm text-fg-3 leading-relaxed px-2 py-1">
+        <div key={i} className="text-body text-fg-3 leading-relaxed px-2 py-1">
           {step.content}
         </div>
       )
@@ -25,12 +25,12 @@ export default function AgentThinking({
       return (
         <div
           key={i}
-          className="flex items-center gap-2.5 px-3 py-2.5 bg-surface-2 border border-border-2 rounded-[10px] text-[13px] text-fg-2"
+          className="flex items-center gap-2.5 px-3 py-2.5 bg-surface-2 border border-border-2 rounded-[10px] text-label text-fg-2"
         >
           <span className="w-[22px] h-[22px] rounded-full inline-flex items-center justify-center bg-emerald-500/15 text-emerald-500 shrink-0">
             <MS name="check" size={14} />
           </span>
-          <span className="font-mono text-[11.5px]">{step.content}</span>
+          <span className="font-mono text-mono-sm">{step.content}</span>
         </div>
       )
     }
@@ -39,7 +39,7 @@ export default function AgentThinking({
     return (
       <div
         key={i}
-        className="border border-border-2 rounded-[10px] overflow-hidden font-mono text-[12px]"
+        className="border border-border-2 rounded-[10px] overflow-hidden font-mono text-mono-sm"
       >
         {lines.map((line, idx) => {
           const isAdd = line.startsWith('+')
@@ -65,7 +65,7 @@ export default function AgentThinking({
         variant="ghost"
         aria-expanded={expanded}
         aria-controls={id}
-        className="w-full flex items-center gap-3 text-[12px] text-fg-4 cursor-pointer group select-none"
+        className="w-full flex items-center gap-3 text-caption text-fg-4 cursor-pointer group select-none"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex-1 h-px bg-border-2 group-hover:bg-border-3 transition-colors" />
@@ -75,7 +75,8 @@ export default function AgentThinking({
           <motion.span
             aria-hidden="true"
             animate={{ rotate: expanded ? 180 : 0 }}
-            className="material-symbols-outlined text-[14px]"
+            className="material-symbols-outlined"
+            style={{ fontSize: 14 }}
           >
             expand_more
           </motion.span>

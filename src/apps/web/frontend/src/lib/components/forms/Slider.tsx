@@ -24,7 +24,7 @@ export default function Slider({
   return (
     <div className={`flex items-center gap-3.5 w-full ${className}`}>
       {label && (
-        <label htmlFor={inputId} className="text-xs text-[var(--fg-4)] shrink-0">
+        <label htmlFor={inputId} className="text-caption text-[var(--fg-4)] shrink-0">
           {label}
         </label>
       )}
@@ -42,7 +42,7 @@ export default function Slider({
         onChange={event => onChange(Number(event.target.value))}
         className="flex-1 min-w-0 h-9 cursor-pointer accent-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-2 disabled:opacity-50"
       />
-      <span className="tabular-nums text-sm text-fg-2 w-12 text-right shrink-0">
+      <span className="tabular-nums text-body text-fg-2 w-12 text-right shrink-0">
         {formatValue ? formatValue(value) : value}
       </span>
     </div>

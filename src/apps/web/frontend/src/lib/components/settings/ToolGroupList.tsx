@@ -3,7 +3,7 @@ import type { ToolGroupListProps } from '$types/widgets/settings'
 
 export default function ToolGroupList({ groups, onToggle }: ToolGroupListProps) {
   if (groups.length === 0) {
-    return <p className="py-3 text-sm text-fg-3">No tool groups available.</p>
+    return <p className="py-3 text-body text-fg-3">No tool groups available.</p>
   }
 
   return (
@@ -14,9 +14,9 @@ export default function ToolGroupList({ groups, onToggle }: ToolGroupListProps) 
             className="min-h-9 min-w-0 flex-1"
             checked={group.enabled}
             onChange={enabled => onToggle(group.name, enabled)}
-            label={<span className="break-words text-sm">{group.name}</span>}
+            label={<span className="break-words text-body">{group.name}</span>}
           />
-          <span className="shrink-0 text-xs tabular-nums text-fg-3">
+          <span className="shrink-0 text-caption tabular-nums text-fg-3">
             {group.count} {group.count === 1 ? 'tool' : 'tools'}
           </span>
         </li>

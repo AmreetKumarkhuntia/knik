@@ -16,7 +16,7 @@ export default function FlowViewportControls({ onFit }: FlowViewportControlsProp
         <MS name="remove" size={18} />
       </Button>
       <output
-        className="w-12 text-center text-xs text-secondary tabular-nums"
+        className="w-12 text-center text-caption text-secondary tabular-nums"
         aria-label="Zoom level"
       >
         {Math.round(zoom * 100)}%

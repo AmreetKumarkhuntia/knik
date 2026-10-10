@@ -16,7 +16,7 @@ export default function HistoryTable({
       key: 'workflowName' as const,
       label: 'Workflow',
       render: (value: unknown) => (
-        <span className="text-sm font-semibold text-foreground">{value as string}</span>
+        <span className="text-body-sm font-semibold text-foreground">{value as string}</span>
       ),
     },
     {
@@ -28,14 +28,16 @@ export default function HistoryTable({
       key: 'startedAt' as const,
       label: 'Started',
       render: (value: unknown) => (
-        <span className="text-sm text-secondary">{formatDate(value as string)}</span>
+        <span className="text-body-sm text-secondary">{formatDate(value as string)}</span>
       ),
     },
     {
       key: 'durationMs' as const,
       label: 'Duration',
       render: (value: unknown) => (
-        <span className="text-sm text-secondary font-mono">{formatDuration(value as number)}</span>
+        <span className="text-mono text-secondary font-mono">
+          {formatDuration(value as number)}
+        </span>
       ),
     },
     {

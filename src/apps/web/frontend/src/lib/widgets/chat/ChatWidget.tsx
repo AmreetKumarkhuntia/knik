@@ -37,7 +37,7 @@ const ChatTranscript = memo(function ChatTranscript({
       aria-live="polite"
       aria-label="Conversation"
       className={
-        messages.length > 0 ? 'w-full max-w-[800px] mx-auto py-6 flex flex-col gap-6' : undefined
+        messages.length > 0 ? 'w-full max-w-[720px] mx-auto py-6 flex flex-col gap-6' : undefined
       }
     >
       {messages.map((message, index) => {
@@ -58,11 +58,11 @@ const ChatTranscript = memo(function ChatTranscript({
               }
               header={
                 !isUser ? (
-                  <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
+                  <div className="flex flex-wrap items-center gap-2 text-label mb-2">
                     <span className="font-semibold text-fg-1">Knik AI</span>
-                    {modelTag && <span className="text-xs text-fg-3">{modelTag}</span>}
+                    {modelTag && <span className="text-caption text-fg-3">{modelTag}</span>}
                     {message.timestamp && (
-                      <span className="text-xs text-fg-3">{message.timestampLabel}</span>
+                      <span className="text-caption text-fg-3">{message.timestampLabel}</span>
                     )}
                   </div>
                 ) : undefined
@@ -168,7 +168,7 @@ function ChatSessionWidget() {
           onCopy={copy}
         />
       </div>
-      <div className="w-full max-w-[800px] mx-auto pt-3 shrink-0">
+      <div className="w-full max-w-[720px] mx-auto pt-3 shrink-0">
         <ChatComposer
           ref={inputRef}
           value={draft}
@@ -188,7 +188,7 @@ function ChatSessionWidget() {
         placement="right"
         size="sm"
       >
-        <p className="text-sm text-fg-3 mb-4">
+        <p className="text-body text-fg-3 mb-4">
           Choose the tool groups available across this session.
         </p>
         <ToolGroupList groups={tools} onToggle={toggleTool} />

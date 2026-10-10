@@ -17,7 +17,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
         className={`knik-input w-full ${className}`}
       />
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-[var(--danger)]">
+        <p id={errorId} role="alert" className="text-caption text-[var(--danger)]">
           {error}
         </p>
       )}

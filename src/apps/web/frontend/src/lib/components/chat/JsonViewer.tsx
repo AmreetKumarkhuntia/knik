@@ -38,7 +38,7 @@ export default function JsonViewer({
         className="max-h-[600px] overflow-auto"
       >
         {json === undefined ? (
-          <p className="p-4 text-sm text-fg-4">No data supplied.</p>
+          <p className="p-4 text-body text-fg-4">No data supplied.</p>
         ) : (
           <CodeBlock
             code={json}

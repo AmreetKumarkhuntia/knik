@@ -37,12 +37,12 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
     <div className="flex-1 min-h-0 min-w-0 flex flex-col overflow-y-auto md:overflow-hidden bg-background">
       <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-border">
         <div className="flex flex-wrap items-center gap-3 mb-3">
-          <h1 className="text-2xl font-semibold text-foreground">Execution #{execution.id}</h1>
-          <span className="text-sm text-secondary truncate">{workflowName}</span>
+          <h1 className="text-h1 text-foreground">Execution #{execution.id}</h1>
+          <span className="text-body text-secondary truncate">{workflowName}</span>
         </div>
         <dl className="flex flex-wrap gap-x-6 gap-y-2">
           {metrics.map(metric => (
-            <div key={metric.id} className="flex items-baseline gap-2 text-sm">
+            <div key={metric.id} className="flex items-baseline gap-2 text-body-sm">
               <dt className="text-secondary">{metric.label}</dt>
               <dd className="font-medium text-foreground">{metric.value}</dd>
             </div>

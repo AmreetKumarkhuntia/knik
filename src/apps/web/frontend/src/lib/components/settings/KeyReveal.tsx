@@ -8,7 +8,7 @@ export default function KeyReveal({ value, onCopy, onDismiss }: KeyRevealProps) 
     <Banner className="mb-3.5" icon={<MS name="key" size={15} />}>
       <div className="mb-2">Supplied demo key — visible until you dismiss it.</div>
       <div className="flex flex-wrap items-center gap-2">
-        <code className="font-mono flex-1 min-w-0 break-all text-xs">{value}</code>
+        <code className="font-mono flex-1 min-w-0 break-all text-mono-sm">{value}</code>
         <Button
           size="sm"
           variant="ghost"

@@ -28,15 +28,15 @@ export default function FormField({
     >
       <div className={layout === 'row' ? 'min-w-[160px] flex-1' : ''}>
         {htmlFor || typeof children === 'function' ? (
-          <label htmlFor={id} className="text-sm font-medium text-fg-1">
+          <label htmlFor={id} className="text-label text-fg-1">
             {label}
             {required && ' *'}
           </label>
         ) : (
-          <div className="text-sm font-medium text-fg-1">{label}</div>
+          <div className="text-label text-fg-1">{label}</div>
         )}
         {hint && (
-          <p id={descriptionId} className="text-sm text-fg-3 mt-1">
+          <p id={descriptionId} className="text-body-sm text-fg-3 mt-1">
             {hint}
           </p>
         )}
@@ -51,7 +51,7 @@ export default function FormField({
           })
         : children}
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-[var(--danger)]">
+        <p id={errorId} role="alert" className="text-body-sm text-[var(--danger)]">
           {error}
         </p>
       )}

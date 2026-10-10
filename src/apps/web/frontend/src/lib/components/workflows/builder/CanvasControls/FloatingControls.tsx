@@ -32,7 +32,7 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
         )}
         content={
           <div className="w-60 p-1">
-            <p className="px-3 py-2 text-xs text-secondary">Choose a step</p>
+            <p className="px-3 py-2 text-caption text-secondary">Choose a step</p>
             {getAllNodeTypes().map(node => (
               <Button
                 key={node.type}
@@ -46,8 +46,10 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
                   <MS name={node.icon} size={18} />
                 </span>
                 <span>
-                  <span className="block text-sm font-medium">{node.label}</span>
-                  <span className="block text-xs font-normal text-secondary">{node.typeLabel}</span>
+                  <span className="block text-label">{node.label}</span>
+                  <span className="block text-caption font-normal text-secondary">
+                    {node.typeLabel}
+                  </span>
                 </span>
               </Button>
             ))}

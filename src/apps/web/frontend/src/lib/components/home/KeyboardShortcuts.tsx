@@ -10,7 +10,7 @@ export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcuts
         {shortcuts.map(shortcut => (
           <div key={shortcut.key} className="flex items-center justify-between gap-4 py-3">
             <Kbd>{shortcut.key}</Kbd>
-            <span className="text-fg-3 text-sm">{shortcut.description}</span>
+            <span className="text-fg-3 text-body">{shortcut.description}</span>
           </div>
         ))}
       </div>

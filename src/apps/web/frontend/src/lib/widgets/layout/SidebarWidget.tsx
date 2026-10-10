@@ -110,7 +110,7 @@ export default function SidebarWidget({
             saveRename(scopeId)
           }}
         >
-          <label htmlFor="conversation-title" className="block text-sm text-fg-2 mb-2">
+          <label htmlFor="conversation-title" className="block text-label text-fg-2 mb-2">
             Title
           </label>
           <Input

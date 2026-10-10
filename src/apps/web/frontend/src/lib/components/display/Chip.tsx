@@ -45,7 +45,7 @@ export default function Chip({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill font-mono text-xs border ${variantClasses} ${interactiveClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill font-mono text-mono-sm border ${variantClasses} ${interactiveClasses} ${className}`}
       {...props}
     >
       {icon && <span className="inline-flex items-center">{icon}</span>}
@@ -65,7 +65,7 @@ export default function Chip({
               onRemove()
             }
           }}
-          className="w-3.5 h-3.5 rounded-full inline-flex items-center justify-center text-[9px] bg-[color-mix(in_srgb,currentColor_10%,transparent)] hover:bg-[color-mix(in_srgb,currentColor_20%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_50%,transparent)]"
+          className="w-3.5 h-3.5 rounded-full inline-flex items-center justify-center text-micro bg-[color-mix(in_srgb,currentColor_10%,transparent)] hover:bg-[color-mix(in_srgb,currentColor_20%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_50%,transparent)]"
           aria-label={typeof label === 'string' ? `Remove ${label}` : 'Remove'}
         >
           ×

@@ -37,7 +37,11 @@ export default function PageHeader({
                 {crumb}
               </span>
               {!isLast && (
-                <span className="material-symbols-outlined text-fg-4 text-sm" aria-hidden="true">
+                <span
+                  className="material-symbols-outlined text-fg-4"
+                  style={{ fontSize: 14 }}
+                  aria-hidden="true"
+                >
                   chevron_right
                 </span>
               )}

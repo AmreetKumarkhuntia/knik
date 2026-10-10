@@ -9,7 +9,7 @@ export default function CompactionDivider({ summaryContent, onCopy }: Compaction
 
   return (
     <div className="my-4">
-      <div className="flex items-center gap-3 text-textSecondary text-sm">
+      <div className="flex items-center gap-3 text-textSecondary text-body">
         <div className="flex-1 h-px bg-border" />
         <Button
           onClick={() => setExpanded(!expanded)}
@@ -36,7 +36,7 @@ export default function CompactionDivider({ summaryContent, onCopy }: Compaction
       {expanded && summaryContent && (
         <div
           aria-live="off"
-          className="mt-3 p-4 rounded-xl bg-[color-mix(in_srgb,var(--bg-surface)_30%,transparent)] text-sm max-h-64 overflow-y-auto"
+          className="mt-3 p-4 rounded-xl bg-[color-mix(in_srgb,var(--bg-surface)_30%,transparent)] text-body max-h-64 overflow-y-auto"
         >
           <MarkdownMessage content={summaryContent} onCopy={onCopy} />
         </div>

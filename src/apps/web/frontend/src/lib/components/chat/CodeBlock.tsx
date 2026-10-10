@@ -52,7 +52,7 @@ export default memo(function CodeBlock({
   return (
     <div className={`bg-code border border-border-2 rounded-[10px] overflow-hidden ${className}`}>
       <div className="flex items-center px-3.5 py-1.5 bg-surface-2 border-b border-border-1">
-        <span className="font-mono text-xs text-fg-3">{language}</span>
+        <span className="font-mono text-mono-sm text-fg-3">{language}</span>
         {copyable && onCopy && (
           <Button
             variant="ghost"
@@ -65,7 +65,7 @@ export default memo(function CodeBlock({
           </Button>
         )}
       </div>
-      <div className="text-[13px] leading-relaxed tracking-[-0.01em] overflow-auto">
+      <div className="text-mono tracking-[-0.01em] overflow-auto">
         <SyntaxHighlighter
           language={language}
           style={CODE_SYNTAX_THEME}

@@ -18,7 +18,7 @@ function TagsField({ field, value, onChange, draft = '', onDraftChange }: NodeFi
   }
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="text-xs font-medium text-secondary uppercase tracking-wide">
+      <label htmlFor={id} className="text-micro text-secondary uppercase tracking-wide">
         {field.label}
       </label>
       <div className="flex flex-wrap gap-1.5">
@@ -43,7 +43,7 @@ function TagsField({ field, value, onChange, draft = '', onDraftChange }: NodeFi
             }
           }}
           placeholder={field.tagPlaceholder ?? 'Add…'}
-          className="!px-3 !py-2 text-xs"
+          className="!px-3 !py-2 text-label"
         />
         <Button variant="secondary" size="sm" onClick={add}>
           Add
@@ -73,7 +73,7 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="text-xs font-medium text-secondary uppercase tracking-wide">
+        <label htmlFor={id} className="text-micro text-secondary uppercase tracking-wide">
           {field.label}
         </label>
         {field.type === 'textarea-collapsible' && (
@@ -114,7 +114,7 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
           onChange={event => onChange(event.target.value)}
           placeholder={field.placeholder}
           rows={field.type === 'textarea' ? 3 : expanded ? 6 : 2}
-          className="w-full !px-3 !py-2 text-xs"
+          className="w-full !px-3 !py-2 text-label"
         />
       ) : (
         <Input
@@ -125,13 +125,13 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
             onChange(field.type === 'number' ? Number(event.target.value) : event.target.value)
           }
           placeholder={field.placeholder}
-          className="!px-3 !py-2 text-xs"
+          className="!px-3 !py-2 text-label"
         />
       )}
       {field.tip && (
         <Banner variant="info" icon={<MS name={field.tip.icon} size={16} />}>
           <span className="font-medium">{field.tip.title}</span>
-          <p className="text-xs mt-1">{field.tip.description}</p>
+          <p className="text-caption mt-1">{field.tip.description}</p>
         </Banner>
       )}
     </div>

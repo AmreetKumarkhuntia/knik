@@ -36,7 +36,7 @@ export default function WorkflowHubWidget() {
           actions={
             <Link
               to={ROUTES.builder}
-              className="inline-flex min-h-9 max-sm:min-h-11 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-[var(--on-primary)] whitespace-nowrap"
+              className="inline-flex min-h-9 max-sm:min-h-11 items-center gap-2 rounded-md bg-primary px-3 text-label text-[var(--on-primary)] whitespace-nowrap"
             >
               <MS name="add" size={16} />
               New workflow

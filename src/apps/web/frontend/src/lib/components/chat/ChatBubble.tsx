@@ -73,7 +73,7 @@ export default function ChatBubble({
             {actionContent}
           </div>
         )}
-        {timestamp && <span className="text-xs text-fg-4 font-mono">{timestamp}</span>}
+        {timestamp && <span className="text-mono-sm text-fg-4 font-mono">{timestamp}</span>}
       </div>
     </div>
   )

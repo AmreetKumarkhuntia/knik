@@ -19,13 +19,13 @@ export default function SectionHeader({
       <div>
         <div className="flex items-center gap-3">
           <Heading
-            className={`text-fg-1 font-semibold tracking-tight ${level === 'page' ? 'text-2xl' : 'text-base'}`}
+            className={`text-fg-1 tracking-tight ${level === 'page' ? 'text-h1' : 'text-h4'}`}
           >
             {title}
           </Heading>
           {badge && <Badge>{badge}</Badge>}
         </div>
-        {subtitle && <p className="text-sm text-fg-4 mt-1">{subtitle}</p>}
+        {subtitle && <p className="text-body text-fg-4 mt-1">{subtitle}</p>}
       </div>
       {actions ??
         right ??
