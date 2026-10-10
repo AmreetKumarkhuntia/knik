@@ -39,6 +39,11 @@ export default function JsonViewer({
       >
         {json === undefined ? (
           <p className="p-4 text-body text-fg-4">No data supplied.</p>
+        ) : typeof displayData === 'string' ? (
+          // Text (e.g. a skill's markdown answer) reads better as is than as a quoted JSON string.
+          <pre className="m-0 p-3 font-mono text-mono-sm text-fg-2 whitespace-pre-wrap break-words">
+            {displayData}
+          </pre>
         ) : (
           <CodeBlock
             code={json}

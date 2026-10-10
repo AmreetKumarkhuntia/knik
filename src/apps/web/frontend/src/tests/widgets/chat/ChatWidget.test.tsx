@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ReactMarkdown from 'react-markdown'
 import { StoresProvider } from '$stores'
@@ -12,6 +12,24 @@ vi.mock('react-markdown', async importOriginal => {
   const actual = await importOriginal<typeof import('react-markdown')>()
   return { ...actual, default: vi.fn(actual.default) }
 })
+
+// Replies stream in on timers. userEvent awaits real timers, so a test types with real timers, then
+// sends with fireEvent under fake ones and drives the reply by hand.
+afterEach(() => vi.useRealTimers())
+const sendWithFakeTimers = (send: () => void) => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  send()
+}
+const advance = (ms: number) =>
+  act(() => {
+    vi.advanceTimersByTime(ms)
+  })
+const finishReplies = () => {
+  act(() => {
+    vi.runAllTimers()
+  })
+  vi.useRealTimers()
+}
 
 describe('ChatWidget', () => {
   it('sends any message locally without requiring a model or supplied scenario', async () => {
@@ -59,8 +77,9 @@ describe('ChatWidget', () => {
       </StoresProvider>
     )
     await user.type(screen.getByPlaceholderText(/Type your message/), 'Hello')
-    await user.click(screen.getByRole('button', { name: 'Send message' }))
-    expect(await screen.findByText('A supplied reply.')).toBeInTheDocument()
+    sendWithFakeTimers(() => fireEvent.click(screen.getByRole('button', { name: 'Send message' })))
+    finishReplies()
+    expect(screen.getByText('A supplied reply.')).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Type your message/)).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled()
   })
@@ -107,7 +126,10 @@ describe('chat working scope lifecycle', () => {
     const [first, second] = screen.getAllByRole('textbox', { name: 'Message' })
     await user.type(first, 'Hello')
     await user.type(second, 'Another draft')
-    await user.click(screen.getAllByRole('button', { name: 'Send message' })[0])
+    sendWithFakeTimers(() =>
+      fireEvent.click(screen.getAllByRole('button', { name: 'Send message' })[0])
+    )
+    finishReplies()
     expect(screen.getAllByText('Supplied answer')).toHaveLength(2)
     expect(first).toHaveValue('')
     expect(second).toHaveValue('Another draft')
@@ -124,7 +146,8 @@ describe('chat working scope lifecycle', () => {
     )
     const view = render(content(true))
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello')
-    await user.click(screen.getByRole('button', { name: 'Send message' }))
+    sendWithFakeTimers(() => fireEvent.click(screen.getByRole('button', { name: 'Send message' })))
+    finishReplies()
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Unsaved')
     view.rerender(content(false))
     view.rerender(content(true))
@@ -210,7 +233,11 @@ describe('chat transcript', () => {
     expect(log).toHaveAttribute('aria-live', 'polite')
     expect(log).toBeEmptyDOMElement()
     expect(screen.getByRole('heading', { name: 'How can I help you today?' })).toBeInTheDocument()
-    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello{Enter}')
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello')
+    sendWithFakeTimers(() =>
+      fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Enter' })
+    )
+    finishReplies()
     expect(screen.getByRole('log', { name: 'Conversation' })).toBe(log)
     expect(within(log).getByText('A supplied reply.')).toBeInTheDocument()
   })
@@ -240,7 +267,9 @@ describe('chat transcript', () => {
     )
     const log = screen.getByRole('log', { name: 'Conversation' })
     const composer = screen.getByRole('textbox', { name: 'Message' })
-    await user.type(composer, 'Hello{Enter}')
+    await user.type(composer, 'Hello')
+    sendWithFakeTimers(() => fireEvent.keyDown(composer, { key: 'Enter' }))
+    finishReplies()
     expect(screen.getByRole('log', { name: 'Conversation' })).toBe(log)
     expect(within(log).getByText('A supplied reply.')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Message' })).toBe(composer)
@@ -263,6 +292,74 @@ describe('chat transcript', () => {
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'unsent draft')
     await user.click(screen.getByRole('button', { name: 'New chat' }))
     expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('')
+  })
+})
+
+describe('streamed replies', () => {
+  const source = {
+    chatScenarios: [
+      {
+        prompt: 'Hello',
+        replies: [
+          {
+            role: 'assistant' as const,
+            content: 'one two three four five six seven',
+            timestamp: '2026-10-08T12:00:00Z',
+            metadata: {
+              tool_calls: [
+                {
+                  id: 'call-1',
+                  tool_name: 'search_docs',
+                  tool_args: { query: 'hello' },
+                  tool_result: { hits: 1 },
+                  duration_ms: 500,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  }
+  const send = async () => {
+    render(
+      <StoresProvider source={source}>
+        <ChatWidget />
+      </StoresProvider>
+    )
+    const composer = screen.getByRole('textbox', { name: 'Message' })
+    await userEvent.type(composer, 'Hello')
+    sendWithFakeTimers(() => fireEvent.keyDown(composer, { key: 'Enter' }))
+    return screen.getByRole('log', { name: 'Conversation' })
+  }
+
+  it('marks the log busy, shows typing, then a running tool, until the reply ends', async () => {
+    const log = await send()
+    advance(0)
+    expect(log).toHaveAttribute('aria-busy', 'true')
+    expect(log.querySelector('.knik-typing')).toHaveAttribute('aria-hidden', 'true')
+    advance(450)
+    expect(within(log).getByRole('button', { name: /search_docs.*Running/ })).toBeInTheDocument()
+    expect(log.querySelector('.knik-typing')).toBeNull()
+    advance(500)
+    expect(within(log).getByRole('button', { name: /search_docs.*Done/ })).toBeInTheDocument()
+    finishReplies()
+    expect(within(log).getByText('one two three four five six seven')).toBeInTheDocument()
+    expect(log).toHaveAttribute('aria-busy', 'false')
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument()
+  })
+
+  it('swaps Send for Stop, which ends the reply with the text received so far', async () => {
+    const log = await send()
+    expect(screen.queryByRole('button', { name: 'Send message' })).not.toBeInTheDocument()
+    advance(450 + 500 + 250)
+    expect(within(log).getByText('one two three')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Stop generating' }))
+    finishReplies()
+    expect(within(log).getByText('one two three')).toBeInTheDocument()
+    expect(within(log).queryByText(/seven/)).not.toBeInTheDocument()
+    expect(log).toHaveAttribute('aria-busy', 'false')
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument()
   })
 })
 
@@ -294,7 +391,10 @@ describe('chat tool drawer', () => {
     await user.click(checkbox)
     expect(screen.getByLabelText('Shared browser selection')).toHaveTextContent('Enabled')
     await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog', { name: 'Chat tools' })).not.toBeInTheDocument()
+    // The drawer leaves after its exit animation.
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Chat tools' })).not.toBeInTheDocument()
+    )
     expect(trigger).toHaveFocus()
     expect(composer).toHaveValue('Keep this draft')
     await user.click(trigger)

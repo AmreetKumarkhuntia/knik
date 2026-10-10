@@ -22,6 +22,9 @@ export interface InputPanelProps {
   onChange: (value: string) => void
   onSend: () => void
   disabled?: boolean
+  /** A reply is arriving: Send becomes Stop and Enter no longer sends. */
+  isStreaming?: boolean
+  onStop?: () => void
   model?: string
   onModel?: (id: string) => void
   models?: ChatModelOption[]

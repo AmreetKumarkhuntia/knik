@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { Conversation, ConversationMessage } from '$types/conversation'
+import type { Conversation, ConversationMessage, ToolCall } from '$types/conversation'
 import type { AgentThinkingStep } from '$types/components/chat'
 import type { DemoSuggestion } from '$types/demo-session'
 import type { Viewport } from '$types/stores/shell'
@@ -67,10 +67,14 @@ export interface ChatTranscriptMessage extends ConversationMessage {
   steps: AgentThinkingStep[]
   modelTag?: string
   messageId: string
+  toolCalls: ToolCall[]
+  isStreaming: boolean
 }
 export interface ChatTranscriptProps {
   messages: ChatTranscriptMessage[]
   initials: string
   summaryMessageId?: string | null
+  /** A reply is arriving; the log is marked busy so it is announced once it is complete. */
+  isStreaming: boolean
   onCopy: (text: string) => void
 }

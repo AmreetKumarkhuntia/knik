@@ -78,10 +78,6 @@ body,
   contain: strict;
 }
 
-.message-transition {
-  transition: all var(--dur-base) var(--ease-out);
-}
-
 /* =================================================================
    Semantic utility classes
    Defined outside @layer to bypass Tailwind purge.

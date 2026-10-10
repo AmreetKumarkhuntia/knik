@@ -398,6 +398,77 @@ h1.display {
 }
 
 /* -----------------------------------------------------------------
+   Loading shimmer (skeleton blocks) and shimmering text (running work)
+   ----------------------------------------------------------------- */
+.knik-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-2) 25%,
+    var(--bg-surface-3) 50%,
+    var(--bg-surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: knik-shimmer 1.4s var(--ease-in-out) infinite;
+}
+
+.knik-shimmer-text {
+  background: linear-gradient(90deg, var(--fg-3) 35%, var(--fg-1) 50%, var(--fg-3) 65%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: knik-shimmer 1.6s linear infinite;
+}
+
+@keyframes knik-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* -----------------------------------------------------------------
+   Typing indicator: three dots while a reply has not started
+   ----------------------------------------------------------------- */
+.knik-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 1.625rem;
+}
+
+.knik-typing > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fg-4);
+  animation: knik-typing 1.2s var(--ease-in-out) infinite;
+}
+
+.knik-typing > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.knik-typing > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes knik-typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+/* -----------------------------------------------------------------
    Dividers
    ----------------------------------------------------------------- */
 .knik-divider {
