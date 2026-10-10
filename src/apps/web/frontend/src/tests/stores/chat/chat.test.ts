@@ -57,6 +57,7 @@ describe('chat store', () => {
     expect(store.getState().conversations[0].preview).toBe(draft)
   })
   it('preserves explicit titles when the first message is sent and clears only the sent draft', () => {
+    vi.useFakeTimers()
     const source = seed(),
       store = createChatStore(source)
     const id = store.getState().startConversation()
@@ -64,6 +65,7 @@ describe('chat store', () => {
     store.getState().initializeScope('composer', id)
     store.getState().patchScope('composer', { draft: 'Hello' })
     expect(store.getState().sendMessage('composer', 'demo')).toEqual({ ok: true, id })
+    vi.runAllTimers()
     expect(store.getState().conversations[0].title).toBe('My saved title')
     expect(store.getState().conversations[0].messages.map(message => message.content)).toEqual([
       'Hello',
@@ -117,11 +119,12 @@ describe('chat store', () => {
     expect(store.getState().conversations.map(c => c.id)).toEqual([next, fresh, blank])
   })
   it('stamps supplied replies with the send time rather than the authored fixture time', () => {
-    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-02T15:45:00Z') })
+    vi.useFakeTimers({ now: new Date('2026-11-02T15:45:00Z') })
     const store = createChatStore(seed())
     store.getState().initializeScope('composer')
     store.getState().patchScope('composer', { draft: 'Hello' })
     store.getState().sendMessage('composer', 'demo')
+    vi.runAllTimers()
     expect(store.getState().conversations[0].messages.map(m => [m.role, m.timestamp])).toEqual([
       ['user', '2026-11-02T15:45:00.000Z'],
       ['assistant', '2026-11-02T15:45:00.000Z'],

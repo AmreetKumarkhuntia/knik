@@ -18,6 +18,8 @@ export interface ChatState extends Pick<
 > {
   scopes: Partial<Record<string, ChatScope>>
   autoTitles: Record<string, boolean>
+  /** Conversations with a reply still arriving. */
+  streaming: Record<string, boolean>
   initializeScope: (id: string, resourceId?: string | null) => void
   disposeScope: (id: string) => void
   patchScope: (id: string, patch: Partial<ChatScope>) => void
@@ -30,5 +32,6 @@ export interface ChatState extends Pick<
   cancelRename: (scopeId: string) => void
   saveRename: (scopeId: string) => DemoActionResult
   sendMessage: (scopeId: string, modelId?: string) => DemoActionResult
+  stopStreaming: (conversationId: string) => void
 }
 export type ChatStore = StoreApi<ChatState>

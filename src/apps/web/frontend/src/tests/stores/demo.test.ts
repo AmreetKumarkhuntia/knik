@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { bundledDemoSource, createDemoSeed } from '$lib/stores/demo'
 import { validateDemoSource } from '$lib/stores/demo/validate'
 import { createStoreBundle } from '$lib/stores/session/createStoreBundle'
@@ -104,6 +104,7 @@ describe('canonical demo seed', () => {
   })
 
   it('saves messages with unavailable models and replays only matching authored replies', () => {
+    vi.useFakeTimers()
     const bundle = createStoreBundle({
       models: [{ id: 'm', label: 'Model', vendor: 'Example' }],
       chatScenarios: [
@@ -132,6 +133,8 @@ describe('canonical demo seed', () => {
     bundle.settings.getState().updateSettings({ model: '' })
     bundle.chat.getState().patchScope('composer', { draft: 'hello' })
     expect(bundle.commands.sendMessage('composer')).toMatchObject({ ok: true })
+    vi.runAllTimers()
+    vi.useRealTimers()
     expect(bundle.chat.getState().conversations).toHaveLength(1)
     expect(
       bundle.chat.getState().conversations[0].messages.map(message => message.content)
