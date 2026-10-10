@@ -9,6 +9,7 @@ export function createChatStore(seed: DemoSnapshot) {
     chatScenarios: structuredClone(seed.chatScenarios),
     scopes: {},
     autoTitles: {},
+    streaming: {},
     ...createChatActions(set, get),
   }))
 }

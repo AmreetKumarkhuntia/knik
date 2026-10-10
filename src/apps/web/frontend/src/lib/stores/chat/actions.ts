@@ -1,7 +1,83 @@
 import type { ChatStore, ChatState, ChatScope } from '$types/stores/chat'
 import { EMPTY_CHAT_SCOPE } from './selectors'
 import { generateId } from '$utils/uuid'
+import type { ChatStreamEvent, ConversationMessage } from '$types/conversation'
+import { applyStreamEvent, demoEvents, playEvents, stopMessage } from './stream'
 export function createChatActions(set: ChatStore['setState'], get: ChatStore['getState']) {
+  // Live replies per conversation; AbortControllers are not state, so they stay out of the store.
+  const streams = new Map<string, AbortController>()
+  const updateMessage = (
+    conversationId: string,
+    messageId: string,
+    update: (message: ConversationMessage) => ConversationMessage
+  ) =>
+    set(state => ({
+      conversations: state.conversations.map(c =>
+        c.id === conversationId
+          ? { ...c, messages: c.messages.map(m => (m.id === messageId ? update(m) : m)) }
+          : c
+      ),
+    }))
+  const finishStream = (conversationId: string) => {
+    streams.delete(conversationId)
+    set(state => {
+      const streaming = { ...state.streaming }
+      delete streaming[conversationId]
+      return { streaming }
+    })
+  }
+  const abortStream = (conversationId: string) => {
+    streams.get(conversationId)?.abort()
+    streams.delete(conversationId)
+  }
+  const streamReplies = (
+    conversationId: string,
+    replies: ConversationMessage[],
+    timestamp: string
+  ) => {
+    const controller = new AbortController()
+    streams.set(conversationId, controller)
+    let messageId = ''
+    const emit = (event: ChatStreamEvent) => {
+      if (event.type === 'message_start') {
+        messageId = event.messageId
+        const message: ConversationMessage = {
+          id: messageId,
+          role: 'assistant',
+          content: '',
+          timestamp,
+          metadata: {},
+        }
+        set(state => ({
+          conversations: state.conversations.map(c =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: [...c.messages, applyStreamEvent(message, event)],
+                  message_count: c.messages.length + 1,
+                }
+              : c
+          ),
+        }))
+        return
+      }
+      updateMessage(conversationId, messageId, message => applyStreamEvent(message, event))
+      if (event.type === 'message_end')
+        set(state => ({
+          conversations: state.conversations.map(c =>
+            c.id === conversationId
+              ? { ...c, preview: c.messages.find(m => m.id === messageId)?.content ?? c.preview }
+              : c
+          ),
+        }))
+    }
+    playEvents(
+      replies.flatMap(reply => demoEvents(reply, generateId())),
+      emit,
+      controller.signal,
+      () => finishStream(conversationId)
+    )
+  }
   return {
     initializeScope: (id: string, resourceId: string | null = null) =>
       set(state => ({ scopes: { ...state.scopes, [id]: { ...EMPTY_CHAT_SCOPE, resourceId } } })),
@@ -65,13 +141,38 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
       }))
       return { ok: true as const, id }
     },
-    deleteConversation: (id: string) =>
+    deleteConversation: (id: string) => {
+      abortStream(id)
+      set(state => {
+        const streaming = { ...state.streaming }
+        delete streaming[id]
+        return {
+          conversations: state.conversations.filter(c => c.id !== id),
+          activeConversationId:
+            state.activeConversationId === id ? null : state.activeConversationId,
+          streaming,
+        }
+      })
+    },
+    clearConversations: () => {
+      for (const id of streams.keys()) abortStream(id)
+      set({ conversations: [], activeConversationId: null, autoTitles: {}, streaming: {} })
+    },
+    stopStreaming: (conversationId: string) => {
+      if (!streams.has(conversationId)) return
+      abortStream(conversationId)
       set(state => ({
-        conversations: state.conversations.filter(c => c.id !== id),
-        activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
-      })),
-    clearConversations: () =>
-      set({ conversations: [], activeConversationId: null, autoTitles: {} }),
+        conversations: state.conversations.map(c =>
+          c.id === conversationId
+            ? {
+                ...c,
+                messages: c.messages.map(m => (m.metadata.streaming ? stopMessage(m) : m)),
+              }
+            : c
+        ),
+      }))
+      finishStream(conversationId)
+    },
     beginRename: (scopeId: string, conversation: ChatState['conversations'][number]) =>
       get().patchScope(scopeId, {
         editingId: conversation.id,
@@ -98,6 +199,8 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
       if (!scope || !prompt) return fail('Enter a message.')
       if (scope.resourceId && !get().conversations.some(c => c.id === scope.resourceId))
         return fail('This conversation is no longer available.')
+      if (get().streaming[scope.resourceId ?? get().activeConversationId ?? ''])
+        return fail('Wait for the reply to finish, or stop it.')
       const scenario = get().chatScenarios.find(
         s => s.prompt.trim() === prompt && (!s.modelId || s.modelId === modelId)
       )
@@ -129,15 +232,10 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
               timestamp,
               metadata: {},
             },
-            ...structuredClone(replies).map(reply => ({
-              ...reply,
-              id: generateId(),
-              timestamp,
-            })),
           ],
           updated_at: timestamp,
-          preview: replies.at(-1)?.content ?? prompt,
-          message_count: conversation.messages.length + 1 + replies.length,
+          preview: prompt,
+          message_count: conversation.messages.length + 1,
         }
         return {
           conversations: existing
@@ -149,8 +247,10 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
             ...state.scopes,
             [scopeId]: { ...scope, draft: '', error: '', resourceId: id },
           },
+          streaming: replies.length ? { ...state.streaming, [id]: true } : state.streaming,
         }
       })
+      if (replies.length) streamReplies(id, structuredClone(replies), timestamp)
       return { ok: true as const, id }
     },
   }
