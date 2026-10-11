@@ -333,19 +333,21 @@ describe('streamed replies', () => {
     return screen.getByRole('log', { name: 'Conversation' })
   }
 
-  it('marks the log busy, shows typing, then a running tool, until the reply ends', async () => {
+  it('marks the log busy and shows one Thinking line, then the running tool, until the reply ends', async () => {
     const log = await send()
     advance(0)
     expect(log).toHaveAttribute('aria-busy', 'true')
-    expect(log.querySelector('.knik-typing')).toHaveAttribute('aria-hidden', 'true')
+    expect(within(log).getByText('Thinking…')).toBeInTheDocument()
     advance(450)
-    expect(within(log).getByRole('button', { name: /search_docs.*Running/ })).toBeInTheDocument()
-    expect(log.querySelector('.knik-typing')).toBeNull()
+    const summary = within(log).getByRole('button', { name: /Running search_docs…/ })
+    expect(summary).toHaveAttribute('aria-expanded', 'false')
     advance(500)
-    expect(within(log).getByRole('button', { name: /search_docs.*Done/ })).toBeInTheDocument()
+    expect(within(log).getByRole('button', { name: /Thinking…/ })).toBeInTheDocument()
     finishReplies()
     expect(within(log).getByText('one two three four five six seven')).toBeInTheDocument()
     expect(log).toHaveAttribute('aria-busy', 'false')
+    fireEvent.click(within(log).getByRole('button', { name: /Used 1 tool/ }))
+    expect(within(log).getByRole('button', { name: /search_docs.*Done/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument()
   })
 

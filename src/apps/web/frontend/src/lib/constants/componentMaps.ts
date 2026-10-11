@@ -2,7 +2,7 @@
  * Static lookup maps for design-system components, relocated from co-located
  * .tsx files to satisfy the configs-live-in-constants/ boundary (eslint.config.js).
  */
-import type { BadgeProps, BannerProps, ModalSize } from '$types'
+import type { BannerProps, ModalSize } from '$types'
 import type { AccentBadge } from '$types/components/chat'
 import type { ExecutionStatus } from '$types/workflow'
 import type { ToolCallKind, ToolCallStatus } from '$types/conversation'
@@ -39,14 +39,14 @@ export const BANNER_ROLE: Record<NonNullable<BannerProps['variant']>, 'alert' | 
   success: 'status',
 }
 
-/** Icon, label and badge per tool call kind (ToolCallCard). */
+/** Icon, label and plural nouns per tool call kind (ToolCallCard, ToolCallList). */
 export const TOOL_CALL_KINDS: Record<
   ToolCallKind,
-  { icon: string; label: string; badge: BadgeProps['variant']; nouns: [string, string] }
+  { icon: string; label: string; nouns: [string, string] }
 > = {
-  tool: { icon: 'build', label: 'Tool', badge: 'default', nouns: ['tool', 'tools'] },
-  skill: { icon: 'auto_awesome', label: 'Skill', badge: 'primary', nouns: ['skill', 'skills'] },
-  mcp: { icon: 'hub', label: 'MCP', badge: 'info', nouns: ['MCP call', 'MCP calls'] },
+  tool: { icon: 'build', label: 'Tool', nouns: ['tool', 'tools'] },
+  skill: { icon: 'auto_awesome', label: 'Skill', nouns: ['skill', 'skills'] },
+  mcp: { icon: 'hub', label: 'MCP', nouns: ['MCP call', 'MCP calls'] },
 }
 
 /** Screen-reader status per tool call state (ToolCallCard). */

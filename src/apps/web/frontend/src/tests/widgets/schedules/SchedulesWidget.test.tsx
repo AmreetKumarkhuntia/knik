@@ -1,4 +1,4 @@
-import { render, screen, within, cleanup } from '@testing-library/react'
+import { render, screen, within, cleanup, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
@@ -39,6 +39,8 @@ describe('session schedule interactions', () => {
     expect(screen.getAllByText('Active').length).toBeGreaterThan(1)
     await user.click(screen.getByRole('button', { name: 'Delete schedule for Customer digest' }))
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    // The cancelled dialog fades out before it unmounts; the next one must be the only dialog.
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(screen.getByText('every day at 9am')).toBeTruthy()
     await user.click(screen.getByRole('button', { name: 'Delete schedule for Customer digest' }))
     await user.click(

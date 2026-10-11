@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import MS from '../display/MS'
 import ToolCallCard from './ToolCallCard'
 import Button from '../buttons/Button'
-import { ANIMATION } from '$lib/constants/dimensions'
 import { TOOL_CALL_KINDS } from '$lib/constants/componentMaps'
 import type { ToolCallKind } from '$types/conversation'
 import type { ToolCallListProps } from '$types/components/chat'
@@ -17,59 +16,79 @@ function summarizeCalls(calls: ToolCallListProps['calls']) {
   return `Used ${parts.join(' · ')}`
 }
 
-const SUMMARY_THRESHOLD = 3
-
-/** Stacks a reply's tool calls; a finished reply with many calls folds them behind a summary. */
-export default function ToolCallList({ calls, isStreaming, className = '' }: ToolCallListProps) {
+/** A reply's tool calls behind one line: "Thinking…" until it answers, then a summary that expands. */
+export default function ToolCallList({ calls, isThinking, className = '' }: ToolCallListProps) {
   const id = useId()
   const [expanded, setExpanded] = useState(false)
-  const collapsible = !isStreaming && calls.length >= SUMMARY_THRESHOLD
-  const visible = !collapsible || expanded
-  if (!calls.length) return null
+  if (!calls.length)
+    return isThinking ? (
+      <span className={`flex items-center gap-2 text-label knik-shimmer-text ${className}`}>
+        Thinking…
+      </span>
+    ) : null
+  const running = calls.find(call => call.status === 'running')
+  const failed = calls.filter(call => call.status === 'error').length
+  const live = isThinking || running !== undefined
+  const label = running
+    ? `Running ${running.tool_name}…`
+    : isThinking
+      ? 'Thinking…'
+      : summarizeCalls(calls)
 
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
-      {collapsible && (
-        <Button
-          variant="ghost"
-          size="xs"
-          aria-expanded={expanded}
-          aria-controls={id}
-          onClick={() => setExpanded(!expanded)}
-          className="self-start rounded-full border border-border-2 bg-surface-2 text-caption text-fg-3 hover:text-fg-1"
-        >
-          <MS name="build" size={14} />
-          {summarizeCalls(calls)}
-          <motion.span
+    <div className={`flex flex-col ${className}`}>
+      <Button
+        variant="ghost"
+        size="xs"
+        aria-expanded={expanded}
+        aria-controls={id}
+        onClick={() => setExpanded(!expanded)}
+        className="self-start -ml-2 text-label text-fg-3 hover:text-fg-1"
+      >
+        {live ? (
+          <span
             aria-hidden="true"
-            animate={{ rotate: expanded ? 180 : 0 }}
-            className="material-symbols-outlined"
-            style={{ fontSize: 14 }}
+            className="knik-spinner"
+            style={{ width: 12, height: 12, color: 'var(--primary)' }}
+          />
+        ) : (
+          <MS name="build" size={14} />
+        )}
+        <span className={live ? 'knik-shimmer-text' : undefined}>{label}</span>
+        {failed > 0 && !live && (
+          // Leading space keeps the accessible name readable; flex gap handles the visual spacing.
+          <span style={{ color: 'var(--danger)' }}>{` · ${failed} failed`}</span>
+        )}
+        <motion.span
+          aria-hidden="true"
+          animate={{ rotate: expanded ? 180 : 0 }}
+          className="material-symbols-outlined"
+          style={{ fontSize: 16 }}
+        >
+          expand_more
+        </motion.span>
+      </Button>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            id={id}
+            aria-live="off"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.25 }}
+            className="overflow-hidden"
           >
-            expand_more
-          </motion.span>
-        </Button>
-      )}
-      {visible && (
-        <div id={id} className="flex flex-col gap-2">
-          <AnimatePresence initial={false}>
-            {calls.map(call => (
-              <motion.div
-                key={call.id}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: ANIMATION.stiffness,
-                  damping: ANIMATION.damping,
-                }}
-              >
-                <ToolCallCard call={call} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+            <ol className="m-0 mt-1 ml-1.5 list-none border-l border-border-2 pl-3 flex flex-col">
+              {calls.map(call => (
+                <li key={call.id}>
+                  <ToolCallCard call={call} />
+                </li>
+              ))}
+            </ol>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

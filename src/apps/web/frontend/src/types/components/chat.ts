@@ -124,7 +124,7 @@ export interface ToolCallCardProps {
 
 export interface ToolCallListProps {
   calls: ToolCall[]
-  /** A live reply keeps every card visible instead of folding them into a summary. */
-  isStreaming?: boolean
+  /** The reply is still working before its first word: shows "Thinking…" even with no calls yet. */
+  isThinking?: boolean
   className?: string
 }
