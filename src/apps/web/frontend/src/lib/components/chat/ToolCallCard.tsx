@@ -1,6 +1,5 @@
 import { useId, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Badge from '../display/Badge'
 import MS from '../display/MS'
 import JsonViewer from './JsonViewer'
 import Button from '../buttons/Button'
@@ -18,13 +17,13 @@ function StatusIcon({ status }: { status: ToolCallStatus }) {
       />
     )
   return status === 'success' ? (
-    <MS name="check_circle" size={16} style={{ color: 'var(--success)' }} />
+    <MS name="check" size={14} style={{ color: 'var(--success)' }} />
   ) : (
-    <MS name="error" size={16} style={{ color: 'var(--danger)' }} />
+    <MS name="error" size={14} style={{ color: 'var(--danger)' }} />
   )
 }
 
-/** One tool, skill or MCP call of an assistant reply: a header with its live status and an expandable body. */
+/** One tool, skill or MCP call as a plain row; clicking it shows the call's inputs and outputs. */
 export default function ToolCallCard({ call, defaultExpanded, className = '' }: ToolCallCardProps) {
   const id = useId()
   const status = call.status ?? 'success'
@@ -39,27 +38,23 @@ export default function ToolCallCard({ call, defaultExpanded, className = '' }: 
   const tabs = status === 'success' ? ['Outputs', 'Inputs'] : ['Inputs']
 
   return (
-    <div
-      className={`rounded-[10px] border border-border-2 bg-surface-2 overflow-hidden ${className}`}
-    >
+    <div className={className}>
       <Button
         variant="ghost"
-        size="sm"
+        size="xs"
         aria-expanded={expanded}
         aria-controls={id}
         onClick={() => setExpanded(!expanded)}
-        className="w-full rounded-none text-label text-fg-2 hover:text-fg-1"
+        className="w-full text-label text-fg-3 hover:text-fg-1"
       >
-        <span className="flex-1 min-w-0 flex items-center gap-2.5 text-left">
-          <MS name={kind.icon} size={16} className="text-fg-3 shrink-0" />
-          <Badge size="sm" variant={kind.badge}>
-            {kind.label}
-          </Badge>
+        <span className="flex-1 min-w-0 flex items-center gap-2 text-left">
+          <MS name={kind.icon} size={14} className="shrink-0" />
           <span
             className={`font-mono text-mono-sm truncate min-w-0 ${status === 'running' ? 'knik-shimmer-text' : ''}`}
           >
             {call.tool_name}
           </span>
+          <span className="text-caption text-fg-4 shrink-0">{kind.label}</span>
           <span className="ml-auto flex items-center gap-2 shrink-0">
             {call.duration_ms !== undefined && status !== 'running' && (
               <span className="text-caption text-fg-4">
@@ -102,7 +97,7 @@ export default function ToolCallCard({ call, defaultExpanded, className = '' }: 
             transition={{ ease: 'easeOut', duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="flex flex-col gap-2 border-t border-border-2 p-2">
+            <div className="flex flex-col gap-2 pt-1 pb-2">
               {status === 'error' && (
                 <p
                   className="m-0 rounded-md px-3 py-2 font-mono text-mono-sm whitespace-pre-wrap"

@@ -48,8 +48,7 @@ const ChatTranscript = memo(function ChatTranscript({
       <AnimatePresence initial={false}>
         {messages.map((message, index) => {
           const { isUser, steps, modelTag, messageId, toolCalls } = message
-          const typing =
-            message.isStreaming && !message.content && !toolCalls.some(c => c.status === 'running')
+          const thinking = message.isStreaming && !message.content
           return (
             <motion.div
               key={`${message.id || messageId}:${index}`}
@@ -60,13 +59,7 @@ const ChatTranscript = memo(function ChatTranscript({
               <ChatBubble
                 role={isUser ? 'user' : 'assistant'}
                 content={
-                  typing ? (
-                    <span className="knik-typing" aria-hidden="true">
-                      <span />
-                      <span />
-                      <span />
-                    </span>
-                  ) : (
+                  thinking ? undefined : (
                     <MarkdownMessage
                       content={message.content}
                       isStreaming={message.isStreaming}
@@ -95,10 +88,10 @@ const ChatTranscript = memo(function ChatTranscript({
                   ) : undefined
                 }
                 reasoning={
-                  !isUser && (steps.length > 0 || toolCalls.length > 0) ? (
+                  !isUser && (steps.length > 0 || toolCalls.length > 0 || thinking) ? (
                     <div className="flex flex-col gap-3">
                       {steps.length > 0 && <AgentThinking steps={steps} />}
-                      <ToolCallList calls={toolCalls} isStreaming={message.isStreaming} />
+                      <ToolCallList calls={toolCalls} isThinking={thinking} />
                     </div>
                   ) : undefined
                 }

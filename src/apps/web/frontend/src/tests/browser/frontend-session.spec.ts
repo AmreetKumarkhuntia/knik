@@ -176,8 +176,9 @@ test('chat replays supplied scenarios and preserves committed messages across ro
     'Refactor my Python script'
   )
   await page.getByRole('button', { name: 'Send message', exact: true }).click()
-  const skill = page.getByRole('main').getByRole('button', { name: /python-refactor/ })
-  await expect(skill).toBeVisible()
+  await expect(
+    page.getByRole('main').getByRole('button', { name: /Running python-refactor…/ })
+  ).toBeVisible()
   const response =
     'The behaviour is unchanged, and memory use no longer grows with the size of the input.'
   await expect(page.getByRole('main').getByText(response, { exact: true })).toBeVisible()
@@ -185,6 +186,10 @@ test('chat replays supplied scenarios and preserves committed messages across ro
     'aria-busy',
     'false'
   )
+  const summary = page.getByRole('main').getByRole('button', { name: /Used 1 tool · 1 skill/ })
+  await expect(summary).toHaveAttribute('aria-expanded', 'false')
+  await summary.click()
+  const skill = page.getByRole('main').getByRole('button', { name: /python-refactor.*Done/ })
   await expect(skill).toHaveAttribute('aria-expanded', 'false')
   await skill.click()
   await expect(skill).toHaveAttribute('aria-expanded', 'true')
@@ -215,8 +220,9 @@ test('Stop ends a streaming reply and marks the running tool as stopped', async 
   const message = page.getByRole('textbox', { name: 'Message', exact: true })
   await message.fill('Find the bug in this hook')
   await message.press('Enter')
-  const tool = page.getByRole('main').getByRole('button', { name: /run_tests.*Running/ })
-  await expect(tool).toBeVisible()
+  await expect(
+    page.getByRole('main').getByRole('button', { name: /Running run_tests…/ })
+  ).toBeVisible()
   await expect(page.getByRole('log', { name: 'Conversation' })).toHaveAttribute('aria-busy', 'true')
   await page.getByRole('button', { name: 'Stop generating', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeVisible()
@@ -224,6 +230,10 @@ test('Stop ends a streaming reply and marks the running tool as stopped', async 
     'aria-busy',
     'false'
   )
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /Used 1 tool · 1 failed/ })
+    .click()
   const stopped = page.getByRole('main').getByRole('button', { name: /run_tests.*Failed/ })
   await expect(stopped).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('main').getByText('Stopped', { exact: true })).toBeVisible()

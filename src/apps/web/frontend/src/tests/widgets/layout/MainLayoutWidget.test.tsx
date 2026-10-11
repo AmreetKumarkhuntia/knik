@@ -72,7 +72,10 @@ describe('MainLayoutWidget command data', () => {
     const location = renderShell('/workflows')
     await user.keyboard('{Control>}k{/Control}')
     await user.keyboard('{Control>}j{/Control}')
-    expect(screen.queryByRole('dialog', { name: 'Commands' })).not.toBeInTheDocument()
+    // The palette fades out before it unmounts.
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Commands' })).not.toBeInTheDocument()
+    )
     expect(location()).toHaveTextContent(/^\/$/)
   })
 
