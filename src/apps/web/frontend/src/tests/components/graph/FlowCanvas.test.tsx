@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { Position, type Edge, type Node, type NodeTypes } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
-import { BaseNode, FlowCanvas } from '$components/graph'
+import { FlowCanvas } from '$components/graph'
+import BaseNode from '$components/graph/nodes/BaseNode'
 
 const nodeTypes: NodeTypes = {
   StartNode: BaseNode,

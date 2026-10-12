@@ -50,10 +50,7 @@ describe('frontend dependency ownership', () => {
     '$lib/stores/chat/store',
     '../stores/chat/hooks',
     '$widgets/settings',
-    '$sections/settings/Pane',
     '$pages/Settings',
-    '$store',
-    '$services/theme',
     '$hooks/useTheme',
     '$constants/demoData',
   ])('rejects component imports of %s', target => {
@@ -357,7 +354,6 @@ describe('frontend dependency ownership', () => {
   it.each([
     '$widgets/layout/MainLayoutWidget',
     '$pages/Home',
-    '$sections/layout/MainLayout',
     '../../App',
     '$stores/chat/store',
     '$stores/session/useStoreBundle',

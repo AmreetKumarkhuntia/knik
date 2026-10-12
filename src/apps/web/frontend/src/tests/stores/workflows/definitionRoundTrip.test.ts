@@ -136,4 +136,13 @@ describe('builder definition round trips', () => {
     expect(state().saveBuilder('editor').ok).toBe(true)
     expect(state().builderScopes.editor!.error).toBeNull()
   })
+
+  it('refuses to save a blank name and shows why', () => {
+    const { state, saved } = setup()
+    state().initBuilder('editor', 'digest')
+    state().patchBuilder('editor', { name: '   ' })
+    expect(state().saveBuilder('editor')).toEqual({ ok: false, error: 'Enter a workflow name.' })
+    expect(state().builderScopes.editor!.error).toBe('Enter a workflow name.')
+    expect(saved('digest')).toEqual(digest)
+  })
 })

@@ -56,6 +56,15 @@ describe('App routes', () => {
     expect(window.location.pathname).toBe('/settings')
   })
 
+  it.each([
+    ['/workflows', '5 of 5 shown'],
+    ['/workflows/executions', 'Showing 6 of 6 executions'],
+    ['/schedules', 'Every day at 09:00'],
+  ])('renders the seeded page for %s', async (path, text) => {
+    renderAt(path)
+    expect(await screen.findByText(text)).toBeInTheDocument()
+  })
+
   it('lets framer-motion honour the prefers-reduced-motion setting', async () => {
     renderAt('/')
     expect(await screen.findByText('Motion reduced')).toBeInTheDocument()

@@ -6,28 +6,28 @@ import VoiceOption from '$components/settings/VoiceOption'
 import FormGroup from '$widgets/FormGroup'
 import FormRow from '$widgets/FormRow'
 import { useSettingsStore } from '$stores/settings'
-import { useVoiceView } from '$stores/views'
+import { useCatalog } from '$stores/catalogs'
 
 export default function VoicePane() {
   const id = useId()
-  const { voices } = useVoiceView()
+  const voices = useCatalog('voices')
   const settings = useSettingsStore(s => s.settings)
   const updateSettings = useSettingsStore(s => s.updateSettings)
 
   return (
     <>
-      <FormGroup title="Text-to-speech" sub="Configure voice playback for this session">
-        <FormRow label="Enable TTS" hint="Enable playback when audio is available">
+      <FormGroup title="Text-to-speech" sub="Preferences only; this frontend plays no audio">
+        <FormRow label="Enable TTS">
           <ToggleSwitch
             aria-label="Enable TTS"
             checked={settings.tts_enabled}
             onChange={tts_enabled => updateSettings({ tts_enabled })}
           />
         </FormRow>
-        <FormRow label="Speaking rate" last>
+        <FormRow label="Speaking rate" htmlFor={`${id}-rate`} last>
           <div className="flex-1 max-w-[260px] min-w-0">
             <Slider
-              label="Speaking rate"
+              id={`${id}-rate`}
               min={0.5}
               max={2}
               step={0.1}

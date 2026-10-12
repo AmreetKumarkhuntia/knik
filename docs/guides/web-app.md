@@ -22,7 +22,7 @@ flowchart TD
 
 ### Tech Stack
 
-- **React 18** - UI framework
+- **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Build tool with lightning-fast HMR
 - **Tailwind CSS** - Utility-first styling
@@ -33,45 +33,21 @@ flowchart TD
 src/apps/web/frontend/src/
   App.tsx                  # Main layout orchestrator
   main.tsx                 # Entry point
+  types/                   # TypeScript type definitions
   lib/
     pages/                 # Route-level pages
+      Settings.tsx
       WorkflowBuilder.tsx
       ExecutionDetail.tsx
-    components/            # 30+ reusable UI components
-      ActionButton, Card, Modal, Table, Pagination, SearchBar,
-      StatusBadge, MarkdownMessage, ExecutionFlowGraph, etc.
-    services/              # API client, streaming, theme, audio
-    hooks/                 # useAudio, useChat, useKeyboardShortcuts, useToast
-    types/                 # TypeScript type definitions
+    widgets/               # Bind store state and actions to components
+    stores/                # Provider-scoped Zustand domain stores
+    components/            # Presentational UI, grouped by family
+      buttons, chat, display, forms, graph, navigation, surfaces, etc.
+    hooks/                 # useKeyboardShortcuts, useViewport
+    constants/
+    data-structures/
+    utils/
 ```
-
-### Services
-
-**API Client** (`lib/services/api.ts`)
-
-```typescript
-const API_BASE_URL = "http://localhost:8000/api";
-
-await api.chat(message); // Text + audio response
-await api.getHistory(); // Conversation history
-await api.clearHistory(); // Clear history
-await api.getSettings(); // Current settings
-```
-
-**Audio Service** (`lib/services/audio/`)
-
-```typescript
-queueAudio(base64Audio, sampleRate); // Queue WAV chunk for playback
-pauseAudio() / resumeAudio() / stopAudio();
-```
-
-### Animations
-
-All animations use GPU-accelerated properties (transform, opacity) for 60fps:
-
-- `gradient-shift` (8s ease infinite)
-- `slide-in-right` / `slide-in-left` (300ms bounce)
-- `fade-in` (500ms ease-out)
 
 ## Backend (FastAPI)
 

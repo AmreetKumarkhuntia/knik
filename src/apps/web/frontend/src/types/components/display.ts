@@ -5,8 +5,6 @@ import type { ExecutionStatus } from '$types/workflow'
 /** Props for a status badge. */
 export interface StatusBadgeProps {
   status: ExecutionStatus
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
 }
 
 /** Column definition for a data table. */
@@ -41,7 +39,6 @@ export interface EmptyStateProps {
   title: string
   description?: string
   action?: ReactNode
-  className?: string
 }
 
 export interface AvatarProps {
@@ -52,8 +49,7 @@ export interface AvatarProps {
 }
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary'
-  size?: 'sm' | 'md'
+  variant?: 'default' | 'success'
   className?: string
   children: React.ReactNode
 }

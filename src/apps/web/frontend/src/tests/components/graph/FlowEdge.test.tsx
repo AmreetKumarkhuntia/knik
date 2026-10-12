@@ -15,7 +15,7 @@ const edgeProps = {
   targetPosition: Position.Left,
 } as EdgeProps
 
-const renderEdge = (status?: 'running' | 'success') =>
+const renderEdge = (status?: 'running' | 'success' | 'failed' | 'pending') =>
   render(
     <svg>
       <FlowEdge {...edgeProps} data={{ mode: 'execution', status }} />
@@ -26,5 +26,15 @@ describe('FlowEdge execution motion', () => {
   it('flows dashes only while the edge is running', () => {
     expect(renderEdge('running')).toHaveClass('graph-edge', 'graph-edge--running')
     expect(renderEdge('success')).not.toHaveClass('graph-edge--running')
+  })
+
+  it.each([
+    ['failed', 'var(--danger)'],
+    ['success', 'var(--success)'],
+    ['running', 'var(--info)'],
+    ['pending', 'var(--fg-4)'],
+    [undefined, 'var(--fg-4)'],
+  ] as const)('strokes a %s edge with %s', (status, stroke) => {
+    expect(renderEdge(status)?.getAttribute('style')).toContain(`stroke: ${stroke}`)
   })
 })

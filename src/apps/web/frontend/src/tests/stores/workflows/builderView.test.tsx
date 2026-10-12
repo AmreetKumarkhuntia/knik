@@ -5,6 +5,7 @@ import { graphToWorkflowDefinition } from '$lib/data-structures'
 import { StoresProvider } from '$stores'
 import { useWorkflowBuilderView } from '$stores/views'
 import type { DemoSource } from '$types/demo-session'
+import type { WorkflowDefinition } from '$types/workflow'
 
 vi.mock('$lib/data-structures', async importOriginal => {
   const actual = await importOriginal<typeof import('$lib/data-structures')>()
@@ -67,5 +68,38 @@ describe('workflow builder run availability', () => {
     expect(result.current.canRun).toBe(false)
     act(() => result.current.updateNode('summarize', { ...data(), systemPrompt: PROMPT }))
     expect(result.current.canRun).toBe(true)
+  })
+
+  it('keeps Run off for a saved workflow that would fail save-time validation', () => {
+    const definition: WorkflowDefinition = {
+      nodes: {
+        start: { type: 'StartNode' },
+        call: { type: 'FunctionExecutionNode', function_name: '' },
+      },
+      connections: [{ from_id: 'start', to_id: 'call' }],
+    }
+    const broken: DemoSource = {
+      workflows: [{ id: 'broken', name: 'Broken', definition }],
+      runScenarios: {
+        broken: {
+          execution: {
+            id: 8,
+            workflow_id: 'broken',
+            workflow_name: 'Broken',
+            status: 'success',
+            inputs: {},
+            outputs: {},
+            started_at: '2026-10-08T10:00:00Z',
+          },
+          timeline: [],
+        },
+      },
+    }
+    const { result } = renderHook(() => useWorkflowBuilderView('broken'), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <StoresProvider source={broken}>{children}</StoresProvider>
+      ),
+    })
+    expect(result.current.canRun).toBe(false)
   })
 })

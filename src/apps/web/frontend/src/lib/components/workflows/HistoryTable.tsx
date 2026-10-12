@@ -21,7 +21,7 @@ export default function HistoryTable({
     {
       key: 'status' as const,
       label: 'Status',
-      render: (value: unknown) => <StatusBadge status={value as ExecutionStatus} size="sm" />,
+      render: (value: unknown) => <StatusBadge status={value as ExecutionStatus} />,
     },
     {
       key: 'startedAt' as const,

@@ -25,14 +25,10 @@ const aliases = {
   $components: 'src/lib/components',
   $widgets: 'src/lib/widgets',
   $stores: 'src/lib/stores',
-  $sections: 'src/lib/sections',
   $pages: 'src/lib/pages',
   $hooks: 'src/lib/hooks',
-  $services: 'src/services',
-  $store: 'src/store',
   $constants: 'src/lib/constants',
   $utils: 'src/lib/utils',
-  $assets: 'src/assets',
 }
 const networkPackages = /^(?:axios|ky|node-fetch|undici|socket\.io-client|graphql-request)(?:\/|$)/
 const storePackages = /^(?:zustand|redux|@reduxjs\/toolkit|react-redux)(?:\/|$)/
@@ -57,10 +53,7 @@ function tier(relative) {
   if (within(relative, 'src/lib/stores')) return 'stores'
   if (within(relative, 'src/lib/hooks')) return 'hooks'
   if (within(relative, 'src/lib/widgets')) return 'widgets'
-  if (
-    /^src\/lib\/(?:pages|sections)(?:\/|$)/.test(relative) ||
-    /^src\/[^/]+\.[jt]sx?$/.test(relative)
-  )
+  if (/^src\/lib\/pages(?:\/|$)/.test(relative) || /^src\/[^/]+\.[jt]sx?$/.test(relative))
     return 'composition'
   return 'other'
 }
@@ -286,9 +279,9 @@ export function createFrontendArchitecture({
     )
       return 'Components render props and emit events; stores own data and actions; widgets own browser operations.'
     if (origin === 'widgets' && targetTier === 'composition')
-      return 'Widgets may compose components and widgets, but cannot import pages, sections or App.'
+      return 'Widgets may compose components and widgets, but cannot import pages or App.'
     if (origin === 'hooks' && ['widgets', 'composition'].includes(targetTier))
-      return 'Shared hooks serve widgets; they cannot import widgets, pages, sections or App.'
+      return 'Shared hooks serve widgets; they cannot import widgets, pages or App.'
     if (
       ['types', 'lower'].includes(origin) &&
       !typeOnly &&
@@ -310,7 +303,7 @@ export function createFrontendArchitecture({
       ['components', 'hooks', 'widgets', 'composition'].includes(targetTier) &&
       !typeOnly
     )
-      return 'Stores cannot depend on components, shared hooks, widgets, pages or sections.'
+      return 'Stores cannot depend on components, shared hooks, widgets or pages.'
     // Only widgets consume shared hooks, so hooks get the widget store boundary.
     if (origin === 'widgets' || origin === 'hooks') {
       if (isFixture(target)) return 'Widgets read application data only through public store hooks.'
@@ -331,7 +324,7 @@ export function createFrontendArchitecture({
         isFixture(target) ||
         (targetTier === 'widgets' && internalWidget)
       )
-        return 'App, pages and sections compose widgets; only the public StoresProvider may be imported from stores.'
+        return 'App and pages compose widgets; only the public StoresProvider may be imported from stores.'
     }
     return null
   }

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { NodeContent } from '$components/graph'
+import { NodeContent } from '$components/graph/nodes/NodeContent'
 
 function renderFunction(params: unknown) {
   return render(

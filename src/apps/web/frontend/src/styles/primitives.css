@@ -7,19 +7,6 @@
    ================================================================= */
 
 /* -----------------------------------------------------------------
-   Surfaces
-   ----------------------------------------------------------------- */
-.knik-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-lg);
-  transition:
-    border-color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out),
-    transform var(--dur-base) var(--ease-out);
-}
-
-/* -----------------------------------------------------------------
    Focus Rings
    ----------------------------------------------------------------- */
 
@@ -123,12 +110,6 @@
   gap: var(--space-2);
 }
 
-.knik-btn--lg {
-  padding: var(--space-3) var(--space-5);
-  font-size: var(--fs-label);
-  gap: var(--space-2);
-}
-
 /* -----------------------------------------------------------------
    Badges
    ----------------------------------------------------------------- */
@@ -157,29 +138,9 @@
   color: var(--fg-2);
 }
 
-.knik-badge--primary {
-  background: var(--primary-soft);
-  color: var(--primary);
-}
-
 .knik-badge--success {
   background: var(--success-bg);
   color: var(--success);
-}
-
-.knik-badge--warning {
-  background: var(--warning-bg);
-  color: var(--warning);
-}
-
-.knik-badge--danger {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
-
-.knik-badge--info {
-  background: var(--info-bg);
-  color: var(--info);
 }
 
 /* -----------------------------------------------------------------
@@ -233,10 +194,6 @@
 .knik-spinner--md {
   width: 24px;
   height: 24px;
-}
-.knik-spinner--lg {
-  width: 36px;
-  height: 36px;
 }
 
 @keyframes knik-spin {

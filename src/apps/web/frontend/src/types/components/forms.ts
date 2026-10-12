@@ -73,7 +73,7 @@ export interface SelectProps extends Omit<
   renderOption?: (option: SelectOption) => ReactNode
   placeholder?: string
   disabled?: boolean
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md'
   className?: string
 }
 
@@ -85,8 +85,6 @@ export interface SliderProps {
   value: number
   onChange: (value: number) => void
   step?: number
-  label?: string
-  className?: string
 }
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
