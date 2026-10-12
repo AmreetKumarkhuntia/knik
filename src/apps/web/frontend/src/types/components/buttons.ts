@@ -5,6 +5,6 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   icon?: ReactNode
   label?: string
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'xs' | 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md'
   loading?: boolean
 }

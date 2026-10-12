@@ -11,7 +11,5 @@ export interface ToastProps {
 
 /** Props for a loading spinner. */
 export interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg'
   className?: string
-  text?: string
 }

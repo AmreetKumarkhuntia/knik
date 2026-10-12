@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readSource, selectorClasses, tailwindConfig } from '../styles/helpers'
+import { tailwindConfig } from '../styles/helpers'
 
 // Tailwind 3 cannot apply `/NN` opacity modifiers to colors defined as plain `var(--x)`
 // strings (or to colors it does not know), and silently emits no CSS for those classes.
@@ -27,32 +27,28 @@ function varColorNames() {
 const COLOR_UTILITY =
   /^(?:[\w-]+:)*!?(?:bg|text|border(?:-[xytrbl])?|ring(?:-offset)?|divide|outline|fill|stroke|from|via|to|decoration|accent|caret|shadow|placeholder)-([a-z][\w-]*)\/(?:\d+|\[[^\]]+\])$/
 
-// index.css hand-writes color-mix shims for a fixed set of classes; those are the only
-// opacity classes that work on the semantic color names below, which Tailwind does not know.
-const shims = selectorClasses(readSource('index.css'))
+// index.css hand-writes plain classes for these names, which Tailwind does not know.
 const semanticColors = [
-  ...['foreground', 'text', 'secondary', 'muted', 'subtle', 'inverse', 'primary', 'accent'],
-  ...['textSecondary', 'textMuted', 'textSubtle', 'textInverse', 'background', 'code'],
-  ...['success', 'error', 'warning', 'info', 'surface', 'surfaceGlass', 'surfaceRaised'],
-  ...['canvas', 'border', 'borderLight'],
+  ...['foreground', 'text', 'secondary', 'subtle', 'textSecondary', 'primary'],
+  ...['background', 'code', 'success', 'error', 'info'],
 ]
 const unsupported = new Set([...varColorNames(), ...semanticColors, 'current', 'inherit'])
 
 function violations(source: string) {
   return (source.match(/[^\s'"`{}()]+/g) ?? []).filter(token => {
     const match = COLOR_UTILITY.exec(token)
-    return match !== null && unsupported.has(match[1]) && !shims.has(token)
+    return match !== null && unsupported.has(match[1])
   })
 }
 
 describe('Tailwind opacity modifiers', () => {
   it('derives the var-based theme colors from tailwind.config.js', () => {
     expect([...varColorNames()]).toEqual(
-      expect.arrayContaining(['aurora-300', 'teal-300', 'violet-400', 'border', 'surface-2'])
+      expect.arrayContaining(['aurora-300', 'border', 'surface-2'])
     )
   })
 
-  it('flags dropped modifiers and allows hex palette colors and index.css shims', () => {
+  it('flags dropped modifiers and allows hex palette colors', () => {
     expect(
       violations(
         "'bg-aurora-300/10 border-border/50 focus-visible:ring-primary/50 hover:bg-current/20 bg-emerald-500/15 bg-teal-200/10 bg-surface/50 bg-error/20 bg-black/50'"
@@ -62,6 +58,7 @@ describe('Tailwind opacity modifiers', () => {
       'border-border/50',
       'focus-visible:ring-primary/50',
       'hover:bg-current/20',
+      'bg-surface/50',
       'bg-error/20',
     ])
   })

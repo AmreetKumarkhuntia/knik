@@ -60,7 +60,7 @@ export function normalizeNodes(nodes: Node[]): Node[] {
 export function duplicateConnectionError({ source, target }: Pick<Edge, 'source' | 'target'>) {
   return `Node ${source}: only one connection to ${target} is allowed.`
 }
-export function duplicateConnectionErrors(edges: Edge[]) {
+function duplicateConnectionErrors(edges: Edge[]) {
   return edges
     .filter(
       (edge, index) =>

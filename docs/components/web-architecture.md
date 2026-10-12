@@ -10,7 +10,7 @@ The Archify files preserve the earlier proposed design. The chat behavior clarif
 
 | Layer                          | Owns                                                                                                                         | Public dependencies                                           |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| App, pages, sections           | Routing, route parameters, layout and composition                                                                            | Provider entry point, widgets, presentation components        |
+| App, pages                     | Routing, route parameters, layout and composition                                                                            | Provider entry point, widgets, presentation components        |
 | Stores                         | Committed records, settings, selections, drafts, feature dialogs, errors, filters, sorting, derived views and domain actions | Shared types, constants and pure transformations              |
 | Widgets                        | Bind store state/actions to component props/events; perform browser effects                                                  | Public store/domain/view barrels, components and pure helpers |
 | Shared hooks (`src/lib/hooks`) | Browser subscriptions shared by widgets, such as the viewport breakpoint and keyboard shortcuts                              | Public store hooks, types, constants and pure helpers         |
@@ -26,19 +26,19 @@ Routes compose widgets → widgets supply component props
                         store actions ← component events
 ```
 
-Store factories do not import peer domains. The session coordinator receives the store bundle and handles cross-domain commands. Joined views read multiple owners without copying records. Widgets cannot import store internals, raw Zustand APIs or demo modules. Pages/sections/components cannot select application state directly. A widget must not import a page or section. Shared hooks serve widgets only: they cannot import widgets, pages, sections or App, and components, stores, types and constants cannot import them.
+Store factories do not import peer domains. The session coordinator receives the store bundle and handles cross-domain commands. Joined views read multiple owners without copying records. Widgets cannot import store internals, raw Zustand APIs or demo modules. Pages and components cannot select application state directly. A widget must not import a page. Shared hooks serve widgets only: they cannot import widgets, pages or App, and components, stores, types and constants cannot import them.
 
 ## Domain relationships
 
 | Store       | Stored data and working state                                                                   |
 | ----------- | ----------------------------------------------------------------------------------------------- |
-| Catalogs    | Providers, models, voices and tool definitions                                                  |
+| Catalogs    | Providers, models, voices, tools and suggestions                                                |
 | Chat        | Conversations, messages, active selection, reply scenarios, composer and rename scopes          |
 | Workflows   | Canonical workflow records, builder draft graph/name, selected node, validation and hub filters |
 | Schedules   | Records referencing workflow IDs, create/edit/delete working state                              |
 | Executions  | Records referencing workflow IDs, timelines, run scenarios, filters, sorting and pagination     |
 | Settings    | Profile, preferences, appearance, enabled tool IDs and pane working state                       |
-| Credentials | Key metadata, supplied key scenarios and create/reveal/delete state                             |
+| Credentials | Key metadata and delete-confirmation state                                                      |
 | Shell       | Sidebar collapse and command palette state                                                      |
 | Feedback    | Toast queue                                                                                     |
 
@@ -74,14 +74,12 @@ The controlled workflow builder reads its name, nodes, edges, selection and erro
 | Add a chat reply                   | Optionally append replies from a matching authored scenario; otherwise keep only the user message, with no warning or fabricated reply |
 | Blank text or deleted conversation | Reject the send, retain the draft and show the validation error                                                                        |
 | Run workflow                       | Require a scenario matching the committed definition; write execution and timeline together                                            |
-| Create demo key                    | Require an explicitly supplied sample-secret scenario; never generate a secret                                                         |
-| Preview voice                      | Play a supplied audio asset only after the user's action                                                                               |
 | Clipboard or export                | Widget performs the browser operation and updates store-owned status/feedback                                                          |
 | Missing/deleted route ID           | Show a not-found or empty state                                                                                                        |
 
-ThemeWidget applies the light/dark `data-theme` attribute from the settings store. `styles/tokens.css` owns the fixed palette, spacing and corner radii; appearance state contains only `mode`. Audio elements, object URLs, DOM refs and focus mechanics remain browser resources rather than serializable store data. Their owning widgets clean them up. Existing storage keys are neither read nor cleared.
+ThemeWidget applies the light/dark `data-theme` attribute from the settings store. `styles/tokens.css` owns the fixed palette, spacing and corner radii; appearance state contains only `mode`. DOM refs and focus mechanics remain browser resources rather than serializable store data. Their owning widgets clean them up. Existing storage keys are neither read nor cleared.
 
-No network fallback, progress simulation, mock API or live/demo switch is present. Static assets and explicitly supplied media may load normally; this architecture does not promise offline packaging.
+No network fallback, progress simulation, mock API or live/demo switch is present. Static assets may load normally; this architecture does not promise offline packaging.
 
 Chat reply availability never blocks a valid local send. An unmatched message is still part of the conversation and appears in subscribed chat/sidebar views without a warning or reply-unavailable status. Authored scenarios provide optional local replay. No assistant message is fabricated and no provider is called. Whitespace-only drafts and sends targeting deleted conversations remain validation failures.
 
@@ -89,16 +87,16 @@ Chat reply availability never blocks a valid local send. An unmatched message is
 
 Canonical Button, Table/TableParts, form controls, Modal and Popover retain their shared responsibilities. See [component contracts](react-common-components.md). The compact workspace redesign uses these same controls with solid surfaces and a fixed teal palette. Routes and store ownership remain unchanged.
 
-| Path                    | Feature                                                   |
-| ----------------------- | --------------------------------------------------------- |
-| `/`                     | Chat                                                      |
-| `/workflows`            | Workflow hub                                              |
-| `/workflows/create`     | Workflow builder                                          |
-| `/workflows/:id/edit`   | Builder for a saved workflow                              |
-| `/workflows/executions` | Execution list                                            |
-| `/executions/:id`       | Execution detail                                          |
-| `/schedules`            | Schedule management                                       |
-| `/settings`             | Profile, appearance, providers/tools, voice and demo keys |
+| Path                    | Feature                                                  |
+| ----------------------- | -------------------------------------------------------- |
+| `/`                     | Chat                                                     |
+| `/workflows`            | Workflow hub                                             |
+| `/workflows/create`     | Workflow builder                                         |
+| `/workflows/:id/edit`   | Builder for a saved workflow                             |
+| `/workflows/executions` | Execution list                                           |
+| `/executions/:id`       | Execution detail                                         |
+| `/schedules`            | Schedule management                                      |
+| `/settings`             | Profile, appearance, providers/tools, voice and API keys |
 
 From `src/apps/web/frontend`:
 

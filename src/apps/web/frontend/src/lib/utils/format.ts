@@ -1,10 +1,13 @@
 /** Formats a millisecond duration into a compact human-readable string. */
 export function formatDuration(ms: number | undefined): string {
   if (typeof ms !== 'number' || Number.isNaN(ms)) return '-'
-  if (ms < 1000) return `${Math.round(ms)}ms`
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-  if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
-  return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`
+  const rounded = Math.round(ms)
+  if (rounded < 1000) return `${rounded}ms`
+  // From 59.95s, toFixed(1) would print "60.0s".
+  if (rounded < 59_950) return `${(rounded / 1000).toFixed(1)}s`
+  const seconds = Math.round(ms / 1000)
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
 }
 
 /** Formats an ISO date string into a locale-readable string. */

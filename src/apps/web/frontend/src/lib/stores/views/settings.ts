@@ -3,7 +3,7 @@ import { useSettingsStore } from '../settings/hooks'
 import { useCatalog } from '../catalogs/hooks'
 import { modelOptions } from '../catalogs/selectors'
 import { useCredentialsStore } from '../credentials/hooks'
-import { EMPTY_SETTINGS_SCOPE, accountInitials } from '../settings/selectors'
+import { EMPTY_SETTINGS_SCOPE, accountInitials, accountName } from '../settings/selectors'
 import { EMPTY_CREDENTIALS_SCOPE } from '../credentials/selectors'
 export function useProfileView(scopeId: string) {
   const settings = useSettingsStore(s => s.settings)
@@ -14,7 +14,7 @@ export function useProfileView(scopeId: string) {
     dirty:
       scope.displayName !== (settings.display_name ?? '') ||
       scope.username !== (settings.username ?? ''),
-    initials: accountInitials(settings.display_name ?? ''),
+    initials: accountInitials(accountName(settings)),
     modelOptions: useMemo(() => modelOptions(models), [models]),
   }
 }
@@ -39,9 +39,6 @@ export function useProvidersView() {
       [tools, enabled]
     ),
   }
-}
-export function useVoiceView() {
-  return { voices: useCatalog('voices') }
 }
 export function useCredentialsView(scopeId: string) {
   const keys = useCredentialsStore(s => s.apiKeys),

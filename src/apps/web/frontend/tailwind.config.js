@@ -31,17 +31,9 @@ export default {
           DEFAULT: 'var(--border-2)',
           1: 'var(--border-1)',
           2: 'var(--border-2)',
-          3: 'var(--border-3)',
         },
         aurora: {
           300: 'var(--aurora-300)',
-          400: 'var(--aurora-400)',
-        },
-        teal: {
-          300: 'var(--teal-300)',
-        },
-        violet: {
-          400: 'var(--violet-400)',
         },
         surface: {
           DEFAULT: 'var(--bg-surface)',

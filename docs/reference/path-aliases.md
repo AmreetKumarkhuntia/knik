@@ -4,38 +4,37 @@ This document describes the path aliases configured for the Knik frontend to sim
 
 ## Available Aliases
 
-| Alias         | Maps to                | Description                                          | Usage     |
-| ------------- | ---------------------- | ---------------------------------------------------- | --------- |
-| `$types`      | `src/types/*`          | TypeScript type definitions                          | ~97 files |
-| `$lib`        | `src/lib/*`            | Library utilities, components, hooks                 | ~42 files |
-| `$components` | `src/lib/components/*` | Reusable UI components                               | ~36 files |
-| `$services`   | `src/services/*`       | API services and clients                             | ~7 files  |
-| `$hooks`      | `src/lib/hooks/*`      | Custom React hooks                                   | ~4 files  |
-| `$store`      | `src/store/*`          | Zustand state management (audio, chat, toast slices) | ~4 files  |
-| `$pages`      | `src/lib/pages/*`      | Top-level page components                            | ~1 file   |
-| `$common`     | `src/lib/components/*` | Alias for components (same as above)                 | unused    |
-| `$utils`      | `src/lib/utils/*`      | Utility functions                                    | unused    |
-| `$constants`  | `src/lib/constants/*`  | Constants and config values                          | unused    |
+| Alias         | Maps to                | Description                                         | Usage      |
+| ------------- | ---------------------- | --------------------------------------------------- | ---------- |
+| `$types`      | `src/types/*`          | TypeScript type definitions                         | ~179 files |
+| `$lib`        | `src/lib/*`            | Library root: data structures, constants, etc.      | ~52 files  |
+| `$components` | `src/lib/components/*` | Reusable UI components                              | ~77 files  |
+| `$stores`     | `src/lib/stores/*`     | Zustand domain stores and joined views              | ~47 files  |
+| `$widgets`    | `src/lib/widgets/*`    | Widgets that bind stores to components              | ~28 files  |
+| `$pages`      | `src/lib/pages/*`      | Top-level page components                           | ~3 files   |
+| `$utils`      | `src/lib/utils/*`      | Utility functions                                   | ~18 files  |
+| `$constants`  | `src/lib/constants/*`  | Constants and config values                         | unused     |
+| `$hooks`      | `src/lib/hooks/*`      | Shared browser hooks (viewport, keyboard shortcuts) | ~6 files   |
 
-> **Note:** `$common`, `$utils`, and `$constants` are configured but currently unused in the codebase. `$utils` and `$constants` are redundant with `$lib/utils` and `$lib/constants` which are used instead.
+> **Note:** `$constants` is configured but unused; code imports constants through `$lib/constants`.
 
 ## Usage Examples
 
 ### Before (Relative Paths)
 
 ```typescript
-// From src/lib/sections/workflows/WorkflowHub.tsx
-import type { ExecutionRecord, Schedule } from "../../../types/workflow";
-import { workflowApi } from "../../../services/workflowApi";
-import { ActionButton } from "../../components/ActionButton";
+// From src/lib/widgets/workflows/WorkflowHubWidget.tsx
+import type { ExecutionDetail, Schedule } from "../../../types/workflow";
+import { useWorkflowHubView } from "../../stores/views";
+import HistoryTable from "../../components/workflows/HistoryTable";
 ```
 
 ### After (Path Aliases)
 
 ```typescript
-import type { ExecutionRecord, Schedule } from "$types/workflow";
-import { workflowApi } from "$services/workflowApi";
-import ActionButton from "$components/ActionButton";
+import type { ExecutionDetail, Schedule } from "$types/workflow";
+import { useWorkflowHubView } from "$stores/views";
+import HistoryTable from "$components/workflows/HistoryTable";
 ```
 
 ### Common Import Patterns
@@ -43,50 +42,57 @@ import ActionButton from "$components/ActionButton";
 ```typescript
 // Types (most common alias)
 import type { WorkflowDefinition, ExecutionStatus } from "$types/workflow";
-import type { ChatMessage } from "$types/api";
+import type { Conversation } from "$types/conversation";
 
 // Components
-import LoadingSpinner from "$components/LoadingSpinner";
-import { Table } from "$components/Table";
-import Modal from "$components/Modal";
+import Button from "$components/buttons/Button";
+import Table from "$components/display/Table";
+import Modal from "$components/surfaces/Modal";
+
+// Stores and widgets
+import { useFeedbackStore } from "$stores/feedback";
+import FormRow from "$widgets/FormRow";
 
 // Library utilities and sub-paths
-import { formatDuration } from "$lib/utils/format";
-import { NODE_TYPES } from "$lib/constants/nodes";
+import { formatDuration } from "$utils/format";
+import { NODE_REGISTRY } from "$lib/constants/nodes";
 import { Graph } from "$lib/data-structures";
 
-// Services
-import { workflowApi } from "$services/workflowApi";
-import { streamChat } from "$services/streaming";
-
 // Hooks
-import { useTheme } from "$hooks/useTheme";
+import { useViewport } from "$hooks";
 
 // Pages (used in App.tsx router)
-import { Home, Workflows, WorkflowBuilder } from "$pages/index";
+import { Home, Workflows, WorkflowBuilder } from "$pages";
 ```
 
 ## Configuration Files
 
 ### TypeScript (`tsconfig.app.json`)
 
-Path aliases are defined in `compilerOptions.paths` with the `/*` glob suffix:
+Path aliases are defined in `compilerOptions.paths`, each as a bare alias plus a `/*` glob:
 
 ```json
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
+      "$types": ["./src/types"],
       "$types/*": ["./src/types/*"],
-      "$services/*": ["./src/services/*"],
+      "$lib": ["./src/lib"],
       "$lib/*": ["./src/lib/*"],
+      "$components": ["./src/lib/components"],
       "$components/*": ["./src/lib/components/*"],
+      "$stores": ["./src/lib/stores"],
+      "$stores/*": ["./src/lib/stores/*"],
+      "$widgets": ["./src/lib/widgets"],
+      "$widgets/*": ["./src/lib/widgets/*"],
+      "$pages": ["./src/lib/pages"],
       "$pages/*": ["./src/lib/pages/*"],
-      "$common/*": ["./src/lib/components/*"],
+      "$utils": ["./src/lib/utils"],
       "$utils/*": ["./src/lib/utils/*"],
+      "$constants": ["./src/lib/constants"],
       "$constants/*": ["./src/lib/constants/*"],
-      "$hooks/*": ["./src/lib/hooks/*"],
-      "$store/*": ["./src/store/*"]
+      "$hooks": ["./src/lib/hooks"],
+      "$hooks/*": ["./src/lib/hooks/*"]
     }
   }
 }
@@ -99,16 +105,15 @@ Aliases are mirrored in `resolve.alias` using `path.resolve()`:
 ```typescript
 resolve: {
   alias: {
-    "$types": path.resolve(__dirname, "./src/types"),
-    "$services": path.resolve(__dirname, "./src/services"),
-    "$lib": path.resolve(__dirname, "./src/lib"),
-    "$components": path.resolve(__dirname, "./src/lib/components"),
-    "$pages": path.resolve(__dirname, "./src/lib/pages"),
-    "$hooks": path.resolve(__dirname, "./src/lib/hooks"),
-    "$store": path.resolve(__dirname, "./src/store"),
-    "$common": path.resolve(__dirname, "./src/lib/components"),
-    "$utils": path.resolve(__dirname, "./src/lib/utils"),
-    "$constants": path.resolve(__dirname, "./src/lib/constants"),
+    $types: path.resolve(__dirname, "./src/types"),
+    $lib: path.resolve(__dirname, "./src/lib"),
+    $components: path.resolve(__dirname, "./src/lib/components"),
+    $stores: path.resolve(__dirname, "./src/lib/stores"),
+    $widgets: path.resolve(__dirname, "./src/lib/widgets"),
+    $pages: path.resolve(__dirname, "./src/lib/pages"),
+    $hooks: path.resolve(__dirname, "./src/lib/hooks"),
+    $utils: path.resolve(__dirname, "./src/lib/utils"),
+    $constants: path.resolve(__dirname, "./src/lib/constants"),
   }
 }
 ```

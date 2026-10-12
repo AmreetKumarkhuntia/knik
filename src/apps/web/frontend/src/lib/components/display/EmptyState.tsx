@@ -2,17 +2,11 @@ import MS from './MS'
 import type { EmptyStateProps } from '$types/components'
 
 /** Placeholder component shown when no data is available. */
-export default function EmptyState({
-  icon = '📜',
-  title,
-  description,
-  action,
-  className = '',
-}: EmptyStateProps) {
+export default function EmptyState({ icon = '📜', title, description, action }: EmptyStateProps) {
   const isReactNode = typeof icon !== 'string'
 
   return (
-    <div className={`text-center py-20 text-fg-4 ${className}`}>
+    <div className="text-center py-20 text-fg-4">
       {isReactNode ? (
         <div className="flex justify-center mb-4 text-fg-4" style={{ fontSize: 36 }}>
           {icon}

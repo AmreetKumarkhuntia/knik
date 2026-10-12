@@ -56,9 +56,6 @@ export interface ModelPickerProps {
 
 export interface ToolCallCardProps {
   call: ToolCall
-  /** Error cards open by default. */
-  defaultExpanded?: boolean
-  className?: string
 }
 
 export interface ToolCallListProps {

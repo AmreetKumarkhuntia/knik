@@ -4,7 +4,7 @@ import type { ErrorBoundaryProps, ErrorBoundaryState } from '$types/sections/fee
 
 // React.lazy caches a rejected import, so after a failed chunk load only a reload can retry it.
 const CHUNK_LOAD_ERROR =
-  /dynamically imported module|Importing a module script failed|ChunkLoadError/i
+  /dynamically imported module|Importing a module script failed|Unable to preload CSS|ChunkLoadError/i
 
 export default class ErrorBoundaryWidget extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false, error: null }

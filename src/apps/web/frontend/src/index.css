@@ -98,9 +98,6 @@ body,
 .bg-background {
   background-color: var(--bg-base);
 }
-.bg-surface\/50 {
-  background-color: color-mix(in srgb, var(--bg-surface) 50%, transparent);
-}
 .bg-code {
   background-color: var(--bg-code);
 }

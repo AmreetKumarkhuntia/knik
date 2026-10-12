@@ -18,7 +18,7 @@ const cases: [string, ReactElement][] = [
       ]
   ),
   ['Checkbox', <Checkbox label="Enabled" checked={false} onChange={noop} disabled />],
-  ['Slider', <Slider min={0} max={2} value={1} onChange={noop} label="Rate" />],
+  ['Slider', <Slider min={0} max={2} value={1} onChange={noop} />],
   ['ToggleSwitch', <ToggleSwitch aria-label="Stream" checked onChange={noop} />],
 ]
 
@@ -29,8 +29,9 @@ describe('component classes resolve to generated or project CSS', () => {
   })
 
   it('reports utilities Tailwind 3 drops', async () => {
-    expect(
-      await unresolvedClasses(['cursor-inherit', 'bg-aurora-300/10', 'knik-card', 'bg-surface/50'])
-    ).toEqual(['cursor-inherit', 'bg-aurora-300/10'])
+    expect(await unresolvedClasses(['cursor-inherit', 'bg-aurora-300/10', 'knik-btn'])).toEqual([
+      'cursor-inherit',
+      'bg-aurora-300/10',
+    ])
   })
 })

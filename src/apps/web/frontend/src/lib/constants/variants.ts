@@ -16,19 +16,4 @@ export const sizeVariants = {
   xs: 'knik-btn--xs',
   sm: 'knik-btn--sm',
   md: 'knik-btn--md',
-  lg: 'knik-btn--lg',
-}
-
-/** Badge size modifiers — the design system caps badges at `md`. */
-export const badgeSizes = {
-  sm: 'knik-badge--sm',
-  md: 'knik-badge--md',
-  lg: 'knik-badge--md',
-}
-
-/** Spinner size modifiers — pair with the base `knik-spinner` class. */
-export const spinnerSizes = {
-  sm: 'knik-spinner--sm',
-  md: 'knik-spinner--md',
-  lg: 'knik-spinner--lg',
 }

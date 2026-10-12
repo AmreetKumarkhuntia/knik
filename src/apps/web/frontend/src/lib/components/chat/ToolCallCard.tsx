@@ -25,11 +25,11 @@ function StatusIcon({ status }: { status: ToolCallStatus }) {
 }
 
 /** One tool, skill or MCP call as a plain row; clicking it shows the call's inputs and outputs. */
-export default function ToolCallCard({ call, defaultExpanded, className = '' }: ToolCallCardProps) {
+export default function ToolCallCard({ call }: ToolCallCardProps) {
   const id = useId()
   const status = call.status ?? 'success'
   const kind = TOOL_CALL_KINDS[call.kind ?? 'tool']
-  const [expanded, setExpanded] = useState(defaultExpanded ?? status === 'error')
+  const [expanded, setExpanded] = useState(status === 'error')
   // A call that fails while visible opens on its own, the same as one that failed before mount.
   const [seenStatus, setSeenStatus] = useState(status)
   if (seenStatus !== status) {
@@ -39,7 +39,7 @@ export default function ToolCallCard({ call, defaultExpanded, className = '' }: 
   const tabs = status === 'success' ? ['Outputs', 'Inputs'] : ['Inputs']
 
   return (
-    <div className={className}>
+    <div>
       <Button
         variant="ghost"
         size="xs"

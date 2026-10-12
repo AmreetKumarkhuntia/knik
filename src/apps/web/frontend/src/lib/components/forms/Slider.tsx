@@ -3,27 +3,12 @@ import type { SliderProps } from '$types'
 /**
  * Native range control with a visible keyboard focus indicator.
  */
-export default function Slider({
-  min,
-  max,
-  value,
-  onChange,
-  step = 1,
-  label,
-  className = '',
-  id,
-  disabled,
-}: SliderProps) {
+export default function Slider({ min, max, value, onChange, step = 1, id, disabled }: SliderProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
 
   return (
-    <div className={`flex items-center gap-3.5 w-full ${className}`}>
-      {label && (
-        <label htmlFor={inputId} className="text-caption text-[var(--fg-4)] shrink-0">
-          {label}
-        </label>
-      )}
+    <div className="flex items-center gap-3.5 w-full">
       <input
         type="range"
         id={inputId}
