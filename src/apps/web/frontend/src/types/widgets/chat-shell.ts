@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import type { Conversation, ConversationMessage, ToolCall } from '$types/conversation'
-import type { AgentThinkingStep } from '$types/components/chat'
 import type { DemoSuggestion } from '$types/demo-session'
 import type { Viewport } from '$types/stores/shell'
 
@@ -27,7 +26,6 @@ export interface SidebarNavProps {
 }
 export interface SidebarRecentsProps {
   conversations: Conversation[]
-  loading: boolean
   onSelect: (id: string) => void
   onRename: (conversation: Conversation) => void
   onDelete: (conversation: Conversation) => void
@@ -64,7 +62,6 @@ export interface CompactionDividerProps {
 export interface ChatTranscriptMessage extends ConversationMessage {
   timestampLabel: string
   isUser: boolean
-  steps: AgentThinkingStep[]
   modelTag?: string
   messageId: string
   toolCalls: ToolCall[]

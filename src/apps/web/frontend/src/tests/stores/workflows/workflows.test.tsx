@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { createDemoSeed } from '$stores/demo'
 import { createWorkflowStore } from '$stores/workflows/store'
 import { StoresProvider } from '$stores'
@@ -22,7 +22,7 @@ const source: DemoSource = {
     },
   ],
 }
-afterEach(cleanup)
+
 describe('workflow store ownership', () => {
   it('keeps editors independent and commits without mutating another provider or the source', () => {
     const seed = createDemoSeed(source)

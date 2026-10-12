@@ -3,6 +3,7 @@ import type { DemoVoiceOption } from '../demo-session'
 
 export interface ProfileSummaryProps {
   displayName: string
+  initials: string
 }
 export interface ToolGroupListProps {
   groups: readonly { name: string; enabled: boolean; count: number }[]
@@ -15,11 +16,6 @@ export interface ApiKeyRowProps {
   apiKey: ApiKeyInfo
   last: boolean
   onDelete?: () => void
-}
-export interface KeyRevealProps {
-  value: string
-  onCopy: () => void
-  onDismiss: () => void
 }
 export interface SettingsWidgetProps {
   /** Pane to open, from the route's ?tab= search param. */

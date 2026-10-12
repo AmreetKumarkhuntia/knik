@@ -1,65 +1,18 @@
-import { useEffect, useId, useRef } from 'react'
-import Button from '$components/buttons/Button'
+import { useId } from 'react'
 import Radio from '$components/forms/Radio'
 import ToggleSwitch from '$components/forms/ToggleSwitch'
 import Slider from '$components/forms/Slider'
 import VoiceOption from '$components/settings/VoiceOption'
 import FormGroup from '$widgets/FormGroup'
 import FormRow from '$widgets/FormRow'
-import { useSettingsStore, useSettingsScope } from '$stores/settings'
-import { useFeedbackStore } from '$stores/feedback'
+import { useSettingsStore } from '$stores/settings'
 import { useVoiceView } from '$stores/views'
 
 export default function VoicePane() {
   const id = useId()
-  const { voices, selected } = useVoiceView()
+  const { voices } = useVoiceView()
   const settings = useSettingsStore(s => s.settings)
   const updateSettings = useSettingsStore(s => s.updateSettings)
-  const addToast = useFeedbackStore(s => s.addToast)
-  const audio = useRef<HTMLAudioElement | null>(null)
-  const { scope, patch } = useSettingsScope()
-  const playing = scope.playing
-  const setPlaying = (playing: boolean) => patch({ playing })
-
-  useEffect(
-    () => () => {
-      if (audio.current) {
-        audio.current.onended = null
-        audio.current.pause()
-        audio.current = null
-      }
-    },
-    []
-  )
-
-  const stopPreview = () => {
-    if (audio.current) {
-      audio.current.onended = null
-      audio.current.pause()
-      audio.current = null
-    }
-    setPlaying(false)
-  }
-  const preview = async () => {
-    if (playing) {
-      stopPreview()
-      return
-    }
-    if (!selected?.audioSrc) return
-    audio.current?.pause()
-    const player = new Audio(selected.audioSrc)
-    audio.current = player
-    player.playbackRate = settings.speaking_rate
-    player.onended = () => setPlaying(false)
-    try {
-      await player.play()
-      if (audio.current === player) setPlaying(true)
-    } catch {
-      if (audio.current !== player) return
-      setPlaying(false)
-      addToast('The voice preview could not be played.', 'error')
-    }
-  }
 
   return (
     <>
@@ -79,10 +32,7 @@ export default function VoicePane() {
               max={2}
               step={0.1}
               value={settings.speaking_rate}
-              onChange={speaking_rate => {
-                updateSettings({ speaking_rate })
-                if (audio.current) audio.current.playbackRate = speaking_rate
-              }}
+              onChange={speaking_rate => updateSettings({ speaking_rate })}
             />
           </div>
         </FormRow>
@@ -94,10 +44,7 @@ export default function VoicePane() {
             label="Default voice"
             presentation="standard"
             value={settings.voice}
-            onChange={voice => {
-              stopPreview()
-              updateSettings({ voice })
-            }}
+            onChange={voice => updateSettings({ voice })}
             options={voices.map(voice => ({
               value: voice.id,
               label: <VoiceOption voice={voice} />,
@@ -106,16 +53,6 @@ export default function VoicePane() {
         ) : (
           <p className="text-body-sm text-[var(--fg-4)] py-2">No voices available.</p>
         )}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button size="sm" disabled={!selected?.audioSrc} onClick={() => void preview()}>
-            {playing ? 'Stop preview' : 'Preview voice'}
-          </Button>
-          {!selected?.audioSrc && (
-            <p className="text-caption text-[var(--fg-4)]">
-              Select a voice with a preview recording to listen.
-            </p>
-          )}
-        </div>
       </FormGroup>
     </>
   )

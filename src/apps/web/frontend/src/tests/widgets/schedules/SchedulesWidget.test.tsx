@@ -1,6 +1,6 @@
-import { render, screen, within, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { StoresProvider } from '$stores'
 import SchedulesWidget from '$widgets/schedules/SchedulesWidget'
@@ -11,8 +11,6 @@ const source = {
     { id: 'workflow-one', name: 'Customer digest', definition: { nodes: {}, connections: [] } },
   ],
 }
-
-afterEach(cleanup)
 
 describe('session schedule interactions', () => {
   it('cancels drafts, saves across widgets, and deletes only after confirmation', async () => {

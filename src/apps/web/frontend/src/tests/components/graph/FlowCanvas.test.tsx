@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { Position, type Edge, type Node, type NodeTypes } from '@xyflow/react'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { BaseNode, FlowCanvas } from '$components/graph'
 
 const nodeTypes: NodeTypes = {
@@ -8,21 +8,6 @@ const nodeTypes: NodeTypes = {
   AIExecutionNode: BaseNode,
   ConditionalBranchNode: BaseNode,
 }
-
-beforeAll(() => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    }
-  )
-})
-
-afterAll(() => {
-  vi.unstubAllGlobals()
-})
 
 describe('flow canvas accessibility', () => {
   it('names each node from its title, type and execution status', () => {

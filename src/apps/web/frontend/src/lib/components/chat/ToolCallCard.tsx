@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import MS from '../display/MS'
 import JsonViewer from './JsonViewer'
 import Button from '../buttons/Button'
+import { formatDuration } from '$utils/format'
 import { TOOL_CALL_KINDS, TOOL_CALL_STATUS_LABELS } from '$lib/constants/componentMaps'
 import type { ToolCallStatus } from '$types/conversation'
 import type { ToolCallCardProps } from '$types/components/chat'
@@ -57,9 +58,7 @@ export default function ToolCallCard({ call, defaultExpanded, className = '' }: 
           <span className="text-caption text-fg-4 shrink-0">{kind.label}</span>
           <span className="ml-auto flex items-center gap-2 shrink-0">
             {call.duration_ms !== undefined && status !== 'running' && (
-              <span className="text-caption text-fg-4">
-                {(call.duration_ms / 1000).toFixed(1)}s
-              </span>
+              <span className="text-caption text-fg-4">{formatDuration(call.duration_ms)}</span>
             )}
             <AnimatePresence mode="wait" initial={false}>
               <motion.span

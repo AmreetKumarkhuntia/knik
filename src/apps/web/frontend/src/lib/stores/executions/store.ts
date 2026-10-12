@@ -3,12 +3,12 @@ import type { DemoSnapshot } from '$types/demo-session'
 import type { ExecutionStore } from '$types/stores/executions'
 import { executionActions } from './actions'
 export function createExecutionStore(seed: DemoSnapshot) {
-  return createStore<ExecutionStore>()((set, get) => ({
+  return createStore<ExecutionStore>()(set => ({
     executions: structuredClone(seed.executions),
     timelines: structuredClone(seed.timelines),
     runScenarios: structuredClone(seed.runScenarios),
     scopes: {},
     detailScopes: {},
-    ...executionActions(set, get),
+    ...executionActions(set),
   }))
 }

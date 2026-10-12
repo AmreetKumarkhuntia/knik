@@ -1,6 +1,13 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { WorkflowDefinition } from '$types/workflow'
-import type { WorkflowStore } from '$types/stores/workflows'
+import type { DefinitionResult, WorkflowHubScope } from '$types/stores/workflows'
+import {
+  canvasNodesToGraph,
+  graphToWorkflowDefinition,
+  validateWorkflowGraph,
+} from '$lib/data-structures'
+
+export const createHubScope = (): WorkflowHubScope => ({ query: '', filter: 'all' })
 
 export function definitionToCanvas(definition?: WorkflowDefinition): {
   nodes: Node[]
@@ -75,6 +82,17 @@ export function sameDefinitionNodes(a?: Node[], b?: Node[]) {
       ))
   )
 }
-export function selectWorkflow(state: WorkflowStore, id?: string) {
-  return state.workflows.find(workflow => workflow.id === id)
+/** The saveable definition for a canvas, or the reason it is not valid. */
+export function canvasToDefinition(nodes: Node[], edges: Edge[]): DefinitionResult {
+  try {
+    const graph = canvasNodesToGraph(normalizeNodes(nodes), edges)
+    const errors = [...duplicateConnectionErrors(edges), ...validateWorkflowGraph(graph).errors]
+    if (errors.length) throw new Error(errors.join('\n'))
+    return { ok: true, definition: graphToWorkflowDefinition(graph) }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Could not validate workflow.',
+    }
+  }
 }

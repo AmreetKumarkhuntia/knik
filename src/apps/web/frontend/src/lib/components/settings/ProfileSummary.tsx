@@ -1,16 +1,7 @@
 import Avatar from '$components/display/Avatar'
 import type { ProfileSummaryProps } from '$types/widgets/settings'
 
-export default function ProfileSummary({ displayName }: ProfileSummaryProps) {
-  const initials =
-    displayName
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(word => word[0])
-      .join('')
-      .toUpperCase() || 'AI'
+export default function ProfileSummary({ displayName, initials }: ProfileSummaryProps) {
   return (
     <div className="flex items-center gap-4 pb-4 mb-1.5 border-b border-[var(--border-1)]">
       <Avatar initials={initials} size={56} color="accent" />

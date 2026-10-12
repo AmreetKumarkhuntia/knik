@@ -1,12 +1,12 @@
 import { Profiler } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { StoresProvider } from '$stores'
 import MainLayoutWidget from '$widgets/layout/MainLayoutWidget'
 import ChatWidget from '$widgets/chat/ChatWidget'
-import '../../hooks/matchMedia'
+import { resizeTo } from '../../hooks/matchMedia'
 import { COMMAND_GROUPS } from '$lib/constants/navigation'
 
 const commandDialog = () => within(screen.getByRole('dialog', { name: 'Commands' }))
@@ -100,15 +100,6 @@ describe('MainLayoutWidget command data', () => {
   })
 })
 
-const originalWidth = window.innerWidth
-function resize(width: number) {
-  act(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
-    window.dispatchEvent(new Event('resize'))
-  })
-}
-afterEach(() => resize(originalWidth))
-
 describe('responsive workspace navigation', () => {
   function renderProfiledShell() {
     const commits: { phase: string; sidebar: boolean; menu: boolean }[] = []
@@ -136,26 +127,26 @@ describe('responsive workspace navigation', () => {
   }
 
   it('commits the mobile drawer layout on the first render', () => {
-    resize(390)
+    resizeTo(390)
     const commits = renderProfiledShell()
     expect(commits[0]).toEqual({ phase: 'mount', sidebar: false, menu: true })
   })
 
   it('re-renders the shell only when a resize crosses a breakpoint', () => {
-    resize(1440)
+    resizeTo(1440)
     const commits = renderProfiledShell()
     const settled = commits.length
-    resize(1300)
-    resize(1100)
+    resizeTo(1300)
+    resizeTo(1100)
     expect(commits).toHaveLength(settled)
-    resize(900)
+    resizeTo(900)
     expect(commits.length).toBeGreaterThan(settled)
     expect(commits.at(-1)).toMatchObject({ sidebar: true, menu: false })
   })
 
   it('uses a tablet rail without overwriting the desktop sidebar preference', async () => {
     const user = userEvent.setup()
-    resize(1440)
+    resizeTo(1440)
     render(
       <MemoryRouter>
         <StoresProvider source={{}}>
@@ -168,19 +159,19 @@ describe('responsive workspace navigation', () => {
     const sidebar = screen.getByRole('complementary', { name: 'Workspace sidebar' })
     expect(sidebar).toHaveStyle({ width: '232px' })
     // The width animates, so each check waits for it to settle.
-    resize(900)
+    resizeTo(900)
     await waitFor(() => expect(sidebar).toHaveStyle({ width: '64px' }))
-    resize(1440)
+    resizeTo(1440)
     await waitFor(() => expect(sidebar).toHaveStyle({ width: '232px' }))
     await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
-    resize(900)
-    resize(1440)
+    resizeTo(900)
+    resizeTo(1440)
     await waitFor(() => expect(sidebar).toHaveStyle({ width: '64px' }))
   })
 
   it('keeps the chat draft across viewport changes and closes mobile navigation after selecting a route', async () => {
     const user = userEvent.setup()
-    resize(1440)
+    resizeTo(1440)
     render(
       <MemoryRouter>
         <StoresProvider source={{}}>
@@ -192,7 +183,7 @@ describe('responsive workspace navigation', () => {
     )
     const composer = screen.getByRole('textbox', { name: 'Message' })
     await user.type(composer, 'A draft to keep')
-    resize(390)
+    resizeTo(390)
     expect(composer).toHaveValue('A draft to keep')
     const trigger = screen.getByRole('button', { name: 'Open navigation' })
     await user.click(trigger)
@@ -212,7 +203,7 @@ describe('responsive workspace navigation', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument()
     )
-    resize(1440)
+    resizeTo(1440)
     expect(composer).toHaveValue('A draft to keep')
   })
 })

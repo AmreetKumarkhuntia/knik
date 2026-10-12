@@ -32,14 +32,14 @@ describe('ToolCallCard', () => {
     expect(toggle()).toHaveAccessibleName(/Running/)
     expect(container.querySelector('.knik-spinner')).toBeInTheDocument()
     expect(screen.getByText('read_file')).toHaveClass('knik-shimmer-text')
-    expect(screen.queryByText('0.9s')).not.toBeInTheDocument()
+    expect(screen.queryByText('900ms')).not.toBeInTheDocument()
   })
 
   it('collapses a finished call and expands it to show outputs and inputs', async () => {
     const user = userEvent.setup()
     render(<ToolCallCard call={call} />)
     expect(toggle()).toHaveAccessibleName(/Done/)
-    expect(screen.getByText('0.9s')).toBeInTheDocument()
+    expect(screen.getByText('900ms')).toBeInTheDocument()
     expect(toggle()).toHaveAttribute('aria-expanded', 'false')
     await user.click(toggle())
     expect(toggle()).toHaveAttribute('aria-expanded', 'true')

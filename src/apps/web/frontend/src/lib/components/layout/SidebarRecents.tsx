@@ -1,9 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import Button from '$components/buttons/Button'
-import { LoadingSpinner, EmptyState, MS } from '$components'
+import { EmptyState, MS } from '$components'
 import Eyebrow from '$components/display/Eyebrow'
 import { formatRelativeDay } from '$utils/format'
-import { UI_TEXT, EMPTY_STATE_DEFAULTS } from '$lib/constants'
 import type { Conversation } from '$types/conversation'
 import type { SidebarRecentsProps } from '$types/widgets/chat-shell'
 
@@ -14,7 +13,6 @@ function getConversationLabel(conv: Conversation): string {
 /** Recent conversations list with hover rename/delete actions. */
 export default function SidebarRecents({
   conversations,
-  loading,
   onSelect,
   onRename,
   onDelete,
@@ -24,14 +22,8 @@ export default function SidebarRecents({
     <div className="flex flex-col min-h-0 flex-1" style={{ marginTop: 24 }}>
       <Eyebrow>Recent chats</Eyebrow>
       <div className="overflow-y-auto flex flex-col scrollbar-hide" style={{ gap: 1 }}>
-        {loading ? (
-          <LoadingSpinner size="sm" className="py-8" />
-        ) : conversations.length === 0 ? (
-          <EmptyState
-            icon={EMPTY_STATE_DEFAULTS.icon}
-            title={UI_TEXT.empty.noHistoryTitle}
-            description={UI_TEXT.empty.noHistoryDescription}
-          />
+        {conversations.length === 0 ? (
+          <EmptyState title="No history yet" description="Start a conversation to see it here" />
         ) : (
           // initial={false}: only rows added or removed later animate, not the first render.
           <AnimatePresence initial={false}>

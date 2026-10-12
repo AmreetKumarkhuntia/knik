@@ -90,12 +90,12 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
       </div>
       {field.type === 'slider' ? (
         <Slider
+          id={id}
           min={field.min ?? 0}
           max={field.max ?? 100}
           step={field.step ?? 1}
           value={typeof value === 'number' ? value : (field.defaultValue ?? field.min ?? 0)}
           onChange={onChange}
-          label={field.label}
         />
       ) : field.type === 'select' ? (
         <Select
@@ -139,16 +139,15 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
 }
 
 export default function ConfigurationForm({
-  nodeType,
-  data,
-  onDataChange,
-  nodeId,
+  node,
+  onUpdate,
   modelOptions,
   fieldDrafts,
   onFieldDraftChange,
 }: ConfigurationFormProps) {
-  const metadata = getNodeMetadata(nodeType)
+  const metadata = getNodeMetadata(node.type ?? '')
   if (!metadata) return null
+  const { id: nodeId, data } = node
   return (
     <div className="space-y-5">
       {metadata.formFields.map(field => (
@@ -160,7 +159,7 @@ export default function ConfigurationForm({
           value={
             field.field === 'systemPrompt' ? (data.systemPrompt ?? data.prompt) : data[field.field]
           }
-          onChange={value => onDataChange(field.field, value)}
+          onChange={value => onUpdate({ ...data, [field.field]: value })}
         />
       ))}
     </div>

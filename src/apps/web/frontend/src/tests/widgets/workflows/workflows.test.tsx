@@ -1,14 +1,12 @@
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { MemoryRouter, Routes, Route, Link } from 'react-router-dom'
 import { StoresProvider } from '$stores'
 import WorkflowHubWidget from '$widgets/workflows/WorkflowHubWidget'
 import WorkflowBuilderWidget from '$widgets/workflows/WorkflowBuilderWidget'
 import ExecutionDetailWidget from '$widgets/workflows/ExecutionDetailWidget'
 import { normalizeNodes } from '$stores/workflows/selectors'
-
-afterEach(cleanup)
 
 describe('workflow session views', () => {
   it('shows absent workflow and execution routes explicitly', () => {
@@ -41,7 +39,42 @@ describe('workflow session views', () => {
     expect(
       (screen.getByRole('button', { name: 'Run Draft workflow' }) as HTMLButtonElement).disabled
     ).toBe(true)
-    expect(screen.getByText('No executions yet')).toBeTruthy()
+    expect(screen.getByText('No execution history yet')).toBeTruthy()
+  })
+
+  it('lists recent executions on the hub and opens one from its row', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <StoresProvider
+          source={{
+            workflows: [
+              { id: 'one', name: 'Draft workflow', definition: { nodes: {}, connections: [] } },
+            ],
+            executions: [
+              {
+                id: 4,
+                workflow_id: 'one',
+                workflow_name: 'Draft workflow',
+                status: 'failed',
+                started_at: '2026-10-08T12:00:00Z',
+                inputs: {},
+                outputs: {},
+              },
+            ],
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<WorkflowHubWidget />} />
+            <Route path="/executions/:id" element={<div>Execution route</div>} />
+          </Routes>
+        </StoresProvider>
+      </MemoryRouter>
+    )
+    expect(screen.getByText('Failed')).toBeTruthy()
+    expect(screen.getByRole('link', { name: /View all/ })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'View execution #4' }))
+    expect(screen.getByText('Execution route')).toBeTruthy()
   })
 
   it('discards route-local search while keeping the provider session', async () => {

@@ -1,11 +1,13 @@
-import type { SettingsScope } from '$types/stores/settings'
+import type { SettingsScope, SettingsState } from '$types/stores/settings'
 export const EMPTY_SETTINGS_SCOPE: SettingsScope = {
   displayName: '',
   username: '',
   confirmClear: false,
   tab: 'general',
-  playing: false,
 }
+export const accountName = (
+  settings: Pick<SettingsState['settings'], 'display_name' | 'username'>
+) => settings.display_name || settings.username || ''
 export const accountInitials = (name: string) =>
   name
     .trim()

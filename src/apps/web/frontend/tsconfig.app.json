@@ -28,8 +28,6 @@
       "$stores/*": ["./src/lib/stores/*"],
       "$widgets": ["./src/lib/widgets"],
       "$widgets/*": ["./src/lib/widgets/*"],
-      "$sections": ["./src/lib/sections"],
-      "$sections/*": ["./src/lib/sections/*"],
       "$pages": ["./src/lib/pages"],
       "$pages/*": ["./src/lib/pages/*"],
       "$utils": ["./src/lib/utils"],
@@ -37,9 +35,7 @@
       "$constants": ["./src/lib/constants"],
       "$constants/*": ["./src/lib/constants/*"],
       "$hooks": ["./src/lib/hooks"],
-      "$hooks/*": ["./src/lib/hooks/*"],
-      "$assets": ["./src/assets"],
-      "$assets/*": ["./src/assets/*"]
+      "$hooks/*": ["./src/lib/hooks/*"]
     },
 
     /* Linting */

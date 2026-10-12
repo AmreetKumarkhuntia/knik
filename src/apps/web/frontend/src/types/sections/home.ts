@@ -6,11 +6,6 @@ export interface KeyboardShortcutsProps {
   onClose: () => void
 }
 
-/** Props for the suggestion cards shown on the home page. */
-export interface SuggestionCardsProps {
-  onSelectPrompt: (prompt: string) => void
-}
-
 /** Props for the welcome container on the home page. */
 export interface WelcomeContainerProps {
   isVisible: boolean

@@ -1,177 +1,59 @@
 import type { DemoSnapshot } from '$types/stores/demo'
+import type { Conversation, ToolCall } from '$types/conversation'
+
+function conversation(
+  index: number,
+  title: string,
+  preview: string,
+  tool_calls?: ToolCall[]
+): Conversation {
+  const start = '2026-10-08T09:00:00Z'
+  const end = '2026-10-08T09:00:01Z'
+  return {
+    id: String(index + 1),
+    title,
+    messages: [
+      {
+        id: `demo-user-${index}`,
+        role: 'user',
+        content: title,
+        timestamp: start,
+        metadata: { demo: true },
+      },
+      {
+        id: `demo-assistant-${index}`,
+        role: 'assistant',
+        content: `This is an authored demo conversation about ${title.toLowerCase()}. ${preview}`,
+        timestamp: end,
+        metadata: { demo: true, ...(tool_calls && { tool_calls }) },
+      },
+    ],
+    created_at: start,
+    updated_at: end,
+    summary_message_id: null,
+    compacted_count: 0,
+    total_tokens: 0,
+    preview,
+    message_count: 2,
+  }
+}
 
 export const demoChat = {
   conversations: [
-    {
-      id: '1',
-      title: 'Refactor Python pipeline',
-      messages: [
-        {
-          id: 'demo-user-0',
-          role: 'user',
-          content: 'Refactor Python pipeline',
-          timestamp: '2026-10-08T09:00:00Z',
-          metadata: {
-            demo: true,
-          },
-        },
-        {
-          id: 'demo-assistant-0',
-          role: 'assistant',
-          content:
-            'This is an authored demo conversation about refactor python pipeline. Replace inner loop with a generator…',
-          timestamp: '2026-10-08T09:00:01Z',
-          metadata: {
-            demo: true,
-            tool_calls: [
-              {
-                id: 'demo-call-history-read',
-                kind: 'tool',
-                tool_name: 'read_file',
-                tool_args: { path: 'pipeline.py' },
-                tool_result: { path: 'pipeline.py', lines: 142 },
-                duration_ms: 600,
-              },
-            ],
-          },
-        },
-      ],
-      created_at: '2026-10-08T09:00:00Z',
-      updated_at: '2026-10-08T09:00:01Z',
-      summary_message_id: null,
-      compacted_count: 0,
-      total_tokens: 0,
-      preview: 'Replace inner loop with a generator…',
-      message_count: 2,
-    },
-    {
-      id: '2',
-      title: 'API docs for /v1/synth',
-      messages: [
-        {
-          id: 'demo-user-1',
-          role: 'user',
-          content: 'API docs for /v1/synth',
-          timestamp: '2026-10-08T09:00:00Z',
-          metadata: {
-            demo: true,
-          },
-        },
-        {
-          id: 'demo-assistant-1',
-          role: 'assistant',
-          content:
-            'This is an authored demo conversation about api docs for /v1/synth. Endpoint accepts voice + text…',
-          timestamp: '2026-10-08T09:00:01Z',
-          metadata: {
-            demo: true,
-          },
-        },
-      ],
-      created_at: '2026-10-08T09:00:00Z',
-      updated_at: '2026-10-08T09:00:01Z',
-      summary_message_id: null,
-      compacted_count: 0,
-      total_tokens: 0,
-      preview: 'Endpoint accepts voice + text…',
-      message_count: 2,
-    },
-    {
-      id: '3',
-      title: 'Debug React state',
-      messages: [
-        {
-          id: 'demo-user-2',
-          role: 'user',
-          content: 'Debug React state',
-          timestamp: '2026-10-08T09:00:00Z',
-          metadata: {
-            demo: true,
-          },
-        },
-        {
-          id: 'demo-assistant-2',
-          role: 'assistant',
-          content:
-            'This is an authored demo conversation about debug react state. useEffect dependency missing…',
-          timestamp: '2026-10-08T09:00:01Z',
-          metadata: {
-            demo: true,
-          },
-        },
-      ],
-      created_at: '2026-10-08T09:00:00Z',
-      updated_at: '2026-10-08T09:00:01Z',
-      summary_message_id: null,
-      compacted_count: 0,
-      total_tokens: 0,
-      preview: 'useEffect dependency missing…',
-      message_count: 2,
-    },
-    {
-      id: '4',
-      title: 'Voice notes → tasks',
-      messages: [
-        {
-          id: 'demo-user-3',
-          role: 'user',
-          content: 'Voice notes → tasks',
-          timestamp: '2026-10-08T09:00:00Z',
-          metadata: {
-            demo: true,
-          },
-        },
-        {
-          id: 'demo-assistant-3',
-          role: 'assistant',
-          content:
-            'This is an authored demo conversation about voice notes → tasks. Trigger every 15 min, summarise inbox…',
-          timestamp: '2026-10-08T09:00:01Z',
-          metadata: {
-            demo: true,
-          },
-        },
-      ],
-      created_at: '2026-10-08T09:00:00Z',
-      updated_at: '2026-10-08T09:00:01Z',
-      summary_message_id: null,
-      compacted_count: 0,
-      total_tokens: 0,
-      preview: 'Trigger every 15 min, summarise inbox…',
-      message_count: 2,
-    },
-    {
-      id: '5',
-      title: 'MCP shell tool wrapper',
-      messages: [
-        {
-          id: 'demo-user-4',
-          role: 'user',
-          content: 'MCP shell tool wrapper',
-          timestamp: '2026-10-08T09:00:00Z',
-          metadata: {
-            demo: true,
-          },
-        },
-        {
-          id: 'demo-assistant-4',
-          role: 'assistant',
-          content:
-            'This is an authored demo conversation about mcp shell tool wrapper. Wrap tar + ssh into a single call…',
-          timestamp: '2026-10-08T09:00:01Z',
-          metadata: {
-            demo: true,
-          },
-        },
-      ],
-      created_at: '2026-10-08T09:00:00Z',
-      updated_at: '2026-10-08T09:00:01Z',
-      summary_message_id: null,
-      compacted_count: 0,
-      total_tokens: 0,
-      preview: 'Wrap tar + ssh into a single call…',
-      message_count: 2,
-    },
+    conversation(0, 'Refactor Python pipeline', 'Replace inner loop with a generator…', [
+      {
+        id: 'demo-call-history-read',
+        kind: 'tool',
+        tool_name: 'read_file',
+        tool_args: { path: 'pipeline.py' },
+        tool_result: { path: 'pipeline.py', lines: 142 },
+        duration_ms: 600,
+      },
+    ]),
+    conversation(1, 'API docs for /v1/synth', 'Endpoint accepts voice + text…'),
+    conversation(2, 'Debug React state', 'useEffect dependency missing…'),
+    conversation(3, 'Voice notes → tasks', 'Trigger every 15 min, summarise inbox…'),
+    conversation(4, 'MCP shell tool wrapper', 'Wrap tar + ssh into a single call…'),
   ],
   activeConversationId: null,
   chatScenarios: [

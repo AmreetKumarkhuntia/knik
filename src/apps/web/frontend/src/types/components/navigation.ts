@@ -8,20 +8,16 @@ export interface BreadcrumbItem {
 
 /** Props for a breadcrumb navigation component. */
 export interface BreadcrumbProps {
-  separator?: '/' | 'chevron'
   items: BreadcrumbItem[]
-  className?: string
 }
 
 /** Props for a navigation link. */
 export interface NavLinkProps {
   icon: React.ReactNode
   collapsed?: boolean
-  className?: string
-  style?: React.CSSProperties
   label: string
   active?: boolean
-  href?: string
+  href: string
   onClick?: () => void
 }
 
@@ -78,7 +74,6 @@ export interface PaginationProps {
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
-  disabled?: boolean
 }
 
 export interface CommandItem {

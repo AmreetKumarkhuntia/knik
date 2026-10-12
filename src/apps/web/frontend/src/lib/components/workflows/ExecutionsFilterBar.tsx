@@ -10,7 +10,6 @@ export default function ExecutionsFilterBar({
   onStatusChange,
   onClearFilters,
   hasActiveFilters,
-  loading,
   shownCount,
   totalCount,
 }: ExecutionsFilterBarProps) {
@@ -56,7 +55,7 @@ export default function ExecutionsFilterBar({
           </Button>
         )}
         <div className="ml-auto text-body-sm text-secondary">
-          {loading ? 'Loading…' : `Showing ${shownCount} of ${totalCount} executions`}
+          Showing {shownCount} of {totalCount} executions
         </div>
       </div>
     </div>

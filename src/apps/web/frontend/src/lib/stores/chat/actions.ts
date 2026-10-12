@@ -1,30 +1,40 @@
 import type { ChatStore, ChatState, ChatScope } from '$types/stores/chat'
 import { EMPTY_CHAT_SCOPE } from './selectors'
 import { generateId } from '$utils/uuid'
-import type { ChatStreamEvent, ConversationMessage } from '$types/conversation'
+import { omit } from '$utils/omit'
+import type { ChatStreamEvent, Conversation, ConversationMessage } from '$types/conversation'
+import { scopeSlice } from '../session/scopes'
 import { applyStreamEvent, demoEvents, playEvents, stopMessage } from './stream'
+const blankConversation = (id: string, now: string): Conversation => ({
+  id,
+  title: 'New conversation',
+  messages: [],
+  created_at: now,
+  updated_at: now,
+  summary_message_id: null,
+  compacted_count: 0,
+  total_tokens: 0,
+})
 export function createChatActions(set: ChatStore['setState'], get: ChatStore['getState']) {
+  const scopes = scopeSlice<ChatState, ChatScope>(set)
   // Live replies per conversation; AbortControllers are not state, so they stay out of the store.
   const streams = new Map<string, AbortController>()
+  const patchConversation = (id: string, change: (conversation: Conversation) => Conversation) =>
+    set(state => ({
+      conversations: state.conversations.map(c => (c.id === id ? change(c) : c)),
+    }))
   const updateMessage = (
     conversationId: string,
     messageId: string,
     update: (message: ConversationMessage) => ConversationMessage
   ) =>
-    set(state => ({
-      conversations: state.conversations.map(c =>
-        c.id === conversationId
-          ? { ...c, messages: c.messages.map(m => (m.id === messageId ? update(m) : m)) }
-          : c
-      ),
+    patchConversation(conversationId, c => ({
+      ...c,
+      messages: c.messages.map(m => (m.id === messageId ? update(m) : m)),
     }))
   const finishStream = (conversationId: string) => {
     streams.delete(conversationId)
-    set(state => {
-      const streaming = { ...state.streaming }
-      delete streaming[conversationId]
-      return { streaming }
-    })
+    set(state => ({ streaming: omit(state.streaming, conversationId) }))
   }
   const abortStream = (conversationId: string) => {
     streams.get(conversationId)?.abort()
@@ -48,27 +58,18 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
           timestamp,
           metadata: {},
         }
-        set(state => ({
-          conversations: state.conversations.map(c =>
-            c.id === conversationId
-              ? {
-                  ...c,
-                  messages: [...c.messages, applyStreamEvent(message, event)],
-                  message_count: c.messages.length + 1,
-                }
-              : c
-          ),
+        patchConversation(conversationId, c => ({
+          ...c,
+          messages: [...c.messages, applyStreamEvent(message, event)],
+          message_count: c.messages.length + 1,
         }))
         return
       }
       updateMessage(conversationId, messageId, message => applyStreamEvent(message, event))
       if (event.type === 'message_end')
-        set(state => ({
-          conversations: state.conversations.map(c =>
-            c.id === conversationId
-              ? { ...c, preview: c.messages.find(m => m.id === messageId)?.content ?? c.preview }
-              : c
-          ),
+        patchConversation(conversationId, c => ({
+          ...c,
+          preview: c.messages.find(m => m.id === messageId)?.content ?? c.preview,
         }))
     }
     playEvents(
@@ -80,19 +81,9 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
   }
   return {
     initializeScope: (id: string, resourceId: string | null = null) =>
-      set(state => ({ scopes: { ...state.scopes, [id]: { ...EMPTY_CHAT_SCOPE, resourceId } } })),
-    disposeScope: (id: string) =>
-      set(state => {
-        const scopes = { ...state.scopes }
-        delete scopes[id]
-        return { scopes }
-      }),
-    patchScope: (id: string, patch: Partial<ChatScope>) =>
-      set(state =>
-        state.scopes[id]
-          ? { scopes: { ...state.scopes, [id]: { ...state.scopes[id], ...patch } } }
-          : {}
-      ),
+      scopes.init(id, { ...EMPTY_CHAT_SCOPE, resourceId }),
+    disposeScope: scopes.dispose,
+    patchScope: scopes.patch,
     startConversation: () => {
       const { conversations, autoTitles } = get()
       // Reuse an untouched blank chat so repeated "New chat" clicks don't pile up empty Recents.
@@ -101,16 +92,7 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
         now = new Date().toISOString()
       set(state => ({
         conversations: [
-          {
-            id,
-            title: 'New conversation',
-            messages: [],
-            created_at: now,
-            updated_at: now,
-            summary_message_id: null,
-            compacted_count: 0,
-            total_tokens: 0,
-          },
+          blankConversation(id, now),
           ...state.conversations.filter(c => c.id !== id),
         ],
         activeConversationId: id,
@@ -133,26 +115,17 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
       if (!title.trim()) return { ok: false as const, error: 'Enter a conversation title.' }
       if (!get().conversations.some(c => c.id === id))
         return { ok: false as const, error: 'This conversation is no longer available.' }
-      set(state => ({
-        conversations: state.conversations.map(c =>
-          c.id === id ? { ...c, title: title.trim() } : c
-        ),
-        autoTitles: { ...state.autoTitles, [id]: false },
-      }))
+      patchConversation(id, c => ({ ...c, title: title.trim() }))
+      set(state => ({ autoTitles: { ...state.autoTitles, [id]: false } }))
       return { ok: true as const, id }
     },
     deleteConversation: (id: string) => {
       abortStream(id)
-      set(state => {
-        const streaming = { ...state.streaming }
-        delete streaming[id]
-        return {
-          conversations: state.conversations.filter(c => c.id !== id),
-          activeConversationId:
-            state.activeConversationId === id ? null : state.activeConversationId,
-          streaming,
-        }
-      })
+      set(state => ({
+        conversations: state.conversations.filter(c => c.id !== id),
+        activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+        streaming: omit(state.streaming, id),
+      }))
     },
     clearConversations: () => {
       for (const id of streams.keys()) abortStream(id)
@@ -161,15 +134,9 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
     stopStreaming: (conversationId: string) => {
       if (!streams.has(conversationId)) return
       abortStream(conversationId)
-      set(state => ({
-        conversations: state.conversations.map(c =>
-          c.id === conversationId
-            ? {
-                ...c,
-                messages: c.messages.map(m => (m.metadata.streaming ? stopMessage(m) : m)),
-              }
-            : c
-        ),
+      patchConversation(conversationId, c => ({
+        ...c,
+        messages: c.messages.map(m => (m.metadata.streaming ? stopMessage(m) : m)),
       }))
       finishStream(conversationId)
     },
@@ -192,15 +159,11 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
     sendMessage: (scopeId: string, modelId?: string) => {
       const scope = get().scopes[scopeId],
         prompt = scope?.draft.trim()
-      const fail = (error: string) => {
-        get().patchScope(scopeId, { error })
-        return { ok: false as const, error }
-      }
-      if (!scope || !prompt) return fail('Enter a message.')
+      if (!scope || !prompt) return scopes.fail(scopeId, 'Enter a message.')
       if (scope.resourceId && !get().conversations.some(c => c.id === scope.resourceId))
-        return fail('This conversation is no longer available.')
+        return scopes.fail(scopeId, 'This conversation is no longer available.')
       if (get().streaming[scope.resourceId ?? get().activeConversationId ?? ''])
-        return fail('Wait for the reply to finish, or stop it.')
+        return scopes.fail(scopeId, 'Wait for the reply to finish, or stop it.')
       const scenario = get().chatScenarios.find(
         s => s.prompt.trim() === prompt && (!s.modelId || s.modelId === modelId)
       )
@@ -210,16 +173,7 @@ export function createChatActions(set: ChatStore['setState'], get: ChatStore['ge
       const timestamp = new Date().toISOString()
       set(state => {
         const existing = state.conversations.find(c => c.id === id)
-        const conversation = existing ?? {
-          id,
-          title: 'New conversation',
-          messages: [],
-          created_at: timestamp,
-          updated_at: timestamp,
-          summary_message_id: null,
-          compacted_count: 0,
-          total_tokens: 0,
-        }
+        const conversation = existing ?? blankConversation(id, timestamp)
         const committed = {
           ...conversation,
           title: !existing || state.autoTitles[id] ? prompt.slice(0, 60) : conversation.title,

@@ -13,29 +13,10 @@ export interface MarkdownMessageProps {
 export interface ChatBubbleProps {
   role: 'user' | 'assistant'
   content: React.ReactNode
-  timestamp?: string
   avatar?: React.ReactNode
   header?: React.ReactNode
   reasoning?: React.ReactNode
-  actionContent?: React.ReactNode
-  actions?: {
-    copy?: () => void
-    thumbsUp?: () => void
-    thumbsDown?: () => void
-    retry?: () => void
-  }
-  className?: string
-}
-
-export interface AgentThinkingStep {
-  type: 'thinking' | 'tool_call' | 'diff'
-  content: string
-}
-
-export interface AgentThinkingProps {
-  steps: AgentThinkingStep[]
-  defaultExpanded?: boolean
-  className?: string
+  onCopy?: () => void
 }
 
 export interface CodeBlockProps {
@@ -57,16 +38,6 @@ export interface JsonViewerProps {
   className?: string
 }
 
-/** Pure mic-button UI props. */
-export interface MicRecorderProps {
-  recording: boolean
-  seconds: number
-  maxDuration?: number // in seconds
-  onStart: () => void
-  onStop: () => void
-  className?: string
-}
-
 /** A selectable model in the composer picker. Optional fields render only when present. */
 export interface ChatModelOption {
   id: string
@@ -81,38 +52,6 @@ export interface ModelPickerProps {
   onChange: (id: string) => void
   compact?: boolean
   models: ChatModelOption[]
-}
-
-export interface TTSPlayerProps {
-  voiceName: string
-  text: string
-  /** Playback progress as a fraction of the waveform, 0–1 (clamped). */
-  progress: number
-  className?: string
-}
-
-export interface Voice {
-  id: string
-  name: string
-  lang: string
-  tags: string[]
-  gradient: string
-}
-
-export interface VoicePickerProps {
-  voices: Voice[]
-  selected: string
-  onSelect: (id: string) => void
-  className?: string
-}
-
-/** Props for a structured input/output viewer. */
-export interface StructuredOutputProps {
-  inputs: Record<string, unknown> | undefined
-  outputs: Record<string, unknown> | undefined
-  loading: boolean
-  onCopy?: (text: string) => void
-  copied?: boolean
 }
 
 export interface ToolCallCardProps {

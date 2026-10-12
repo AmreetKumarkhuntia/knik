@@ -5,14 +5,13 @@ import { useWorkflowStore } from '../workflows/hooks'
 import { useScheduleStore } from '../schedules/hooks'
 import { useExecutionStore } from '../executions/hooks'
 import { useCatalogStore } from '../catalogs/hooks'
-import { effectiveModelId } from '../catalogs/selectors'
+import { effectiveModelId, modelOptions } from '../catalogs/selectors'
 import { useSettingsStore } from '../settings/hooks'
 import { useStoreBundle } from '../session/useStoreBundle'
 import { useWidgetScope } from '../session/useWidgetScope'
 import { toExecutionSummary } from '../executions/selectors'
-import { normalizeNodes, sameDefinitionNodes } from '../workflows/selectors'
+import { canvasToDefinition, createHubScope, sameDefinitionNodes } from '../workflows/selectors'
 import { definitionsMatch } from '$utils/workflowDefinition'
-import { canvasNodesToGraph, graphToWorkflowDefinition } from '$lib/data-structures'
 
 export function useWorkflowHubView() {
   const state = useWorkflowStore(
@@ -28,7 +27,7 @@ export function useWorkflowHubView() {
   const scenarios = useExecutionStore(state => state.runScenarios)
   const schedules = useScheduleStore(state => state.schedules)
   const scope = useWidgetScope(state.initHub, state.disposeHub)
-  const view = useWorkflowStore(state => state.hubScopes[scope]) ?? { query: '', filter: 'all' }
+  const view = useWorkflowStore(state => state.hubScopes[scope]) ?? createHubScope()
   const data = useMemo(() => {
     const today = new Date().toDateString()
     const durations = executions.flatMap(execution =>
@@ -51,12 +50,12 @@ export function useWorkflowHubView() {
         ? durations.reduce((sum, duration) => sum + duration, 0) / durations.length
         : undefined,
     }
+    const newestFirst = [...executions].sort(
+      (a, b) => Date.parse(b.started_at) - Date.parse(a.started_at)
+    )
     const rows = state.workflows
       .map<HubWorkflowRow>(workflow => {
-        const runs = executions.filter(execution => execution.workflow_id === workflow.id)
-        const latest = [...runs]
-          .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))
-          .at(0)
+        const runs = newestFirst.filter(execution => execution.workflow_id === workflow.id)
         return {
           id: workflow.id,
           name: workflow.name,
@@ -67,7 +66,7 @@ export function useWorkflowHubView() {
           )
             ? 'active'
             : 'inactive',
-          lastExecutedAt: latest?.started_at,
+          lastExecutedAt: runs.at(0)?.started_at,
         }
       })
       .filter(
@@ -75,8 +74,7 @@ export function useWorkflowHubView() {
           (view.filter === 'all' || workflow.status === view.filter) &&
           workflow.name.toLowerCase().includes(view.query.toLowerCase())
       )
-    const recentExecutions = [...executions]
-      .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))
+    const recentExecutions = newestFirst
       .slice(0, 5)
       .map(execution => toExecutionSummary(execution, state.workflows))
     return { metrics, rows, recentExecutions }
@@ -130,10 +128,6 @@ export function useWorkflowBuilderView(workflowId?: string) {
   const workflow = useWorkflowStore(state =>
     state.workflows.find(workflow => workflow.id === workflowId)
   )
-  const modelOptions = useMemo(
-    () => models.map(model => ({ value: model.id, label: model.label })),
-    [models]
-  )
   const savedMatchesScenario = useMemo(
     () =>
       !!workflow &&
@@ -147,22 +141,14 @@ export function useWorkflowBuilderView(workflowId?: string) {
   const definitionEdges = draft?.edges
   const canRun = useMemo(() => {
     if (!savedMatchesScenario || !workflow || !definitionNodes || !definitionEdges) return false
-    try {
-      return definitionsMatch(
-        graphToWorkflowDefinition(
-          canvasNodesToGraph(normalizeNodes(definitionNodes), definitionEdges)
-        ),
-        workflow.definition
-      )
-    } catch {
-      return false
-    }
+    const result = canvasToDefinition(definitionNodes, definitionEdges)
+    return result.ok && definitionsMatch(result.definition, workflow.definition)
   }, [savedMatchesScenario, workflow, definitionNodes, definitionEdges])
   return {
     draft,
     workflow,
     canRun,
-    modelOptions,
+    modelOptions: useMemo(() => modelOptions(models), [models]),
     selectedNode: draft?.nodes.find(node => node.id === draft.selectedNodeId) ?? null,
     setName: (name: string) => state.patchBuilder(scope, { name }),
     selectNode: (selectedNodeId: string | null) => state.patchBuilder(scope, { selectedNodeId }),

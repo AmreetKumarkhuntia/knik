@@ -54,8 +54,6 @@ export default function SchedulesWidget() {
           <ScheduleListPanel
             schedules={schedules}
             workflowNames={workflowNames}
-            loading={false}
-            error={null}
             onToggle={(schedule, enabled) => toggle(schedule.id, enabled)}
             onDelete={schedule => setDeleting(schedule.id)}
           />

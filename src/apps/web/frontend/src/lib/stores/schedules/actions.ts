@@ -1,30 +1,19 @@
 import type { StoreApi } from 'zustand/vanilla'
-import type { ScheduleStore } from '$types/stores/schedules'
+import type { ScheduleStore, ScheduleScope } from '$types/stores/schedules'
 import type { WorkflowStore } from '$types/stores/workflows'
 import type { DemoActionResult } from '$types/demo-session'
+import { scopeSlice } from '../session/scopes'
 import { createScheduleScope } from './selectors'
 export function scheduleActions(
   set: StoreApi<ScheduleStore>['setState'],
   get: StoreApi<ScheduleStore>['getState']
 ): Omit<ScheduleStore, 'schedules' | 'scopes'> {
+  const scopes = scopeSlice<ScheduleStore, ScheduleScope>(set)
   return {
-    initScope: scope => {
-      if (!get().scopes[scope])
-        set(state => ({ scopes: { ...state.scopes, [scope]: createScheduleScope() } }))
-    },
-    disposeScope: scope =>
-      set(state => {
-        const next = { ...state.scopes }
-        delete next[scope]
-        return { scopes: next }
-      }),
-    patchScope: (scope, patch) =>
-      set(state =>
-        state.scopes[scope]
-          ? { scopes: { ...state.scopes, [scope]: { ...state.scopes[scope], ...patch } } }
-          : {}
-      ),
-    closeCreate: scope => get().patchScope(scope, createScheduleScope()),
+    initScope: scope => scopes.init(scope, createScheduleScope()),
+    disposeScope: scopes.dispose,
+    patchScope: scopes.patch,
+    closeCreate: scope => scopes.patch(scope, createScheduleScope()),
     addSchedule: draft => {
       const id = Math.max(0, ...get().schedules.map(schedule => schedule.id)) + 1
       set(state => ({
@@ -45,6 +34,14 @@ export function scheduleActions(
       set(state => ({ schedules: state.schedules.filter(schedule => schedule.id !== id) })),
   }
 }
+function validTimezone(timeZone: string) {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone }).format()
+    return true
+  } catch {
+    return false
+  }
+}
 export function createScheduleCommand(stores: {
   workflows: StoreApi<WorkflowStore>
   schedules: StoreApi<ScheduleStore>
@@ -52,21 +49,17 @@ export function createScheduleCommand(stores: {
   return (scope: string): DemoActionResult => {
     const session = stores.schedules.getState()
     const draft = session.scopes[scope]?.draft
-    let error: string | null = null
     if (!draft) return { ok: false, error: 'The schedule form is no longer open.' }
-    if (
-      !stores.workflows
-        .getState()
-        .workflows.some(workflow => workflow.id === draft.target_workflow_id)
-    )
-      error = 'Select a workflow available in this session.'
-    else if (!draft.schedule_description.trim()) error = 'Enter a schedule description.'
     const timezone = draft.timezone?.trim() || 'UTC'
-    try {
-      new Intl.DateTimeFormat('en', { timeZone: timezone }).format()
-    } catch {
-      error = 'Enter a valid timezone, such as UTC or Asia/Kolkata.'
-    }
+    const error = !stores.workflows
+      .getState()
+      .workflows.some(workflow => workflow.id === draft.target_workflow_id)
+      ? 'Select a workflow available in this session.'
+      : !draft.schedule_description.trim()
+        ? 'Enter a schedule description.'
+        : !validTimezone(timezone)
+          ? 'Enter a valid timezone, such as UTC or Asia/Kolkata.'
+          : null
     if (error) {
       session.patchScope(scope, { error })
       return { ok: false, error }

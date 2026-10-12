@@ -10,8 +10,6 @@ import type { ScheduleListPanelProps } from '$types/sections/schedules'
 export default function ScheduleListPanel({
   schedules,
   workflowNames,
-  loading,
-  error,
   onToggle,
   onDelete,
 }: ScheduleListPanelProps) {
@@ -91,9 +89,6 @@ export default function ScheduleListPanel({
         columns={columns}
         data={schedules}
         getRowKey={schedule => schedule.id}
-        density="compact"
-        loading={loading}
-        error={error ?? undefined}
         empty={
           <EmptyState
             icon="schedule"

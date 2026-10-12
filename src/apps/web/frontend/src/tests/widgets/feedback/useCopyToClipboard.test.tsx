@@ -22,10 +22,10 @@ function stubClipboard(writeText?: (text: string) => Promise<void>) {
   })
 }
 
-function renderCopy(successMessage?: string) {
+function renderCopy() {
   return renderHook(
     () => ({
-      copy: useCopyToClipboard(successMessage),
+      copy: useCopyToClipboard(),
       toasts: useFeedbackStore(state => state.toasts),
     }),
     { wrapper }
@@ -47,15 +47,6 @@ describe('useCopyToClipboard', () => {
       expect(result.current.toasts).toEqual([
         { id: 1, message: 'Copied to clipboard.', type: 'success' },
       ])
-    )
-  })
-
-  it('uses a caller-specific success message', async () => {
-    stubClipboard(vi.fn().mockResolvedValue(undefined))
-    const { result } = renderCopy('Demo key copied.')
-    result.current.copy('secret')
-    await waitFor(() =>
-      expect(result.current.toasts.map(toast => toast.message)).toEqual(['Demo key copied.'])
     )
   })
 

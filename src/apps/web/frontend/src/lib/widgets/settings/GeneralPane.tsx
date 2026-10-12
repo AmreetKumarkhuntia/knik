@@ -16,7 +16,7 @@ import { useProfileView } from '$stores/views'
 export default function GeneralPane() {
   const { scopeId, scope, patch } = useSettingsScope()
   const { displayName, username, confirmClear } = scope
-  const { settings, dirty, modelOptions } = useProfileView(scopeId)
+  const { settings, dirty, modelOptions, initials } = useProfileView(scopeId)
   const updateSettings = useSettingsStore(s => s.updateSettings)
   const resetProfile = useSettingsStore(s => s.resetProfile)
   const saveProfile = useSettingsStore(s => s.saveProfile)
@@ -29,7 +29,7 @@ export default function GeneralPane() {
   return (
     <>
       <FormGroup title="Profile" sub="How you appear across Knik AI">
-        <ProfileSummary displayName={settings.display_name ?? ''} />
+        <ProfileSummary displayName={settings.display_name ?? ''} initials={initials} />
         <form
           onSubmit={event => {
             event.preventDefault()
@@ -43,7 +43,6 @@ export default function GeneralPane() {
               id={`${id}-display-name`}
               value={displayName}
               onChange={event => patch({ displayName: event.target.value })}
-              density="compact"
               fullWidth={false}
               className="w-full sm:w-[260px]"
             />
@@ -60,7 +59,6 @@ export default function GeneralPane() {
               aria-describedby={`${id}-username-hint`}
               value={username}
               onChange={event => patch({ username: event.target.value })}
-              density="compact"
               fullWidth={false}
               className="w-full sm:w-[260px]"
             />

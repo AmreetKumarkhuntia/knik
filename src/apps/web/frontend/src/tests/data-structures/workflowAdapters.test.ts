@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Edge, Node } from '@xyflow/react'
-import { canvasNodesToGraph, graphToWorkflowDefinition } from '$lib/data-structures'
+import {
+  canvasNodesToGraph,
+  graphToWorkflowDefinition,
+  validateWorkflowGraph,
+} from '$lib/data-structures'
 import { definitionToCanvas, normalizeNodes } from '$stores/workflows/selectors'
 
 const node = (id: string, type: string, data: Record<string, unknown> = {}): Node => ({
@@ -80,5 +84,13 @@ describe('canvas and definition round trips', () => {
       prompt: 'Edited',
       mode: 'edit',
     })
+  })
+})
+
+describe('workflow validation', () => {
+  it('reports a cycle once', () => {
+    const nodes = [node('a', 'StartNode'), node('b', 'EndNode')]
+    const graph = canvasNodesToGraph(nodes, [edge('a', 'b'), edge('b', 'a')])
+    expect(validateWorkflowGraph(graph).errors).toEqual(['Workflow contains a cycle'])
   })
 })

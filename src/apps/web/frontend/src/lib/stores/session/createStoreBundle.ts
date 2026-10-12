@@ -22,8 +22,8 @@ export function createStoreBundle(source?: DemoSource): StoreBundle {
     executions: createExecutionStore(seed),
     settings: createSettingsStore(seed),
     credentials: createCredentialsStore(seed),
-    shell: createShellStore(seed),
-    feedback: createFeedbackStore(seed),
+    shell: createShellStore(),
+    feedback: createFeedbackStore(),
   }
   return { ...stores, commands: createSessionCommands(stores) }
 }

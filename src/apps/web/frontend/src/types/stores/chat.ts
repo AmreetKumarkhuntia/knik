@@ -1,6 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla'
 import type { Conversation } from '$types/conversation'
 import type { DemoSnapshot, DemoActionResult } from '$types/demo-session'
+import type { ScopeState } from './scope'
 
 export interface ChatScope {
   resourceId: string | null
@@ -12,17 +13,13 @@ export interface ChatScope {
   deletingId: string | null
   title: string
 }
-export interface ChatState extends Pick<
-  DemoSnapshot,
-  'conversations' | 'activeConversationId' | 'chatScenarios'
-> {
-  scopes: Partial<Record<string, ChatScope>>
+export interface ChatState
+  extends
+    Pick<DemoSnapshot, 'conversations' | 'activeConversationId' | 'chatScenarios'>,
+    ScopeState<ChatScope, [resourceId?: string | null]> {
   autoTitles: Record<string, boolean>
   /** Conversations with a reply still arriving. */
   streaming: Record<string, boolean>
-  initializeScope: (id: string, resourceId?: string | null) => void
-  disposeScope: (id: string) => void
-  patchScope: (id: string, patch: Partial<ChatScope>) => void
   startConversation: () => string
   selectConversation: (id: string | null) => void
   renameConversation: (id: string, title: string) => DemoActionResult

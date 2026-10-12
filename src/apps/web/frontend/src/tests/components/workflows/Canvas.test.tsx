@@ -7,7 +7,6 @@ import type { CanvasProps } from '$types/sections/workflow-builder'
 vi.mock('$components/graph', async () => {
   const { ReactFlowProvider } = await import('@xyflow/react')
   return {
-    BaseNode: () => null,
     FlowEdge: () => null,
     FlowCanvas: ({ children }: { children?: ReactNode }) => (
       <ReactFlowProvider>

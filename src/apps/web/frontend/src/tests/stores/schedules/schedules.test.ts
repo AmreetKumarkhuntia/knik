@@ -29,6 +29,14 @@ describe('schedule commands', () => {
     expect(stores.schedules.getState().scopes.form!.draft.schedule_description).toBe('Every Monday')
     expect(stores.schedules.getState().scopes.form!.error).toContain('Select a workflow')
   })
+  it('reports the first failure when the description and timezone are both invalid', () => {
+    const stores = setup()
+    stores.schedules.getState().patchScope('form', {
+      draft: { target_workflow_id: 'one', schedule_description: '  ', timezone: 'not-a-timezone' },
+    })
+    expect(stores.save('form')).toEqual({ ok: false, error: 'Enter a schedule description.' })
+    expect(stores.schedules.getState().scopes.form!.error).toBe('Enter a schedule description.')
+  })
   it('validates timezone before committing and clears only the saved scope', () => {
     const stores = setup()
     stores.schedules.getState().initScope('other')

@@ -5,7 +5,7 @@ import { StoresProvider } from '$stores'
 import { ThemeWidget } from '$widgets/theme'
 import { MainLayoutWidget } from '$widgets/layout'
 import { ErrorBoundaryWidget } from '$widgets/feedback'
-import FullScreenLoader from '$widgets/FullScreenLoader'
+import LoadingSpinner from '$components/feedback/LoadingSpinner'
 import { ROUTES } from '$lib/constants/navigation'
 import {
   Home,
@@ -33,7 +33,7 @@ function AnimatedRoutes() {
         animate={{ opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
         exit={{ opacity: 0, transition: { duration: 0.12, ease: 'easeOut' } }}
       >
-        <Suspense fallback={<FullScreenLoader variant="block" />}>
+        <Suspense fallback={<LoadingSpinner className="py-20" />}>
           {/* The explicit location keeps the exiting page on its own route while it fades out. */}
           <Routes location={location}>
             <Route path={ROUTES.home} element={<Home />} />

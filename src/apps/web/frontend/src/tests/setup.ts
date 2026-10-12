@@ -8,3 +8,11 @@ afterEach(() => {
 })
 
 Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true })
+
+// jsdom has no ResizeObserver; this one never reports, so only synchronous measurements apply.
+// Assigned directly because unstubGlobals would undo vi.stubGlobal.
+window.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}

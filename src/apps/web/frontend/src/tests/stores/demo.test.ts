@@ -34,8 +34,6 @@ describe('canonical demo seed', () => {
     expect(
       seed.models.every(model => seed.providers.some(provider => provider.id === model.providerId))
     ).toBe(true)
-    expect(seed.keyScenarios).toEqual([])
-    expect(seed.voices.every(voice => voice.audioSrc === undefined)).toBe(true)
   })
 
   it('rejects duplicate identities and broken schedule/scenario relationships before exposing stores', () => {

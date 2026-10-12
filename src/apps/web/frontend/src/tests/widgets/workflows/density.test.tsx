@@ -7,7 +7,7 @@ import AllExecutionsWidget from '$widgets/workflows/AllExecutionsWidget'
 import SchedulesWidget from '$widgets/schedules/SchedulesWidget'
 
 describe('compact application tables', () => {
-  it('uses consistent compact headers across workflows, executions, and schedules', () => {
+  it('uses consistent compact headers across workflows, recent executions, executions, and schedules', () => {
     render(
       <MemoryRouter>
         <StoresProvider
@@ -44,7 +44,7 @@ describe('compact application tables', () => {
       </MemoryRouter>
     )
     const headers = screen.getAllByRole('columnheader', { name: 'Workflow' })
-    expect(headers).toHaveLength(3)
+    expect(headers).toHaveLength(4)
     for (const header of headers) expect(header).toHaveClass('py-2')
   })
 })

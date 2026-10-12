@@ -1,15 +1,16 @@
 import type { StoreApi } from 'zustand/vanilla'
-import type { WorkflowStore, DefinitionResult } from '$types/stores/workflows'
+import type {
+  WorkflowStore,
+  DefinitionResult,
+  WorkflowBuilderScope,
+  WorkflowHubScope,
+} from '$types/stores/workflows'
+import { scopeSlice } from '../session/scopes'
 import {
-  canvasNodesToGraph,
-  graphToWorkflowDefinition,
-  validateWorkflowGraph,
-} from '$lib/data-structures'
-import {
+  canvasToDefinition,
+  createHubScope,
   definitionToCanvas,
   duplicateConnectionError,
-  duplicateConnectionErrors,
-  normalizeNodes,
 } from './selectors'
 import { getDefaultNodeData } from '$lib/constants/nodes'
 import { generateId } from '$utils/uuid'
@@ -19,63 +20,35 @@ export function workflowActions(
   set: StoreApi<WorkflowStore>['setState'],
   get: StoreApi<WorkflowStore>['getState']
 ): Omit<WorkflowStore, 'workflows' | 'scenarioDefinitions' | 'builderScopes' | 'hubScopes'> {
-  const patch: WorkflowStore['patchBuilder'] = (scope, updates) =>
-    set(state =>
-      state.builderScopes[scope]
-        ? {
-            builderScopes: {
-              ...state.builderScopes,
-              [scope]: { ...state.builderScopes[scope], ...updates },
-            },
-          }
-        : {}
-    )
+  const builders = scopeSlice<WorkflowStore, WorkflowBuilderScope>(set, 'builderScopes')
+  const hubs = scopeSlice<WorkflowStore, WorkflowHubScope>(set, 'hubScopes')
+  const patch = builders.patch
   const validate = (scope: string): DefinitionResult => {
     const draft = get().builderScopes[scope]
     if (!draft) return { ok: false, error: 'The workflow editor is no longer open.' }
-    try {
-      const graph = canvasNodesToGraph(normalizeNodes(draft.nodes), draft.edges)
-      const errors = [
-        ...duplicateConnectionErrors(draft.edges),
-        ...validateWorkflowGraph(graph).errors,
-      ]
-      if (errors.length) throw new Error(errors.join('\n'))
-      patch(scope, { error: null })
-      return { ok: true, definition: graphToWorkflowDefinition(graph) }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not validate workflow.'
-      patch(scope, { error: message })
-      return { ok: false, error: message }
-    }
+    const result = canvasToDefinition(draft.nodes, draft.edges)
+    if (!result.ok) return builders.fail(scope, result.error)
+    patch(scope, { error: null })
+    return result
   }
   return {
     initBuilder: (scope, workflowId) => {
-      if (get().builderScopes[scope]) return
       const workflow = get().workflows.find(item => item.id === workflowId)
-      set(state => ({
-        builderScopes: {
-          ...state.builderScopes,
-          [scope]: {
-            workflowId,
-            name: workflow?.name ?? 'Untitled workflow',
-            ...definitionToCanvas(workflow?.definition),
-            nodes: definitionToCanvas(workflow?.definition).nodes.map(node => ({
-              ...node,
-              position: workflow?.canvasPositions?.[node.id] ?? node.position,
-            })),
-            selectedNodeId: null,
-            fieldDrafts: {},
-            error: null,
-          },
-        },
-      }))
+      const { nodes, edges } = definitionToCanvas(workflow?.definition)
+      builders.init(scope, {
+        workflowId,
+        name: workflow?.name ?? 'Untitled workflow',
+        nodes: nodes.map(node => ({
+          ...node,
+          position: workflow?.canvasPositions?.[node.id] ?? node.position,
+        })),
+        edges,
+        selectedNodeId: null,
+        fieldDrafts: {},
+        error: null,
+      })
     },
-    disposeBuilder: scope =>
-      set(state => {
-        const next = { ...state.builderScopes }
-        delete next[scope]
-        return { builderScopes: next }
-      }),
+    disposeBuilder: builders.dispose,
     patchBuilder: patch,
     changeNodes: (scope, changes) => {
       const draft = get().builderScopes[scope]
@@ -132,15 +105,9 @@ export function workflowActions(
     saveBuilder: scope => {
       const draft = get().builderScopes[scope]
       if (!draft) return { ok: false, error: 'The workflow editor is no longer open.' }
-      if (!draft.name.trim()) {
-        patch(scope, { error: 'Enter a workflow name.' })
-        return { ok: false, error: 'Enter a workflow name.' }
-      }
+      if (!draft.name.trim()) return builders.fail(scope, 'Enter a workflow name.')
       const existing = get().workflows.find(workflow => workflow.id === draft.workflowId)
-      if (draft.workflowId && !existing) {
-        patch(scope, { error: 'Workflow no longer exists.' })
-        return { ok: false, error: 'Workflow no longer exists.' }
-      }
+      if (draft.workflowId && !existing) return builders.fail(scope, 'Workflow no longer exists.')
       const result = validate(scope)
       if (!result.ok) return result
       const id = draft.workflowId ?? generateId()
@@ -160,30 +127,12 @@ export function workflowActions(
         workflows: existing
           ? state.workflows.map(workflow => (workflow.id === id ? record : workflow))
           : [...state.workflows, record],
-        builderScopes: {
-          ...state.builderScopes,
-          [scope]: { ...draft, workflowId: id, name: record.name, error: null },
-        },
       }))
+      patch(scope, { workflowId: id, name: record.name, error: null })
       return { ok: true, id }
     },
-    initHub: scope => {
-      if (!get().hubScopes[scope])
-        set(state => ({ hubScopes: { ...state.hubScopes, [scope]: { filter: 'all', query: '' } } }))
-    },
-    disposeHub: scope =>
-      set(state => {
-        const next = { ...state.hubScopes }
-        delete next[scope]
-        return { hubScopes: next }
-      }),
-    patchHub: (scope, updates) =>
-      set(state =>
-        state.hubScopes[scope]
-          ? {
-              hubScopes: { ...state.hubScopes, [scope]: { ...state.hubScopes[scope], ...updates } },
-            }
-          : {}
-      ),
+    initHub: scope => hubs.init(scope, createHubScope()),
+    disposeHub: hubs.dispose,
+    patchHub: hubs.patch,
   }
 }

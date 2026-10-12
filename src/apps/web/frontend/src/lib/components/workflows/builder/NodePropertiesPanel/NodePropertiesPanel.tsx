@@ -1,7 +1,7 @@
 import { Modal, MS } from '$components'
 import Button from '$components/buttons/Button'
 import { getNodeMetadata } from '$lib/constants/nodes'
-import NodeProperties from '../PropertiesPanel/NodeProperties'
+import ConfigurationForm from '../PropertiesPanel/ConfigurationForm'
 import ConnectionForm from '../PropertiesPanel/ConnectionForm'
 import type { NodePropertiesPanelProps } from '$types'
 
@@ -20,14 +20,15 @@ export default function NodePropertiesPanel({
   const metadata = getNodeMetadata(selectedNode.type ?? '')
   const properties = (
     <>
-      <NodeProperties
-        key={selectedNode.id}
-        node={selectedNode}
-        modelOptions={modelOptions}
-        fieldDrafts={fieldDrafts}
-        onFieldDraftChange={onFieldDraftChange}
-        onUpdate={data => onNodeUpdate(selectedNode.id, data)}
-      />
+      <div key={selectedNode.id} className="p-5">
+        <ConfigurationForm
+          node={selectedNode}
+          modelOptions={modelOptions}
+          fieldDrafts={fieldDrafts}
+          onFieldDraftChange={onFieldDraftChange}
+          onUpdate={data => onNodeUpdate(selectedNode.id, data)}
+        />
+      </div>
       {nodes && onConnect && (
         <ConnectionForm
           key={`connect-${selectedNode.id}`}

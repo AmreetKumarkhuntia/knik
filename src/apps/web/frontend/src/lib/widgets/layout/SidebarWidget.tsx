@@ -54,7 +54,6 @@ export default function SidebarWidget({
       {!collapsed ? (
         <SidebarRecents
           conversations={conversations}
-          loading={false}
           activeConversationId={location.pathname === ROUTES.home ? activeConversationId : null}
           onSelect={id => {
             selectConversation(id)

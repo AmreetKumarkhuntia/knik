@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createShellStore } from '$stores/shell/store'
-import { normalizeDemoSource } from '$stores/demo/normalize'
 describe('shell store', () => {
   it('disposes palette queries independently of the shared sidebar preference', () => {
-    const store = createShellStore(normalizeDemoSource())
+    const store = createShellStore()
     store.getState().initializeScope('layout')
     store.getState().patchScope('layout', { paletteOpen: true, paletteQuery: 'settings' })
     store.getState().patchScope('layout', { mobileNavigationOpen: true })
@@ -24,7 +23,7 @@ describe('shell store', () => {
   })
 
   it('skips the store update when a patch repeats the current values', () => {
-    const store = createShellStore(normalizeDemoSource())
+    const store = createShellStore()
     store.getState().initializeScope('layout')
     const scope = store.getState().scopes.layout
     const updates = vi.fn()

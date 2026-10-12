@@ -3,8 +3,6 @@ import { BaseEdge, getSmoothStepPath, type EdgeProps } from '@xyflow/react'
 import type { FlowEdgeData } from '$types/graph'
 import { EDGE_STATUS_COLORS } from '$lib/constants/themes'
 
-export type { FlowEdgeData }
-
 export default memo(function FlowEdge({
   id,
   sourceX,
@@ -28,14 +26,7 @@ export default memo(function FlowEdge({
   })
   const edgeData = data as FlowEdgeData | undefined
   const status = edgeData?.mode === 'execution' ? edgeData.status : undefined
-  const color =
-    status === 'failed'
-      ? EDGE_STATUS_COLORS.failed
-      : status === 'success'
-        ? EDGE_STATUS_COLORS.success
-        : status === 'running'
-          ? EDGE_STATUS_COLORS.running
-          : EDGE_STATUS_COLORS.default
+  const color = EDGE_STATUS_COLORS[status && status !== 'pending' ? status : 'default']
   return (
     <BaseEdge
       id={id}

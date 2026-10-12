@@ -12,11 +12,7 @@ export default function Slider({
   label,
   className = '',
   id,
-  name,
   disabled,
-  'aria-label': ariaLabel,
-  'aria-describedby': describedBy,
-  formatValue,
 }: SliderProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
@@ -31,10 +27,7 @@ export default function Slider({
       <input
         type="range"
         id={inputId}
-        name={name}
         disabled={disabled}
-        aria-label={ariaLabel}
-        aria-describedby={describedBy}
         min={min}
         max={max}
         step={step}
@@ -42,9 +35,7 @@ export default function Slider({
         onChange={event => onChange(Number(event.target.value))}
         className="flex-1 min-w-0 h-9 cursor-pointer accent-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-2 disabled:opacity-50"
       />
-      <span className="tabular-nums text-body text-fg-2 w-12 text-right shrink-0">
-        {formatValue ? formatValue(value) : value}
-      </span>
+      <span className="tabular-nums text-body text-fg-2 w-12 text-right shrink-0">{value}</span>
     </div>
   )
 }

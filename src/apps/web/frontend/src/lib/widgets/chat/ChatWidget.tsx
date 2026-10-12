@@ -5,7 +5,6 @@ import {
   MarkdownMessage,
   Avatar,
   KnikGlyph,
-  AgentThinking,
   ToolCallList,
   Banner,
   Modal,
@@ -47,7 +46,7 @@ const ChatTranscript = memo(function ChatTranscript({
       {/* initial={false}: history already on screen stays put; only newly appended messages enter. */}
       <AnimatePresence initial={false}>
         {messages.map((message, index) => {
-          const { isUser, steps, modelTag, messageId, toolCalls } = message
+          const { isUser, modelTag, messageId, toolCalls } = message
           const thinking = message.isStreaming && !message.content
           return (
             <motion.div
@@ -88,18 +87,11 @@ const ChatTranscript = memo(function ChatTranscript({
                   ) : undefined
                 }
                 reasoning={
-                  !isUser && (steps.length > 0 || toolCalls.length > 0 || thinking) ? (
-                    <div className="flex flex-col gap-3">
-                      {steps.length > 0 && <AgentThinking steps={steps} />}
-                      <ToolCallList calls={toolCalls} isThinking={thinking} />
-                    </div>
+                  !isUser && (toolCalls.length > 0 || thinking) ? (
+                    <ToolCallList calls={toolCalls} isThinking={thinking} />
                   ) : undefined
                 }
-                actions={
-                  !isUser && !message.isStreaming
-                    ? { copy: () => onCopy(message.content) }
-                    : undefined
-                }
+                onCopy={!isUser && !message.isStreaming ? () => onCopy(message.content) : undefined}
               />
               {summaryMessageId === messageId && (
                 <CompactionDivider summaryContent={message.content} onCopy={onCopy} />

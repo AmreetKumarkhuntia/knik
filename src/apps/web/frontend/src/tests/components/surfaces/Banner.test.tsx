@@ -19,14 +19,4 @@ describe('Banner live-region role', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Something needs attention.')
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
-
-  it('keeps the dismiss glyph out of the accessible name', () => {
-    render(
-      <Banner variant="info" dismissible>
-        Note
-      </Banner>
-    )
-    expect(screen.getByRole('button')).toHaveAccessibleName('Dismiss banner')
-    expect(screen.getByText('close')).toHaveAttribute('aria-hidden', 'true')
-  })
 })

@@ -1,7 +1,7 @@
 import { formatDuration } from '$utils/format'
 import type { HubMetricStripProps } from '$types'
 
-export default function HubMetricStrip({ metrics, loading }: HubMetricStripProps) {
+export default function HubMetricStrip({ metrics }: HubMetricStripProps) {
   const items = [
     { label: 'Workflows', value: metrics?.totalWorkflows ?? '—' },
     { label: 'Executions today', value: metrics?.executionsToday ?? '—' },
@@ -12,10 +12,7 @@ export default function HubMetricStrip({ metrics, loading }: HubMetricStripProps
     { label: 'Avg duration', value: metrics ? formatDuration(metrics.avgDurationMs) : '—' },
   ]
   return (
-    <dl
-      className="flex flex-wrap items-center gap-x-8 gap-y-3 py-4 mb-3 border-b border-border"
-      aria-busy={loading}
-    >
+    <dl className="flex flex-wrap items-center gap-x-8 gap-y-3 py-4 mb-3 border-b border-border">
       {items.map(item => (
         <div key={item.label} className="flex items-baseline gap-2">
           <dt className="text-body text-secondary">{item.label}</dt>

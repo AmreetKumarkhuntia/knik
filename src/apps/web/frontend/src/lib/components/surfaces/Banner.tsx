@@ -1,64 +1,25 @@
-import Button from '$components/buttons/Button'
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { BANNER_ROLE } from '$lib/constants'
 import type { BannerProps } from '$types'
 
-export default function Banner({
-  variant = 'info',
-  dismissible = false,
-  icon,
-  children,
-  className = '',
-  onDismiss,
-}: BannerProps) {
-  const [isVisible, setIsVisible] = useState(true)
-
-  const handleDismiss = () => {
-    setIsVisible(false)
-    onDismiss?.()
-  }
-
-  const baseClasses = 'flex items-center gap-3 p-3 rounded-md border text-body font-medium w-full'
-
+export default function Banner({ variant = 'info', icon, children, className = '' }: BannerProps) {
   const color = `var(--${variant})`
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: -10, height: 0 }}
-          animate={{ opacity: 1, y: 0, height: 'auto' }}
-          exit={{ opacity: 0, y: -10, height: 0, marginTop: 0, marginBottom: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={`${baseClasses} ${className}`}
-          style={{
-            color,
-            borderColor: `color-mix(in srgb, ${color} 25%, transparent)`,
-            background: `color-mix(in srgb, ${color} 6%, transparent)`,
-          }}
-          role={BANNER_ROLE[variant]}
-        >
-          {icon && <span className="flex-shrink-0 flex items-center justify-center">{icon}</span>}
-          <div className="flex-1">{children}</div>
-          {dismissible && (
-            <Button
-              variant="ghost"
-              onClick={handleDismiss}
-              className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors"
-              aria-label="Dismiss banner"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 20 }}
-                aria-hidden="true"
-              >
-                close
-              </span>
-            </Button>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0, y: -10, height: 0 }}
+      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className={`flex items-center gap-3 p-3 rounded-md border text-body font-medium w-full ${className}`}
+      style={{
+        color,
+        borderColor: `color-mix(in srgb, ${color} 25%, transparent)`,
+        background: `color-mix(in srgb, ${color} 6%, transparent)`,
+      }}
+      role={BANNER_ROLE[variant]}
+    >
+      {icon && <span className="flex-shrink-0 flex items-center justify-center">{icon}</span>}
+      <div className="flex-1">{children}</div>
+    </motion.div>
   )
 }

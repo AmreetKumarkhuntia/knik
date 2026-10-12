@@ -16,8 +16,6 @@ import { CANVAS_OVERLAY_COLORS } from '$lib/constants/themes'
 import { getNodeMetadata, getNodeTitle } from '$lib/constants/nodes'
 import FlowViewportControls from './FlowViewportControls'
 
-export type { FlowCanvasProps }
-
 // Cached per source node so unchanged nodes keep their identity and xyflow skips re-adopting them.
 const labelledNodes = new WeakMap<Node, Node>()
 

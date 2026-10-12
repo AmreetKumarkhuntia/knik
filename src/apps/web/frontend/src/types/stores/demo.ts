@@ -1,16 +1,9 @@
 import type { ReactNode } from 'react'
 import type { Conversation, ConversationMessage } from '../conversation'
-import type { McpTool } from '../components/product'
 import type { ToastType } from '../components/feedback'
 import type { ChatModelOption } from '../components/chat'
 import type { Workflow, Schedule, ExecutionDetail, NodeExecutionStep } from '../workflow'
-import type {
-  FrontendSettings,
-  AdminOption,
-  McpToolInfo,
-  ApiKeyInfo,
-  ApiKeyCreated,
-} from '../sections/settings'
+import type { FrontendSettings, AdminOption, McpToolInfo, ApiKeyInfo } from '../sections/settings'
 import type { ThemeMode } from '../theme'
 
 export interface AppearanceSettings {
@@ -33,7 +26,6 @@ export interface DemoRunScenario {
   timeline: NodeExecutionStep[]
 }
 export interface DemoVoiceOption extends AdminOption {
-  audioSrc?: string
   lang?: string
   tags?: string[]
 }
@@ -54,11 +46,9 @@ export interface DemoSnapshot {
   providers: AdminOption[]
   voices: DemoVoiceOption[]
   tools: McpToolInfo[]
-  toolDefinitions: McpTool[]
   apiKeys: ApiKeyInfo[]
   chatScenarios: DemoChatScenario[]
   runScenarios: Partial<Record<string, DemoRunScenario>>
-  keyScenarios: ApiKeyCreated[]
 }
 export type DemoSource = Partial<Omit<DemoSnapshot, 'settings' | 'appearance'>> & {
   settings?: Partial<FrontendSettings>

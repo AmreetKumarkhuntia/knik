@@ -28,18 +28,10 @@ export interface CanvasProps extends BuilderFieldStateProps {
   narrow?: boolean
 }
 
-/** Props for the node properties sidebar panel. */
-export interface NodePropertiesProps extends BuilderFieldStateProps {
-  node: Node
-  onUpdate: (data: Record<string, unknown>) => void
-}
-
 /** Props for the node configuration form. */
 export interface ConfigurationFormProps extends BuilderFieldStateProps {
-  nodeId: string
-  nodeType: string
-  data: Record<string, unknown>
-  onDataChange: (field: string, value: unknown) => void
+  node: Node
+  onUpdate: (data: Record<string, unknown>) => void
 }
 
 /** Props for the workflow builder navigation bar. */
@@ -76,18 +68,6 @@ export interface ConnectionFormProps {
   node: Node
   nodes: Node[]
   onConnect: OnConnect
-}
-
-/** A single line in the builder run-bar log stream. */
-export interface RunLog {
-  t: string
-  m: string
-  c: string
-}
-
-/** Props for the floating workflow run-bar. */
-export interface RunBarProps {
-  onClose?: () => void
 }
 
 export interface WorkflowBuilderWidgetProps {

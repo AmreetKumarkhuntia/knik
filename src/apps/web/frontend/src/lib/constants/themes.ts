@@ -1,8 +1,8 @@
 export const EDGE_STATUS_COLORS = {
-  default: 'var(--color-text-muted)',
-  failed: 'var(--color-error)',
-  success: 'var(--color-success)',
-  running: 'var(--color-info)',
+  default: 'var(--fg-4)',
+  failed: 'var(--danger)',
+  success: 'var(--success)',
+  running: 'var(--info)',
 } as const
 
 export const CANVAS_OVERLAY_COLORS = {

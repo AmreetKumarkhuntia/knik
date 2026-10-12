@@ -14,3 +14,6 @@ export function effectiveModelId(selectedId: string, models: readonly { id: stri
   if (!selectedId) return models.at(0)?.id
   return models.some(model => model.id === selectedId) ? selectedId : undefined
 }
+
+export const modelOptions = (models: readonly { id: string; label: string }[]) =>
+  models.map(model => ({ value: model.id, label: model.label }))

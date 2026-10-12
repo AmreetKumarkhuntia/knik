@@ -1,19 +1,11 @@
-import { type NodeTypes, type EdgeTypes } from '@xyflow/react'
+import { type EdgeTypes } from '@xyflow/react'
 import NodePropertiesPanel from './NodePropertiesPanel/NodePropertiesPanel'
 import FloatingControls from './CanvasControls/FloatingControls'
 import WorkflowNavbar from '$components/workflows/WorkflowNavbar'
 import { Banner } from '$components'
 import type { CanvasProps } from '$types/sections/workflow-builder'
-import { BaseNode, FlowEdge, FlowCanvas } from '$components/graph'
-
-const nodeTypes: NodeTypes = {
-  FunctionExecutionNode: BaseNode,
-  ConditionalBranchNode: BaseNode,
-  FlowMergeNode: BaseNode,
-  AIExecutionNode: BaseNode,
-  StartNode: BaseNode,
-  EndNode: BaseNode,
-}
+import { FlowEdge, FlowCanvas } from '$components/graph'
+import { nodeTypes } from '$components/graph/nodeTypes'
 
 const edgeTypes: EdgeTypes = {
   custom: FlowEdge,

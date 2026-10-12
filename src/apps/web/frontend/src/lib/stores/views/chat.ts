@@ -1,11 +1,10 @@
-import type { AgentThinkingStep } from '$types/components/chat'
 import { useMemo } from 'react'
 import { formatTime } from '$utils/format'
 import { useChatStore } from '../chat/hooks'
 import { selectActiveConversation, selectRecentConversations } from '../chat/selectors'
 import { toolCallsOf } from '../chat/stream'
 import { useSettingsStore } from '../settings/hooks'
-import { accountInitials } from '../settings/selectors'
+import { accountInitials, accountName } from '../settings/selectors'
 import { useCatalog } from '../catalogs/hooks'
 import { effectiveModelId } from '../catalogs/selectors'
 export function useChatView() {
@@ -25,9 +24,6 @@ export function useChatView() {
           ...message,
           timestampLabel: formatTime(message.timestamp),
           isUser: message.role === 'user',
-          steps: Array.isArray(message.metadata.reasoning)
-            ? (message.metadata.reasoning as AgentThinkingStep[])
-            : [],
           toolCalls: toolCallsOf(message).map(call => ({
             ...call,
             status: call.status ?? ('success' as const),
@@ -50,7 +46,7 @@ export function useChatView() {
     messages,
     isStreaming,
     stop: () => conversationId && stopStreaming(conversationId),
-    initials: accountInitials(settings.display_name || settings.username || ''),
+    initials: accountInitials(accountName(settings)),
   }
 }
 export function useSidebarView() {
@@ -60,6 +56,6 @@ export function useSidebarView() {
     () => selectRecentConversations({ conversations }),
     [conversations]
   )
-  const accountName = settings.display_name || settings.username || ''
-  return { conversations: recentConversations, accountName, initials: accountInitials(accountName) }
+  const name = accountName(settings)
+  return { conversations: recentConversations, accountName: name, initials: accountInitials(name) }
 }

@@ -1,10 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { generateId } from '$utils/uuid'
 import { createStoreBundle } from '$lib/stores/session/createStoreBundle'
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
 
 // Over plain http on a LAN address or intranet hostname, crypto exists but randomUUID does not.
 const stubInsecureContext = () => vi.stubGlobal('crypto', {})

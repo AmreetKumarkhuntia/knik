@@ -34,11 +34,8 @@ export interface FormFieldConfig {
 
 /** Tailwind color classes for a node type. */
 export interface NodeColors {
-  primary: string
   iconBg: string
   iconText: string
-  border: string
-  hoverBorder: string
 }
 
 /** Full metadata describing a registered node type. */
