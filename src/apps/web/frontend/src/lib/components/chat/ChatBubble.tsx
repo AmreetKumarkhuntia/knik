@@ -5,17 +5,14 @@ import type { ChatBubbleProps } from '$types/components/chat'
 export default function ChatBubble({
   role,
   content,
-  timestamp,
-  actions,
+  onCopy,
   avatar,
   header,
   reasoning,
-  actionContent,
-  className = '',
 }: ChatBubbleProps) {
   const isUser = role === 'user'
   return (
-    <div className={`flex gap-[13px] ${isUser ? 'flex-row-reverse' : ''} ${className}`}>
+    <div className={`flex gap-[13px] ${isUser ? 'flex-row-reverse' : ''}`}>
       {avatar && <div className="flex-shrink-0">{avatar}</div>}
       <div style={{ maxWidth: isUser ? '78%' : '100%', flex: isUser ? 'none' : 1, minWidth: 0 }}>
         {header}
@@ -33,47 +30,13 @@ export default function ChatBubble({
         >
           {content}
         </div>
-        {!isUser && (actions || actionContent) && (
+        {!isUser && onCopy && (
           <div className="flex gap-1 mt-2">
-            {actions?.copy && (
-              <Button variant="ghost" size="xs" onClick={actions.copy} aria-label="Copy message">
-                <MS name="content_copy" size={15} />
-              </Button>
-            )}
-            {actions?.thumbsUp && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={actions.thumbsUp}
-                aria-label="Like message"
-              >
-                <MS name="thumb_up" size={15} />
-              </Button>
-            )}
-            {actions?.thumbsDown && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={actions.thumbsDown}
-                aria-label="Dislike message"
-              >
-                <MS name="thumb_down" size={15} />
-              </Button>
-            )}
-            {actions?.retry && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={actions.retry}
-                aria-label="Regenerate response"
-              >
-                <MS name="refresh" size={15} />
-              </Button>
-            )}
-            {actionContent}
+            <Button variant="ghost" size="xs" onClick={onCopy} aria-label="Copy message">
+              <MS name="content_copy" size={15} />
+            </Button>
           </div>
         )}
-        {timestamp && <span className="text-mono-sm text-fg-4 font-mono">{timestamp}</span>}
       </div>
     </div>
   )

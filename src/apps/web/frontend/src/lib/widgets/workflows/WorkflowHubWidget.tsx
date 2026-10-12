@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Banner, Input, MS, Segmented, SectionHeader } from '$components'
 import HubMetricStrip from '$components/workflows/HubMetricStrip'
-import HubRecentExecutions from '$components/workflows/HubRecentExecutions'
+import HistoryTable from '$components/workflows/HistoryTable'
 import HubWorkflowsTable from '$components/workflows/HubWorkflowsTable'
 import { useWorkflowHubView } from '$stores/views'
 import { useFeedbackStore } from '$stores/feedback'
@@ -43,7 +43,7 @@ export default function WorkflowHubWidget() {
             </Link>
           }
         />
-        <HubMetricStrip metrics={metrics} loading={false} />
+        <HubMetricStrip metrics={metrics} />
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <Input
             fullWidth={false}
@@ -69,15 +69,25 @@ export default function WorkflowHubWidget() {
             Runs use supplied demo scenarios. Workflows without a scenario cannot run.
           </Banner>
         )}
-        <HubWorkflowsTable
-          rows={rows}
-          loading={false}
-          error={null}
-          isEmpty={count === 0}
-          onRun={handleRun}
-          canRun={canRun}
+        <HubWorkflowsTable rows={rows} isEmpty={count === 0} onRun={handleRun} canRun={canRun} />
+        <SectionHeader
+          level="section"
+          className="mb-3"
+          title="Recent executions"
+          actions={
+            <Link
+              to={ROUTES.executions}
+              className="inline-flex items-center gap-1 text-label text-[var(--acc-text,var(--aurora-300))]"
+            >
+              View all
+              <MS name="arrow_forward" size={15} />
+            </Link>
+          }
         />
-        <HubRecentExecutions executions={recentExecutions} loading={false} />
+        <HistoryTable
+          executions={recentExecutions}
+          onViewDetail={execution => void navigate(ROUTE_PATHS.executionDetail(execution.id))}
+        />
       </div>
     </div>
   )

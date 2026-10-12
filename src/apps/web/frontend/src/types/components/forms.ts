@@ -8,7 +8,6 @@ import type { PopoverProps } from './surfaces'
 
 /** Props for a text input field. */
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
-  density?: 'compact' | 'comfortable'
   error?: string
   fullWidth?: boolean
   id?: string
@@ -28,15 +27,10 @@ export interface ToggleSwitchProps {
 }
 
 export interface CheckboxProps {
-  presentation?: 'standard' | 'chip'
-  id?: string
-  name?: string
-  'aria-describedby'?: string
   checked: boolean
   onChange: (checked: boolean) => void
   label?: ReactNode
   disabled?: boolean
-  indeterminate?: boolean
   className?: string
 }
 
@@ -85,11 +79,7 @@ export interface SelectProps extends Omit<
 
 export interface SliderProps {
   id?: string
-  name?: string
   disabled?: boolean
-  'aria-label'?: string
-  'aria-describedby'?: string
-  formatValue?: (value: number) => string
   min: number
   max: number
   value: number
@@ -97,19 +87,6 @@ export interface SliderProps {
   step?: number
   label?: string
   className?: string
-}
-
-export interface FileUploadProps {
-  accept?: string
-  multiple?: boolean
-  onUpload: (files: File[]) => void
-  maxSize?: number // in bytes
-  className?: string
-}
-
-/** Props for a search bar input. */
-export interface SearchBarProps {
-  placeholder?: string
 }
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {

@@ -9,8 +9,6 @@ export const buttonVariants = {
   secondary: 'knik-btn--secondary',
   danger: 'knik-btn--danger',
   ghost: 'knik-btn--ghost',
-  success: 'knik-btn--success',
-  warning: 'knik-btn--warning',
 }
 
 /** Button size modifiers — pair with the base `knik-btn` class. */
@@ -33,14 +31,4 @@ export const spinnerSizes = {
   sm: 'knik-spinner--sm',
   md: 'knik-spinner--md',
   lg: 'knik-spinner--lg',
-}
-
-/** Confirm-dialog variants — icon + confirm-button styling per severity. */
-export const confirmDialogVariants = {
-  danger: { icon: '⚠', confirmBtn: 'bg-[var(--danger)] text-[var(--fg-inverse)] hover:opacity-90' },
-  warning: {
-    icon: '⚡',
-    confirmBtn: 'bg-[var(--warning)] text-[var(--fg-inverse)] hover:opacity-90',
-  },
-  info: { icon: 'ℹ', confirmBtn: 'bg-[var(--info)] text-[var(--fg-inverse)] hover:opacity-90' },
 }

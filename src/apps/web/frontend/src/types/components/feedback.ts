@@ -1,6 +1,3 @@
-import type * as React from 'react'
-import type { DemoToast } from '../stores/demo'
-
 /** Supported toast notification types. */
 export type ToastType = 'success' | 'error' | 'info'
 
@@ -18,23 +15,3 @@ export interface LoadingSpinnerProps {
   className?: string
   text?: string
 }
-
-export interface ProgressBarProps {
-  value: number
-  max?: number
-  variant?: 'default' | 'running'
-  animated?: boolean
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
-}
-
-export interface TooltipProps {
-  content: React.ReactNode
-  placement?: 'top' | 'bottom' | 'left' | 'right'
-  delay?: number
-  children: React.ReactNode
-  className?: string
-}
-
-/** Internal state for a toast notification. */
-export type ToastState = DemoToast

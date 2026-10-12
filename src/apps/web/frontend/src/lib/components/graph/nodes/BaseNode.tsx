@@ -2,11 +2,10 @@ import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { getNodeMetadata } from '$lib/constants/nodes'
 import { GRAPH_NODE_SIZE } from '$lib/constants/graph'
+import { formatDuration } from '$utils/format'
 import type { HandleConfig } from '$types/node-registry'
 import type { BaseNodeData } from '$types/graph'
 import { NodeContent } from './NodeContent'
-
-export type { BaseNodeData }
 
 const POSITION_MAP = {
   top: Position.Top,
@@ -124,9 +123,7 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
             </span>
           )}
           {duration !== undefined && (
-            <span className="graph-node__duration">
-              {duration < 1000 ? `${duration}ms` : `${(duration / 1000).toFixed(2)}s`}
-            </span>
+            <span className="graph-node__duration">{formatDuration(duration)}</span>
           )}
         </div>
       )}

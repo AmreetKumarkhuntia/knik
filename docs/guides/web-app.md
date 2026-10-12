@@ -35,48 +35,15 @@ src/apps/web/frontend/src/
   main.tsx                 # Entry point
   lib/
     pages/                 # Route-level pages
-      Home.tsx
-      Workflows.tsx
       WorkflowBuilder.tsx
       ExecutionDetail.tsx
-      AllExecutions.tsx
-    sections/              # Domain-specific UI sections
-      audio/               # AudioControls
-      chat/                # ChatPanel, InputPanel
-      effects/             # BackgroundEffects
-      feedback/            # ErrorBoundary, Toast
-      home/                # KeyboardShortcuts, SuggestionCards, WelcomeContainer, WelcomePrompt
-      layout/              # MainLayout, Sidebar, TopBar
-      theme/               # ThemeProvider, ThemeSelector, ThemeToggle
-      workflows/           # WorkflowHub, WorkflowsTable, ExecutionHistory, ScheduleManager, WorkflowBuilder
     components/            # 30+ reusable UI components
       ActionButton, Card, Modal, Table, Pagination, SearchBar,
-      StatusBadge, MetricCard, MarkdownMessage, ExecutionFlowGraph, etc.
+      StatusBadge, MarkdownMessage, ExecutionFlowGraph, etc.
     services/              # API client, streaming, theme, audio
     hooks/                 # useAudio, useChat, useKeyboardShortcuts, useToast
     types/                 # TypeScript type definitions
 ```
-
-### Key Sections
-
-**Chat** (`lib/sections/chat/`)
-
-- ChatPanel: Scrollable message display with glassmorphic effects and animated bubbles
-- InputPanel: Text input with Enter key support, Send button, voice toggle
-
-**Workflows** (`lib/sections/workflows/`)
-
-- WorkflowHub: Workflow dashboard
-- WorkflowsTable: Workflow listing
-- WorkflowBuilder/: Visual node graph editor with Canvas, FloatingControls, NodePropertiesPanel, ConfigurationForm.tsx, WorkflowNavbar
-- ScheduleManager/: Create and manage schedules with ScheduleCard, ScheduleForm, ScheduleList
-- ExecutionHistory/: HistoryTable, ExecutionDetail
-
-**Layout** (`lib/sections/layout/`)
-
-- MainLayout: Page wrapper
-- TopBar: Navigation and actions
-- Sidebar: History integration with backend API
 
 ### Services
 

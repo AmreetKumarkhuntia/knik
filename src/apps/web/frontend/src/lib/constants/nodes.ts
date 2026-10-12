@@ -7,11 +7,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Entry point',
     icon: 'play_arrow',
     colors: {
-      primary: 'green',
       iconBg: 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)]',
       iconText: 'text-[var(--success)]',
-      border: 'border-[var(--border-2)]',
-      hoverBorder: 'hover:border-[var(--border-3)]',
     },
     handles: {
       inputs: [],
@@ -29,11 +26,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Completion',
     icon: 'flag',
     colors: {
-      primary: 'neutral',
       iconBg: 'bg-surface-2',
       iconText: 'text-fg-3',
-      border: 'border-[var(--border-2)]',
-      hoverBorder: 'hover:border-[var(--border-3)]',
     },
     handles: {
       inputs: [{ position: 'left', color: 'var(--fg-3)' }],
@@ -51,11 +45,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Code step',
     icon: 'code',
     colors: {
-      primary: 'neutral',
       iconBg: 'bg-surface-2',
       iconText: 'text-fg-3',
-      border: 'border-[var(--border-2)]',
-      hoverBorder: 'hover:border-[var(--border-3)]',
     },
     handles: {
       inputs: [{ position: 'left', color: 'var(--fg-3)' }],
@@ -79,11 +70,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Branch',
     icon: 'call_split',
     colors: {
-      primary: 'orange',
       iconBg: 'bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]',
       iconText: 'text-[var(--warning)]',
-      border: 'border-[var(--border-2)]',
-      hoverBorder: 'hover:border-[var(--border-3)]',
     },
     handles: {
       inputs: [{ position: 'left', color: 'var(--warning)' }],
@@ -127,11 +115,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Merge paths',
     icon: 'call_merge',
     colors: {
-      primary: 'blue',
       iconBg: 'bg-[color-mix(in_srgb,var(--info)_10%,transparent)]',
       iconText: 'text-[var(--info)]',
-      border: 'border-[var(--border-2)]',
-      hoverBorder: 'hover:border-[var(--border-3)]',
     },
     handles: {
       inputs: [
@@ -161,11 +146,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'AI model',
     icon: 'psychology',
     colors: {
-      primary: 'teal',
       iconBg: 'bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]',
       iconText: 'text-[var(--primary)]',
-      border: 'border-[var(--border-2)]',
-      hoverBorder: 'hover:border-[var(--border-3)]',
     },
     handles: {
       inputs: [{ position: 'left', id: 'input', label: 'Prompt', color: 'var(--primary)' }],

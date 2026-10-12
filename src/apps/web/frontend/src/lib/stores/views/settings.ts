@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useSettingsStore } from '../settings/hooks'
 import { useCatalog } from '../catalogs/hooks'
+import { modelOptions } from '../catalogs/selectors'
 import { useCredentialsStore } from '../credentials/hooks'
-import { EMPTY_SETTINGS_SCOPE } from '../settings/selectors'
+import { EMPTY_SETTINGS_SCOPE, accountInitials } from '../settings/selectors'
 import { EMPTY_CREDENTIALS_SCOPE } from '../credentials/selectors'
 export function useProfileView(scopeId: string) {
   const settings = useSettingsStore(s => s.settings)
@@ -13,10 +14,8 @@ export function useProfileView(scopeId: string) {
     dirty:
       scope.displayName !== (settings.display_name ?? '') ||
       scope.username !== (settings.username ?? ''),
-    modelOptions: useMemo(
-      () => models.map(model => ({ value: model.id, label: model.label })),
-      [models]
-    ),
+    initials: accountInitials(settings.display_name ?? ''),
+    modelOptions: useMemo(() => modelOptions(models), [models]),
   }
 }
 export function useProvidersView() {
@@ -42,17 +41,10 @@ export function useProvidersView() {
   }
 }
 export function useVoiceView() {
-  const voices = useCatalog('voices'),
-    voiceId = useSettingsStore(s => s.settings.voice)
-  return { voices, selected: voices.find(voice => voice.id === voiceId) }
+  return { voices: useCatalog('voices') }
 }
 export function useCredentialsView(scopeId: string) {
   const keys = useCredentialsStore(s => s.apiKeys),
-    scenarios = useCredentialsStore(s => s.keyScenarios),
     scope = useCredentialsStore(s => s.scopes[scopeId] ?? EMPTY_CREDENTIALS_SCOPE)
-  return {
-    keys,
-    available: scenarios.some(scenario => !keys.some(key => key.id === scenario.id)),
-    deleting: keys.find(key => key.id === scope.deletingId),
-  }
+  return { keys, deleting: keys.find(key => key.id === scope.deletingId) }
 }

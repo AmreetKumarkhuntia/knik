@@ -13,7 +13,7 @@ export function workflowDefinitionToGraph(
 ): Graph<NodeDefinition> {
   const { mode = 'edit', executionData } = options
 
-  const graph = new Graph<NodeDefinition>({ directed: true, weighted: false })
+  const graph = new Graph<NodeDefinition>()
 
   Object.entries(definition.nodes).forEach(([nodeId, nodeDef]) => {
     const execData = executionData?.get(nodeId)
@@ -84,11 +84,6 @@ export function validateWorkflowGraph(graph: Graph<unknown>): WorkflowValidation
 
   if (graph.hasCycle()) {
     errors.push('Workflow contains a cycle')
-  }
-
-  const topSort = graph.topologicalSort()
-  if (!topSort) {
-    errors.push('Cannot determine execution order (workflow may contain cycles)')
   }
 
   const nodes = graph.getNodes()

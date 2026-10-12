@@ -2,7 +2,11 @@
  * jsdom has no window.matchMedia. Importing this module installs a width-driven one that evaluates
  * (min-width) and (max-width) queries against window.innerWidth and emits 'change' when a resize
  * event flips a query, so tests keep resizing through innerWidth. Other media features never match.
+ * resizeTo(width) drives it and every test restores the original width afterwards.
  */
+import { act } from '@testing-library/react'
+import { afterEach } from 'vitest'
+
 type ChangeListener = (event: MediaQueryListEvent) => void
 
 const subscriptions: { query: string; listener: ChangeListener; matches: boolean }[] = []
@@ -58,3 +62,16 @@ Object.defineProperty(window, 'matchMedia', {
 export function activeMediaSubscriptions() {
   return subscriptions.length
 }
+
+const initialWidth = window.innerWidth
+
+export function resizeTo(width: number) {
+  act(() => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
+    window.dispatchEvent(new Event('resize'))
+  })
+}
+
+afterEach(() => {
+  if (window.innerWidth !== initialWidth) resizeTo(initialWidth)
+})

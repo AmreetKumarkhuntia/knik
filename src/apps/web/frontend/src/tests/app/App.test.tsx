@@ -4,7 +4,7 @@ import { useReducedMotionConfig } from 'framer-motion'
 import App from '../../App'
 import * as pages from '$pages'
 
-vi.mock('$lib/pages/Home', () => ({
+vi.mock('$widgets/chat/ChatWidget', () => ({
   default: function MotionProbe() {
     return <p>{useReducedMotionConfig() ? 'Motion reduced' : 'Motion full'}</p>
   },

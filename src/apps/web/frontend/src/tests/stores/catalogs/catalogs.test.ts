@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { StoresProvider } from '$stores'
 import { useSettingsStore } from '$stores/settings'
-import { useCredentialsStore, useCredentialsScope } from '$stores/credentials'
+import { useCredentialsStore } from '$stores/credentials'
 import { useCatalog } from '$stores/catalogs'
 import { useProvidersView } from '$stores/views'
 import type { DemoSource } from '$types/demo-session'
@@ -11,7 +11,7 @@ import type { DemoSource } from '$types/demo-session'
 const source: DemoSource = {
   providers: [{ id: 'custom-provider', name: 'Custom Provider' }],
   models: [{ id: 'custom-model', label: 'Custom Model', vendor: 'Custom Provider' }],
-  voices: [{ id: 'custom-voice', name: 'Custom Voice', audioSrc: '/assets/voice.wav' }],
+  voices: [{ id: 'custom-voice', name: 'Custom Voice' }],
   tools: [{ name: 'Custom Tools', category: 'Custom', count: 3, enabled: true }],
   apiKeys: [
     {
@@ -23,15 +23,6 @@ const source: DemoSource = {
       last_used_at: null,
     },
   ],
-  keyScenarios: [
-    {
-      id: 'new-key',
-      label: 'New Key',
-      key_prefix: 'demo',
-      scopes: ['read'],
-      key: 'supplied-demo-value',
-    },
-  ],
 }
 
 function useCatalogs() {
@@ -41,14 +32,8 @@ function useCatalogs() {
   const { tools } = useProvidersView()
   const apiKeys = useCredentialsStore(state => state.apiKeys)
   const toggleTool = useSettingsStore(session => session.toggleTool)
-  const create = useCredentialsStore(session => session.createDemoKey)
-  const scope = useCredentialsScope()
-  const createKey = (label: string) => {
-    scope.patch({ label })
-    return create(scope.scopeId)
-  }
   const deleteKey = useCredentialsStore(session => session.deleteKey)
-  return { providers, models, voices, tools, apiKeys, toggleTool, createKey, deleteKey }
+  return { providers, models, voices, tools, apiKeys, toggleTool, deleteKey }
 }
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -63,7 +48,6 @@ describe('store-owned settings catalogs', () => {
     expect(result.current.tools).toEqual(source.tools)
     expect(result.current.apiKeys).toEqual(source.apiKeys)
     expect(result.current.models[0].label).toBe('Custom Model')
-    expect(result.current.voices[0].audioSrc).toBe('/assets/voice.wav')
   })
 
   it('subscribes to local tool and key updates without mutating supplied fixtures', () => {
@@ -71,12 +55,8 @@ describe('store-owned settings catalogs', () => {
     const { result } = renderHook(useCatalogs, { wrapper })
     act(() => result.current.toggleTool('Custom Tools', false))
     expect(result.current.tools[0].enabled).toBe(false)
-    act(() => {
-      expect(result.current.createKey('New Key')).toMatchObject({ ok: true })
-    })
-    expect(result.current.apiKeys.map(key => key.id)).toEqual(['sample-key', 'new-key'])
     act(() => result.current.deleteKey('sample-key'))
-    expect(result.current.apiKeys.map(key => key.id)).toEqual(['new-key'])
+    expect(result.current.apiKeys).toEqual([])
     expect(source).toEqual(original)
   })
 
@@ -123,7 +103,6 @@ describe('store-owned settings catalogs', () => {
     })
     act(() => {
       populated.result.current.toggleTool('Custom Tools', false)
-      populated.result.current.createKey('New Key')
       populated.result.current.deleteKey('sample-key')
     })
     expect(fetcher).not.toHaveBeenCalled()

@@ -4,9 +4,7 @@ import HistoryTable from '$components/workflows/HistoryTable'
 
 describe('HistoryTable', () => {
   it('draws the empty-state icon from the Material Symbols font rather than an SVG icon set', () => {
-    const { container } = render(
-      <HistoryTable executions={[]} loading={false} onViewDetail={vi.fn()} />
-    )
+    const { container } = render(<HistoryTable executions={[]} onViewDetail={vi.fn()} />)
     expect(screen.getByText('No execution history yet')).toBeInTheDocument()
     const glyph = container.querySelector('.material-symbols-outlined')
     expect(glyph).toHaveTextContent('history')
@@ -27,7 +25,6 @@ describe('HistoryTable', () => {
             durationMs: 1200,
           },
         ]}
-        loading={false}
         onViewDetail={vi.fn()}
       />
     )

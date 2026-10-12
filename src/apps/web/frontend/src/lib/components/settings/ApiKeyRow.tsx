@@ -1,7 +1,6 @@
 import Button from '$components/buttons/Button'
 import Chip from '$components/display/Chip'
 import MS from '$components/display/MS'
-import IconTile from '$components/display/IconTile'
 import { formatDate } from '$utils/format'
 import type { ApiKeyRowProps } from '$types/widgets/settings'
 
@@ -11,7 +10,9 @@ export default function ApiKeyRow({ apiKey, last, onDelete }: ApiKeyRowProps) {
       className="flex flex-wrap items-center gap-3.5 py-3"
       style={{ borderBottom: last ? 'none' : '1px solid var(--border-1)' }}
     >
-      <IconTile bg="var(--bg-surface-3)" color="var(--fg-3)" icon={<MS name="key" size={17} />} />
+      <div className="flex items-center justify-center flex-shrink-0 w-[34px] h-[34px] rounded-[var(--r-btn)] bg-[var(--bg-surface-3)] text-[var(--fg-3)]">
+        <MS name="key" size={17} />
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-h4 text-[var(--fg-1)]">{apiKey.label}</span>

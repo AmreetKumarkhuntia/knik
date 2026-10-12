@@ -9,7 +9,6 @@ This document describes the path aliases configured for the Knik frontend to sim
 | `$types`      | `src/types/*`          | TypeScript type definitions                          | ~97 files |
 | `$lib`        | `src/lib/*`            | Library utilities, components, hooks                 | ~42 files |
 | `$components` | `src/lib/components/*` | Reusable UI components                               | ~36 files |
-| `$sections`   | `src/lib/sections/*`   | App-specific section components                      | ~13 files |
 | `$services`   | `src/services/*`       | API services and clients                             | ~7 files  |
 | `$hooks`      | `src/lib/hooks/*`      | Custom React hooks                                   | ~4 files  |
 | `$store`      | `src/store/*`          | Zustand state management (audio, chat, toast slices) | ~4 files  |
@@ -17,9 +16,8 @@ This document describes the path aliases configured for the Knik frontend to sim
 | `$common`     | `src/lib/components/*` | Alias for components (same as above)                 | unused    |
 | `$utils`      | `src/lib/utils/*`      | Utility functions                                    | unused    |
 | `$constants`  | `src/lib/constants/*`  | Constants and config values                          | unused    |
-| `$assets`     | `src/assets/*`         | Static assets (images, fonts, etc.)                  | unused    |
 
-> **Note:** `$common`, `$utils`, `$constants`, and `$assets` are configured but currently unused in the codebase. `$utils` and `$constants` are redundant with `$lib/utils` and `$lib/constants` which are used instead.
+> **Note:** `$common`, `$utils`, and `$constants` are configured but currently unused in the codebase. `$utils` and `$constants` are redundant with `$lib/utils` and `$lib/constants` which are used instead.
 
 ## Usage Examples
 
@@ -52,11 +50,6 @@ import LoadingSpinner from "$components/LoadingSpinner";
 import { Table } from "$components/Table";
 import Modal from "$components/Modal";
 
-// Sections (app-specific UI)
-import { ChatPanel } from "$sections/chat/ChatPanel";
-import { MainLayout } from "$sections/layout/MainLayout";
-import { ThemeProvider } from "$sections/theme";
-
 // Library utilities and sub-paths
 import { formatDuration } from "$lib/utils/format";
 import { NODE_TYPES } from "$lib/constants/nodes";
@@ -88,14 +81,12 @@ Path aliases are defined in `compilerOptions.paths` with the `/*` glob suffix:
       "$services/*": ["./src/services/*"],
       "$lib/*": ["./src/lib/*"],
       "$components/*": ["./src/lib/components/*"],
-      "$sections/*": ["./src/lib/sections/*"],
       "$pages/*": ["./src/lib/pages/*"],
       "$common/*": ["./src/lib/components/*"],
       "$utils/*": ["./src/lib/utils/*"],
       "$constants/*": ["./src/lib/constants/*"],
       "$hooks/*": ["./src/lib/hooks/*"],
-      "$store/*": ["./src/store/*"],
-      "$assets/*": ["./src/assets/*"]
+      "$store/*": ["./src/store/*"]
     }
   }
 }
@@ -112,11 +103,9 @@ resolve: {
     "$services": path.resolve(__dirname, "./src/services"),
     "$lib": path.resolve(__dirname, "./src/lib"),
     "$components": path.resolve(__dirname, "./src/lib/components"),
-    "$sections": path.resolve(__dirname, "./src/lib/sections"),
     "$pages": path.resolve(__dirname, "./src/lib/pages"),
     "$hooks": path.resolve(__dirname, "./src/lib/hooks"),
     "$store": path.resolve(__dirname, "./src/store"),
-    "$assets": path.resolve(__dirname, "./src/assets"),
     "$common": path.resolve(__dirname, "./src/lib/components"),
     "$utils": path.resolve(__dirname, "./src/lib/utils"),
     "$constants": path.resolve(__dirname, "./src/lib/constants"),

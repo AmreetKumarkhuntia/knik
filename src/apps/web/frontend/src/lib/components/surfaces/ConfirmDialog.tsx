@@ -6,33 +6,15 @@ export default function ConfirmDialog({
   title,
   message,
   confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  variant = 'danger',
   onConfirm,
   onCancel,
-  loading,
 }: ConfirmDialogProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={() => {
-        if (!loading) onCancel()
-      }}
-      title={title}
-      size="sm"
-    >
+    <Modal isOpen={isOpen} onClose={onCancel} title={title} size="sm">
       <p className="text-fg-2 mb-6">{message}</p>
       <div className="flex justify-end gap-3">
-        <Button disabled={loading} onClick={onCancel}>
-          {cancelLabel}
-        </Button>
-        <Button
-          variant={variant === 'info' ? 'primary' : variant}
-          loading={loading}
-          onClick={() => {
-            void onConfirm()
-          }}
-        >
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button variant="danger" onClick={() => void onConfirm()}>
           {confirmLabel}
         </Button>
       </div>

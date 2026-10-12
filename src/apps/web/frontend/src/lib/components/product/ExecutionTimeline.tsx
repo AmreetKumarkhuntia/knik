@@ -1,23 +1,10 @@
 import CodeBlock from '../chat/CodeBlock'
 import type { ExecutionTimelineProps } from '$types/components'
 import { getNodeIcon } from '$lib/constants/nodes'
+import { formatDuration } from '$utils/format'
 
 /** Vertical timeline displaying execution step details. */
-export default function ExecutionTimeline({
-  timeline,
-  loading = false,
-  onCopy,
-}: ExecutionTimelineProps) {
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="knik-shimmer border border-border rounded-lg p-4 h-20" />
-        ))}
-      </div>
-    )
-  }
-
+export default function ExecutionTimeline({ timeline, onCopy }: ExecutionTimelineProps) {
   if (!timeline || timeline.length === 0) {
     return (
       <div className="bg-surface border border-border rounded-lg p-8 text-center">
@@ -58,9 +45,7 @@ export default function ExecutionTimeline({
                 <span className="text-caption capitalize text-secondary">{step.status}</span>
                 <span className="text-caption text-fg-3 break-all">{step.node_type}</span>
               </div>
-              <span className="text-caption text-fg-4">
-                {step.duration_ms !== undefined ? `${step.duration_ms}ms` : 'N/A'}
-              </span>
+              <span className="text-caption text-fg-4">{formatDuration(step.duration_ms)}</span>
             </div>
 
             {step.error_message && (

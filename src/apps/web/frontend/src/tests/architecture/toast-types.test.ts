@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { ToastState, ToastType } from '$types/components'
+import type { ToastType } from '$types/components'
 import type { DemoToast } from '$types/demo-session'
 import type { FeedbackState } from '$types/stores/feedback'
 
@@ -21,7 +21,6 @@ describe('toast types', () => {
 
   it('shares one toast record between the store and the toast views', () => {
     expectTypeOf<DemoToast['type']>().toEqualTypeOf<ToastType>()
-    expectTypeOf<ToastState>().toEqualTypeOf<DemoToast>()
     expectTypeOf<FeedbackState['toasts']>().toEqualTypeOf<DemoToast[]>()
   })
 })

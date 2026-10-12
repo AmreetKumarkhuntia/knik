@@ -33,14 +33,12 @@ export default function AllExecutionsWidget() {
           onStatusChange={setStatus}
           onClearFilters={clear}
           hasActiveFilters={hasActiveFilters}
-          loading={false}
           shownCount={executions.length}
           totalCount={totalCount}
         />
         <div>
           <HistoryTable
             executions={executions}
-            loading={false}
             onViewDetail={execution => void navigate(ROUTE_PATHS.executionDetail(execution.id))}
             maxHeight="none"
           />

@@ -6,7 +6,7 @@ import { useFeedbackStore } from '$stores/feedback'
  * toast. navigator.clipboard only exists in secure contexts (https or localhost), so its absence is
  * reported instead of throwing.
  */
-export function useCopyToClipboard(successMessage = 'Copied to clipboard.') {
+export function useCopyToClipboard() {
   const addToast = useFeedbackStore(state => state.addToast)
   return useCallback(
     (text: string) => {
@@ -16,10 +16,10 @@ export function useCopyToClipboard(successMessage = 'Copied to clipboard.') {
         return
       }
       void clipboard.writeText(text).then(
-        () => addToast(successMessage, 'success'),
+        () => addToast('Copied to clipboard.', 'success'),
         () => addToast('Could not copy to the clipboard.', 'error')
       )
     },
-    [addToast, successMessage]
+    [addToast]
   )
 }

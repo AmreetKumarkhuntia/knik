@@ -35,5 +35,4 @@ export const demoSettings = {
       last_used_at: null,
     },
   ],
-  keyScenarios: [],
 } satisfies DemoSource

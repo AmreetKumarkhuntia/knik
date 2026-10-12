@@ -5,7 +5,7 @@ import { Graph } from '../structures/Graph'
 const BRANCH_CONDITIONS = new Set(['true', 'false'])
 
 export function canvasNodesToGraph<T = unknown>(nodes: Node[], edges: Edge[]): Graph<T> {
-  const graph = new Graph<T>({ directed: true, weighted: false })
+  const graph = new Graph<T>()
   const branchNodeIds = new Set(
     nodes.filter(node => node.type === 'ConditionalBranchNode').map(node => node.id)
   )
@@ -21,8 +21,7 @@ export function canvasNodesToGraph<T = unknown>(nodes: Node[], edges: Edge[]): G
     const sourceId = edge.source
     const targetId = edge.target
 
-    const weight = edge.data?.weight as number | undefined
-    graph.addEdge(sourceId, targetId, weight)
+    graph.addEdge(sourceId, targetId)
 
     if (
       edge.sourceHandle &&

@@ -1,21 +1,13 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Position, type NodeTypes, type EdgeTypes } from '@xyflow/react'
+import { Position, type EdgeTypes } from '@xyflow/react'
 
 import type { ExecutionFlowGraphProps } from '$types/components'
 import { workflowDefinitionToGraph, type ExecutionNodeData } from '$lib/data-structures'
 import LoadingSpinner from '../feedback/LoadingSpinner'
-import { BaseNode, FlowEdge, FlowCanvas } from '../graph'
+import { FlowEdge, FlowCanvas } from '../graph'
+import { nodeTypes } from '../graph/nodeTypes'
 import { GRAPH_NODE_SIZE } from '$lib/constants/graph'
 import { getNodeMetadata } from '$lib/constants/nodes'
-
-const nodeTypes: NodeTypes = {
-  FunctionExecutionNode: BaseNode,
-  ConditionalBranchNode: BaseNode,
-  FlowMergeNode: BaseNode,
-  AIExecutionNode: BaseNode,
-  StartNode: BaseNode,
-  EndNode: BaseNode,
-}
 
 const edgeTypes: EdgeTypes = {
   default: FlowEdge,
@@ -61,7 +53,6 @@ export default function ExecutionFlowGraph({
       })
 
       const canvas = graph.toCanvasNodes({
-        layout: 'dag',
         direction,
         nodeSpacingX: 304,
         nodeSpacingY: 144,

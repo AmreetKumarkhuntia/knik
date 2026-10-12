@@ -9,7 +9,6 @@ export function createCatalogStore(seed: DemoSnapshot) {
       providers: seed.providers,
       voices: seed.voices,
       tools: seed.tools,
-      toolDefinitions: seed.toolDefinitions,
       suggestions: seed.suggestions,
     })
   )

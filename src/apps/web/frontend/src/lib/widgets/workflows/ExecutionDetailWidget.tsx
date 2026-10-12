@@ -97,7 +97,7 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
             tabIndex={0}
           >
             {tab === 'timeline' ? (
-              <ExecutionTimeline timeline={timeline} loading={false} onCopy={handleCopy} />
+              <ExecutionTimeline timeline={timeline} onCopy={handleCopy} />
             ) : (
               <JsonViewer
                 data={tab === 'inputs' ? execution.inputs : execution.outputs}

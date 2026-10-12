@@ -7,7 +7,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     children,
     label,
     icon,
-    endIcon,
     variant = 'secondary',
     size = 'md',
     loading = false,
@@ -37,11 +36,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         )
       )}
       {children ?? label}
-      {endIcon && (
-        <span aria-hidden="true" className="inline-flex">
-          {endIcon}
-        </span>
-      )}
     </button>
   )
 })

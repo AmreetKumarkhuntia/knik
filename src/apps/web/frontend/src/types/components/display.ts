@@ -11,9 +11,6 @@ export interface StatusBadgeProps {
 
 /** Column definition for a data table. */
 export interface TableColumn<T> {
-  id?: string
-  align?: 'left' | 'center' | 'right'
-  className?: string
   key: keyof T | string
   label: string
   render?: (value: unknown, row: T) => ReactNode
@@ -24,12 +21,7 @@ export interface TableProps<T = Record<string, unknown>> {
   columns: TableColumn<T>[]
   data: T[]
   getRowKey: (row: T) => React.Key
-  density?: 'compact' | 'comfortable'
-  error?: ReactNode
-  onRowClick?: (row: T) => void
-  loading?: boolean
   empty?: ReactNode
-  className?: string
   maxHeight?: string
   stickyHeader?: boolean
 }
@@ -39,23 +31,8 @@ export interface SectionHeaderProps extends React.HTMLAttributes<HTMLDivElement>
   level?: 'page' | 'section'
   subtitle?: string
   actions?: ReactNode
-  right?: ReactNode
   title: string
-  actionText?: string
-  onActionClick?: () => void
-  badge?: string
   className?: string
-}
-
-/** Props for a user profile display. Identity is always supplied by the caller. */
-export interface UserProfileProps {
-  avatar: string
-  name: string
-  avatarColor?: string
-  account?: string
-  displayOnly?: boolean
-  showBadge?: boolean
-  badgeType?: 'pro' | 'basic' | 'admin'
 }
 
 /** Props for an empty state placeholder. */
@@ -65,15 +42,6 @@ export interface EmptyStateProps {
   description?: string
   action?: ReactNode
   className?: string
-}
-
-/** Props for a page header with breadcrumbs. */
-export interface PageHeaderProps {
-  breadcrumbs: string[]
-  rightContent?: ReactNode
-  showBackButton?: boolean
-  onBackClick?: () => void
-  sticky?: boolean
 }
 
 export interface AvatarProps {
@@ -92,8 +60,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   label: React.ReactNode
-  variant?: 'default' | 'tag' | 'voice' | 'lang' | 'team' | 'input' | 'kbd'
-  icon?: React.ReactNode
+  variant?: 'default' | 'tag'
   onRemove?: () => void
   className?: string
 }

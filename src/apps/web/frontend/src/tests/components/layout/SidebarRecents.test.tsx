@@ -27,7 +27,6 @@ describe('SidebarRecents', () => {
     render(
       <SidebarRecents
         conversations={[first, second]}
-        loading={false}
         activeConversationId="second"
         onSelect={() => {}}
         onRename={onRename}
@@ -53,7 +52,6 @@ describe('SidebarRecents', () => {
     render(
       <SidebarRecents
         conversations={[conversation('first', 'Trip planning')]}
-        loading={false}
         onSelect={() => {}}
         onRename={() => {}}
         onDelete={() => {}}

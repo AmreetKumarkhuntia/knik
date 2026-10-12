@@ -110,13 +110,12 @@ describe('directed graph layout', () => {
   })
 
   it('passes directional spacing through the canvas adapter without changing graph records', () => {
-    const graph = new Graph({ directed: true })
+    const graph = new Graph()
     graph.addNode({ label: 'Start' }, 'start')
     graph.addNode({ label: 'End' }, 'end')
     graph.addEdge('start', 'end')
-    const initial = graph.toCanvasNodes({ layout: 'dag', ...size })
+    const initial = graph.toCanvasNodes(size)
     const vertical = graph.toCanvasNodes({
-      layout: 'dag',
       ...size,
       direction: 'vertical',
       nodeSpacingX: 304,
@@ -127,6 +126,6 @@ describe('directed graph layout', () => {
       { x: 450, y: 388 },
     ])
     expect(vertical.edges).toEqual(initial.edges)
-    expect(graph.toCanvasNodes({ layout: 'dag', ...size })).toEqual(initial)
+    expect(graph.toCanvasNodes(size)).toEqual(initial)
   })
 })

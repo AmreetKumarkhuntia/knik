@@ -59,9 +59,6 @@ export interface WorkflowConnection {
   condition?: string
 }
 
-/** Alias for a workflow connection. */
-export type Connection = WorkflowConnection
-
 /** The nodes and connections that define a workflow. */
 export interface WorkflowDefinition {
   nodes: Record<string, NodeDefinition>

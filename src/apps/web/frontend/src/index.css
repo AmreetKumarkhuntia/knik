@@ -28,7 +28,6 @@ body,
   background: var(--bg-base);
   color: var(--fg-2);
   font-family: var(--font-sans);
-  font-size: var(--fs-body);
   line-height: var(--lh-base);
   font-feature-settings: 'ss01', 'cv11', 'calt';
   -webkit-font-smoothing: antialiased;
@@ -62,22 +61,6 @@ body,
   background-color: var(--bg-canvas);
 }
 
-/* -----------------------------------------------------------------
-   Chat layout
-   ----------------------------------------------------------------- */
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.chat-scroll-area {
-  overflow-y: auto;
-  will-change: scroll-position;
-  contain: strict;
-}
-
 /* =================================================================
    Semantic utility classes
    Defined outside @layer to bypass Tailwind purge.
@@ -87,300 +70,40 @@ body,
 
 /* -- text color -- */
 .text-foreground {
-  color: var(--color-text);
-}
-.text-foreground\/90 {
-  color: color-mix(in srgb, var(--color-text) 90%, transparent);
-}
-.text-foreground\/80 {
-  color: color-mix(in srgb, var(--color-text) 80%, transparent);
-}
-.text-foreground\/70 {
-  color: color-mix(in srgb, var(--color-text) 70%, transparent);
-}
-.text-foreground\/60 {
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-}
-.text-foreground\/50 {
-  color: color-mix(in srgb, var(--color-text) 50%, transparent);
-}
-
-.text-text {
-  color: var(--color-text);
+  color: var(--fg-1);
 }
 .text-secondary {
-  color: var(--color-text-secondary);
-}
-.text-muted {
-  color: var(--color-text-muted);
+  color: var(--fg-3);
 }
 .text-subtle {
-  color: var(--color-text-subtle);
-}
-.text-inverse {
-  color: var(--color-text-inverse);
-}
-.text-inverse\/80 {
-  color: color-mix(in srgb, var(--color-text-inverse) 80%, transparent);
+  color: var(--fg-2);
 }
 .text-textSecondary {
-  color: var(--color-text-secondary);
-}
-.text-textMuted {
-  color: var(--color-text-muted);
-}
-.text-textSubtle {
-  color: var(--color-text-subtle);
-}
-.text-textInverse {
-  color: var(--color-text-inverse);
-}
-
-.text-primary {
-  color: var(--color-primary);
-}
-.text-accent {
-  color: var(--color-accent);
+  color: var(--fg-3);
 }
 .text-success {
-  color: var(--color-success);
+  color: var(--success);
 }
 .text-error {
-  color: var(--color-error);
-}
-.text-warning {
-  color: var(--color-warning);
+  color: var(--danger);
 }
 .text-info {
-  color: var(--color-info);
-}
-
-/* -- hover text -- */
-.hover\:text-foreground:hover {
-  color: var(--color-text);
+  color: var(--info);
 }
 .hover\:text-text:hover {
-  color: var(--color-text);
-}
-.hover\:text-primary:hover {
-  color: var(--color-primary);
-}
-.hover\:text-subtle:hover {
-  color: var(--color-text-subtle);
-}
-.hover\:text-inverse:hover {
-  color: var(--color-text-inverse);
-}
-.hover\:text-error\/80:hover {
-  color: color-mix(in srgb, var(--color-error) 80%, transparent);
-}
-.hover\:text-info\/80:hover {
-  color: color-mix(in srgb, var(--color-info) 80%, transparent);
+  color: var(--fg-1);
 }
 
 /* -- background -- */
 .bg-background {
-  background-color: var(--color-background);
-}
-.bg-surface {
-  background-color: var(--color-surface);
+  background-color: var(--bg-base);
 }
 .bg-surface\/50 {
-  background-color: color-mix(in srgb, var(--color-surface) 50%, transparent);
-}
-.bg-surfaceGlass {
-  background-color: var(--color-surface-glass);
-}
-.bg-surfaceRaised {
-  background-color: var(--color-surface-raised);
-}
-.bg-surfaceRaised\/90 {
-  background-color: color-mix(in srgb, var(--color-surface-raised) 90%, transparent);
-}
-.bg-surfaceRaised\/60 {
-  background-color: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
-}
-.bg-canvas {
-  background-color: var(--color-canvas);
-}
-.bg-canvas\/60 {
-  background-color: color-mix(in srgb, var(--color-canvas) 60%, transparent);
+  background-color: color-mix(in srgb, var(--bg-surface) 50%, transparent);
 }
 .bg-code {
-  background-color: var(--color-code);
+  background-color: var(--bg-code);
 }
-.bg-border {
-  background-color: var(--color-border);
-}
-
 .bg-primary {
-  background-color: var(--color-primary);
-}
-.bg-primary\/10 {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-.bg-primary\/20 {
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-}
-.bg-primary\/60 {
-  background-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
-}
-.bg-accent {
-  background-color: var(--color-accent);
-}
-
-.bg-success {
-  background-color: var(--color-success);
-}
-.bg-success\/20 {
-  background-color: color-mix(in srgb, var(--color-success) 20%, transparent);
-}
-.bg-error {
-  background-color: var(--color-error);
-}
-.bg-error\/10 {
-  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
-}
-.bg-error\/20 {
-  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
-}
-.bg-warning {
-  background-color: var(--color-warning);
-}
-.bg-info {
-  background-color: var(--color-info);
-}
-.bg-info\/20 {
-  background-color: color-mix(in srgb, var(--color-info) 20%, transparent);
-}
-
-.bg-foreground\/10 {
-  background-color: color-mix(in srgb, var(--color-text) 10%, transparent);
-}
-.bg-foreground\/15 {
-  background-color: color-mix(in srgb, var(--color-text) 15%, transparent);
-}
-.bg-foreground\/80 {
-  background-color: color-mix(in srgb, var(--color-text) 80%, transparent);
-}
-.bg-text {
-  background-color: var(--color-text);
-}
-
-/* -- hover background -- */
-.hover\:bg-surface:hover {
-  background-color: var(--color-surface);
-}
-.hover\:bg-surfaceRaised:hover {
-  background-color: var(--color-surface-raised);
-}
-.hover\:bg-border:hover {
-  background-color: var(--color-border);
-}
-.hover\:bg-primary\/80:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 80%, transparent);
-}
-.hover\:bg-primary\/90:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 90%, transparent);
-}
-.hover\:bg-success\/80:hover {
-  background-color: color-mix(in srgb, var(--color-success) 80%, transparent);
-}
-.hover\:bg-warning\/80:hover {
-  background-color: color-mix(in srgb, var(--color-warning) 80%, transparent);
-}
-.hover\:bg-error\/10:hover {
-  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
-}
-.hover\:bg-error\/80:hover {
-  background-color: color-mix(in srgb, var(--color-error) 80%, transparent);
-}
-.hover\:bg-foreground\/15:hover {
-  background-color: color-mix(in srgb, var(--color-text) 15%, transparent);
-}
-
-/* -- border -- */
-.border-border {
-  border-color: var(--color-border);
-}
-.border-borderLight {
-  border-color: var(--color-border-light);
-}
-.border-foreground {
-  border-color: var(--color-text);
-}
-.border-foreground\/30 {
-  border-color: color-mix(in srgb, var(--color-text) 30%, transparent);
-}
-.border-text {
-  border-color: var(--color-text);
-}
-.border-primary {
-  border-color: var(--color-primary);
-}
-.border-success\/60 {
-  border-color: color-mix(in srgb, var(--color-success) 60%, transparent);
-}
-.border-error {
-  border-color: var(--color-error);
-}
-.border-error\/20 {
-  border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
-}
-.border-error\/30 {
-  border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
-}
-.border-error\/50 {
-  border-color: color-mix(in srgb, var(--color-error) 50%, transparent);
-}
-.border-error\/60 {
-  border-color: color-mix(in srgb, var(--color-error) 60%, transparent);
-}
-.border-info\/60 {
-  border-color: color-mix(in srgb, var(--color-info) 60%, transparent);
-}
-
-.border-t-foreground {
-  border-top-color: var(--color-text);
-}
-.border-b-foreground {
-  border-bottom-color: var(--color-text);
-}
-.border-l-foreground {
-  border-left-color: var(--color-text);
-}
-.border-r-foreground {
-  border-right-color: var(--color-text);
-}
-
-/* -- hover border -- */
-.hover\:border-primary:hover {
-  border-color: var(--color-primary);
-}
-.hover\:border-borderLight:hover {
-  border-color: var(--color-border-light);
-}
-
-/* -- divide -- */
-.divide-border > :not([hidden]) ~ :not([hidden]) {
-  border-color: var(--color-border);
-}
-
-/* -- placeholder -- */
-.placeholder\:text-muted::placeholder {
-  color: var(--color-text-muted);
-}
-.placeholder\:text-foreground\/40::placeholder {
-  color: color-mix(in srgb, var(--color-text) 40%, transparent);
-}
-
-/* -- focus -- */
-.focus\:ring-primary:focus {
-  --tw-ring-color: var(--color-primary);
-}
-.focus\:ring-primary\/30:focus {
-  --tw-ring-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
-}
-.focus\:border-primary\/60:focus {
-  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background-color: var(--primary);
 }

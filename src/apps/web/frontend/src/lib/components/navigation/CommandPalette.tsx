@@ -31,7 +31,6 @@ function CommandList({
         aria-autocomplete="list"
         aria-activedescendant={items.length ? optionId(active) : undefined}
         value={query}
-        density="compact"
         placeholder="Type a command or search…"
         onChange={event => {
           onQueryChange(event.target.value)

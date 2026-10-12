@@ -1,7 +1,7 @@
 import { forwardRef, useId } from 'react'
 import type { InputProps } from '$types/components'
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { error, fullWidth = true, density = 'compact', className = '', ...props },
+  { error, fullWidth = true, className = '', ...props },
   ref
 ) {
   const errorId = useId()
@@ -9,7 +9,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <div className={fullWidth ? 'w-full' : ''}>
       <input
         ref={ref}
-        className={`knik-input ${fullWidth ? 'w-full' : ''} ${density === 'compact' ? 'px-3 py-1.5' : 'px-4 py-3'} ${className}`}
+        className={`knik-input ${fullWidth ? 'w-full' : ''} px-3 py-1.5 ${className}`}
         {...props}
         aria-invalid={!!error || props['aria-invalid']}
         aria-describedby={

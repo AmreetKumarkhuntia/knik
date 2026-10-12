@@ -51,7 +51,7 @@ function Choices() {
           { value: 'b', label: 'B' },
         ]}
       />
-      <Checkbox presentation="chip" checked={checked} onChange={setChecked} label="Enabled" />
+      <Checkbox checked={checked} onChange={setChecked} label="Enabled" />
     </>
   )
 }

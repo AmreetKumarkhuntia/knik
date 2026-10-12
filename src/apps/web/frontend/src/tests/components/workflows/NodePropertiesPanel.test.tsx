@@ -42,6 +42,12 @@ describe('node inspector', () => {
     await user.keyboard('{Escape}')
     expect(actions.onClose).toHaveBeenCalledOnce()
   })
+  it('labels a slider field once, tied to its range input', () => {
+    const agent = { id: 'ai', type: 'AIExecutionNode', position: { x: 0, y: 0 }, data: {} }
+    render(<NodePropertiesPanel {...props()} selectedNode={agent} />)
+    expect(screen.getAllByText('Temperature')).toHaveLength(1)
+    expect(screen.getByLabelText('Temperature')).toHaveAttribute('type', 'range')
+  })
   it('connects the selected node from the keyboard, since node handles only follow the pointer', async () => {
     const user = userEvent.setup()
     const onConnect = vi.fn()

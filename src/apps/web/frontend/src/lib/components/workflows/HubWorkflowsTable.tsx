@@ -9,8 +9,6 @@ import type { HubWorkflowRow } from '$types/workflow'
 
 export default function HubWorkflowsTable({
   rows,
-  loading,
-  error,
   isEmpty,
   onRun,
   canRun,
@@ -89,9 +87,6 @@ export default function HubWorkflowsTable({
         columns={columns}
         data={rows}
         getRowKey={row => row.id}
-        density="compact"
-        loading={loading}
-        error={error ?? undefined}
         empty={
           <EmptyState
             icon="account_tree"

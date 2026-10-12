@@ -1,11 +1,8 @@
 import type { DynamicMetric, ExecutionSnapshot } from '$types/workflow'
+import { formatDuration } from './format'
 
 /** Builds an array of metric cards for an execution detail view. */
-export function calculateMetrics(data: ExecutionSnapshot | null): DynamicMetric[] {
-  if (!data) return []
-
-  const { execution, timeline } = data
-
+export function calculateMetrics({ execution, timeline }: ExecutionSnapshot): DynamicMetric[] {
   const metrics: DynamicMetric[] = []
 
   metrics.push({
@@ -61,20 +58,6 @@ export function calculateMetrics(data: ExecutionSnapshot | null): DynamicMetric[
   })
 
   return metrics
-}
-
-/** Formats a millisecond duration into a compact human-readable string. */
-export function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-  if (ms < 3600000) {
-    const minutes = Math.floor(ms / 60000)
-    const seconds = Math.floor((ms % 60000) / 1000)
-    return `${minutes}m ${seconds}s`
-  }
-  const hours = Math.floor(ms / 3600000)
-  const minutes = Math.floor((ms % 3600000) / 60000)
-  return `${hours}h ${minutes}m`
 }
 
 /** Formats a byte count into a human-readable size string. */

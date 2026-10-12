@@ -1,13 +1,9 @@
 export * from './variants'
 export * from './status'
 export * from './themes'
-export * from './ui'
-export * from './defaults'
 export * from './dimensions'
-export * from './config'
 export * from './navigation'
 export * from './nodes'
 export * from './componentMaps'
-export * from './widgets'
 
 export { CODE_SYNTAX_THEME } from './syntax'

@@ -1,53 +1,22 @@
 import type { StoreApi } from 'zustand/vanilla'
-import type { ExecutionStore } from '$types/stores/executions'
+import type { ExecutionStore, ExecutionScope, ExecutionDetailScope } from '$types/stores/executions'
 import type { WorkflowStore } from '$types/stores/workflows'
 import type { DemoActionResult } from '$types/demo-session'
+import { scopeSlice } from '../session/scopes'
 import { createExecutionScope, createExecutionDetailScope } from './selectors'
 import { definitionsMatch } from '$utils/workflowDefinition'
 export function executionActions(
-  set: StoreApi<ExecutionStore>['setState'],
-  get: StoreApi<ExecutionStore>['getState']
+  set: StoreApi<ExecutionStore>['setState']
 ): Omit<ExecutionStore, 'executions' | 'timelines' | 'runScenarios' | 'scopes' | 'detailScopes'> {
+  const scopes = scopeSlice<ExecutionStore, ExecutionScope>(set)
+  const details = scopeSlice<ExecutionStore, ExecutionDetailScope>(set, 'detailScopes')
   return {
-    initDetailScope: scope => {
-      if (!get().detailScopes[scope])
-        set(state => ({
-          detailScopes: { ...state.detailScopes, [scope]: createExecutionDetailScope() },
-        }))
-    },
-    disposeDetailScope: scope =>
-      set(state => {
-        const next = { ...state.detailScopes }
-        delete next[scope]
-        return { detailScopes: next }
-      }),
-    patchDetailScope: (scope, patch) =>
-      set(state =>
-        state.detailScopes[scope]
-          ? {
-              detailScopes: {
-                ...state.detailScopes,
-                [scope]: { ...state.detailScopes[scope], ...patch },
-              },
-            }
-          : {}
-      ),
-    initScope: scope => {
-      if (!get().scopes[scope])
-        set(state => ({ scopes: { ...state.scopes, [scope]: createExecutionScope() } }))
-    },
-    disposeScope: scope =>
-      set(state => {
-        const next = { ...state.scopes }
-        delete next[scope]
-        return { scopes: next }
-      }),
-    patchScope: (scope, patch) =>
-      set(state =>
-        state.scopes[scope]
-          ? { scopes: { ...state.scopes, [scope]: { ...state.scopes[scope], ...patch } } }
-          : {}
-      ),
+    initDetailScope: scope => details.init(scope, createExecutionDetailScope()),
+    disposeDetailScope: details.dispose,
+    patchDetailScope: details.patch,
+    initScope: scope => scopes.init(scope, createExecutionScope()),
+    disposeScope: scopes.dispose,
+    patchScope: scopes.patch,
     commitScenario: scenario => {
       const { execution, timeline } = structuredClone(scenario)
       set(state => ({

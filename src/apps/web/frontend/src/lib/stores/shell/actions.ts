@@ -1,43 +1,16 @@
-import type { ShellStore, ShellScope } from '$types/stores/shell'
+import type { ShellStore, ShellScope, ShellState } from '$types/stores/shell'
+import { scopeSlice } from '../session/scopes'
 import { EMPTY_SHELL_SCOPE } from './selectors'
-export function createShellActions(set: ShellStore['setState']) {
+export function createShellActions(set: ShellStore['setState'], get: ShellStore['getState']) {
+  const scopes = scopeSlice<ShellState, ShellScope>(set)
   return {
     setCollapsed: (collapsed: boolean) => set({ collapsed }),
-    initializeScope: (id: string) =>
-      set(state => ({ scopes: { ...state.scopes, [id]: { ...EMPTY_SHELL_SCOPE } } })),
-    disposeScope: (id: string) =>
-      set(state => {
-        const scopes = { ...state.scopes }
-        delete scopes[id]
-        return { scopes }
-      }),
-    patchScope: (id: string, patch: Partial<ShellScope>) =>
-      set(state => {
-        const scope = state.scopes[id]
-        // Returning the same state skips notifying subscribers when nothing would change.
-        if (
-          !scope ||
-          Object.entries(patch).every(([key, value]) =>
-            Object.is(scope[key as keyof ShellScope], value)
-          )
-        )
-          return state
-        return { scopes: { ...state.scopes, [id]: { ...scope, ...patch } } }
-      }),
-    togglePalette: (id: string) =>
-      set(state =>
-        state.scopes[id]
-          ? {
-              scopes: {
-                ...state.scopes,
-                [id]: {
-                  ...state.scopes[id],
-                  paletteOpen: !state.scopes[id].paletteOpen,
-                  paletteQuery: '',
-                },
-              },
-            }
-          : {}
-      ),
+    initializeScope: (id: string) => scopes.init(id, { ...EMPTY_SHELL_SCOPE }),
+    disposeScope: scopes.dispose,
+    patchScope: scopes.patch,
+    togglePalette: (id: string) => {
+      const scope = get().scopes[id]
+      if (scope) scopes.patch(id, { paletteOpen: !scope.paletteOpen, paletteQuery: '' })
+    },
   }
 }

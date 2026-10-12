@@ -13,11 +13,14 @@ afterEach(() => vi.useRealTimers())
 describe('formatDuration', () => {
   it.each([
     [undefined, '-'],
-    [0, '-'],
-    [250, '250ms'],
+    [Number.NaN, '-'],
+    [0, '0ms'],
+    [40, '40ms'],
+    [523.33, '523ms'],
     [1500, '1.5s'],
     [59_000, '59.0s'],
-    [90_000, '1.5m'],
+    [90_000, '1m 30s'],
+    [3_600_000, '1h 0m'],
   ])('formats %s', (ms, expected) => {
     expect(formatDuration(ms)).toBe(expected)
   })

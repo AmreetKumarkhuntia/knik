@@ -29,8 +29,6 @@ describe('schedule table actions', () => {
       onDelete = vi.fn()
     const props = {
       workflowNames: { first: 'First', second: 'Second' },
-      loading: false,
-      error: null,
       onToggle,
       onDelete,
     }

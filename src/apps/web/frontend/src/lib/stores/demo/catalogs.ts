@@ -183,50 +183,6 @@ export const demoCatalogs = {
       enabled: true,
     },
   ],
-  toolDefinitions: [
-    {
-      id: 'shell.run',
-      name: 'shell.run',
-      desc: 'Run a shell command and capture stdout / stderr.',
-      category: 'shell',
-      icon: 'terminal',
-    },
-    {
-      id: 'file.read',
-      name: 'file.read',
-      desc: 'Read a file from the local sandbox.',
-      category: 'file',
-      icon: 'draft',
-    },
-    {
-      id: 'file.write',
-      name: 'file.write',
-      desc: 'Create or overwrite a file with new content.',
-      category: 'file',
-      icon: 'edit_document',
-    },
-    {
-      id: 'browser.fetch',
-      name: 'browser.fetch',
-      desc: 'Fetch a URL and return rendered HTML.',
-      category: 'browser',
-      icon: 'language',
-    },
-    {
-      id: 'cron.schedule',
-      name: 'cron.schedule',
-      desc: 'Schedule a workflow with a cron expression.',
-      category: 'cron',
-      icon: 'schedule',
-    },
-    {
-      id: 'text.summarise',
-      name: 'text.summarise',
-      desc: 'Compress a long passage to N sentences.',
-      category: 'text',
-      icon: 'format_align_left',
-    },
-  ],
   suggestions: [
     {
       id: 'suggestion-1',

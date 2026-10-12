@@ -1,9 +1,10 @@
-/** Formats a millisecond duration into a human-readable string. */
+/** Formats a millisecond duration into a compact human-readable string. */
 export function formatDuration(ms: number | undefined): string {
-  if (!ms) return '-'
-  if (ms < 1000) return `${ms}ms`
+  if (typeof ms !== 'number' || Number.isNaN(ms)) return '-'
+  if (ms < 1000) return `${Math.round(ms)}ms`
   if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-  return `${(ms / 60000).toFixed(1)}m`
+  if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
+  return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`
 }
 
 /** Formats an ISO date string into a locale-readable string. */

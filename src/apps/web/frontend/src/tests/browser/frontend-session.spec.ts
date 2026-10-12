@@ -397,9 +397,7 @@ test('narrow builder supports node addition, property editing, and dismissal', a
   await noHorizontalOverflow(page)
 })
 
-test('settings catalogs are seeded while actions without secrets or audio stay unavailable', async ({
-  page,
-}) => {
+test('settings catalogs are seeded and pane choices carry over to chat', async ({ page }) => {
   await page.goto('/settings', { waitUntil: 'domcontentloaded' })
   const assertLocalPane = async () => {
     await expect(page.getByRole('button', { name: /Retry/ })).toHaveCount(0)
@@ -419,14 +417,9 @@ test('settings catalogs are seeded while actions without secrets or audio stay u
   await assertLocalPane()
   await page.getByRole('tab', { name: 'Voice', exact: true }).click()
   await expect(page.getByRole('radio', { name: /Heart/ })).toBeChecked()
-  await expect(page.getByRole('button', { name: 'Preview voice', exact: true })).toBeDisabled()
-  await expect(
-    page.getByText('Select a voice with a preview recording to listen.', { exact: true })
-  ).toBeVisible()
   await assertLocalPane()
   await page.getByRole('tab', { name: 'API keys', exact: true }).click()
   await expect(page.getByText('Demo · Production', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Create key', exact: true })).toBeDisabled()
   await assertLocalPane()
   await page.getByRole('tab', { name: 'Providers', exact: true }).click()
   await expect(page.getByRole('radio', { name: /OpenAI/ })).toBeChecked()

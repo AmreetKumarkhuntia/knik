@@ -7,7 +7,6 @@ import type { HistoryTableProps } from '$types/sections/execution-history'
 /** Table of execution history records with status, duration, and actions. */
 export default function HistoryTable({
   executions,
-  loading,
   onViewDetail,
   maxHeight = '300px',
 }: HistoryTableProps) {
@@ -62,8 +61,6 @@ export default function HistoryTable({
       columns={columns}
       data={executions}
       getRowKey={row => row.id}
-      loading={loading}
-      density="compact"
       empty={
         <EmptyState
           icon="history"

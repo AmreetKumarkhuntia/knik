@@ -1,6 +1,5 @@
 import Button from '$components/buttons/Button'
 import { MS } from '$components'
-import { UI_TEXT } from '$lib/constants'
 import type { SidebarQuickActionsProps } from '$types/widgets/chat-shell'
 
 export default function SidebarQuickActions({ collapsed, onNewChat }: SidebarQuickActionsProps) {
@@ -9,8 +8,8 @@ export default function SidebarQuickActions({ collapsed, onNewChat }: SidebarQui
       <Button
         variant="secondary"
         onClick={onNewChat}
-        aria-label={UI_TEXT.nav.newChat}
-        title={collapsed ? UI_TEXT.nav.newChat : undefined}
+        aria-label="New Chat"
+        title={collapsed ? 'New Chat' : undefined}
         className={`w-full ${collapsed ? 'justify-center px-0' : 'justify-start'}`}
         icon={<MS name="add" size={18} />}
       >
