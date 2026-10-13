@@ -7,7 +7,7 @@ from backend.models.workflow import (
     WorkflowExecuteRequest,
     WorkflowUpdateRequest,
 )
-from imports import Scheduler, SchedulerDB, workflow_service
+from imports import DB_ERRORS, ExecutionDB, Scheduler, workflow_service
 
 
 router = APIRouter()
@@ -29,6 +29,8 @@ async def list_workflows():
             for w in workflows
         ]
         return {"success": True, "workflows": results, "total": len(results)}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -45,7 +47,7 @@ async def create_workflow(request: WorkflowCreateRequest):
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
         return {"success": True, "workflow": request.definition, **result}
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -59,7 +61,7 @@ async def get_workflow(workflow_id: str):
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
         return {"success": True, "workflow": workflow.definition}
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -79,7 +81,7 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
             status = 404 if "not found" in result["error"] else 400
             raise HTTPException(status_code=status, detail=result["error"])
         return {"success": True, "workflow": request.definition, **result}
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -93,7 +95,7 @@ async def delete_workflow(workflow_id: str):
         if "error" in result:
             raise HTTPException(status_code=404, detail=result["error"])
         return result
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -107,6 +109,8 @@ async def execute_workflow(workflow_id: str, request: WorkflowExecuteRequest):
         return {"success": True, "result": result}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -115,7 +119,7 @@ async def execute_workflow(workflow_id: str, request: WorkflowExecuteRequest):
 async def workflow_history(workflow_id: str):
     """Get execution history for a specific workflow."""
     try:
-        history = await SchedulerDB.get_execution_history(workflow_id)
+        history = await ExecutionDB.get_execution_history(workflow_id)
         results = [
             {
                 "id": h.id,
@@ -127,6 +131,8 @@ async def workflow_history(workflow_id: str):
             for h in history
         ]
         return {"success": True, "history": results, "total": len(results)}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -135,7 +141,7 @@ async def workflow_history(workflow_id: str):
 async def get_node_executions(workflow_id: str, execution_id: int):
     """Get node execution traces for a specific workflow execution."""
     try:
-        node_executions = await SchedulerDB.get_node_executions(execution_id)
+        node_executions = await ExecutionDB.get_node_executions(execution_id)
         results = [
             {
                 "id": ne.id,
@@ -153,5 +159,7 @@ async def get_node_executions(workflow_id: str, execution_id: int):
             for ne in node_executions
         ]
         return {"success": True, "node_executions": results, "total": len(results)}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

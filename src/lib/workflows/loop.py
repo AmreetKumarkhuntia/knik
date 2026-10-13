@@ -4,7 +4,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 from lib.core.config import Config
-from lib.services.scheduler.db_client import SchedulerDB
+from lib.services.db import DB_OUTAGE_ERRORS, ScheduleDB, WorkflowDB
 from lib.utils import printer as logger
 from lib.workflows.engine import WorkflowEngine
 
@@ -21,6 +21,7 @@ class CronScheduler:
 
         self._last_run_map: dict[int, datetime] = {}
         self._poll_count = 0
+        self._db_unavailable = False
 
     def start(self):
         """Start the background polling loop."""
@@ -48,13 +49,22 @@ class CronScheduler:
         while self._running:
             self._poll_count += 1
             try:
-                schedules = await SchedulerDB.list_schedules()
+                schedules = await ScheduleDB.list_schedules(enabled_only=True)
+                if self._db_unavailable:
+                    self._db_unavailable = False
+                    logger.info("CronScheduler: Postgres is reachable again, resuming schedules")
                 if self._poll_count % heartbeat_frequency == 0:
                     logger.info(f"CronScheduler heartbeat: {len(schedules)} active schedules polling...")
 
                 await self._check_schedules(schedules)
             except asyncio.CancelledError:
                 break
+            except DB_OUTAGE_ERRORS as e:
+                # Logged once per outage, whether Postgres was down at startup or went away later; the pool
+                # reconnects on its own when it is back. Query errors still go to the generic branch below.
+                if not self._db_unavailable:
+                    self._db_unavailable = True
+                    logger.warning(f"CronScheduler: schedules paused, {e}")
             except Exception as e:
                 logger.error(f"CronScheduler loop error: {e}")
 
@@ -65,7 +75,7 @@ class CronScheduler:
         now = datetime.now(UTC)
 
         if schedules is None:
-            schedules = await SchedulerDB.list_schedules()
+            schedules = await ScheduleDB.list_schedules(enabled_only=True)
 
         for schedule in schedules:
             try:
@@ -82,10 +92,10 @@ class CronScheduler:
 
                     if schedule.recurrence_seconds:
                         next_run = now + timedelta(seconds=schedule.recurrence_seconds)
-                        await SchedulerDB.update_schedule_next_run(schedule.id, next_run)
+                        await ScheduleDB.update_schedule_next_run(schedule.id, next_run)
                         logger.info(f"Schedule ID {schedule.id} next run: {next_run}")
 
-                    await SchedulerDB.record_schedule_execution(schedule.id)
+                    await ScheduleDB.record_schedule_execution(schedule.id)
 
             except Exception as e:
                 logger.error(f"Error processing schedule {schedule.id}: {e}")
@@ -93,7 +103,7 @@ class CronScheduler:
     async def _trigger_workflow(self, workflow_id: str):
         """Background trigger wrapper to prevent failing the loop on unhandled DAG faults."""
         try:
-            workflow = await SchedulerDB.get_workflow(workflow_id)
+            workflow = await WorkflowDB.get_workflow(workflow_id)
             if not workflow:
                 logger.error(f"Scheduled Workflow {workflow_id} not found locally.")
                 return

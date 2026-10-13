@@ -23,18 +23,20 @@ Put shared or reusable code in `src/lib/`. Put app-specific code in the app that
 1. **Apps never import each other.** `backend`, `bot`, `worker` and `console` are independent.
 2. **Apps import library names through `src/imports.py`**, never through deep `lib.*` paths. The hub is lazy (PEP 562 `__getattr__` over the `_EXPORTS` map), so an app only loads the integrations it uses. To expose a new name, add it to `_EXPORTS` **and** to the `TYPE_CHECKING` block. `tests/test_imports_hub.py` fails if the two differ or a name does not resolve.
 3. **Code under `lib/` never imports `imports.py` or any app.** It imports its siblings directly, e.g. `from lib.utils.printer import printer`.
-4. **Services do not import each other.** The one exception is the planned `lib/services/db` (it replaces `postgres/`, `conversation/`, `scheduler/` and `settings/`), which other services may import.
+4. **Services do not import each other.** The one exception is `lib/services/db`, the shared database foundation, which other services may import. `services/db` itself imports no other service.
+5. **Services never import `lib/tools`, `lib/workflows` or `lib/commands`.** Those layers sit above the services and call into them.
+6. **`lib/utils` and `lib/core` import nothing above them** (no services, tools, workflows or commands).
 
-These rules are enforced by import-linter contracts in `pyproject.toml`. Run them with `npm run lint:imports`; CI and pre-commit run them too. The contracts checked today are "apps are independent of each other" and "library code never imports apps or the app import hub". The service-independence contract is added together with `services/db`. CI also fails on any `sys.path.insert` under `src/`.
+These rules are enforced by import-linter contracts in `pyproject.toml`. Run them with `npm run lint:imports`; CI and pre-commit run them too. CI also fails on any `sys.path.insert` under `src/`.
 
 ## Apps
 
 | App                  | Purpose                                     | Structure                                                                                                                                                     |
 | -------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `backend/`           | FastAPI web backend (port 8010)             | `main.py` + `config.py` + `state.py` (shared clients) + `routes/` + `models/` (Pydantic request/response models)                                              |
-| `bot/`               | Telegram bot                                | `app.py` + `config.py` + `message_handler.py` + `streaming.py` + `user_identity.py` + `user_client_manager.py` + `consent.py` + `commands/` (shared commands) |
+| `backend/`           | FastAPI web backend (port 8010)             | `main.py` (app, lifespan, 503 handler for database errors) + `config.py` + `state.py` (shared clients) + `analytics.py` (dashboard formatting) + `routes/` + `models/` |
+| `bot/`               | Telegram bot                                | `app.py` + `config.py` + `transport.py` (`MessagingTransport` protocol) + `message_handler.py` + `streaming.py` + `user_identity.py` + `user_client_manager.py` + `consent.py` + `commands/` (shared commands) |
 | `worker/`            | Workflow scheduler process                  | `app.py` (`WorkerApp`)                                                                                                                                        |
-| `console/`           | Interactive terminal chat                   | `app.py` + `config.py` + `history.py` + `identity.py` + `commands/` (shared commands) + `tools/` (console-only commands)                                      |
+| `console/`           | Interactive terminal chat                   | `app.py` + `config.py` + `processor.py` (input loop and command dispatch) + `history.py` + `identity.py` + `commands/` (shared commands) + `tools/` (console-only commands) |
 | `apps/web/frontend/` | React + TypeScript + Vite (dev server 8020) | `src/main.tsx` + `src/lib/` (pages, widgets, components, stores). Stays at this path until it moves to `src/frontend`                                         |
 
 When adding a new app:
@@ -49,11 +51,11 @@ When adding a new app:
 | Domain       | Purpose                                                                                  | Structure                                                                                                                                                                   |
 | ------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/`      | App-level configuration                                                                  | Flat - `config.py`                                                                                                                                                          |
-| `utils/`     | Helpers (`printer`, `async_utils`, `graph_utils`, `timezone_utils`, `console_processor`) | Flat files, no subdirectories                                                                                                                                               |
+| `utils/`     | Stateless helpers (`printer`, `async_utils`, `graph_utils`, `timezone_utils`, `text_ops`, `time_ops`, `encoding_ops`) | Flat files, no subdirectories                                                                                                                                               |
 | `commands/`  | Shared command logic (`CommandService`) behind the console and bot command systems       | `service.py` + `models.py`                                                                                                                                                  |
 | `tools/`     | Tools the AI can call. An in-process LangChain tool registry, not Model Context Protocol | One `*_tool.py` per tool group + `catalog.py` + `index.py`                                                                                                                  |
-| `workflows/` | Workflow engine and scheduler                                                            | Flat - `models.py`, `nodes.py`, `engine.py`, `scheduler.py`, `loop.py`, `schedule_parser.py`, `schedule_service.py`, `workflow_service.py`, `functions.py`, `validation.py` |
-| `services/`  | Integrations (AI, TTS, messaging, database, shell)                                       | One subdirectory per service                                                                                                                                                |
+| `workflows/` | Workflow engine and scheduler (row models live in `services/db/models.py`)               | Flat - `nodes.py`, `engine.py`, `scheduler.py`, `loop.py`, `schedule_parser.py`, `schedule_service.py`, `workflow_service.py`, `functions.py`, `validation.py` |
+| `services/`  | Integrations only (AI, TTS, Telegram, database, browser, shell)                          | One subdirectory per service                                                                                                                                                |
 
 ## Services (`src/lib/services/`)
 
@@ -61,33 +63,30 @@ Each service is a **self-contained module** (see Dependency Rules).
 
 **Complex services** follow the provider pattern:
 
-| Service             | Structure                                                                                                                                                                                                 |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ai_client/`        | `client.py` + `client_cache.py` + `providers/` (base + one file per provider) + `registry/` (`provider_registry.py`, `mcp_registry.py`) + `base_tool.py` + `consent.py` + `pricing.py` + `token_utils.py` |
-| `tts/`              | `processor.py` + `providers/` (base + kokoro) + `audio/` (playback) + `utils.py`                                                                                                                          |
-| `messaging_client/` | `client.py` + `models.py` + `providers/` (base + telegram + mock) + `registry.py`                                                                                                                         |
+| Service      | Structure                                                                                                                                                                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ai_client/` | `client.py` + `client_cache.py` + `compaction.py` (conversation summaries) + `titles.py` (conversation titles) + `providers/` (base + one file per provider) + `registry/` (`provider_registry.py`, `mcp_registry.py`) + `base_tool.py` + `consent.py` + `pricing.py` + `token_utils.py` |
+| `tts/`       | `processor.py` + `providers/` (base + kokoro) + `audio/` (playback) + `utils.py`                                                                                                                                                                                |
 
 When adding a new complex service that supports multiple backends, follow this same pattern: a client module, a `providers/` subdirectory with a base class and implementations, and a registry.
 
-**Medium services** have a few related files:
+**The database service** is the shared foundation other services may import:
 
-| Service         | Structure                                      |
-| --------------- | ---------------------------------------------- |
-| `conversation/` | `db_client.py` + `models.py` + `summarizer.py` |
+| Service | Structure                                                                                                                                                                          |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/`   | `connection.py` (`PostgresDB` pool, `DatabaseUnavailable`, `DB_ERRORS`) + `models.py` (row dataclasses) + `repositories/` (`base`, `conversations`, `workflows`, `schedules`, `executions`, `settings`) |
 
-**Simple services** are single-file modules:
+Repositories raise on database errors; they never log-and-return a default. A caller that can carry on without Postgres catches `DB_ERRORS` itself, and the backend maps any database error that reaches a route to HTTP 503. Schema changes go in a new numbered file in `db/migrations/`, written so it can be re-run safely; `scripts/migrate.sh` applies the ones not yet recorded in `schema_migrations`.
 
-| Service      | Structure       |
-| ------------ | --------------- |
-| `postgres/`  | `db.py`         |
-| `scheduler/` | `db_client.py`  |
-| `settings/`  | `db_client.py`  |
-| `shell/`     | `executor.py`   |
-| `text/`      | `operations.py` |
-| `time/`      | `operations.py` |
-| `encoding/`  | `operations.py` |
+**Simple services** are a client module plus, where needed, a `models.py`:
 
-When adding a new simple service, create a subdirectory with `__init__.py` and a single implementation file. Promote to the provider pattern only when multiple backends are needed.
+| Service     | Structure                                                          |
+| ----------- | ------------------------------------------------------------------ |
+| `telegram/` | `client.py` (`TelegramClient`) + `models.py`                       |
+| `browser/`  | `session.py` (`BrowserSession`, Playwright lifecycle, idle cleanup) |
+| `shell/`    | `executor.py`                                                      |
+
+When adding a new simple service, create a subdirectory with `__init__.py` and a single implementation file. Promote to the provider pattern only when multiple backends are needed. Pure helpers that do not talk to anything outside the process belong in `lib/utils/`, not in `services/`.
 
 ## Tool Structure (`src/lib/tools/`)
 

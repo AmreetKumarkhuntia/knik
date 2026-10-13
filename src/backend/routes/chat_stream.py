@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 from backend import state
 from backend.config import WebBackendConfig
 from backend.models.chat import StreamChatRequest
-from imports import ConversationDB, is_speakable, printer
+from imports import DB_ERRORS, ConversationDB, is_speakable, printer
 
 
 router = APIRouter()
@@ -59,6 +59,18 @@ async def _tts_worker(
             printer.error(f"[TTS worker] TTS failed for sentence, skipping: {e}")
 
 
+async def _summary_message_id(conversation_id: str | None) -> str | None:
+    """The conversation's compaction pointer; None without a conversation or a database, so chat keeps working."""
+    if not conversation_id:
+        return None
+    try:
+        summary_message_id, _ = await ConversationDB.get_compaction_state(conversation_id)
+    except DB_ERRORS as e:
+        printer.warning(f"Compaction state unavailable for {conversation_id}: {e}")
+        return None
+    return summary_message_id
+
+
 async def stream_chat_response(prompt: str, conversation_id: str | None = None) -> AsyncGenerator[str, None]:
     sentence_queue: asyncio.Queue = asyncio.Queue(maxsize=_TTS_QUEUE_MAX)
     audio_queue: asyncio.Queue = asyncio.Queue()
@@ -87,9 +99,7 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
         sentence_endings = [".", "!", "?", "\n"]
         audio_count = 0
         active_conversation_id = conversation_id
-        pre_compaction_state, _ = (
-            await ConversationDB.get_compaction_state(conversation_id) if conversation_id else (None, 0)
-        )
+        pre_compaction_state = await _summary_message_id(conversation_id)
 
         async for chunk in ai_client.achat_stream(
             prompt=prompt,
@@ -142,7 +152,7 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
                     yield f"event: usage\ndata: {json.dumps({'usage': usage})}\n\n"
 
                 if active_conversation_id:
-                    post_compaction_state, _ = await ConversationDB.get_compaction_state(active_conversation_id)
+                    post_compaction_state = await _summary_message_id(active_conversation_id)
                     if post_compaction_state and post_compaction_state != pre_compaction_state:
                         yield f"event: compaction\ndata: {json.dumps({'summary_message_id': post_compaction_state})}\n\n"
 

@@ -3,8 +3,8 @@
 -- and removes deprecated evaluation-related columns
 
 -- Add recurrence tracking columns
-ALTER TABLE schedules ADD COLUMN next_run_at TIMESTAMP WITH TIME ZONE;
-ALTER TABLE schedules ADD COLUMN recurrence_seconds INTEGER;
+ALTER TABLE schedules ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE schedules ADD COLUMN IF NOT EXISTS recurrence_seconds INTEGER;
 
 -- Remove deprecated columns
 ALTER TABLE schedules DROP COLUMN IF EXISTS trigger_type;

@@ -7,13 +7,14 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Query
 
+from backend.analytics import activity_item, execution_summary, executions_page, get_date_range, workflow_summary
 from backend.models.analytics import (
     ActivityResponse,
     DashboardResponse,
     TopWorkflowsResponse,
     WorkflowMetricsResponse,
 )
-from imports import SchedulerDB
+from imports import DB_ERRORS, ExecutionDB, WorkflowDB
 
 
 router = APIRouter()
@@ -34,12 +35,14 @@ async def get_dashboard(
         end_date = datetime.now(UTC)
         start_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        total_workflows = await SchedulerDB.get_total_workflows()
-        executions_today = await SchedulerDB.get_executions_count(start_date, end_date)
-        success_rate = await SchedulerDB.get_success_rate(start_date, end_date)
+        total_workflows = await WorkflowDB.get_total_workflows()
+        executions_today = await ExecutionDB.get_executions_count(start_date, end_date)
+        success_rate = await ExecutionDB.get_success_rate(start_date, end_date)
 
-        recent_workflows = await SchedulerDB.get_recent_workflows_summary(workflows_limit)
-        recent_executions = await SchedulerDB.get_recent_executions_summary(executions_limit)
+        recent_workflows = [workflow_summary(r) for r in await WorkflowDB.get_recent_workflows_summary(workflows_limit)]
+        recent_executions = [
+            execution_summary(r) for r in await ExecutionDB.get_recent_executions_summary(executions_limit)
+        ]
 
         return DashboardResponse(
             success=True,
@@ -53,6 +56,8 @@ async def get_dashboard(
                 "recentExecutions": recent_executions,
             },
         )
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -73,13 +78,13 @@ async def get_metrics(
                 detail="Invalid time_range. Must be one of: today, 7days, 30days, 90days, all",
             )
 
-        start_date, end_date = SchedulerDB.get_date_range(time_range)
+        start_date, end_date = get_date_range(time_range)
 
-        total_workflows = await SchedulerDB.get_total_workflows()
-        executions_in_period = await SchedulerDB.get_executions_count(start_date, end_date)
-        success_rate = await SchedulerDB.get_success_rate(start_date, end_date)
-        avg_duration = await SchedulerDB.get_average_duration(start_date, end_date)
-        active_executions = await SchedulerDB.get_active_executions_count()
+        total_workflows = await WorkflowDB.get_total_workflows()
+        executions_in_period = await ExecutionDB.get_executions_count(start_date, end_date)
+        success_rate = await ExecutionDB.get_success_rate(start_date, end_date)
+        avg_duration = await ExecutionDB.get_average_duration(start_date, end_date)
+        active_executions = await ExecutionDB.get_active_executions_count()
 
         metrics = {
             "totalWorkflows": total_workflows,
@@ -92,7 +97,7 @@ async def get_metrics(
         }
 
         return WorkflowMetricsResponse(success=True, metrics=metrics)
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -114,8 +119,8 @@ async def get_top_workflows(
                 detail="Invalid time_range. Must be one of: today, 7days, 30days, 90days, all",
             )
 
-        start_date, end_date = SchedulerDB.get_date_range(time_range)
-        workflows = await SchedulerDB.get_top_workflows(limit, start_date, end_date)
+        start_date, end_date = get_date_range(time_range)
+        workflows = await WorkflowDB.get_top_workflows(limit, start_date, end_date)
 
         top_workflows = [
             {
@@ -130,7 +135,7 @@ async def get_top_workflows(
         ]
 
         return TopWorkflowsResponse(success=True, workflows=top_workflows, total=len(top_workflows))
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -145,8 +150,10 @@ async def get_executions_paginated(
 ):
     """Get paginated executions with optional filters."""
     try:
-        result = await SchedulerDB.get_executions_paginated(page, page_size, workflow_id, status)
-        return {"success": True, "data": result}
+        result = await ExecutionDB.get_executions_paginated(page, page_size, workflow_id, status)
+        return {"success": True, "data": executions_page(result)}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -155,8 +162,10 @@ async def get_executions_paginated(
 async def get_workflows_list():
     """Get simple list of workflows for filter dropdowns."""
     try:
-        workflows = await SchedulerDB.get_workflows_list()
+        workflows = await WorkflowDB.get_workflows_list()
         return {"success": True, "workflows": workflows}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -171,12 +180,12 @@ async def get_activity(
     try:
         # If execution_id is provided, return detailed execution info
         if execution_id is not None:
-            execution, node_traces = await SchedulerDB.get_execution_detail(execution_id)
+            execution, node_traces = await ExecutionDB.get_execution_detail(execution_id)
 
             if not execution:
                 raise HTTPException(status_code=404, detail=f"Execution {execution_id} not found")
 
-            workflow_name = await SchedulerDB.get_workflow_name(execution.workflow_id)
+            workflow_name = await WorkflowDB.get_workflow_name(execution.workflow_id)
 
             return {
                 "success": True,
@@ -209,10 +218,10 @@ async def get_activity(
             }
 
         # Otherwise, return activity feed
-        activities = await SchedulerDB.get_recent_activity(limit, hours_back)
+        activities = [activity_item(r) for r in await ExecutionDB.get_recent_activity(limit, hours_back)]
 
         return ActivityResponse(success=True, activities=activities)
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

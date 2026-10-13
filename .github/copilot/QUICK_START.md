@@ -31,7 +31,7 @@ src/
 │   ├── commands/            # CommandService shared by bot and console
 │   ├── tools/               # *_tool.py groups, catalog.py (ALL_TOOL_CLASSES), index.py (register_all_tools)
 │   ├── workflows/           # Engine, nodes, validation, schedule parser, loop.py (scheduler loop)
-│   └── services/            # Integrations: ai_client, tts, postgres, conversation, scheduler, settings, messaging_client, shell, ...
+│   └── services/            # Integrations: db, ai_client, tts, telegram, browser, shell
 └── apps/web/frontend/       # React + Vite + Tailwind (port 8020)
 ```
 

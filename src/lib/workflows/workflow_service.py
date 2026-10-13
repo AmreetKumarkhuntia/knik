@@ -7,9 +7,9 @@ web routes, console commands, and the Scheduler class.
 import uuid
 from typing import Any
 
-from lib.services.scheduler.db_client import SchedulerDB
+from lib.services.db import ScheduleDB, WorkflowDB
+from lib.services.db.models import Workflow
 from lib.utils import printer
-from lib.workflows.models import Workflow
 from lib.workflows.validation import validate_workflow_definition
 
 
@@ -48,7 +48,7 @@ async def create_workflow(
         description=description,
     )
 
-    await SchedulerDB.create_workflow(workflow)
+    await WorkflowDB.create_workflow(workflow)
 
     printer.info(f"Workflow created successfully: {workflow_id}")
     return {
@@ -77,7 +77,7 @@ async def update_workflow(
         Dict with 'success' and details on success, or 'error' (and optionally
         'details') if the workflow is missing or the definition is invalid.
     """
-    existing = await SchedulerDB.get_workflow(workflow_id)
+    existing = await WorkflowDB.get_workflow(workflow_id)
     if not existing:
         return {"error": f"Workflow {workflow_id} not found", "workflow_id": workflow_id}
 
@@ -94,7 +94,7 @@ async def update_workflow(
         definition=definition,
         description=description if description is not None else existing.description,
     )
-    await SchedulerDB.create_workflow(workflow)  # upsert via ON CONFLICT DO UPDATE
+    await WorkflowDB.create_workflow(workflow)  # upsert via ON CONFLICT DO UPDATE
 
     printer.info(f"Workflow updated successfully: {workflow_id}")
     return {
@@ -107,12 +107,12 @@ async def update_workflow(
 
 async def get_workflow(workflow_id: str) -> Workflow | None:
     """Retrieve a workflow by ID."""
-    return await SchedulerDB.get_workflow(workflow_id)
+    return await WorkflowDB.get_workflow(workflow_id)
 
 
 async def list_workflows() -> list[Workflow]:
     """List all registered workflows."""
-    return await SchedulerDB.list_workflows()
+    return await WorkflowDB.list_workflows()
 
 
 async def delete_workflow(workflow_id: str, cascade: bool = True) -> dict[str, Any]:
@@ -127,15 +127,15 @@ async def delete_workflow(workflow_id: str, cascade: bool = True) -> dict[str, A
     Returns:
         Dict with 'success' and deletion details, or 'error' if not found.
     """
-    workflow = await SchedulerDB.get_workflow(workflow_id)
+    workflow = await WorkflowDB.get_workflow(workflow_id)
     if not workflow:
         return {"error": f"Workflow {workflow_id} not found", "workflow_id": workflow_id}
 
     deleted_schedules = 0
     if cascade:
-        deleted_schedules = await SchedulerDB.delete_schedules_by_workflow(workflow_id)
+        deleted_schedules = await ScheduleDB.delete_schedules_by_workflow(workflow_id)
 
-    await SchedulerDB.delete_workflow(workflow_id)
+    await WorkflowDB.delete_workflow(workflow_id)
 
     printer.info(f"Workflow {workflow_id} deleted (cascade={cascade}, schedules_removed={deleted_schedules})")
     return {

@@ -3,8 +3,8 @@
 import asyncio
 import json
 
-from imports import SchedulerDB, workflow_service
 from imports import printer as logger
+from imports import workflow_service
 
 
 def workflow_command(app, args: str) -> str:
@@ -45,7 +45,6 @@ def workflow_command(app, args: str) -> str:
 async def _list_workflows() -> str:
     """List all registered workflows from the database."""
     try:
-        await SchedulerDB.initialize()
         workflows = await workflow_service.list_workflows()
         if not workflows:
             return "No workflows found in database."
@@ -66,7 +65,6 @@ async def _run_workflow(app, workflow_id: str, inputs: dict) -> str:
     from imports import Scheduler
 
     try:
-        await SchedulerDB.initialize()
         scheduler = Scheduler()
         logger.info(f"Running workflow manually: {workflow_id} with inputs: {inputs}")
 

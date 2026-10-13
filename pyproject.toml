@@ -35,3 +35,38 @@ name = "Library code never imports apps or the app import hub"
 type = "forbidden"
 source_modules = ["lib"]
 forbidden_modules = ["backend", "bot", "console", "worker", "imports"]
+
+[[tool.importlinter.contracts]]
+name = "Integration services are independent of each other (services.db is the shared foundation)"
+type = "independence"
+modules = [
+    "lib.services.ai_client",
+    "lib.services.browser",
+    "lib.services.shell",
+    "lib.services.telegram",
+    "lib.services.tts",
+]
+
+[[tool.importlinter.contracts]]
+name = "Services never import tools, workflows or commands"
+type = "forbidden"
+source_modules = ["lib.services"]
+forbidden_modules = ["lib.tools", "lib.workflows", "lib.commands"]
+
+[[tool.importlinter.contracts]]
+name = "The database service imports no other service"
+type = "forbidden"
+source_modules = ["lib.services.db"]
+forbidden_modules = [
+    "lib.services.ai_client",
+    "lib.services.browser",
+    "lib.services.shell",
+    "lib.services.telegram",
+    "lib.services.tts",
+]
+
+[[tool.importlinter.contracts]]
+name = "Utils and core stay at the bottom of lib"
+type = "forbidden"
+source_modules = ["lib.utils", "lib.core"]
+forbidden_modules = ["lib.services", "lib.tools", "lib.workflows", "lib.commands"]

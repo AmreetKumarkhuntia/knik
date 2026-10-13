@@ -3,35 +3,21 @@
 from fastapi import APIRouter, HTTPException
 
 from backend.models.cron import ScheduleCreateRequest, ScheduleToggleRequest
-from imports import Schedule, schedule_service
+from imports import DB_ERRORS, schedule_service
 
 
 router = APIRouter()
 
 
-def _serialize_schedule(s: Schedule) -> dict:
-    """Serialize a Schedule dataclass to a JSON-safe dictionary."""
-    return {
-        "id": s.id,
-        "target_workflow_id": s.target_workflow_id,
-        "enabled": s.enabled,
-        "timezone": s.timezone,
-        "schedule_description": s.schedule_description,
-        "next_run_at": s.next_run_at.isoformat() if s.next_run_at else None,
-        "recurrence_seconds": s.recurrence_seconds,
-        "created_at": s.created_at.isoformat() if s.created_at else None,
-        "updated_at": s.updated_at.isoformat() if s.updated_at else None,
-        "last_executed_at": s.last_executed_at.isoformat() if s.last_executed_at else None,
-    }
-
-
 @router.get("/")
 async def list_schedules():
-    """List all active cron schedules."""
+    """List all cron schedules, enabled and disabled, so disabled ones can be toggled back on."""
     try:
-        schedules = await schedule_service.list_schedules()
-        results = [_serialize_schedule(s) for s in schedules]
+        schedules = await schedule_service.list_schedules(enabled_only=False)
+        results = [s.to_dict() for s in schedules]
         return {"success": True, "schedules": results, "total": len(results)}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -45,7 +31,7 @@ async def add_schedule(req: ScheduleCreateRequest):
             status_code = 400 if "hint" in result or "required" in result.get("error", "") else 500
             raise HTTPException(status_code=status_code, detail=result)
         return result
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -57,6 +43,8 @@ async def remove_schedule(schedule_id: int):
     try:
         result = await schedule_service.delete_schedule(schedule_id)
         return result
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -70,9 +58,9 @@ async def toggle_schedule(schedule_id: int, req: ScheduleToggleRequest):
             raise HTTPException(status_code=404, detail="Schedule not found")
         return {
             "success": True,
-            "schedule": _serialize_schedule(schedule),
+            "schedule": schedule.to_dict(),
         }
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

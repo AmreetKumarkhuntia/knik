@@ -21,10 +21,6 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "Printer": ("lib.utils.printer", "Printer"),
     "PrinterConfig": ("lib.utils.printer", "PrinterConfig"),
     "LogLevel": ("lib.utils.printer", "LogLevel"),
-    "BaseProcessor": ("lib.utils.console_processor", "BaseProcessor"),
-    "CommandProcessor": ("lib.utils.console_processor", "CommandProcessor"),
-    "ConsoleProcessor": ("lib.utils.console_processor", "ConsoleProcessor"),
-    "create_processor": ("lib.utils.console_processor", "create_processor"),
     # commands
     "CommandService": ("lib.commands.service", "CommandService"),
     "CommandDefinition": ("lib.commands.models", "CommandDefinition"),
@@ -34,13 +30,12 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "get_all_tools": ("lib.tools.index", "get_all_tools"),
     "get_tool_info": ("lib.tools.index", "get_tool_info"),
     "ALL_TOOL_CLASSES": ("lib.tools.catalog", "ALL_TOOL_CLASSES"),
-    "BrowserTool": ("lib.tools.browser_tool", "BrowserTool"),
     # workflows
     "schedule_service": ("lib.workflows.schedule_service", None),
     "workflow_service": ("lib.workflows.workflow_service", None),
     "Scheduler": ("lib.workflows.scheduler", "Scheduler"),
-    "Schedule": ("lib.workflows.models", "Schedule"),
-    "Workflow": ("lib.workflows.models", "Workflow"),
+    "Schedule": ("lib.services.db.models", "Schedule"),
+    "Workflow": ("lib.services.db.models", "Workflow"),
     # services: ai_client
     "AIClient": ("lib.services.ai_client.client", "AIClient"),
     "MockAIClient": ("lib.services.ai_client.client", "MockAIClient"),
@@ -56,16 +51,23 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "VoiceModel": ("lib.services.tts", "VoiceModel"),
     "is_speakable": ("lib.services.tts.utils", "is_speakable"),
     # services: database
-    "PostgresDB": ("lib.services.postgres.db", "PostgresDB"),
-    "ConversationDB": ("lib.services.conversation.db_client", "ConversationDB"),
-    "SchedulerDB": ("lib.services.scheduler.db_client", "SchedulerDB"),
-    "SettingsDB": ("lib.services.settings.db_client", "SettingsDB"),
-    "ApiKeyDB": ("lib.services.settings.db_client", "ApiKeyDB"),
-    "McpToolsDB": ("lib.services.settings.db_client", "McpToolsDB"),
-    # services: messaging
-    "MessagingClient": ("lib.services.messaging_client.client", "MessagingClient"),
-    "IncomingMessage": ("lib.services.messaging_client.models", "IncomingMessage"),
-    "MessageResult": ("lib.services.messaging_client.models", "MessageResult"),
+    "PostgresDB": ("lib.services.db.connection", "PostgresDB"),
+    "DatabaseUnavailable": ("lib.services.db.connection", "DatabaseUnavailable"),
+    "DB_ERRORS": ("lib.services.db.connection", "DB_ERRORS"),
+    "ConversationDB": ("lib.services.db.repositories.conversations", "ConversationDB"),
+    "WorkflowDB": ("lib.services.db.repositories.workflows", "WorkflowDB"),
+    "ScheduleDB": ("lib.services.db.repositories.schedules", "ScheduleDB"),
+    "ExecutionDB": ("lib.services.db.repositories.executions", "ExecutionDB"),
+    "SettingsDB": ("lib.services.db.repositories.settings", "SettingsDB"),
+    "ApiKeyDB": ("lib.services.db.repositories.settings", "ApiKeyDB"),
+    "McpToolsDB": ("lib.services.db.repositories.settings", "McpToolsDB"),
+    # services: telegram
+    "TelegramClient": ("lib.services.telegram.client", "TelegramClient"),
+    "BotCommand": ("lib.services.telegram.models", "BotCommand"),
+    "IncomingMessage": ("lib.services.telegram.models", "IncomingMessage"),
+    "MessageResult": ("lib.services.telegram.models", "MessageResult"),
+    # services: browser
+    "browser": ("lib.services.browser", None),
 }
 
 if TYPE_CHECKING:
@@ -75,6 +77,7 @@ if TYPE_CHECKING:
     from lib.commands.service import CommandService as CommandService
     from lib.core import AudioConfig as AudioConfig
     from lib.core.config import Config as Config
+    from lib.services import browser as browser
     from lib.services.ai_client.base_tool import BaseTool as BaseTool
     from lib.services.ai_client.client import AIClient as AIClient
     from lib.services.ai_client.client import MockAIClient as MockAIClient
@@ -82,37 +85,37 @@ if TYPE_CHECKING:
     from lib.services.ai_client.consent import ConsentRequest as ConsentRequest
     from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry as MCPServerRegistry
     from lib.services.ai_client.registry.provider_registry import ProviderRegistry as ProviderRegistry
-    from lib.services.conversation.db_client import ConversationDB as ConversationDB
-    from lib.services.messaging_client.client import MessagingClient as MessagingClient
-    from lib.services.messaging_client.models import IncomingMessage as IncomingMessage
-    from lib.services.messaging_client.models import MessageResult as MessageResult
-    from lib.services.postgres.db import PostgresDB as PostgresDB
-    from lib.services.scheduler.db_client import SchedulerDB as SchedulerDB
-    from lib.services.settings.db_client import ApiKeyDB as ApiKeyDB
-    from lib.services.settings.db_client import McpToolsDB as McpToolsDB
-    from lib.services.settings.db_client import SettingsDB as SettingsDB
+    from lib.services.db.connection import DB_ERRORS as DB_ERRORS
+    from lib.services.db.connection import DatabaseUnavailable as DatabaseUnavailable
+    from lib.services.db.connection import PostgresDB as PostgresDB
+    from lib.services.db.models import Schedule as Schedule
+    from lib.services.db.models import Workflow as Workflow
+    from lib.services.db.repositories.conversations import ConversationDB as ConversationDB
+    from lib.services.db.repositories.executions import ExecutionDB as ExecutionDB
+    from lib.services.db.repositories.schedules import ScheduleDB as ScheduleDB
+    from lib.services.db.repositories.settings import ApiKeyDB as ApiKeyDB
+    from lib.services.db.repositories.settings import McpToolsDB as McpToolsDB
+    from lib.services.db.repositories.settings import SettingsDB as SettingsDB
+    from lib.services.db.repositories.workflows import WorkflowDB as WorkflowDB
+    from lib.services.telegram.client import TelegramClient as TelegramClient
+    from lib.services.telegram.models import BotCommand as BotCommand
+    from lib.services.telegram.models import IncomingMessage as IncomingMessage
+    from lib.services.telegram.models import MessageResult as MessageResult
     from lib.services.tts import AudioProcessor as AudioProcessor
     from lib.services.tts import KokoroVoiceModel as KokoroVoiceModel
     from lib.services.tts import TTSAsyncProcessor as TTSAsyncProcessor
     from lib.services.tts import VoiceModel as VoiceModel
     from lib.services.tts.utils import is_speakable as is_speakable
-    from lib.tools.browser_tool import BrowserTool as BrowserTool
     from lib.tools.catalog import ALL_TOOL_CLASSES as ALL_TOOL_CLASSES
     from lib.tools.index import get_all_tools as get_all_tools
     from lib.tools.index import get_tool_info as get_tool_info
     from lib.tools.index import register_all_tools as register_all_tools
-    from lib.utils.console_processor import BaseProcessor as BaseProcessor
-    from lib.utils.console_processor import CommandProcessor as CommandProcessor
-    from lib.utils.console_processor import ConsoleProcessor as ConsoleProcessor
-    from lib.utils.console_processor import create_processor as create_processor
     from lib.utils.printer import LogLevel as LogLevel
     from lib.utils.printer import Printer as Printer
     from lib.utils.printer import PrinterConfig as PrinterConfig
     from lib.utils.printer import printer as printer
     from lib.workflows import schedule_service as schedule_service
     from lib.workflows import workflow_service as workflow_service
-    from lib.workflows.models import Schedule as Schedule
-    from lib.workflows.models import Workflow as Workflow
     from lib.workflows.scheduler import Scheduler as Scheduler
 
 

@@ -4,10 +4,9 @@ Workflow function implementations for FunctionExecutionNode.
 These functions are called by workflow engine and are NOT exposed as MCP tools.
 All functions are async and return dict results.
 
-Functions that overlap with MCP tools (shell, text, time, encoding) are
-imported from the service layer (lib.services.shell, lib.services.text, etc.)
-to avoid duplication. HTTP and data processing functions remain here as they
-are scheduler-specific.
+Functions that overlap with the AI tools are imported instead of duplicated: shell
+from lib.services.shell, text/time/encoding from the lib.utils *_ops helpers. HTTP and
+data processing functions remain here as they are scheduler-specific.
 """
 
 import asyncio
@@ -40,9 +39,9 @@ except ImportError:
             aiohttp = None
             requests = None
 
-from lib.services.encoding import base64_decode, base64_encode
 from lib.services.shell import run_shell_command
-from lib.services.text import (
+from lib.utils.encoding_ops import base64_decode, base64_encode
+from lib.utils.text_ops import (
     string_concat,
     string_format,
     string_join,
@@ -53,7 +52,7 @@ from lib.services.text import (
     string_to_lower,
     string_to_upper,
 )
-from lib.services.time import current_timestamp
+from lib.utils.time_ops import current_timestamp
 
 
 logger = logging.getLogger(__name__)

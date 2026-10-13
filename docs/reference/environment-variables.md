@@ -130,13 +130,16 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Database (PostgreSQL)
 
-| Variable       | Default     | Description       |
-| -------------- | ----------- | ----------------- |
-| `KNIK_DB_HOST` | `localhost` | Database host     |
-| `KNIK_DB_PORT` | `5432`      | Database port     |
-| `KNIK_DB_USER` | `postgres`  | Database user     |
-| `KNIK_DB_PASS` | _(empty)_   | Database password |
-| `KNIK_DB_NAME` | `knik`      | Database name     |
+| Variable                  | Default     | Description                                                                       |
+| ------------------------- | ----------- | --------------------------------------------------------------------------------- |
+| `KNIK_DB_HOST`            | `localhost` | Database host                                                                     |
+| `KNIK_DB_PORT`            | `5432`      | Database port                                                                     |
+| `KNIK_DB_USER`            | `postgres`  | Database user                                                                     |
+| `KNIK_DB_PASS`            | _(empty)_   | Database password                                                                 |
+| `KNIK_DB_NAME`            | `knik`      | Database name                                                                     |
+| `KNIK_DB_POOL_MIN_SIZE`   | `1`         | Connections the pool keeps open                                                   |
+| `KNIK_DB_POOL_MAX_SIZE`   | `10`        | Most connections the pool opens                                                   |
+| `KNIK_DB_CONNECT_TIMEOUT` | `5`         | Seconds to wait for Postgres to accept a connection, and for a free one per query |
 
 ## Scheduler
 
@@ -179,11 +182,10 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Bot App
 
-| Variable                    | Default    | Description                                           |
-| --------------------------- | ---------- | ----------------------------------------------------- |
-| `KNIK_BOT_ENABLED`          | `true`     | Enable/disable the bot daemon                         |
-| `KNIK_BOT_PROVIDERS`        | `telegram` | Comma-separated list of messaging providers to enable |
-| `KNIK_BOT_CONCURRENT_LIMIT` | `10`       | Maximum concurrent message processing tasks           |
+| Variable                    | Default | Description                                 |
+| --------------------------- | ------- | ------------------------------------------- |
+| `KNIK_BOT_ENABLED`          | `true`  | Enable/disable the bot daemon               |
+| `KNIK_BOT_CONCURRENT_LIMIT` | `10`    | Maximum concurrent message processing tasks |
 
 ## Usage
 

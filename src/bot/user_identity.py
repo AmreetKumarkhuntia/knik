@@ -1,4 +1,4 @@
-"""User identity management for cross-platform conversation continuity."""
+"""Maps Telegram senders to bot user ids and their active conversation (in memory only)."""
 
 import uuid
 from dataclasses import dataclass
@@ -10,7 +10,6 @@ from imports import IncomingMessage
 @dataclass
 class UserIdentity:
     user_id: str
-    provider: str
     sender_id: str
     conversation_id: str | None = None
     is_new: bool = False
@@ -18,42 +17,33 @@ class UserIdentity:
 
 class UserIdentityManager:
     def __init__(self) -> None:
-        self._identity_map: dict[tuple[str, str], str] = {}
+        self._identity_map: dict[str, str] = {}
         self._user_conversations: dict[str, str | None] = {}
         self._user_metadata: dict[str, dict[str, Any]] = {}
 
-    def resolve(self, incoming: IncomingMessage, provider: str) -> UserIdentity:
-        if incoming.sender_id is None:
-            raise ValueError(f"IncomingMessage from {provider} has no sender_id. Cannot resolve identity.")
+    def resolve(self, incoming: IncomingMessage) -> UserIdentity:
+        sender_id = incoming.sender_id
+        if sender_id is None:
+            raise ValueError("IncomingMessage has no sender_id. Cannot resolve identity.")
 
-        key = (provider.lower(), incoming.sender_id)
-
-        if key in self._identity_map:
-            user_id = self._identity_map[key]
+        if sender_id in self._identity_map:
+            user_id = self._identity_map[sender_id]
             return UserIdentity(
                 user_id=user_id,
-                provider=provider,
-                sender_id=incoming.sender_id,
+                sender_id=sender_id,
                 conversation_id=self._user_conversations.get(user_id),
                 is_new=False,
             )
 
         user_id = self._generate_user_id()
-        self._identity_map[key] = user_id
+        self._identity_map[sender_id] = user_id
         self._user_conversations[user_id] = None
         self._user_metadata[user_id] = {
-            "first_seen_provider": provider,
             "first_seen_at": incoming.timestamp,
             "sender_name": incoming.sender_name,
         }
 
-        return UserIdentity(
-            user_id=user_id,
-            provider=provider,
-            sender_id=incoming.sender_id,
-            conversation_id=None,
-            is_new=True,
-        )
+        return UserIdentity(user_id=user_id, sender_id=sender_id, conversation_id=None, is_new=True)
 
     def get_conversation_id(self, user_id: str) -> str | None:
         return self._user_conversations.get(user_id)
@@ -67,43 +57,16 @@ class UserIdentityManager:
     def get_user_metadata(self, user_id: str) -> dict[str, Any]:
         return self._user_metadata.get(user_id, {})
 
-    def get_stats(self) -> dict[str, Any]:
-        provider_counts: dict[str, int] = {}
-        for provider, _ in self._identity_map:
-            provider_counts[provider] = provider_counts.get(provider, 0) + 1
-
-        active_conversations = sum(1 for conv_id in self._user_conversations.values() if conv_id is not None)
-
-        return {
-            "total_identities": len(self._identity_map),
-            "active_conversations": active_conversations,
-            "providers": provider_counts,
-        }
-
-    def _generate_user_id(self) -> str:
-        return f"usr_{uuid.uuid4().hex[:12]}"
-
-    def link_identities(self, user_id: str, provider: str, sender_id: str) -> None:
-        if user_id not in self._user_conversations:
-            raise ValueError(f"User {user_id} does not exist")
-
-        key = (provider.lower(), sender_id)
-        if key in self._identity_map:
-            existing = self._identity_map[key]
-            if existing != user_id:
-                raise ValueError(f"({provider}, {sender_id}) already linked to {existing}")
-            return
-
-        self._identity_map[key] = user_id
-
-    def get_user_id_for_sender(self, provider: str, sender_id: str | None) -> str | None:
+    def get_user_id_for_sender(self, sender_id: str | None) -> str | None:
         if sender_id is None:
             return None
-        key = (provider.lower(), sender_id)
-        return self._identity_map.get(key)
+        return self._identity_map.get(sender_id)
 
-    def get_conversation_id_for_sender(self, provider: str, sender_id: str | None) -> str | None:
-        user_id = self.get_user_id_for_sender(provider, sender_id)
+    def get_conversation_id_for_sender(self, sender_id: str | None) -> str | None:
+        user_id = self.get_user_id_for_sender(sender_id)
         if user_id is None:
             return None
         return self._user_conversations.get(user_id)
+
+    def _generate_user_id(self) -> str:
+        return f"usr_{uuid.uuid4().hex[:12]}"

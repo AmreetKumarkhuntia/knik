@@ -6,7 +6,7 @@ from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from imports import CommandDefinition, CommandResult, IncomingMessage, printer
+from imports import BotCommand, CommandDefinition, CommandResult, IncomingMessage, printer
 
 
 if TYPE_CHECKING:
@@ -44,6 +44,9 @@ class BotCommandRegistry:
     def get_definitions(self) -> list[CommandDefinition]:
         return [cmd.definition for cmd in self._commands.values()]
 
+    def get_bot_commands(self) -> list[BotCommand]:
+        return [BotCommand(name=d.name, description=d.description) for d in self.get_definitions()]
+
     def list_commands(self) -> list[str]:
         return list(self._commands.keys())
 
@@ -79,10 +82,7 @@ class BotCommandDispatcher:
             return await registered.handler(
                 command_service=self._service,
                 args=args,
-                user_id=user_identity.get_user_id_for_sender(
-                    incoming.provider_name or "unknown",
-                    incoming.sender_id,
-                ),
+                user_id=user_identity.get_user_id_for_sender(incoming.sender_id),
             )
         except Exception as e:
             printer.error(f"Command handler error for /{command_name}: {e}")

@@ -20,9 +20,12 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from ...core.config import Config
 from ...utils.printer import printer
+from ..db import DB_ERRORS, ConversationDB
+from .compaction import ConversationCompactor
 from .providers import BaseAIProvider
 from .providers.base_provider import ChatResult
 from .registry import ProviderRegistry
+from .titles import generate_and_set_title
 
 
 class AIClient:
@@ -41,20 +44,6 @@ class AIClient:
     # Strong references for fire-and-forget tasks (e.g. background
     # summarisation, title generation) to prevent GC mid-execution.
     _background_tasks: ClassVar[set[asyncio.Task]] = set()
-
-    @staticmethod
-    def _conversation_db():
-        """Lazy import to avoid circular dependency at module load time."""
-        from ..conversation import ConversationDB
-
-        return ConversationDB
-
-    @staticmethod
-    def _conversation_compactor():
-        """Lazy import to avoid circular dependency at module load time."""
-        from ..conversation.summarizer import ConversationCompactor
-
-        return ConversationCompactor
 
     def __init__(
         self,
@@ -284,8 +273,8 @@ class AIClient:
            when the threshold is crossed
         7. Auto-generating a title after the first exchange
 
-        If the DB is unavailable every step silently degrades and the
-        method still returns a valid LLM response.
+        If the DB is unavailable every step degrades with a logged warning
+        and the method still returns a valid LLM response.
 
         Args:
             prompt: The user's message.
@@ -313,12 +302,7 @@ class AIClient:
         conversation_id = await self._ensure_conversation(conversation_id)
 
         if conversation_id:
-            await self._conversation_db().append_message(
-                conversation_id=conversation_id,
-                role="user",
-                content=prompt,
-                metadata=meta,
-            )
+            await self._append_message(conversation_id, "user", prompt, meta)
 
         if history is None and conversation_id:
             history = await self._load_history(conversation_id, cfg.history_context_size)
@@ -393,12 +377,7 @@ class AIClient:
             yield {"__conversation_id__": conversation_id}
 
         if conversation_id:
-            await self._conversation_db().append_message(
-                conversation_id=conversation_id,
-                role="user",
-                content=prompt,
-                metadata=meta,
-            )
+            await self._append_message(conversation_id, "user", prompt, meta)
 
         if history is None and conversation_id:
             history = await self._load_history(conversation_id, cfg.history_context_size)
@@ -477,25 +456,32 @@ class AIClient:
         )
         return text, self.last_usage, self.last_tool_interactions
 
-    @classmethod
-    async def _ensure_conversation(cls, conversation_id: str | None) -> str | None:
+    @staticmethod
+    async def _ensure_conversation(conversation_id: str | None) -> str | None:
         """Create a new conversation or verify an existing one.
 
         Returns the valid conversation ID, or ``None`` if the DB is
-        unavailable.
+        unavailable (the chat then runs without persistence).
         """
-        db = cls._conversation_db()
-        if not conversation_id:
-            return await db.create_conversation()
+        try:
+            if conversation_id and await ConversationDB.get_conversation(conversation_id):
+                return conversation_id
+            return await ConversationDB.create_conversation()
+        except DB_ERRORS as e:
+            printer.warning(f"Chat not persisted, database unavailable: {e}")
+            return None
 
-        existing = await db.get_conversation(conversation_id)
-        if existing:
-            return conversation_id
+    @staticmethod
+    async def _append_message(conversation_id: str, role: str, content: str, metadata: dict[str, Any]) -> None:
+        try:
+            await ConversationDB.append_message(
+                conversation_id=conversation_id, role=role, content=content, metadata=metadata
+            )
+        except DB_ERRORS as e:
+            printer.warning(f"{role.capitalize()} message not saved to {conversation_id}, database unavailable: {e}")
 
-        return await db.create_conversation()
-
-    @classmethod
-    async def _load_history(cls, conversation_id: str, context_size: int) -> list:
+    @staticmethod
+    async def _load_history(conversation_id: str, context_size: int) -> list:
         """Load the active message window for a conversation and convert to LangChain types.
 
         If the conversation has been compacted, loads only messages from the
@@ -510,18 +496,18 @@ class AIClient:
         tool calls, one ToolMessage per tool result, and a final AIMessage with
         the text response.  This gives the LLM accurate memory of prior tool
         usage across conversation turns.
+
+        Returns an empty history when the DB is unavailable.
         """
-        DB = cls._conversation_db()
-
-        summary_message_id, _ = await DB.get_compaction_state(conversation_id)
-
-        if summary_message_id:
-            messages = await DB.get_messages_from(conversation_id, summary_message_id)
-        else:
-            messages = await DB.get_recent_messages(
-                conversation_id,
-                last_n=context_size * 2,
-            )
+        try:
+            summary_message_id, _ = await ConversationDB.get_compaction_state(conversation_id)
+            if summary_message_id:
+                messages = await ConversationDB.get_messages_from(conversation_id, summary_message_id)
+            else:
+                messages = await ConversationDB.get_recent_messages(conversation_id, last_n=context_size * 2)
+        except DB_ERRORS as e:
+            printer.warning(f"History not loaded for {conversation_id}, database unavailable: {e}")
+            return []
 
         history: list = []
         for i, msg in enumerate(messages):
@@ -621,12 +607,9 @@ class AIClient:
         not report usage.  Compaction is **blocking** — the caller waits
         until it finishes (or fails) before proceeding.
 
-        All operations are DB-resilient (ConversationDB methods no-op
-        on failure), so this method never raises.
+        Database errors are logged and skipped, so a chat never fails
+        because Postgres is down.
         """
-        db = self._conversation_db()
-        Compactor = self._conversation_compactor()
-
         model_name = self.get_model_name()
         if usage is None:
             base_usage = self._estimate_usage(prompt, response_text, model_name, history=history)
@@ -649,26 +632,25 @@ class AIClient:
         if tool_interactions:
             msg_metadata["tool_calls"] = tool_interactions
 
-        await db.append_message(
-            conversation_id=conversation_id,
-            role="assistant",
-            content=response_text.strip(),
-            metadata=msg_metadata,
-        )
+        await self._append_message(conversation_id, "assistant", response_text.strip(), msg_metadata)
 
         if usage.get("input_tokens") and not disable_summarization:
             context_tokens = usage["input_tokens"]
-            if Compactor.should_compact(context_tokens, model_name):
+            if ConversationCompactor.should_compact(context_tokens, model_name):
                 printer.info(
                     f"Context threshold crossed ({context_tokens} context tokens). Triggering blocking compaction."
                 )
-                compactor = Compactor(self, model_name)
+                compactor = ConversationCompactor(self, model_name)
                 await compactor.compact(conversation_id)
 
-        msg_count = await db.get_message_count(conversation_id)
+        try:
+            msg_count = await ConversationDB.get_message_count(conversation_id)
+        except DB_ERRORS as e:
+            printer.warning(f"Title not generated for {conversation_id}, database unavailable: {e}")
+            return
         if msg_count == 2:
             self._schedule_background(
-                db.generate_and_set_title(
+                generate_and_set_title(
                     conversation_id=conversation_id,
                     first_message=prompt,
                     ai_client=self,

@@ -7,7 +7,7 @@ from lib.workflows import schedule_service
 CRON_DEFINITIONS = [
     {
         "name": "list_cron_schedules",
-        "description": "List all active cron schedules for workflows. When asked for cron jobs use this function until explicitly asked to check for system cron jobs.",
+        "description": "List all cron schedules for workflows, enabled and disabled; each entry has an `enabled` flag. When asked for cron jobs use this function until explicitly asked to check for system cron jobs.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -81,7 +81,7 @@ class CronTool(BaseTool):
 
     @staticmethod
     def _list_cron_schedules() -> dict[str, Any]:
-        printer.info("Listing active cron schedules")
+        printer.info("Listing cron schedules")
         try:
             schedules = run_async(schedule_service.list_schedules())
             results = [

@@ -1,12 +1,21 @@
-"""Bot Application Daemon - Long-running async service for cross-platform messaging bot."""
+"""Bot Application Daemon - Long-running async service for the Telegram bot."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
 import signal
+from typing import TYPE_CHECKING
 
-from imports import BaseTool, BrowserTool, CommandService, IncomingMessage, MessagingClient, PostgresDB
+from imports import (
+    DB_ERRORS,
+    BaseTool,
+    CommandService,
+    IncomingMessage,
+    PostgresDB,
+    TelegramClient,
+    browser,
+)
 from imports import printer as logger
 
 from .commands import create_command_system
@@ -17,11 +26,15 @@ from .user_client_manager import UserClientManager
 from .user_identity import UserIdentityManager
 
 
+if TYPE_CHECKING:
+    from .transport import MessagingTransport
+
+
 class BotApp:
-    def __init__(self, config: BotConfig | None = None) -> None:
+    def __init__(self, config: BotConfig | None = None, transport: MessagingTransport | None = None) -> None:
         self.config = config or BotConfig()
 
-        self._messaging_client: MessagingClient | None = None
+        self._transport: MessagingTransport | None = transport
         self._user_client_manager: UserClientManager | None = None
         self._message_handler: BotMessageHandler | None = None
         self._user_identity: UserIdentityManager | None = None
@@ -45,8 +58,12 @@ class BotApp:
     async def _initialize(self) -> None:
         logger.info("Initializing Bot components...")
 
-        await PostgresDB.initialize()
-        logger.info("PostgresDB initialized")
+        try:
+            await PostgresDB.initialize()
+            logger.info("PostgresDB initialized")
+        except DB_ERRORS as e:
+            # The bot can still chat without Postgres; only conversation history is lost.
+            logger.warning(f"PostgresDB unavailable, continuing without it: {e}")
 
         from imports import AIClient, MCPServerRegistry, register_all_tools
 
@@ -63,21 +80,19 @@ class BotApp:
         )
         logger.info(f"Default AI client initialized: {default_client.provider_name}")
 
-        self._messaging_client = MessagingClient(providers=self.config.bot_providers)
-        logger.info(f"Messaging client created for: {self.config.bot_providers}")
+        if self._transport is None:
+            self._transport = TelegramClient()
+        transport = self._transport
 
         self._user_client_manager = UserClientManager(
-            provider=self.config.ai_provider,
+            ai_provider=self.config.ai_provider,
             system_instruction=self.config.system_instruction,
-            messaging_client=self._messaging_client,
+            transport=transport,
             loop=loop,
         )
 
         self._user_identity = UserIdentityManager()
-        self._streaming = StreamingResponseManager(
-            messaging_client=self._messaging_client,
-            config=self.config,
-        )
+        self._streaming = StreamingResponseManager(transport=transport, config=self.config)
 
         self._command_service = CommandService(
             ai_client=default_client,
@@ -89,12 +104,11 @@ class BotApp:
         registry, dispatcher = create_command_system(self._command_service)
         logger.info(f"Registered {len(registry.list_commands())} bot commands")
 
-        await self._messaging_client.register_bot_commands(registry.get_definitions())
-        logger.info("Commands registered with messaging providers")
+        await transport.register_commands(registry.get_bot_commands())
 
         self._message_handler = BotMessageHandler(
             command_service=self._command_service,
-            messaging_client=self._messaging_client,
+            transport=transport,
             user_identity=self._user_identity,
             streaming_manager=self._streaming,
             config=self.config,
@@ -110,9 +124,9 @@ class BotApp:
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, self._stop_event.set)
 
-        await self._messaging_client.start(on_message=self._on_message)
+        await self._transport.start(on_message=self._on_message)
 
-        logger.info(f"Bot is now running (providers: {self.config.bot_providers})")
+        logger.info("Bot is now running (Telegram long polling)")
         logger.info("Press Ctrl+C to shutdown")
 
         try:
@@ -129,7 +143,7 @@ class BotApp:
         while True:
             await asyncio.sleep(300)
             try:
-                BrowserTool.cleanup_idle(self.config.browser_idle_timeout)
+                browser.cleanup_idle(self.config.browser_idle_timeout)
             except Exception as e:
                 logger.warning(f"Auto-cleaner error: {e}")
 
@@ -145,7 +159,7 @@ class BotApp:
 
         shutdown_steps = [
             ("message handlers", self._shutdown_handlers),
-            ("messaging client", self._shutdown_messaging),
+            ("messaging transport", self._shutdown_transport),
             ("database", self._shutdown_database),
         ]
 
@@ -166,9 +180,9 @@ class BotApp:
         if self._message_handler:
             await asyncio.wait_for(self._message_handler.cancel_all(), timeout=5.0)
 
-    async def _shutdown_messaging(self) -> None:
-        if self._messaging_client:
-            await self._messaging_client.stop()
+    async def _shutdown_transport(self) -> None:
+        if self._transport:
+            await self._transport.stop()
 
     async def _shutdown_database(self) -> None:
         await PostgresDB.close()
