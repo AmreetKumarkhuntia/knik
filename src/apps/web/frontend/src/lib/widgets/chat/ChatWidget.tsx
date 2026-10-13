@@ -16,6 +16,7 @@ import WelcomePrompt from '$components/home/WelcomePrompt'
 import WelcomeContainer from '$components/home/WelcomeContainer'
 import SuggestionCards from '$components/home/SuggestionCards'
 import KeyboardShortcuts from '$components/home/KeyboardShortcuts'
+import { MOTION_DURATION, MOTION_EASE_SPRING } from '$lib/constants/motion'
 import { useChatStore, useChatScope, useSendMessage } from '$stores/chat'
 import { useSettingsStore } from '$stores/settings'
 import { useFeedbackStore } from '$stores/feedback'
@@ -40,7 +41,9 @@ const ChatTranscript = memo(function ChatTranscript({
       aria-busy={isStreaming}
       aria-label="Conversation"
       className={
-        messages.length > 0 ? 'w-full max-w-[720px] mx-auto py-6 flex flex-col gap-6' : undefined
+        messages.length > 0
+          ? 'w-full max-w-[720px] mx-auto py-6 flex flex-col gap-[26px]'
+          : undefined
       }
     >
       {/* initial={false}: history already on screen stays put; only newly appended messages enter. */}
@@ -51,9 +54,9 @@ const ChatTranscript = memo(function ChatTranscript({
           return (
             <motion.div
               key={`${message.id || messageId}:${index}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ease: 'easeOut', duration: 0.2 }}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ ease: MOTION_EASE_SPRING, duration: MOTION_DURATION.page }}
             >
               <ChatBubble
                 role={isUser ? 'user' : 'assistant'}
@@ -70,18 +73,20 @@ const ChatTranscript = memo(function ChatTranscript({
                   isUser ? (
                     <Avatar initials={initials} size={30} />
                   ) : (
-                    <div className="flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-[var(--acc-soft)] border border-[var(--acc-border)]">
-                      <KnikGlyph size={16} />
+                    <div className="knik-tile knik-tile--accent w-[30px] h-[30px] rounded-[10px]">
+                      <KnikGlyph size={16} animated={message.isStreaming} />
                     </div>
                   )
                 }
                 header={
                   !isUser ? (
-                    <div className="flex flex-wrap items-center gap-2 text-label mb-2">
-                      <span className="font-semibold text-fg-1">Knik AI</span>
-                      {modelTag && <span className="text-caption text-fg-3">{modelTag}</span>}
+                    <div className="flex flex-wrap items-center gap-2 min-h-[30px] mb-2">
+                      <span className="text-label font-semibold text-fg-1">Knik AI</span>
+                      {modelTag && <span className="text-caption text-fg-4">{modelTag}</span>}
                       {message.timestamp && (
-                        <span className="text-caption text-fg-3">{message.timestampLabel}</span>
+                        <span className="font-mono text-caption text-fg-4">
+                          {message.timestampLabel}
+                        </span>
                       )}
                     </div>
                   ) : undefined
@@ -230,7 +235,7 @@ function ChatSessionWidget() {
         <p className="text-body text-fg-3 mb-4">
           Choose the tool groups available across this session.
         </p>
-        <ToolGroupList groups={tools} onToggle={toggleTool} />
+        <ToolGroupList groups={tools} onToggle={toggleTool} variant="cards" />
       </Modal>
       <KeyboardShortcuts isOpen={shortcutsOpen} onClose={() => patch({ shortcutsOpen: false })} />
     </div>

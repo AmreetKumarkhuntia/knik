@@ -20,7 +20,7 @@ export default function NodePropertiesPanel({
   const metadata = getNodeMetadata(selectedNode.type ?? '')
   const properties = (
     <>
-      <div key={selectedNode.id} className="p-5">
+      <div key={selectedNode.id} className="p-5 flex flex-col gap-4">
         <ConfigurationForm
           node={selectedNode}
           modelOptions={modelOptions}
@@ -48,16 +48,22 @@ export default function NodePropertiesPanel({
   return (
     <aside
       aria-label="Node properties"
-      className="w-80 border-l border-border bg-surface flex flex-col flex-shrink-0 overflow-hidden"
+      className="w-80 bg-surface border-l border-border-1 flex flex-col flex-shrink-0 overflow-hidden knik-enter-drawer"
     >
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border-1">
         <div className="min-w-0">
-          <h2 className="text-h3 text-foreground">Node properties</h2>
-          <p className="text-caption text-secondary mt-1 truncate">
-            {metadata?.label ?? selectedNode.type}
+          <h2 className="text-h3 text-fg-1">Node properties</h2>
+          <p className="text-caption text-fg-3 mt-0.5 truncate">
+            {metadata?.label ?? selectedNode.type} · {selectedNode.id}
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close node properties">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="knik-btn--icon rounded-[9px]"
+          onClick={onClose}
+          aria-label="Close node properties"
+        >
           <MS name="close" size={18} />
         </Button>
       </div>

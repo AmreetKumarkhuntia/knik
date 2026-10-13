@@ -34,6 +34,7 @@ export default function Canvas({
   fieldDrafts,
   onFieldDraftChange,
   narrow = false,
+  notice,
 }: CanvasProps) {
   return (
     <div className="h-full min-h-0 w-full flex flex-col">
@@ -47,6 +48,7 @@ export default function Canvas({
         workflowName={workflowName}
         readOnly={readOnly}
       />
+      {notice && <div className="shrink-0">{notice}</div>}
       <div className="flex flex-1 overflow-hidden relative">
         <div className="flex-1 min-w-0 relative flex flex-col workflow-grid overflow-hidden">
           {/* In flow rather than overlaid, so the canvas and its Add Node trigger sit below it. */}
@@ -58,8 +60,8 @@ export default function Canvas({
               aria-label="Validation errors"
               className="knik-focus shrink-0 max-h-40 overflow-y-auto"
             >
-              <Banner variant="danger">
-                <pre className="whitespace-pre-wrap font-mono">{error}</pre>
+              <Banner variant="danger" className="rounded-none border-x-0 border-t-0 px-4 py-2.5">
+                <pre className="whitespace-pre-wrap font-mono text-mono-sm">{error}</pre>
               </Banner>
             </div>
           )}

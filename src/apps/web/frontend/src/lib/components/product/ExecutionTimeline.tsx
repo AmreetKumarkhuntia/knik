@@ -1,5 +1,7 @@
 import CodeBlock from '../chat/CodeBlock'
+import MS from '../display/MS'
 import type { ExecutionTimelineProps } from '$types/components'
+import { executionStatusConfig } from '$lib/constants'
 import { getNodeIcon } from '$lib/constants/nodes'
 import { formatDuration } from '$utils/format'
 
@@ -7,81 +9,102 @@ import { formatDuration } from '$utils/format'
 export default function ExecutionTimeline({ timeline, onCopy }: ExecutionTimelineProps) {
   if (!timeline || timeline.length === 0) {
     return (
-      <div className="bg-surface border border-border rounded-lg p-8 text-center">
-        <p className="text-fg-3 text-body">No execution steps available</p>
+      <div className="rounded-[14px] border border-border-1 bg-panel p-8 text-center">
+        <p className="text-body text-fg-3">No execution steps available</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      {timeline.map((step, index) => (
-        <div key={`${step.node_id}-${index}`} className="relative pl-8">
-          {index < timeline.length - 1 && (
-            <div className="absolute left-3 top-8 bottom-0 w-0.5 bg-[var(--border-2)]" />
-          )}
-
+    <div className="flex flex-col gap-3">
+      {timeline.map((step, index) => {
+        const status = executionStatusConfig[step.status]
+        const running = step.status === 'running'
+        return (
           <div
-            className={`absolute left-0 top-2 w-6 h-6 rounded-full flex items-center justify-center ${
-              step.status === 'success'
-                ? 'bg-[var(--success-bg)] text-[var(--success)]'
-                : step.status === 'failed'
-                  ? 'bg-[var(--danger-bg)] text-[var(--danger)]'
-                  : 'bg-[var(--info-bg)] text-[var(--info)]'
-            }`}
+            key={`${step.node_id}-${index}`}
+            className="relative pl-[34px] knik-enter-rise"
+            style={{ animationDelay: `${index * 0.06}s` }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">
-              {step.status === 'success' ? 'check' : step.status === 'failed' ? 'close' : 'pending'}
-            </span>
-          </div>
-
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="material-symbols-outlined text-fg-3" aria-hidden="true">
-                  {getNodeIcon(step.node_type)}
-                </span>
-                <h2 className="font-semibold text-fg-1 break-all">{step.node_id}</h2>
-                <span className="text-caption capitalize text-secondary">{step.status}</span>
-                <span className="text-caption text-fg-3 break-all">{step.node_type}</span>
-              </div>
-              <span className="text-caption text-fg-4">{formatDuration(step.duration_ms)}</span>
-            </div>
-
-            {step.error_message && (
-              <div className="mt-2 p-2 bg-[var(--danger-bg)] border border-[var(--danger)] rounded text-caption text-[var(--danger)]">
-                {step.error_message}
-              </div>
+            {index < timeline.length - 1 && (
+              <div className="absolute left-[11px] top-[34px] -bottom-3 w-0.5 bg-border-2" />
             )}
 
-            <details className="mt-3">
-              <summary className="text-caption text-fg-3 cursor-pointer hover:text-[var(--primary)] transition-colors">
-                View inputs/outputs
-              </summary>
-              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div>
-                  <div className="text-caption text-fg-4 mb-1">Inputs:</div>
-                  <CodeBlock
-                    code={JSON.stringify(step.inputs, null, 2)}
-                    language="json"
-                    onCopy={onCopy}
-                    className="max-h-48 overflow-auto"
-                  />
+            <div
+              className={`absolute left-0 top-2.5 w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-slow ease-out ${status.bg} ${status.text} ${
+                running ? 'shadow-[0_0_0_4px_var(--acc-soft)]' : ''
+              }`}
+            >
+              <MS
+                name={
+                  step.status === 'success'
+                    ? 'check'
+                    : step.status === 'failed'
+                      ? 'close'
+                      : running
+                        ? 'progress_activity'
+                        : 'pending'
+                }
+                size={14}
+                className={running ? 'animate-spin' : ''}
+              />
+            </div>
+
+            <div className="rounded-[14px] border border-border-1 bg-panel px-3.5 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2.5 min-w-0">
+                  <MS name={getNodeIcon(step.node_type)} size={18} className="text-fg-3" />
+                  <h2 className="text-body font-semibold text-fg-1 break-all">{step.node_id}</h2>
+                  <span className={`text-caption capitalize ${status.text}`}>{step.status}</span>
+                  <span className="font-mono text-caption text-fg-4 break-all">
+                    {step.node_type}
+                  </span>
                 </div>
-                <div>
-                  <div className="text-caption text-fg-4 mb-1">Outputs:</div>
-                  <CodeBlock
-                    code={JSON.stringify(step.outputs, null, 2)}
-                    language="json"
-                    onCopy={onCopy}
-                    className="max-h-48 overflow-auto"
-                  />
-                </div>
+                <span className="font-mono text-caption text-fg-4">
+                  {formatDuration(step.duration_ms)}
+                </span>
               </div>
-            </details>
+
+              {step.error_message && (
+                <div className="mt-2.5 rounded-[9px] px-2.5 py-2 bg-[var(--danger-bg)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-body-sm text-[var(--danger)]">
+                  {step.error_message}
+                </div>
+              )}
+
+              <details className="mt-2.5">
+                <summary className="knik-focus rounded-xs inline-flex items-center gap-1 cursor-pointer list-none text-caption text-fg-3 hover:text-[var(--acc-text)] transition-colors duration-base [&::-webkit-details-marker]:hidden">
+                  <MS name="data_object" size={15} />
+                  View inputs/outputs
+                </summary>
+                <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2">
+                  <div className="min-w-0">
+                    <div className="mb-1.5 text-micro font-semibold uppercase tracking-[.06em] text-fg-4">
+                      Inputs
+                    </div>
+                    <CodeBlock
+                      code={JSON.stringify(step.inputs, null, 2)}
+                      language="json"
+                      onCopy={onCopy}
+                      className="max-h-48 overflow-auto"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="mb-1.5 text-micro font-semibold uppercase tracking-[.06em] text-fg-4">
+                      Outputs
+                    </div>
+                    <CodeBlock
+                      code={JSON.stringify(step.outputs, null, 2)}
+                      language="json"
+                      onCopy={onCopy}
+                      className="max-h-48 overflow-auto"
+                    />
+                  </div>
+                </div>
+              </details>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

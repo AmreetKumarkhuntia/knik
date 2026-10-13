@@ -1,8 +1,16 @@
+import KnikGlyph from '$components/display/KnikGlyph'
+
 export default function WelcomePrompt() {
   return (
-    <div>
-      <h1 className="text-h1 tracking-tight text-fg-1">How can I help you today?</h1>
-      <p className="mt-2 text-body text-fg-3">Start a conversation or choose a suggestion.</p>
+    <div className="knik-enter-rise">
+      <div className="inline-flex items-center h-7 px-2.5 mb-[22px] rounded-pill bg-[var(--acc-soft)] border border-[var(--acc-border)]">
+        <KnikGlyph size={20} animated />
+        <span className="ml-1.5 text-micro font-semibold uppercase tracking-[.06em] text-[var(--acc-text)]">
+          Knik AI
+        </span>
+      </div>
+      <h1 className="text-display text-fg-1 [text-wrap:pretty]">How can I help you today?</h1>
+      <p className="mt-2.5 text-body-lg text-fg-3">Start a conversation or choose a suggestion.</p>
     </div>
   )
 }

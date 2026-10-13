@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useViewport } from '$hooks'
 import { useSettingsScope } from '$stores/settings'
 import VerticalTabs from '$components/navigation/VerticalTabs'
@@ -16,12 +16,28 @@ export default function SettingsWidget({
 }: SettingsWidgetProps) {
   const { scope, patch } = useSettingsScope()
   const viewport = useViewport()
+  // A distinct key per pane remounts the wrapper so the entrance replays on every tab switch.
+  const pane = (id: string, content: ReactNode) => (
+    <div key={id} className="flex flex-col gap-6 knik-enter-rise">
+      {content}
+    </div>
+  )
   const tabs = [
-    { id: 'general', label: 'General', icon: 'tune', content: <GeneralPane /> },
-    { id: 'appearance', label: 'Appearance', icon: 'palette', content: <AppearancePane /> },
-    { id: 'providers', label: 'Providers', icon: 'hub', content: <ProvidersPane /> },
-    { id: 'voice', label: 'Voice', icon: 'graphic_eq', content: <VoicePane /> },
-    { id: 'keys', label: 'API keys', icon: 'key', content: <KeysPane /> },
+    { id: 'general', label: 'General', icon: 'tune', content: pane('general', <GeneralPane />) },
+    {
+      id: 'appearance',
+      label: 'Appearance',
+      icon: 'palette',
+      content: pane('appearance', <AppearancePane />),
+    },
+    {
+      id: 'providers',
+      label: 'Providers',
+      icon: 'hub',
+      content: pane('providers', <ProvidersPane />),
+    },
+    { id: 'voice', label: 'Voice', icon: 'graphic_eq', content: pane('voice', <VoicePane />) },
+    { id: 'keys', label: 'API keys', icon: 'key', content: pane('keys', <KeysPane />) },
   ]
   const requestedPane = tabs.some(tab => tab.id === requestedTab) ? requestedTab : null
   useEffect(() => {
@@ -31,7 +47,7 @@ export default function SettingsWidget({
   }, [requestedPane, patch, onRequestedTabApplied])
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="mx-auto max-w-[1032px] px-4 py-6 pb-12 sm:px-8">
+      <div className="mx-auto max-w-[1032px] px-4 pb-12 pt-6 sm:px-8">
         <SectionHeader
           className="mb-6"
           title="Settings"

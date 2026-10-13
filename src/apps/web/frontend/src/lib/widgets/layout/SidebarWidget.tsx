@@ -12,6 +12,7 @@ import { useShellStore } from '$stores/shell'
 import { useSidebarView } from '$stores/views'
 import { LAYOUT } from '$lib/constants/dimensions'
 import { ROUTES } from '$lib/constants/navigation'
+import { MOTION_DURATION, MOTION_EASE_SPRING } from '$lib/constants/motion'
 import type { SidebarWidgetProps } from '$types/widgets/chat-shell'
 
 export default function SidebarWidget({
@@ -44,7 +45,7 @@ export default function SidebarWidget({
   const closeEditor = () => cancelRename(scopeId)
 
   const navigation = (
-    <div className="h-full min-h-0 flex flex-col" style={{ padding: collapsed ? '8px' : '12px' }}>
+    <div className={`h-full min-h-0 flex flex-col ${collapsed ? 'p-2' : 'p-3'}`}>
       <SidebarBrand
         collapsed={collapsed}
         onToggle={viewport === 'desktop' ? () => setCollapsed(!desktopCollapsed) : undefined}
@@ -70,6 +71,7 @@ export default function SidebarWidget({
         collapsed={collapsed}
         name={accountName}
         initials={initials}
+        active={location.pathname === ROUTES.settings}
         onNavigate={onCloseMobile}
       />
     </div>
@@ -90,12 +92,12 @@ export default function SidebarWidget({
       ) : (
         <motion.aside
           aria-label="Workspace sidebar"
-          className="h-full flex-shrink-0 overflow-hidden bg-surface border-r border-border"
+          className="h-full flex-shrink-0 overflow-hidden bg-surface border-r border-border-1"
           initial={false}
           animate={{
             width: collapsed ? LAYOUT.sidebarWidth.collapsed : LAYOUT.sidebarWidth.expanded,
           }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: MOTION_DURATION.slow, ease: MOTION_EASE_SPRING }}
         >
           {navigation}
         </motion.aside>
@@ -112,7 +114,7 @@ export default function SidebarWidget({
             saveRename(scopeId)
           }}
         >
-          <label htmlFor="conversation-title" className="block text-label text-fg-2 mb-2">
+          <label htmlFor="conversation-title" className="block text-label text-fg-3 mb-2">
             Title
           </label>
           <Input
@@ -129,7 +131,9 @@ export default function SidebarWidget({
             <Button onClick={closeEditor} variant="ghost">
               Cancel
             </Button>
-            <Button type="submit">Save title</Button>
+            <Button type="submit" variant="primary">
+              Save title
+            </Button>
           </div>
         </form>
       </Modal>

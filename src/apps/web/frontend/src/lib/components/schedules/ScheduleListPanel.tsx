@@ -23,24 +23,29 @@ export default function ScheduleListPanel({
         workflowNames[schedule.target_workflow_id] ? (
           <Link
             to={ROUTE_PATHS.workflowEdit(schedule.target_workflow_id)}
-            className="font-medium text-foreground hover:underline"
+            className="knik-focus rounded-xs text-h4 text-fg-1 transition-colors duration-base ease-out hover:text-[var(--acc-text)]"
           >
             {workflowName(schedule)}
           </Link>
         ) : (
-          <span className="text-secondary">{workflowName(schedule)}</span>
+          <span className="text-body text-fg-3">{workflowName(schedule)}</span>
         ),
     },
     {
       key: 'schedule_description',
       label: 'Schedule',
-      render: (_, schedule) => schedule.schedule_description ?? 'Recurring',
+      render: (_, schedule) => (
+        <span className="inline-flex items-center gap-2 text-body text-fg-2">
+          <MS name="schedule" size={16} className="shrink-0 text-fg-4" />
+          <span className="min-w-0">{schedule.schedule_description ?? 'Recurring'}</span>
+        </span>
+      ),
     },
     {
       key: 'next_run_at',
       label: 'Next run',
       render: (_, schedule) => (
-        <span className="whitespace-nowrap text-secondary">
+        <span className="whitespace-nowrap text-body text-fg-3">
           {schedule.next_run_at ? formatDate(schedule.next_run_at) : '—'}
         </span>
       ),
@@ -49,7 +54,7 @@ export default function ScheduleListPanel({
       key: 'timezone',
       label: 'Timezone',
       render: (_, schedule) => (
-        <span className="font-mono text-mono-sm">{schedule.timezone || 'UTC'}</span>
+        <span className="font-mono text-mono-sm text-fg-2">{schedule.timezone || 'UTC'}</span>
       ),
     },
     {
@@ -74,8 +79,8 @@ export default function ScheduleListPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="text-[var(--danger)]"
-            icon={<MS name="delete" size={16} />}
+            className="knik-btn--icon knik-btn--destructive rounded-[9px]"
+            icon={<MS name="delete" size={17} />}
             aria-label={`Delete schedule for ${workflowName(schedule)}`}
             onClick={() => onDelete(schedule)}
           />
@@ -84,19 +89,17 @@ export default function ScheduleListPanel({
     },
   ]
   return (
-    <>
-      <Table
-        columns={columns}
-        data={schedules}
-        getRowKey={schedule => schedule.id}
-        empty={
-          <EmptyState
-            icon="schedule"
-            title="No schedules yet"
-            description="Add a schedule to preview it in this session. No jobs are executed."
-          />
-        }
-      />
-    </>
+    <Table
+      columns={columns}
+      data={schedules}
+      getRowKey={schedule => schedule.id}
+      empty={
+        <EmptyState
+          icon="schedule"
+          title="No schedules yet"
+          description="Add a schedule to preview it in this session. No jobs are executed."
+        />
+      }
+    />
   )
 }

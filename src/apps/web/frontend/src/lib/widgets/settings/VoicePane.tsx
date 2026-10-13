@@ -25,33 +25,36 @@ export default function VoicePane() {
           />
         </FormRow>
         <FormRow label="Speaking rate" htmlFor={`${id}-rate`} last>
-          <div className="flex-1 max-w-[260px] min-w-0">
+          <div className="w-full min-w-0 sm:w-[260px]">
             <Slider
               id={`${id}-rate`}
               min={0.5}
               max={2}
               step={0.1}
               value={settings.speaking_rate}
+              formatValue={rate => `${rate.toFixed(1)}×`}
               onChange={speaking_rate => updateSettings({ speaking_rate })}
             />
           </div>
         </FormRow>
       </FormGroup>
-      <FormGroup title="Voice" sub="Choose a default voice for this session">
+      <FormGroup title="Voice" sub="Choose a default voice for this session" bodyClassName="p-1.5">
         {voices.length ? (
           <Radio
             name={`${id}-voice`}
             label="Default voice"
-            presentation="standard"
+            hideLabel
+            presentation="card"
+            optionsClassName="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-0.5"
             value={settings.voice}
             onChange={voice => updateSettings({ voice })}
             options={voices.map(voice => ({
               value: voice.id,
-              label: <VoiceOption voice={voice} />,
+              label: <VoiceOption voice={voice} active={settings.voice === voice.id} />,
             }))}
           />
         ) : (
-          <p className="text-body-sm text-[var(--fg-4)] py-2">No voices available.</p>
+          <p className="px-3 py-2.5 text-body-sm text-fg-4">No voices available.</p>
         )}
       </FormGroup>
     </>

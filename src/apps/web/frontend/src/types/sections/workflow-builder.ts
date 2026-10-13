@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { Node, Edge, OnNodesChange, OnEdgesChange, OnConnect } from '@xyflow/react'
 
 export interface BuilderFieldStateProps {
@@ -26,6 +27,8 @@ export interface CanvasProps extends BuilderFieldStateProps {
   onExportJson?: () => void
   /** True below the desktop breakpoint: lower minimum zoom, no minimap, drawer inspector. */
   narrow?: boolean
+  /** Full-width strip shown directly below the navbar, above the canvas and inspector. */
+  notice?: ReactNode
 }
 
 /** Props for the node configuration form. */

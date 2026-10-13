@@ -81,6 +81,19 @@ describe('node inspector', () => {
       targetHandle: null,
     })
   })
+  it('names the node type and id, and describes a field with its inline tip', () => {
+    const check = {
+      id: 'check',
+      type: 'ConditionalBranchNode',
+      position: { x: 0, y: 0 },
+      data: { condition: 'true' },
+    }
+    render(<NodePropertiesPanel {...props()} selectedNode={check} />)
+    expect(screen.getByText('Conditional · check')).toBeInTheDocument()
+    expect(screen.getByLabelText('Condition')).toHaveAccessibleDescription(
+      'Tip: Use JavaScript expressions like data.value > 10'
+    )
+  })
   it('offers no keyboard connection without a connect handler, as in read-only views', () => {
     render(<NodePropertiesPanel {...props()} nodes={[node]} />)
     expect(screen.queryByLabelText('Connect to')).not.toBeInTheDocument()

@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom'
-import { Pagination, SectionHeader } from '$components'
+import { Link, useNavigate } from 'react-router-dom'
+import { MS, Pagination, SectionHeader } from '$components'
 import HistoryTable from '$components/workflows/HistoryTable'
 import ExecutionsFilterBar from '$components/workflows/ExecutionsFilterBar'
 import { useExecutionsView } from '$stores/views'
-import { ROUTE_PATHS } from '$lib/constants/navigation'
+import { ROUTE_PATHS, ROUTES } from '$lib/constants/navigation'
 
 export default function AllExecutionsWidget() {
   const navigate = useNavigate()
@@ -23,8 +23,20 @@ export default function AllExecutionsWidget() {
   } = useExecutionsView()
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
-        <SectionHeader title="Executions" subtitle="Workflow run history" />
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 pt-6 pb-8">
+        <SectionHeader
+          title="Executions"
+          subtitle="Workflow run history"
+          actions={
+            <Link
+              to={ROUTES.workflows}
+              className="knik-btn knik-btn--secondary knik-btn--sm knik-focus rounded-[11px] pl-2.5 pr-3.5 whitespace-nowrap"
+            >
+              <MS name="arrow_back" size={18} />
+              Workflows
+            </Link>
+          }
+        />
         <ExecutionsFilterBar
           workflows={workflows}
           selectedWorkflow={selectedWorkflow}

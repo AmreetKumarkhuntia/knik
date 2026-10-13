@@ -1,6 +1,6 @@
 import type { CheckboxProps } from '$types'
 /**
- * Custom checkbox with aurora check mark and focus ring.
+ * Custom checkbox with an accent check mark and focus ring.
  */
 export default function Checkbox({
   checked,
@@ -16,10 +16,10 @@ export default function Checkbox({
       } ${className}`}
     >
       <div
-        className={`relative shrink-0 w-[18px] h-[18px] border-[1.5px] rounded-xs inline-flex items-center justify-center transition-all duration-base focus-within:ring-2 focus-within:ring-[var(--border-focus)] ${
+        className={`relative shrink-0 w-[18px] h-[18px] border-[1.5px] rounded-[6px] inline-flex items-center justify-center transition-colors duration-base ease-out focus-within:ring-2 focus-within:ring-[var(--border-focus)] ${
           checked
             ? 'bg-[var(--primary)] border-[var(--primary)]'
-            : 'bg-[var(--bg-surface-2)] border-[var(--border-3)]'
+            : 'bg-panel border-[var(--border-3)]'
         }`}
       >
         <input
@@ -37,7 +37,7 @@ export default function Checkbox({
           />
         )}
       </div>
-      {label && <span className="text-label text-[var(--fg-2)]">{label}</span>}
+      {label && <span className="text-label text-fg-2">{label}</span>}
     </label>
   )
 }

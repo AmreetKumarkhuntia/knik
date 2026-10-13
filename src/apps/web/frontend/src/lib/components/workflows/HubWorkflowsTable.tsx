@@ -18,16 +18,18 @@ export default function HubWorkflowsTable({
       key: 'name',
       label: 'Workflow',
       render: (_, row) => (
-        <div className="flex items-center gap-3">
-          <MS name="account_tree" size={18} />
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="knik-tile">
+            <MS name="account_tree" size={18} className="text-[var(--acc-text)]" />
+          </span>
           <div className="min-w-0">
             <Link
-              className="text-body font-semibold text-foreground hover:underline"
+              className="knik-focus rounded-xs text-h4 text-fg-1 hover:text-[var(--acc-text)] transition-colors duration-base"
               to={ROUTE_PATHS.workflowEdit(row.id)}
             >
               {row.name}
             </Link>
-            <p className="text-caption text-secondary truncate max-w-80">{row.description}</p>
+            <p className="mt-0.5 text-body-sm text-fg-3 truncate max-w-80">{row.description}</p>
           </div>
         </div>
       ),
@@ -36,7 +38,7 @@ export default function HubWorkflowsTable({
       key: 'lastExecutedAt',
       label: 'Last run',
       render: (_, row) => (
-        <span className="font-mono text-mono-sm text-secondary">
+        <span className="font-mono text-mono-sm text-fg-3">
           {row.lastExecutedAt ? formatDate(row.lastExecutedAt) : '—'}
         </span>
       ),
@@ -53,19 +55,21 @@ export default function HubWorkflowsTable({
     {
       key: 'totalExecutions',
       label: 'Runs',
-      render: (_, row) => row.totalExecutions.toLocaleString(),
+      render: (_, row) => (
+        <span className="tabular-nums text-fg-2">{row.totalExecutions.toLocaleString()}</span>
+      ),
     },
     {
       key: 'actions',
       label: 'Actions',
       render: (_, row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Link
             to={ROUTE_PATHS.workflowEdit(row.id)}
             aria-label={`Edit ${row.name}`}
-            className="inline-flex min-h-9 min-w-9 max-sm:min-h-11 max-sm:min-w-11 items-center justify-center text-secondary"
+            className="knik-btn knik-btn--ghost knik-btn--sm knik-btn--icon knik-focus rounded-[9px] hover:!bg-panel-3"
           >
-            <MS name="edit" size={16} />
+            <MS name="edit" size={17} />
           </Link>
           <Button
             variant="ghost"
@@ -74,8 +78,9 @@ export default function HubWorkflowsTable({
             title={canRun(row.id) ? 'Run supplied demo scenario' : 'No demo run scenario supplied'}
             disabled={!canRun(row.id)}
             onClick={() => onRun(row.id)}
+            className="knik-btn--icon rounded-[9px] enabled:hover:!bg-[var(--acc-soft)] enabled:hover:!text-[var(--acc-text)]"
           >
-            <MS name="play_arrow" size={16} />
+            <MS name="play_arrow" size={18} fill={1} />
           </Button>
         </div>
       ),

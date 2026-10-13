@@ -8,6 +8,8 @@ export interface ProfileSummaryProps {
 export interface ToolGroupListProps {
   groups: readonly { name: string; enabled: boolean; count: number }[]
   onToggle: (name: string, enabled: boolean) => void
+  /** `rows` sit inside a settings card; `cards` are separate bordered rows for the chat tools drawer. */
+  variant?: 'rows' | 'cards'
 }
 export interface VoiceOptionProps {
   voice: DemoVoiceOption

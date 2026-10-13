@@ -17,7 +17,7 @@ export default function ExecutionsFilterBar({
     <div className="py-3">
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <label htmlFor="workflow-filter" className="text-label text-subtle">
+          <label htmlFor="workflow-filter" className="text-label text-fg-3">
             Workflow:
           </label>
           <Select
@@ -25,6 +25,7 @@ export default function ExecutionsFilterBar({
             presentation="native"
             value={selectedWorkflow}
             onChange={onWorkflowChange}
+            className="min-h-[34px] !px-2.5 !py-1.5 rounded-[9px] text-label"
             options={[
               { value: '', label: 'All Workflows' },
               ...workflows.map(workflow => ({ value: workflow.id, label: workflow.name })),
@@ -32,7 +33,7 @@ export default function ExecutionsFilterBar({
           />
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="status-filter" className="text-label text-subtle">
+          <label htmlFor="status-filter" className="text-label text-fg-3">
             Status:
           </label>
           <Select
@@ -40,6 +41,7 @@ export default function ExecutionsFilterBar({
             presentation="native"
             value={selectedStatus}
             onChange={onStatusChange}
+            className="min-h-[34px] !px-2.5 !py-1.5 rounded-[9px] text-label"
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'running', label: 'Running' },
@@ -50,11 +52,11 @@ export default function ExecutionsFilterBar({
           />
         </div>
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={onClearFilters}>
+          <Button variant="ghost" size="sm" className="rounded-[9px]" onClick={onClearFilters}>
             Clear Filters
           </Button>
         )}
-        <div className="ml-auto text-body-sm text-secondary">
+        <div className="ml-auto text-body-sm text-fg-3">
           Showing {shownCount} of {totalCount} executions
         </div>
       </div>

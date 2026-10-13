@@ -5,6 +5,7 @@ import { GRAPH_NODE_SIZE } from '$lib/constants/graph'
 import { formatDuration } from '$utils/format'
 import type { HandleConfig } from '$types/node-registry'
 import type { BaseNodeData } from '$types/graph'
+import MS from '../../display/MS'
 import { NodeContent } from './NodeContent'
 
 const POSITION_MAP = {
@@ -57,7 +58,10 @@ function NodeHandle({
       style={{ ...style, backgroundColor: config.color ?? 'var(--fg-3)' }}
     >
       {showLabel && config.label && (
-        <span className={`graph-node__port-label graph-node__port-label--${position}`}>
+        <span
+          className={`graph-node__port-label graph-node__port-label--${position}`}
+          style={{ color: config.color }}
+        >
           {config.label}
         </span>
       )}
@@ -80,9 +84,11 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
   const classes = [
     'graph-node',
     terminal ? 'graph-node--terminal' : 'graph-node--process',
-    isExecution ? 'graph-node--execution' : 'graph-node--editable',
+    // Opacity-only entrance: xyflow reads handle positions with getBoundingClientRect on mount, so
+    // the design's scale pop would anchor edges to the shrunken node.
+    isExecution ? 'graph-node--execution' : 'graph-node--editable knik-enter-fade',
     selected && 'graph-node--selected',
-    isExecution && status === 'running' && 'graph-node--running',
+    isExecution && status && status !== 'pending' && `graph-node--${status}`,
   ]
     .filter(Boolean)
     .join(' ')
@@ -94,9 +100,7 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
     >
       <div className="graph-node__header">
         <span className={`graph-node__icon ${metadata.colors.iconBg} ${metadata.colors.iconText}`}>
-          <span className="material-symbols-outlined" aria-hidden="true">
-            {metadata.icon}
-          </span>
+          <MS name={metadata.icon} size={terminal && isExecution ? 15 : 17} />
         </span>
         <div className="graph-node__heading">
           <h3 className="graph-node__title" title={label}>
@@ -116,9 +120,7 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
         <div className="graph-node__execution">
           {status && (
             <span className={`graph-node__status graph-node__status--${status}`}>
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {STATUS_ICONS[status]}
-              </span>
+              <MS name={STATUS_ICONS[status]} size={15} />
               <span>{status}</span>
             </span>
           )}

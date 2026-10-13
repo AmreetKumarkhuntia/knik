@@ -7,42 +7,41 @@ import type { ApiKeyRowProps } from '$types/widgets/settings'
 export default function ApiKeyRow({ apiKey, last, onDelete }: ApiKeyRowProps) {
   return (
     <div
-      className="flex flex-wrap items-center gap-3.5 py-3"
-      style={{ borderBottom: last ? 'none' : '1px solid var(--border-1)' }}
+      className={`flex flex-wrap items-center gap-3.5 py-3.5 ${last ? '' : 'border-b border-border-1'}`}
     >
-      <div className="flex items-center justify-center flex-shrink-0 w-[34px] h-[34px] rounded-[var(--r-btn)] bg-[var(--bg-surface-3)] text-[var(--fg-3)]">
-        <MS name="key" size={17} />
+      <span className="knik-tile h-9 w-9">
+        <MS name="key" size={18} />
+      </span>
+      <div className="min-w-[160px] flex-1">
+        <div className="break-words text-body font-medium text-fg-1">{apiKey.label}</div>
+        <code className="mt-0.5 block font-mono text-caption text-fg-4">
+          {apiKey.key_prefix}••••••••
+        </code>
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-h4 text-[var(--fg-1)]">{apiKey.label}</span>
+      {apiKey.scopes.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
           {apiKey.scopes.map(scope => (
             <Chip key={scope} label={scope} />
           ))}
         </div>
-        <code className="font-mono text-mono-sm text-[var(--fg-4)]">
-          {apiKey.key_prefix}••••••••••••
-        </code>
-      </div>
-      <div className="text-right">
-        <div className="text-caption text-[var(--fg-3)]">
+      )}
+      <div className="text-body-sm sm:text-right">
+        <div className="text-fg-3">
           {apiKey.last_used_at ? `Used ${formatDate(apiKey.last_used_at)}` : 'Never used'}
         </div>
-        {apiKey.created_at && (
-          <div className="font-mono text-mono-sm text-[var(--fg-5)]">
-            {formatDate(apiKey.created_at)}
-          </div>
-        )}
+        {apiKey.created_at && <div className="text-fg-4">{formatDate(apiKey.created_at)}</div>}
       </div>
       {onDelete && (
         <Button
           variant="ghost"
           size="sm"
+          className="knik-btn--destructive rounded-[9px]"
           aria-label={`Remove ${apiKey.label}`}
           title="Remove key"
           onClick={onDelete}
-          icon={<MS name="delete" size={15} />}
-        />
+        >
+          Remove
+        </Button>
       )}
     </div>
   )

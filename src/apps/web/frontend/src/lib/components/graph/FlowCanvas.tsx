@@ -150,15 +150,15 @@ function FlowCanvasContent({
     >
       <Background
         variant={BackgroundVariant.Dots}
-        gap={24}
+        gap={22}
         size={1}
         color={CANVAS_OVERLAY_COLORS.dotGrid}
       />
       {showMiniMap && (
         <MiniMap
           position="bottom-right"
-          style={{ width: 144, height: 88, margin: 16 }}
-          className="!bg-[var(--bg-surface)] !border !border-[var(--border-2)] !rounded-[10px] !shadow-none"
+          style={{ width: 180, height: 110, margin: 16 }}
+          className="!bg-[color-mix(in_srgb,var(--bg-surface)_80%,transparent)] !border !border-border-2 !rounded-[12px] backdrop-blur-[10px] overflow-hidden !shadow-none knik-enter-fade"
           nodeColor={CANVAS_OVERLAY_COLORS.minimapNode}
           maskColor={CANVAS_OVERLAY_COLORS.minimapMask}
           nodeBorderRadius={3}

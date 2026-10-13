@@ -119,6 +119,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
       )}
       content={
         <div
+          className="flex flex-col gap-0.5"
           onKeyDown={event => {
             if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
               event.preventDefault()
@@ -144,7 +145,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
               tabIndex={index === active ? 0 : -1}
               onClick={() => choose(option.value)}
               variant="ghost"
-              className="w-full justify-start"
+              className="w-full justify-start gap-2.5 rounded-[9px] px-2.5 py-2 text-left text-fg-2 aria-selected:bg-[var(--acc-soft)] aria-selected:text-fg-1 aria-selected:hover:!bg-[var(--acc-soft)]"
               size={size}
             >
               {renderOption?.(option) ?? option.label}

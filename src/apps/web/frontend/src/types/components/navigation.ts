@@ -67,6 +67,8 @@ export interface SegmentedProps {
   options: (SegmentedOption | string)[]
   value: string
   onChange: (value: string) => void
+  /** Accessible name for the option group; not drawn on screen. */
+  label?: string
   size?: 'sm' | 'md'
   className?: string
 }

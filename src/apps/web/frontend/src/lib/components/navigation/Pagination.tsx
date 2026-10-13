@@ -1,9 +1,6 @@
 import Button from '$components/buttons/Button'
 import type { PaginationProps } from '$types/components'
 
-const STEP_BUTTON =
-  'px-3 py-1.5 text-label rounded-md border border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all'
-
 /** Page navigation controls with ellipsis for large page ranges. */
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   const start = Math.max(2, currentPage - 1)
@@ -22,7 +19,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   return (
     <nav
       aria-label="Pagination"
-      className="flex items-center justify-between gap-4 py-4 px-6 border-t border-[var(--border-2)]"
+      className="flex flex-wrap items-center justify-between gap-4 py-4 px-6 border-t border-border-1"
     >
       <div className="text-body-sm text-fg-3">
         Page <span className="font-semibold text-fg-1">{currentPage}</span> of{' '}
@@ -31,10 +28,11 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
 
       <div className="flex items-center gap-2">
         <Button
-          variant="ghost"
+          variant="secondary"
+          size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={STEP_BUTTON}
+          className="rounded-[9px]"
         >
           Previous
         </Button>
@@ -42,19 +40,20 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         <div className="flex gap-1">
           {pages.map((page, idx) =>
             page === '...' ? (
-              <span key={`ellipsis-${idx}`} className="px-3 py-1.5 text-fg-4">
+              <span key={`ellipsis-${idx}`} className="self-center px-2 text-label text-fg-4">
                 ...
               </span>
             ) : (
               <Button
-                variant="ghost"
+                variant="secondary"
+                size="sm"
                 key={page}
                 onClick={() => page !== currentPage && onPageChange(page)}
                 aria-current={page === currentPage ? 'page' : undefined}
-                className={`px-3 py-1.5 text-label rounded-md border transition-all ${
+                className={`min-w-9 rounded-[9px] px-2.5 tabular-nums ${
                   page === currentPage
-                    ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
-                    : 'border-[var(--border-2)] bg-surface-2 text-fg-2 hover:bg-surface-3 hover:text-fg-1'
+                    ? 'bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] hover:!bg-[var(--primary)] hover:!text-[var(--on-primary)] hover:!border-[var(--primary)]'
+                    : ''
                 }`}
               >
                 {page}
@@ -64,10 +63,11 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         </div>
 
         <Button
-          variant="ghost"
+          variant="secondary"
+          size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={STEP_BUTTON}
+          className="rounded-[9px]"
         >
           Next
         </Button>

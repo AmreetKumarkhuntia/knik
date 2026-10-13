@@ -9,15 +9,15 @@ export default function Chip({
 }: ChipProps) {
   const variantClasses =
     variant === 'tag'
-      ? 'text-aurora-300 border-[color-mix(in_srgb,var(--aurora-300)_30%,transparent)] bg-[color-mix(in_srgb,var(--aurora-300)_10%,transparent)]'
-      : 'border-border-2 bg-surface-2 text-fg-2'
+      ? 'bg-[var(--acc-soft)] text-[var(--acc-text)] border border-[var(--acc-border)]'
+      : 'bg-panel-3 text-fg-2'
   const interactiveClasses = onRemove
     ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all'
     : ''
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill font-mono text-mono-sm border ${variantClasses} ${interactiveClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-pill px-[9px] py-[3px] font-mono text-micro leading-none ${variantClasses} ${interactiveClasses} ${className}`}
       {...props}
     >
       {label}

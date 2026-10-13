@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 export interface FormGroupProps {
   title: string
   sub?: string
+  /** Padding override for the card body, e.g. `p-1.5` when it holds a list of option rows. */
+  bodyClassName?: string
   children: ReactNode
 }
 

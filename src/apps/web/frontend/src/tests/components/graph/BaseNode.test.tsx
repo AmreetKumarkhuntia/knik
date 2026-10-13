@@ -90,4 +90,29 @@ describe('graph node responsive ports', () => {
     rerender(<BaseNode {...nodeProps} />)
     expect(container.querySelector('.graph-node')).not.toHaveClass('graph-node--running')
   })
+
+  it('outlines finished execution nodes by outcome but leaves editable nodes plain', () => {
+    const { container, rerender } = render(<BaseNode {...nodeProps} />)
+    expect(container.querySelector('.graph-node')).toHaveClass('graph-node--success')
+
+    rerender(<BaseNode {...nodeProps} data={{ ...nodeProps.data, status: 'failed' }} />)
+    expect(container.querySelector('.graph-node')).toHaveClass('graph-node--failed')
+    expect(container.querySelector('.graph-node')).not.toHaveClass('graph-node--success')
+
+    rerender(<BaseNode {...nodeProps} data={{ mode: 'edit', status: 'failed' }} />)
+    expect(container.querySelector('.graph-node')).not.toHaveClass('graph-node--failed')
+  })
+
+  it('fades editable nodes in without a scale, which would skew measured handle positions', () => {
+    const { container } = render(<BaseNode {...nodeProps} data={{ mode: 'edit' }} />)
+    const node = container.querySelector('.graph-node')
+    expect(node).toHaveClass('knik-enter-fade')
+    expect(node).not.toHaveClass('knik-enter-pop')
+  })
+
+  it('colours each branch label like the handle it names', () => {
+    render(<BaseNode {...nodeProps} />)
+    expect(screen.getByText('True')).toHaveStyle({ color: 'var(--success)' })
+    expect(screen.getByText('False')).toHaveStyle({ color: 'var(--danger)' })
+  })
 })

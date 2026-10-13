@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import Button from '$components/buttons/Button'
-import { EmptyState, MS } from '$components'
+import { MS } from '$components'
 import Eyebrow from '$components/display/Eyebrow'
 import { formatRelativeDay } from '$utils/format'
+import { MOTION_DURATION, MOTION_EASE_OUT } from '$lib/constants/motion'
 import type { Conversation } from '$types/conversation'
 import type { SidebarRecentsProps } from '$types/widgets/chat-shell'
 
@@ -19,73 +20,51 @@ export default function SidebarRecents({
   activeConversationId,
 }: SidebarRecentsProps) {
   return (
-    <div className="flex flex-col min-h-0 flex-1" style={{ marginTop: 24 }}>
+    <div className="flex flex-col min-h-0 flex-1 mt-6">
       <Eyebrow>Recent chats</Eyebrow>
-      <div className="overflow-y-auto flex flex-col scrollbar-hide" style={{ gap: 1 }}>
+      <div className="overflow-y-auto flex flex-col gap-px scrollbar-hide">
         {conversations.length === 0 ? (
-          <EmptyState title="No history yet" description="Start a conversation to see it here" />
+          <div className="px-2 py-5 text-center">
+            <p className="text-body-sm font-semibold text-fg-2">No history yet</p>
+            <p className="mt-1 text-caption text-fg-4">Start a conversation to see it here</p>
+          </div>
         ) : (
           // initial={false}: only rows added or removed later animate, not the first render.
           <AnimatePresence initial={false}>
             {conversations.map(conv => {
               const label = getConversationLabel(conv)
               const current = conv.id === activeConversationId
-              const restingBackground = current ? 'var(--acc-soft)' : 'transparent'
               return (
                 <motion.div
                   key={conv.id}
                   layout="position"
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="group relative transition-colors min-h-12 sm:min-h-9 [@media(pointer:coarse)]:min-h-12"
-                  style={{ borderRadius: 'var(--r-btn)', background: restingBackground }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-surface-3)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = restingBackground)}
+                  exit={{ opacity: 0, transition: { duration: MOTION_DURATION.fast } }}
+                  transition={{ duration: MOTION_DURATION.base, ease: MOTION_EASE_OUT }}
+                  className={`group relative rounded-[10px] transition-colors duration-base ease-out min-h-12 sm:min-h-9 [@media(pointer:coarse)]:min-h-12 ${current ? 'bg-[var(--acc-soft)]' : 'hover:bg-panel-2'}`}
                 >
                   <Button
-                    type="button"
+                    variant="ghost"
                     aria-current={current ? 'true' : undefined}
                     onClick={() => onSelect(conv.id)}
-                    className="w-full text-left pr-[100px] sm:pr-2 sm:group-hover:pr-20 sm:group-focus-within:pr-20 [@media(pointer:coarse)]:pr-[100px]"
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      paddingBlock: '8px',
-                      paddingLeft: '8px',
-                      display: 'block',
-                      cursor: 'pointer',
-                    }}
+                    className="w-full justify-start gap-1.5 rounded-[10px] text-left py-2 pl-2 pr-[100px] sm:pr-2 sm:group-hover:pr-20 sm:group-focus-within:pr-20 [@media(pointer:coarse)]:pr-[100px] hover:!bg-transparent"
                   >
-                    <div className="flex items-center" style={{ gap: 6 }}>
-                      <span
-                        className="truncate flex-1"
-                        style={{
-                          fontSize: 13,
-                          fontWeight: current ? 500 : 400,
-                          color: current ? 'var(--acc-text)' : 'var(--fg-2)',
-                        }}
-                      >
-                        {label}
-                      </span>
-                      <span
-                        className="hidden sm:block font-mono flex-shrink-0 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0"
-                        style={{ fontSize: 11, color: 'var(--fg-3)' }}
-                      >
-                        {formatRelativeDay(conv.updated_at)}
-                      </span>
-                    </div>
+                    <span
+                      className={`truncate flex-1 min-w-0 text-body-sm ${current ? 'font-medium text-[var(--acc-text)]' : 'font-normal text-fg-2'}`}
+                    >
+                      {label}
+                    </span>
+                    <span className="hidden sm:block shrink-0 font-mono text-micro font-normal text-fg-4 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
+                      {formatRelativeDay(conv.updated_at)}
+                    </span>
                   </Button>
-                  <div
-                    className="absolute flex items-center opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100"
-                    style={{ top: 0, bottom: 0, right: 2, gap: 2 }}
-                  >
+                  <div className="absolute inset-y-0 right-0.5 flex items-center gap-0.5 opacity-100 sm:opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100">
                     <Button
                       variant="ghost"
                       size="sm"
-                      style={{ width: 36, height: 36, padding: 0 }}
-                      icon={<MS name="edit" size={13} />}
+                      className="knik-btn--icon rounded-[8px] hover:!bg-panel-3"
+                      icon={<MS name="edit" size={14} />}
                       title="Rename"
                       aria-label={`Rename conversation ${label}`}
                       onClick={() => onRename(conv)}
@@ -93,8 +72,8 @@ export default function SidebarRecents({
                     <Button
                       variant="ghost"
                       size="sm"
-                      style={{ width: 36, height: 36, padding: 0 }}
-                      icon={<MS name="delete" size={13} />}
+                      className="knik-btn--icon knik-btn--destructive rounded-[8px]"
+                      icon={<MS name="delete" size={14} />}
                       title="Delete"
                       aria-label={`Delete conversation ${label}`}
                       onClick={() => onDelete(conv)}

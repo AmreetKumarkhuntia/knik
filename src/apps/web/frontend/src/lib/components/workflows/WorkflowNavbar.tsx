@@ -13,21 +13,30 @@ export default function WorkflowNavbar({
   workflowName,
 }: WorkflowNavbarProps) {
   return (
-    <header className="min-h-[52px] border-b border-border bg-surface flex flex-wrap items-center justify-between gap-2 px-4 py-2 flex-shrink-0 z-20">
+    <header className="min-h-[52px] bg-surface border-b border-border-1 flex flex-wrap items-center justify-between gap-2 px-4 py-2 flex-shrink-0 z-20">
       <div className="flex items-center gap-2 min-w-0">
-        <Button variant="ghost" size="sm" onClick={onBack} aria-label="Back to workflows">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="knik-btn--icon"
+          onClick={onBack}
+          aria-label="Back to workflows"
+        >
           <MS name="arrow_back" size={20} />
         </Button>
         {!readOnly && onNameChange ? (
+          // min-h stays non-important so the 44px coarse-pointer minimum in primitives.css still applies.
           <Input
             fullWidth={false}
             aria-label="Workflow name"
             value={workflowName ?? ''}
             onChange={event => onNameChange(event.target.value)}
-            className="!px-2 !py-1 text-label w-56 max-w-full"
+            className="!w-56 max-w-full min-h-[34px] !px-2.5 !py-0 rounded-[9px] !bg-transparent !border-transparent hover:!bg-panel hover:!border-border-2 focus:!bg-panel focus:!border-[var(--primary)] text-h4 text-fg-1"
           />
         ) : (
-          <span className="font-semibold text-foreground">{workflowName ?? 'Create Workflow'}</span>
+          <span className="min-w-0 px-2.5 text-h4 text-fg-1 truncate">
+            {workflowName ?? 'Create Workflow'}
+          </span>
         )}
       </div>
       {!readOnly && (
@@ -36,7 +45,8 @@ export default function WorkflowNavbar({
             <Button
               variant="secondary"
               size="sm"
-              icon={<MS name="download" size={16} />}
+              className="rounded-[10px]"
+              icon={<MS name="download" size={17} />}
               onClick={onExportJson}
             >
               Export JSON
@@ -46,7 +56,8 @@ export default function WorkflowNavbar({
             <Button
               variant="secondary"
               size="sm"
-              icon={<MS name="play_arrow" size={16} />}
+              className="rounded-[10px]"
+              icon={<MS name="play_arrow" size={17} fill={1} />}
               disabled={!canRun}
               title={canRun ? 'Run supplied demo scenario' : 'No demo run scenario supplied'}
               onClick={onExecute}
@@ -58,7 +69,8 @@ export default function WorkflowNavbar({
             <Button
               variant="primary"
               size="sm"
-              icon={<MS name="save" size={16} />}
+              className="rounded-[10px]"
+              icon={<MS name="save" size={17} />}
               onClick={onSave}
             >
               Save workflow

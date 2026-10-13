@@ -35,6 +35,17 @@ describe('overlay ownership', () => {
       expect(document.body.style.overflow).toBe('')
     }
   )
+  it('names a hidden title for assistive tech without drawing the header', () => {
+    render(
+      <Modal isOpen onClose={() => {}} title="Commands" titleHidden>
+        <Button>Inner</Button>
+      </Modal>
+    )
+    expect(screen.getByRole('dialog', { name: 'Commands' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Commands' })).toHaveClass('sr-only')
+    expect(screen.queryByRole('button', { name: 'Close Commands' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Inner' })).toHaveFocus()
+  })
   it('draws the drawer close control with a hidden Material Symbols icon', async () => {
     const user = userEvent.setup()
     render(<DialogExample placement="right" />)
@@ -49,6 +60,8 @@ describe('overlay ownership', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }))
     expect(screen.getByRole('dialog', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'First' })).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(screen.getByRole('button', { name: 'Close Edit' })).toHaveFocus()
     await user.tab({ shift: true })
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus()
     await user.keyboard('{Escape}')

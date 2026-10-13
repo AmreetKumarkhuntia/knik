@@ -4,16 +4,7 @@ import type { KbdProps } from '$types'
 export default function Kbd({ children, className = '' }: KbdProps) {
   return (
     <span
-      className={`inline-flex items-center justify-center font-mono ${className}`}
-      style={{
-        background: 'var(--bg-surface-3)',
-        border: '1px solid var(--border-2)',
-        borderRadius: 4,
-        padding: '1px 5px',
-        color: 'var(--fg-3)',
-        fontSize: 10.5,
-        lineHeight: 1.6,
-      }}
+      className={`inline-flex items-center justify-center rounded-[5px] border border-border-2 bg-panel px-[5px] py-[3px] font-mono text-micro leading-none text-fg-3 ${className}`}
     >
       {children}
     </span>

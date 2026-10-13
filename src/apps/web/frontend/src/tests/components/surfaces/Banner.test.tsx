@@ -20,3 +20,23 @@ describe('Banner live-region role', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })
+
+describe('Banner icon', () => {
+  it.each([
+    ['info', 'info'],
+    ['success', 'check_circle'],
+    ['warning', 'warning'],
+    ['danger', 'error'],
+  ] as const)('draws a hidden %s glyph by default', (variant, glyph) => {
+    const { container } = render(<Banner variant={variant}>Note.</Banner>)
+    const icon = container.querySelector('.material-symbols-outlined')
+    expect(icon).toHaveTextContent(glyph)
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('prefers an explicit icon', () => {
+    const { container } = render(<Banner icon={<span data-testid="custom" />}>Custom icon.</Banner>)
+    expect(screen.getByTestId('custom')).toBeInTheDocument()
+    expect(container.querySelector('.material-symbols-outlined')).toBeNull()
+  })
+})

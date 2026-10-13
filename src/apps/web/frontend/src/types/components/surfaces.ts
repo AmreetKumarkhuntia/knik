@@ -10,6 +10,11 @@ export interface ModalProps {
   onClose: () => void
   children: ReactNode
   title?: string
+  /**
+   * Draws no header bar: the title stays as the dialog's accessible name only, and the panel keeps
+   * a slim frame because the content brings its own chrome (e.g. the command palette search row).
+   */
+  titleHidden?: boolean
   className?: string
   size?: ModalSize
   placement?: 'center' | 'left' | 'right'

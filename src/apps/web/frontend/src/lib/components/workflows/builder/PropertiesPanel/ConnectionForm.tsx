@@ -30,8 +30,11 @@ export default function ConnectionForm({ node, nodes, onConnect }: ConnectionFor
   if (!candidates.length) return null
   const selected = candidates.find(candidate => candidate.value === choice)
   return (
-    <div className="px-5 pb-5 space-y-2">
-      <label htmlFor={id} className="text-micro text-secondary uppercase tracking-wide">
+    <div className="px-5 pt-4 pb-5 border-t border-border-1">
+      <label
+        htmlFor={id}
+        className="block mb-2.5 text-micro font-semibold uppercase tracking-[.08em] text-fg-4"
+      >
         Connect to
       </label>
       <div className="flex gap-2">
@@ -46,6 +49,7 @@ export default function ConnectionForm({ node, nodes, onConnect }: ConnectionFor
         <Button
           variant="secondary"
           size="sm"
+          className="rounded-[10px]"
           disabled={!selected}
           onClick={() => {
             if (!selected) return

@@ -12,18 +12,23 @@ export default function ProvidersPane() {
   const toggleTool = useSettingsStore(s => s.toggleTool)
   return (
     <>
-      <FormGroup title="AI providers" sub="Choose a default provider for this session">
+      <FormGroup
+        title="AI providers"
+        sub="Choose a default provider for this session"
+        bodyClassName="p-1.5"
+      >
         {providers.length ? (
           <Radio
             name={`${id}-provider`}
             label="Default provider"
-            presentation="standard"
+            hideLabel
+            presentation="card"
             value={provider}
             onChange={next => updateSettings({ provider: next })}
-            options={providers}
+            options={providers.map(option => ({ ...option, monoLabel: option.value }))}
           />
         ) : (
-          <p className="text-body-sm text-[var(--fg-4)] py-2">No providers available.</p>
+          <p className="px-3 py-2.5 text-body-sm text-fg-4">No providers available.</p>
         )}
       </FormGroup>
       <FormGroup title="MCP tools" sub="Choose the tool groups enabled in this session">

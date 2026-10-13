@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { BANNER_ROLE } from '$lib/constants'
+import { BANNER_ICON, BANNER_ROLE, MOTION_DURATION, MOTION_EASE_OUT } from '$lib/constants'
+import MS from '../display/MS'
 import type { BannerProps } from '$types'
 
 export default function Banner({ variant = 'info', icon, children, className = '' }: BannerProps) {
@@ -9,17 +10,18 @@ export default function Banner({ variant = 'info', icon, children, className = '
     <motion.div
       initial={{ opacity: 0, y: -10, height: 0 }}
       animate={{ opacity: 1, y: 0, height: 'auto' }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={`flex items-center gap-3 p-3 rounded-md border text-body font-medium w-full ${className}`}
+      transition={{ duration: MOTION_DURATION.base, ease: MOTION_EASE_OUT }}
+      className={`flex items-center gap-2.5 w-full rounded-[12px] border px-3.5 py-2.5 text-body text-fg-1 ${className}`}
       style={{
-        color,
-        borderColor: `color-mix(in srgb, ${color} 25%, transparent)`,
-        background: `color-mix(in srgb, ${color} 6%, transparent)`,
+        borderColor: `color-mix(in srgb, ${color} 42%, transparent)`,
+        background: `color-mix(in srgb, ${color} 14%, transparent)`,
       }}
       role={BANNER_ROLE[variant]}
     >
-      {icon && <span className="flex-shrink-0 flex items-center justify-center">{icon}</span>}
-      <div className="flex-1">{children}</div>
+      <span className="flex shrink-0 items-center justify-center" style={{ color }}>
+        {icon ?? <MS name={BANNER_ICON[variant]} size={18} />}
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
     </motion.div>
   )
 }
