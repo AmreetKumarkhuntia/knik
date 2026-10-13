@@ -1,426 +1,170 @@
-# Streaming Architecture
+# Streaming
 
-This document describes the real-time streaming system for text and audio responses in the Knik web app.
+How a reply streams from the model to the web backend's SSE endpoint, the Telegram bot and the console.
 
-## Overview
+## Stream events
 
-The streaming system delivers AI responses progressively:
+A streamed chat yields typed events, one small frozen dataclass per kind, defined in
+`src/lib/services/ai_client/stream_events.py`. Consumers `match` on the type.
 
-1. **Text streams immediately** -- users see text as it's generated (token by token)
-2. **Audio streams at sentence boundaries** -- audio chunks are generated and sent as complete sentences accumulate
-3. **SSE transport** -- Server-Sent Events over HTTP for one-way streaming
+| Event               | Fields                                                                           | Meaning                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `ConversationReady` | `conversation_id`                                                                | The conversation the reply belongs to (created if needed). First; never sent without a database            |
+| `TextDelta`         | `text`                                                                           | The next piece of the reply                                                                                |
+| `ToolCallStarted`   | `tool_name`, `tool_call_id`, `tool_args`                                         | The model called a tool                                                                                    |
+| `ToolCallFinished`  | `tool_name`, `tool_call_id` (or `None`), `result_preview` (first 200 characters) | The tool returned                                                                                          |
+| `StreamError`       | `message` (`"Chat streaming error: ..."`)                                        | The provider failed mid-stream. Its message is reply text: apps show it and it is saved like a `TextDelta` |
+| `StreamDone`        | `conversation_id`, `usage` (or `None`), `full_response`                          | Last, after the reply is saved                                                                             |
 
-## Architecture
+`ProviderEvent` is `TextDelta | ToolCallStarted | ToolCallFinished`; `StreamEvent` adds the other three.
 
-### Flow Diagram
+`AIClient` streams at three levels:
 
-```
-User Message
-    |
-    v
-POST /api/chat/stream
-    |
-    v
-AIClient.chat_stream(prompt, history) --> text chunks (generator)
-    |                                          |
-    |                                    SSE: event=text
-    |                                          |
-    v                                     Frontend
-Sentence buffer accumulates text              |
-    |                                         v
-    v                               appendToChat(chunk)
-Sentence complete (. ! ? \n)
-    |
-    v
-KokoroVoiceModel.generate(sentence) --> audio bytes
-    |
-    v
-Base64 encode WAV
-    |
-    v
-SSE: event=audio
-    |
-    v
-Frontend audio queue --> sequential playback
-```
-
-### Key Design Decision: Asynchronous TTS
-
-The streaming endpoint uses an **asynchronous worker pattern with bounded queues** using a background `_tts_worker` task that pulls from `sentence_queue` and pushes generated audio to `audio_queue`. This means:
-
-- Text events are yielded immediately to the client
-- Audio is drained non-blockingly via `_drain_audio()`
-- TTS failure never blocks text delivery
-- Background worker processes sentences independently
-
-> **Note:** The actual implementation uses sentence_queue for text → worker and audio_queue for worker → generator, with text events yielded before audio processing begins.
-
-## Components
-
-### 1. Streaming Endpoint
-
-**File:** `src/apps/web/backend/routes/chat_stream.py`
-
-**Endpoint:** `POST /api/chat/stream/`
-
-**Technology:** Server-Sent Events (SSE) via `StreamingResponse`
-
-**Request:**
-
-```json
-{
-  "message": "Tell me a joke",
-  "conversation_id": "optional-uuid"
-}
-```
-
-**SSE Event Types:**
-
-| Event             | Data Format                                                  | Description                    |
-| ----------------- | ------------------------------------------------------------ | ------------------------------ |
-| `text`            | `{"text": "chunk"}`                                          | AI text chunk                  |
-| `audio`           | `{"audio": "base64...", "sample_rate": 24000}`               | Base64-encoded WAV audio chunk |
-| `conversation_id` | `{"conversation_id": "uuid"}`                                | Unique conversation identifier |
-| `usage`           | `{"total_tokens": N, "input_tokens": M, "output_tokens": L}` | Token usage stats              |
-| `done`            | `{"audio_count": N}`                                         | Stream complete                |
-| `error`           | `{"error": "message"}`                                       | Error message                  |
-
-**Response Headers:**
-
-```
-Content-Type: text/event-stream
-Cache-Control: no-cache
-Connection: keep-alive
-X-Accel-Buffering: no
-```
-
-**Example SSE Stream:**
-
-```
-event: text
-data: {"text": "Why"}
-
-event: text
-data: {"text": " did the"}
-
-event: text
-data: {"text": " chicken"}
-
-event: audio
-data: {"audio": "UklGRiQAAABXQVZFZm10IBAA...", "sample_rate": 24000}
-
-event: text
-data: {"text": " cross the road?"}
-
-event: audio
-data: {"audio": "UklGRiQAAABXQVZFZm10IBAA...", "sample_rate": 24000}
-
-event: done
-data: {"audio_count": 2}
-```
-
-### 2. Frontend Streaming Client
-
-**File:** `src/apps/web/frontend/src/services/streaming.ts`
-
-**Main Function:** `streamChat(message, callbacks)`
-
-Returns an `AbortController` for cancellation.
-
-```typescript
-import { streamChat } from "$services/streaming";
-
-const controller = await streamChat("Hello!", {
-  onText: (chunk) => {
-    appendToChat(chunk);
-  },
-  onAudio: (audioBase64) => {
-    queueAudio(audioBase64, 24000);
-  },
-  onComplete: (count) => {
-    console.log(`Done! ${count} audio chunks`);
-  },
-  onError: (error) => {
-    console.error(error);
-  },
-});
-
-// Cancel streaming
-controller.abort();
-```
-
-Uses `VITE_API_URL` env var or falls back to `http://localhost:8010`.
-
-### 3. Audio Service Layer
-
-**Directory:** `src/apps/web/frontend/src/services/audio/`
-
-| File              | Responsibility                                              |
-| ----------------- | ----------------------------------------------------------- |
-| `queue.ts`        | Receives chunks via `queueAudio()`, plays them sequentially |
-| `playback.ts`     | Decodes base64 WAV, drives `HTMLAudioElement`, emits state  |
-| `mediaSession.ts` | Keeps browser Media Session API in sync                     |
-| `index.ts`        | Barrel exports                                              |
-
-**Playback Control API:**
-
-```typescript
-import {
-  pauseAudio,
-  resumeAudio,
-  stopAudio,
-  clearAudioQueue,
-  setAudioStateCallback,
-} from "$services/audio";
-
-// Listen to state changes
-setAudioStateCallback((isPaused, isPlaying) => {
-  setAudioPaused(isPaused);
-  setAudioPlaying(isPlaying);
-});
-
-pauseAudio(); // Pause current chunk
-resumeAudio(); // Resume
-stopAudio(); // Stop current + clear queue
-clearAudioQueue(); // Clear pending chunks only
-```
-
-### 4. React Integration
-
-**UI Component:**
-
-- `AudioControls` (`src/apps/web/frontend/src/lib/sections/audio/AudioControls.tsx`) -- pause/resume/stop buttons
-
-## Implementation Details
-
-### Sentence-Based Chunking
-
-Audio is generated at sentence boundaries for natural pacing using an async worker pattern:
+- `stream_events(prompt, history=...)`: provider only. Yields the provider's events; a provider failure is
+  logged and ends the stream with a `StreamError`. Token usage is in `client.last_usage` afterwards.
+- `chat_stream(prompt, history=...)`: the text of `stream_events()` as plain strings (`TextDelta` and
+  `StreamError` text), without the tool calls. The console uses it.
+- `achat_stream(prompt, conversation_id=...)`: async, with the conversation around the reply. It yields
+  `ConversationReady` (when the database is reachable), saves the user message and loads the history, yields the
+  provider's events while the provider runs on a worker thread, saves the reply and yields `StreamDone`. An
+  error outside the provider stream (a non-database failure while saving, say) is raised, not yielded. The web
+  backend and the bot use it.
 
 ```python
-text_buffer = ""
-sentence_endings = [".", "!", "?", "\n"]
-
-for text_chunk in ai_client.chat_stream(prompt, history):
-    yield sse_event("text", {"text": text_chunk})
-
-    text_buffer += text_chunk
-
-    for ending in sentence_endings:
-        if ending in text_buffer:
-            parts = text_buffer.split(ending, 1)
-            sentence = parts[0] + ending
-            text_buffer = parts[1] if len(parts) > 1 else ""
-
-            await sentence_queue.put(sentence.strip())
-            break
-
-async def _tts_worker():
-    while True:
-        sentence = await sentence_queue.get()
-        try:
-            audio = voice_model.generate(sentence)
-            wav_base64 = encode_wav_base64(audio, sample_rate)
-            await audio_queue.put(wav_base64)
-        except Exception:
-            pass  # TTS failure doesn't block text delivery
-        finally:
-            sentence_queue.task_done()
-
-async def _drain_audio():
-    while not audio_queue.empty():
-        wav_base64 = await audio_queue.get()
-        yield sse_event("audio", {"audio": wav_base64, "sample_rate": sample_rate})
+async for event in client.achat_stream(prompt, conversation_id=conversation_id):
+    match event:
+        case TextDelta(text=text) | StreamError(message=text):
+            show(text)
+        case ToolCallStarted(tool_name=name):
+            show_tool(name)
+        case StreamDone(usage=usage):
+            record(usage)
 ```
 
-### Client-Side Audio Playback
+## Web backend: Server-Sent Events
 
-Chunks are queued and played sequentially:
+**Endpoint:** `POST /api/chat/stream/` (`src/backend/routes/chat_stream.py`), body
+`{"message": "...", "conversation_id": "optional"}`, response `text/event-stream` with `Cache-Control: no-cache`,
+`Connection: keep-alive` and `X-Accel-Buffering: no`. Each event is `event: <name>` and `data: <JSON>`.
 
-```typescript
-// queue.ts
-export function queueAudio(base64Audio: string, sampleRate: number): void {
-  audioQueue.push({ audio: base64Audio, sampleRate });
-  if (!isPlayingQueue) playQueue(); // start draining if idle
-}
+| SSE event         | `data`                                                                  | Sent                                                                      |
+| ----------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `conversation_id` | `{"conversation_id": "<uuid>"}`                                         | First, for `ConversationReady`                                            |
+| `text`            | `{"text": "<chunk>"}`                                                   | For each `TextDelta`, and for a `StreamError` (its message as text)       |
+| `tool_start`      | `{"tool_name": "...", "tool_args": {...}}`                              | For each `ToolCallStarted`                                                |
+| `tool_end`        | `{"tool_name": "...", "tool_result_preview": "..."}`                    | For each `ToolCallFinished`                                               |
+| `audio`           | `{"audio": "<base64 WAV>", "sample_rate": 24000}`                       | Whenever a sentence's speech is ready, between text events and at the end |
+| `usage`           | `{"usage": {"input_tokens": N, "output_tokens": N, "total_tokens": N}}` | After the reply, when the provider reported usage                         |
+| `compaction`      | `{"summary_message_id": "<id>"}`                                        | After the reply, when this turn compacted the conversation                |
+| `done`            | `{"audio_count": N}`                                                    | Last, once all audio is sent                                              |
+| `error`           | `{"error": "<message>"}`                                                | Instead of the rest, when an exception escapes the stream                 |
 
-// playback.ts
-export function playAudio(base64Audio: string): Promise<void> {
-  return new Promise((resolve) => {
-    const bytes = Uint8Array.from(atob(base64Audio), (c) => c.charCodeAt(0));
-    const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
-    const audio = new Audio(url);
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      notifyStateChange(false, false);
-      resolve();
-    };
-    audio.play().then(() => notifyStateChange(false, true));
-  });
-}
-```
+A tool that needs consent is refused in web chats unless `KNIK_WEB_TOOL_CONSENT=allow`; the model then gets
+`Permission denied for <tool>` as the tool's result (see [Tools](../guides/mcp.md#consent)).
 
-**Design decisions:**
+### Speech
 
-- Audio chunks play **sequentially** (no overlap)
-- The `loading` state keeps Pause/Stop visible between chunks
-- `stopAudio()` + `clearAudioQueue()` abort both current playback and pending chunks
+The text never waits for speech. As text arrives the route cuts a sentence off after a sentence ending (`.`,
+`!`, `?` or a newline) and queues each sentence that has something to say (`is_speakable()`) for a background
+TTS task. The queue holds at most 10 sentences, which slows the stream down only if the model is far ahead of the
+speech. The task generates
+WAV audio with the backend's Kokoro voice; a sentence that fails is logged and skipped. Ready audio is sent
+between text events. After the reply, the remaining text is queued, the route waits up to 30 seconds for the TTS
+task and sends the rest of the audio before `usage`, `compaction` and `done`.
 
-### Conversation History
-
-The streaming endpoint maintains a global `ConversationHistory(max_size=50)` instance. After each complete response, the turn is saved. The number of recent turns sent as context is configurable via `KNIK_HISTORY_CONTEXT_SIZE` (default: 5).
-
-## Configuration
-
-**Backend defaults** (from `src/apps/web/backend/config.py`):
-
-| Setting         | Env Variable                | Default            |
-| --------------- | --------------------------- | ------------------ |
-| Voice           | `KNIK_VOICE`                | `af_heart`         |
-| Sample Rate     | `KNIK_SAMPLE_RATE`          | `24000`            |
-| AI Provider     | `KNIK_AI_PROVIDER`          | `vertex`           |
-| AI Model        | `KNIK_AI_MODEL`             | `gemini-1.5-flash` |
-| History Context | `KNIK_HISTORY_CONTEXT_SIZE` | `5`                |
-
-## Testing
-
-### Backend
+### Example
 
 ```bash
-# Start backend
-npm run start:web:backend
-
-# Test with curl (SSE stream)
 curl -N -X POST http://localhost:8010/api/chat/stream/ \
   -H "Content-Type: application/json" \
   -d '{"message": "Tell me a short joke"}'
 ```
 
+With the mock provider (`KNIK_AI_PROVIDER=mock`):
+
+```
+event: conversation_id
+data: {"conversation_id": "1e66fb1f-2ca0-4949-b331-c408dbaf23ce"}
+
+event: text
+data: {"text": "Mock "}
+
+event: text
+data: {"text": "AI "}
+
+...
+
+event: text
+data: {"text": "responses. "}
+
+event: audio
+data: {"audio": "UklGRiQAAABXQVZF...", "sample_rate": 24000}
+
+event: audio
+data: {"audio": "UklGRiQAAABXQVZF...", "sample_rate": 24000}
+
+event: usage
+data: {"usage": {"input_tokens": 10, "output_tokens": 9, "total_tokens": 19}}
+
+event: done
+data: {"audio_count": 2}
+```
+
+### Without streaming
+
+`POST /api/chat/` (`routes/chat.py`) takes the same body and answers once, with the whole reply spoken as one
+WAV:
+
+```json
+{
+  "text": "...",
+  "audio": "<base64 WAV>",
+  "sample_rate": 24000,
+  "conversation_id": "<uuid>",
+  "usage": { "input_tokens": 10, "output_tokens": 15, "total_tokens": 25 }
+}
+```
+
+`usage` is left out when the provider reports none.
+
 ### Frontend
 
-```bash
-# Start frontend
-npm run start:web:frontend
+The React frontend (`src/apps/web/frontend`) currently runs on an in-memory demo session and does not call these
+endpoints.
 
-# Open http://localhost:8020 and use the chat interface
-```
+## Telegram bot
 
-## Stream vs Non-Stream Comparison
+`StreamingResponseManager.deliver()` (`src/bot/streaming.py`) consumes `achat_stream()` and writes the reply to
+the chat through the `MessagingTransport` (`TelegramClient` in production):
 
-| Aspect            | `/api/chat` (non-stream)   | `/api/chat/stream` (SSE) |
-| ----------------- | -------------------------- | ------------------------ |
-| Response type     | Single JSON                | SSE event stream         |
-| Text delivery     | After full generation      | Token by token           |
-| Audio delivery    | Full audio in response     | Per-sentence chunks      |
-| Perceived latency | Higher (wait for all)      | Lower (instant text)     |
-| Memory            | Higher (full audio in RAM) | Lower (streaming chunks) |
-| Complexity        | Simpler                    | More complex             |
-| Frontend usage    | Not used currently         | Primary chat interface   |
+- Text goes to the chat one segment at a time: the text between two tool calls is one segment, streamed with
+  `transport.send_stream()`.
+- A tool call closes the current segment and sends a notice, `🔧 Calling <tool>(<args>)...`, then
+  `✓ <tool> completed` (or `✓ <tool> completed (no output)`) when it returns.
+- `TelegramClient.send_stream()` shows the segment as a live draft (`sendMessageDraft`, private chats only,
+  updated at most every 0.5 seconds) while it streams, then sends it as permanent messages, split at Telegram's
+  4096-character limit.
 
-## TTSAsyncProcessor Reference
+It returns a `DeliveryResult`:
 
-While the streaming endpoint uses synchronous TTS, the `TTSAsyncProcessor` class supports async audio generation with callbacks:
+| Field                      | Meaning                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `response_text`            | The full reply                                                                            |
+| `conversation_id`, `usage` | From the stream                                                                           |
+| `message_ids`              | The messages sent                                                                         |
+| `error`                    | Set when the reply could not be produced; nothing after the failure was sent              |
+| `send_errors`              | Sends the transport reported as failed: the reply was produced but not all of it was seen |
+| `delivered`                | `True` when there is neither an `error` nor a `send_error`                                |
 
-```python
-from lib.services.tts.processor import TTSAsyncProcessor
+## Console
 
-tts = TTSAsyncProcessor(
-    sample_rate=24000,
-    voice_model="af_sarah",
-    play_voice=False,
-    audio_ready_callback=lambda audio, sr: handle_audio(audio, sr),
-)
-tts.start_async_processing()
-tts.play_async("Hello world")  # Non-blocking, callback fires when ready
-```
+The console calls `chat_stream()` with its in-memory history and prints the text as it arrives. With voice output
+on (`KNIK_VOICE_OUTPUT`), it hands the text to `TTSAsyncProcessor`, which converts text to audio on one thread and
+plays it on another; call `start_async_processing()` before `play_async()`, and wait for
+`is_processing_complete()` before exiting.
 
-Constructor parameters:
+## Related documentation
 
-| Parameter              | Type                                   | Default              | Description                     |
-| ---------------------- | -------------------------------------- | -------------------- | ------------------------------- |
-| `sample_rate`          | `int`                                  | -                    | Audio sample rate               |
-| `voice_model`          | `str`                                  | `Config.DEFAULT_TTS` | TTS voice name                  |
-| `save_dir`             | `str \| None`                          | `None`               | Directory to save audio files   |
-| `play_voice`           | `bool`                                 | `True`               | Play audio locally              |
-| `sleep_duration`       | `float`                                | `0.3`                | Sleep between processing cycles |
-| `audio_ready_callback` | `Callable[[bytes, int], None] \| None` | `None`               | Callback when audio is ready    |
-
-## Best Practices
-
-1. Set `play_voice=False` for web backend (frontend handles playback)
-2. Handle stream cancellation (AbortController) on component unmount
-3. Provide loading state during streaming
-4. Handle errors gracefully (network issues, timeouts)
-5. Clean up audio resources when navigating away
-
-## Bot Streaming (StreamingResponseManager)
-
-The bot streaming system (`src/apps/bot/streaming.py`) provides real-time streaming for Telegram and bot interfaces, with different design considerations compared to the web SSE streaming.
-
-### Architecture Comparison
-
-```
-Web SSE Streaming:                          Bot Streaming (StreamingResponseManager):
-
-User Request                               Discord/Bot Message
-       |                                          |
-       v                                          v
-POST /api/chat/stream/                  StreamingResponseManager.stream()
-       |                                          |
-   SSE Events                           Edit original message (debounced)
-   - text                              - Sentence boundary detection
-   - audio                             - Message chunking
-   - done/error                        - Error handling
-       |                                          |
-   Async worker                        Background task updates
-   - sentence_queue                            |
-   - audio_queue                               v
-       |                                 DeliveryResult dataclass
-   Frontend plays                           - content
-   - sequential                             - has_audio
-   - base64 WAV                              - last_edit_id
-                                            - edit_count
-```
-
-### Key Features
-
-- **Debounced Editing**: Message edits are debounced to avoid rate limits and provide smooth visual updates
-- **Sentence Boundary Detection**: Text is chunked at natural sentence boundaries (`.`, `!`, `?`, `\n`)
-- **Message Chunking**: Long messages are split into chunks for Discord's 2000 character limit
-- **Error Handling**: Failed edits are logged without stopping the stream
-
-### Configuration
-
-| Setting            | Env Variable                   | Default       | Description                                                           |
-| ------------------ | ------------------------------ | ------------- | --------------------------------------------------------------------- |
-| Edit Interval      | `STREAMING_EDIT_INTERVAL`      | `1.0`         | Seconds between message edits (debounce)                              |
-| Placeholder Text   | `STREAMING_PLACEHOLDER`        | `Thinking...` | Initial message before streaming starts                               |
-| Max Message Length | `STREAMING_MAX_MESSAGE_LENGTH` | `1900`        | Maximum characters per Discord message (allowing room for truncation) |
-
-### DeliveryResult Dataclass
-
-```python
-@dataclass
-class DeliveryResult:
-    content: str                    # Final message content
-    has_audio: bool = False         # Whether audio was generated
-    last_edit_id: Optional[int] = None  # Last Discord message edit ID
-    edit_count: int = 0             # Total number of edits performed
-```
-
-### Differences from Web SSE Streaming
-
-| Aspect          | Web SSE Streaming      | Bot Streaming                    |
-| --------------- | ---------------------- | -------------------------------- |
-| Transport       | HTTP SSE               | Discord API / Bot framework      |
-| Text Delivery   | Token-by-token events  | Debounced message edits          |
-| Audio Delivery  | Base64 WAV to frontend | Optional audio file upload       |
-| Rate Limiting   | Not applicable         | Must respect Discord rate limits |
-| Message Length  | Not limited            | 2000 character limit             |
-| Update Strategy | Append to DOM          | Edit original message            |
-
-## Related Documentation
-
-- [Web App Architecture](../components/web-architecture.md)
+- [Tools](../guides/mcp.md) - tool calls and consent
 - [Environment Variables](../reference/environment-variables.md)
 - [API Reference](../reference/api.md)

@@ -1,5 +1,7 @@
 # Plan 06: Tool Calls — Frontend UI
 
+> **Backend part done:** the stream sends `tool_start` and `tool_end` events (see [Streaming](../development/streaming.md)), built from typed stream events rather than the `mcp_registry.py` wrapper described below, which no longer exists. Paths that start with `src/apps/web/backend` refer to the old layout, now `src/backend`.
+
 **Status:** Planning
 **Last Updated:** April 2026
 

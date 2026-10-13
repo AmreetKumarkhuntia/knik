@@ -1,5 +1,7 @@
 # Plan 03: Settings Page — Browser and App Settings
 
+> Paths below that start with `src/apps/web/backend` refer to the old layout, now `src/backend`.
+
 **Status:** Planning
 **Last Updated:** April 2026
 

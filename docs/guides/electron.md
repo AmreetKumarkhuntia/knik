@@ -4,23 +4,22 @@ This document explains how to run and build the Knik desktop application using E
 
 ## Overview
 
-Knik can run as a standalone desktop application on macOS, Windows, and Linux. The Electron wrapper packages the React frontend and FastAPI backend into a native desktop app with:
-
-- Native window management
-- System tray integration (coming soon)
-- Desktop notifications (coming soon)
-- Auto-updates (coming soon)
-- Platform-specific features
+Knik's React frontend can run in an Electron window on macOS, Windows, and Linux. In development the window
+loads the Vite dev server (`http://localhost:8020`); a packaged app loads the built frontend
+(`src/apps/web/frontend/dist/index.html`). The packaged app contains only the frontend: it does not bundle or
+start the FastAPI backend.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    A[Electron Main Process electron-main.js] --> B[Branch]
-    B -->|HTTP Requests| C[Renderer React Port 8020]    B -->|Direct Process| D[Python Backend FastAPI Port 8000]
+    A[Electron main process electron-main.js] -->|development| C[Vite dev server, port 8020]
+    A -->|packaged| E[frontend dist/index.html]
+    F[npm run electron:dev] --> D[FastAPI backend, port 8010]
+    F --> C
+    F --> A
 
     style A fill:#4a90e2
-    style B fill:#f5a623
     style C fill:#7ed321
     style D fill:#50c878
 ```
@@ -31,7 +30,7 @@ flowchart TD
 - **`electron-preload.js`** - Preload script (exposes safe APIs to renderer)
 - **`electron-builder.yml`** - Build configuration for all platforms
 - **`scripts/start_electron.sh`** - Development startup script
-- **`assets/`** - Icons and platform-specific resources
+- **`assets/`** - Platform resources; only `entitlements.mac.plist` is in the repository (see [Electron Assets](../components/electron-assets.md))
 
 ## Development
 
@@ -70,9 +69,8 @@ This script:
 
 1. Loads `.env` file
 2. Activates Python virtual environment
-3. Starts FastAPI backend (port 8000)
-4. Starts Vite dev server (port 8020)
-5. Launches Electron window
+3. Runs `npm run electron:dev`, which starts the FastAPI backend (port 8010) and the Vite dev server (port 8020)
+   and opens the Electron window once port 8020 answers
 
 **Option 2: Manual steps**
 
@@ -84,7 +82,7 @@ npm run start:web:backend
 npm run start:web:frontend
 
 # Terminal 3: Electron (after backend + frontend are ready)
-electron .
+npx electron .
 ```
 
 **Option 3: Direct npm script**
@@ -150,10 +148,11 @@ Before building, ensure:
    npm run build
    ```
 
-2. **Icons are created:** (see `assets/README.md`)
+2. **Icons are created:** they are not in the repository (see [Electron Assets](../components/electron-assets.md))
    - `assets/icon.icns` (macOS)
    - `assets/icon.ico` (Windows)
    - `assets/icon.png` (Linux)
+   - `assets/dmg-background.png` (macOS DMG)
 
 ## Configuration
 
@@ -247,10 +246,10 @@ npm install
 
 ### Backend fails to start
 
-1. Check if port 8000 is available:
+1. Check if port 8010 is available:
 
    ```bash
-   lsof -ti:8000 | xargs kill -9  # Kill process on port 8000
+   lsof -ti:8010 | xargs kill -9  # Kill process on port 8010
    ```
 
 2. Verify Python environment:
@@ -283,7 +282,7 @@ npm install
 
 ### Build fails
 
-1. **Missing icons:** Create icons in `assets/` (see `assets/README.md`)
+1. **Missing icons:** Create icons in `assets/` (see [Electron Assets](../components/electron-assets.md))
 2. **Frontend not built:** Run `cd src/apps/web/frontend && npm run build`
 3. **Permissions:** Ensure build scripts are executable
 4. **Disk space:** Building requires ~500MB free space
@@ -309,8 +308,8 @@ npm install
 
 ## See Also
 
-- [Web App Architecture](../../docs/components/web-architecture.md)
-- [Development Roadmap](../../docs/development/roadmap.md)
-- [Deployment Guide](../../docs/development/deployment.md)
-- `assets/README.md` - Icon creation guide
-- `README.md` - Project overview
+- [Web App Architecture](../components/web-architecture.md)
+- [Development Roadmap](../development/roadmap.md)
+- [Deployment Guide](../development/deployment.md)
+- [Electron Assets](../components/electron-assets.md) - Icon creation guide
+- [README](../../README.md) - Project overview

@@ -1,18 +1,19 @@
 # Environment Variables
 
-Knik supports configuration via environment variables. All have sensible defaults. Copy `.env.example` to `.env` and customize your settings.
+Knik is configured through environment variables, each with a default. Copy `.env.example` to `.env` and
+customize your settings. The apps load `.env` from the repository root.
 
 ## AI Configuration
 
 ### General
 
-| Variable                     | Default            | Description                                                                       |
-| ---------------------------- | ------------------ | --------------------------------------------------------------------------------- |
-| `KNIK_AI_PROVIDER`           | `vertex`           | AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock` |
-| `KNIK_AI_MODEL`              | `gemini-1.5-flash` | AI model name (see available models below)                                        |
-| `KNIK_MAX_TOKENS`            | `25565`            | Maximum tokens for AI responses                                                   |
-| `KNIK_TEMPERATURE`           | `0.7`              | AI temperature (0.0 - 2.0)                                                        |
-| `KNIK_AI_SYSTEM_INSTRUCTION` | _(built-in)_       | Custom system instruction for the AI assistant                                    |
+| Variable                     | Default            | Description                                                                                                                                               |
+| ---------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KNIK_AI_PROVIDER`           | `vertex`           | AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock`. An unknown or unconfigured provider falls back to `mock`               |
+| `KNIK_AI_MODEL`              | `gemini-1.5-flash` | Model for the console and the web backend (until one is saved in its settings). The Telegram bot passes none, so the provider's own default applies there |
+| `KNIK_MAX_TOKENS`            | `25565`            | Maximum reply tokens the console asks for with each message. The web backend shows it on its settings page when none is saved                             |
+| `KNIK_TEMPERATURE`           | `0.7`              | Temperature the console sends with each message (0.0 - 2.0). The web backend shows it on its settings page when none is saved                             |
+| `KNIK_AI_SYSTEM_INSTRUCTION` | _(built-in)_       | Custom system instruction for the AI assistant                                                                                                            |
 
 ### Vertex AI (Google Cloud)
 
@@ -52,10 +53,10 @@ Set `KNIK_AI_PROVIDER=zai` to use this provider.
 
 Set `KNIK_AI_PROVIDER=zai_coding` to use this provider. Requires a GLM Coding Plan subscription. Uses the coding-specific endpoint optimized for coding agents.
 
-| Variable              | Default                                       | Description                                                                                                |
-| --------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `ZAI_CODING_API_KEY`  | None                                          | Z.AI Coding API key (**required**). Falls back to `ZAI_API_KEY` if not set. Get one at https://bigmodel.cn |
-| `ZAI_CODING_API_BASE` | `https://open.bigmodel.cn/api/coding/paas/v4` | Z.AI Coding API base URL                                                                                   |
+| Variable              | Default                               | Description                                                                                                |
+| --------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `ZAI_CODING_API_KEY`  | None                                  | Z.AI Coding API key (**required**). Falls back to `ZAI_API_KEY` if not set. Get one at https://bigmodel.cn |
+| `ZAI_CODING_API_BASE` | `https://api.z.ai/api/coding/paas/v4` | Z.AI Coding API base URL                                                                                   |
 
 ### Custom (OpenAI-Compatible Endpoint)
 
@@ -87,12 +88,12 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Text-to-Speech Configuration
 
-| Variable            | Default                | Description                     |
-| ------------------- | ---------------------- | ------------------------------- |
-| `KNIK_VOICE_OUTPUT` | `true`                 | Enable/disable TTS voice output |
-| `KNIK_VOICE`        | `af_heart`             | Voice to use for TTS            |
-| `KNIK_LANGUAGE`     | `a` (American English) | Language code for TTS           |
-| `KNIK_MODEL`        | `hexgrad/Kokoro-82M`   | TTS model name                  |
+| Variable            | Default                | Description                                                                                              |
+| ------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `KNIK_VOICE_OUTPUT` | `true`                 | Whether the console speaks its replies                                                                   |
+| `KNIK_VOICE`        | `af_heart`             | Voice the web backend speaks with until one is saved on its settings page. The console does not apply it |
+| `KNIK_LANGUAGE`     | `a` (American English) | Not used: speech is always American English (`a`)                                                        |
+| `KNIK_MODEL`        | `hexgrad/Kokoro-82M`   | Not used: the Kokoro model loaded is always `hexgrad/Kokoro-82M`                                         |
 
 ### Available Voices
 
@@ -100,6 +101,8 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 - **Male**: `am_adam`, `am_michael`, `am_leo`, `am_ryan`
 
 ### Language Codes
+
+Kokoro's language codes, kept for reference; `KNIK_LANGUAGE` does not select one yet.
 
 | Code | Language         |
 | ---- | ---------------- |
@@ -116,9 +119,9 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## History / Context
 
-| Variable                    | Default | Description                                        |
-| --------------------------- | ------- | -------------------------------------------------- |
-| `KNIK_HISTORY_CONTEXT_SIZE` | `5`     | Number of conversation turns sent as context to AI |
+| Variable                    | Default | Description                                                                                                                                      |
+| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `KNIK_HISTORY_CONTEXT_SIZE` | `5`     | Earlier user/assistant turn pairs sent as context with each message. A stored conversation that was compacted sends everything since its summary |
 
 ## Web Backend
 
@@ -199,20 +202,23 @@ Scopes are stored with each key but not enforced: any stored key opens every `/a
 
 ## Browser Automation (Playwright)
 
-| Variable                   | Default | Description                                                             |
-| -------------------------- | ------- | ----------------------------------------------------------------------- |
-| `KNIK_BROWSER_HEADLESS`    | `false` | `false` = visible browser window (headful), `true` = headless           |
-| `KNIK_BROWSER_PROFILE_DIR` | None    | Persistent session storage directory (cookies, logins survive restarts) |
+| Variable                    | Default                   | Description                                                                  |
+| --------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
+| `KNIK_BROWSER_HEADLESS`     | `false`                   | `false` = visible browser window (headful), `true` = headless                |
+| `KNIK_BROWSER_PROFILE_DIR`  | `~/.knik/browser-profile` | Persistent session storage directory (cookies, logins survive restarts)      |
+| `KNIK_BROWSER_IDLE_TIMEOUT` | `1800`                    | Seconds a browser session may sit unused before the backend or bot closes it |
 
 ## Context Compaction
 
-| Variable                          | Default | Description                                                                 |
-| --------------------------------- | ------- | --------------------------------------------------------------------------- |
-| `KNIK_COMPACTION_ENABLED`         | `true`  | Enable/disable automatic context compaction                                 |
-| `KNIK_COMPACTION_THRESHOLD`       | `0.95`  | Token usage threshold (fraction of context window) that triggers compaction |
-| `KNIK_COMPACTION_CIRCUIT_BREAKER` | `3`     | Max consecutive compaction failures before disabling                        |
-| `KNIK_COMPACTION_PROMPT_BUFFER`   | `1024`  | Token buffer reserved for the compaction prompt itself                      |
-| `KNIK_MODEL_DISCOVERY_TIMEOUT`    | `5`     | Timeout in seconds for dynamic model discovery API calls                    |
+Applies to conversations stored in Postgres (web backend and bot).
+
+| Variable                          | Default | Description                                                                                     |
+| --------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `KNIK_COMPACTION_ENABLED`         | `true`  | Enable/disable automatic context compaction                                                     |
+| `KNIK_COMPACTION_THRESHOLD`       | `0.95`  | Fraction of the model's context window whose use triggers compaction                            |
+| `KNIK_COMPACTION_CIRCUIT_BREAKER` | `3`     | A conversation whose compaction failed this many times in a row is not compacted again          |
+| `KNIK_COMPACTION_PROMPT_BUFFER`   | `1024`  | Tokens of the context window kept free for the summary; the oldest messages are left out to fit |
+| `KNIK_MODEL_DISCOVERY_TIMEOUT`    | `5`     | Not used: model discovery requests always time out after 5 seconds                              |
 
 ## Messaging (Telegram)
 

@@ -2,7 +2,7 @@
 
 The React/Vite frontend uses provider-scoped, in-memory Zustand domain stores under `src/lib/stores`. Widgets obtain all application data and working state through public store hooks and actions. Components receive props and emit events. The frontend operates without application APIs, streaming, polling, browser persistence or microphone capture.
 
-For a visual walkthrough, open [domain ownership](../../.archify/store-architecture/domain-stores/domain-stores.html), [data flow](../../.archify/store-architecture/store-dataflow/store-dataflow.html), [interactions](../../.archify/store-architecture/store-interactions/store-interactions.html), or [session lifetime](../../.archify/store-architecture/store-lifecycle/store-lifecycle.html). The [implementation plan](../plan/07-frontend-component-consolidation.md) separates approved contracts from verified baseline observations and acceptance evidence.
+The Archify diagrams of this design (domain ownership, data flow, interactions, session lifetime) live under the Git-ignored `.archify/store-architecture/`, so they are not part of the repository. The [implementation plan](../plan/07-frontend-component-consolidation.md) separates approved contracts from verified baseline observations and acceptance evidence.
 
 The Archify files preserve the earlier proposed design. The chat behavior clarified on 2026-10-09 is specified below: saving a user message does not require a model or reply scenario.
 

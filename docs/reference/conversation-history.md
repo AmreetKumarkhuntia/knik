@@ -1,60 +1,23 @@
 # Conversation History
 
-The AI assistant remembers previous conversations through two complementary systems: an in-memory `ConversationHistory` for simple session tracking and a PostgreSQL-backed `ConversationDB` for persistent storage with compaction.
+The assistant remembers earlier turns in two ways: the console keeps its history in memory, and the web
+backend and the Telegram bot store conversations in Postgres, where long ones are compacted into a summary.
+Each stored conversation records its owner (a `users` row) and its source; a bot user lists and resumes only their
+own conversations, and the web and console see the web's and older ones.
 
-## In-Memory History (ConversationHistory)
+## In-memory history (console)
 
-Used by Console and GUI apps for session-level context.
+`ConversationHistory` (`src/console/history.py`) keeps up to 50 turns (user input plus reply) for the running
+console. Before each message the console takes the last `KNIK_HISTORY_CONTEXT_SIZE` turns (5 by default) as
+LangChain messages and passes them to `AIClient.chat_stream()`:
 
-## How It Works
-
-1. **User sends message** -- stored in `ConversationHistory.entries`
-2. **AI responds** -- response paired with user message in history
-3. **Next user message** -- system retrieves last N conversation turns via `get_messages(last_n=5)`
-4. **History conversion** -- user messages become `HumanMessage`, AI responses become `AIMessage`
-5. **Message structure sent to LLM:**
-   ```
-   [SystemMessage] (if configured)
-   [HumanMessage] Previous user input 1
-   [AIMessage] Previous AI response 1
-   [HumanMessage] Previous user input 2
-   [AIMessage] Previous AI response 2
-   ...
-   [HumanMessage] Current user input
-   ```
-
-## Configuration
-
-Set via environment variables (or `.env` file):
-
-```bash
-KNIK_HISTORY_CONTEXT_SIZE=5  # Number of conversation turns to include (default: 5)
 ```
-
-## Benefits
-
-- LLM remembers previous questions and answers
-- Natural follow-up questions work ("What about that?", "Tell me more")
-- Configurable context size balances memory vs token usage
-- Automatic size limits prevent unbounded growth
-
-## Usage Example
-
-```bash
-You: What is 2+2?
-AI: 2+2 equals 4.
-
-You: Multiply that by 3
-AI: If you multiply 4 by 3, you get 12.  # AI remembers "that" = 4
+[SystemMessage] (if configured)
+[HumanMessage] Previous user input 1
+[AIMessage] Previous AI response 1
+...
+[HumanMessage] Current user input
 ```
-
-Works identically across Console, GUI, and Web interfaces. Use `/debug` in Console to see history being passed.
-
-## Technical Details
-
-### Implementation
-
-**ConversationHistory** (`src/apps/console/history.py`)
 
 | Method            | Signature                            | Description                      |
 | ----------------- | ------------------------------------ | -------------------------------- |
@@ -64,83 +27,51 @@ Works identically across Console, GUI, and Web interfaces. Use `/debug` in Conso
 | `get_all_entries` | `get_all_entries() -> list[dict]`    | Get all stored entries           |
 | `clear`           | `clear()`                            | Clear all history                |
 
-### Message Flow
+`/history` shows it, `/clear` empties it, and `/debug on` prints how many history messages each request sends.
 
-```
-Console/GUI/Web App
-    | get_messages(last_n=5)
-    v
-ConversationHistory
-    | [HumanMessage, AIMessage, ...]
-    v
-AIClient.chat() / AIClient.chat_stream()
-    | [SystemMessage, ...history, current HumanMessage]
-    v
-LLM Provider (with full context)
+```text
+You: What is 2+2?
+AI: 2+2 equals 4.
+
+You: Multiply that by 3
+AI: If you multiply 4 by 3, you get 12.
 ```
 
-### Streaming Compatibility
+## Stored conversations (web backend and bot)
 
-History works with both methods:
+`AIClient.achat()` and `achat_stream()` manage a conversation stored through `ConversationDB`
+(`src/lib/services/db/repositories/conversations.py`). For each message they:
 
-- `chat()` -- regular blocking responses
-- `chat_stream()` -- streaming responses (token by token)
+1. Create the conversation, or reuse the given one.
+2. Save the user message.
+3. Load the history: the last `KNIK_HISTORY_CONTEXT_SIZE` turn pairs, or, once the conversation has been
+   compacted, every message from the summary on. A stored reply that called tools is replayed as the tool calls,
+   their results and the final text.
+4. Call the model.
+5. Save the reply with its token usage and tool calls in the message metadata, and add the turn's
+   `total_tokens` to the conversation's running total.
+6. Compact the conversation if this turn crossed the threshold (below).
+7. After the first exchange, generate a title in the background.
 
-### Web App Integration
+When Postgres is unreachable each step is skipped with a warning and the chat still answers, without history.
 
-The web backend (`src/apps/web/backend/routes/chat_stream.py`) maintains a global `ConversationHistory(max_size=50)` instance. The number of recent turns sent as context is controlled by `KNIK_HISTORY_CONTEXT_SIZE`.
+### Compaction
 
-The web API also exposes history endpoints:
+After a reply, if the turn's input tokens reach `KNIK_COMPACTION_THRESHOLD` (0.95) of the model's context
+window, the reply waits while the conversation is compacted (`src/lib/services/ai_client/compaction.py`):
 
-- `GET /api/history` -- retrieve conversation history
-- `POST /api/history/clear` -- clear history
+- The whole conversation is summarised by the model into a structured summary (goal, constraints, progress,
+  decisions, tool activity, next steps). If the messages do not fit, the oldest are left out, keeping
+  `KNIK_COMPACTION_PROMPT_BUFFER` tokens free for the summary.
+- The summary is appended as a message, and the conversation's `summary_message_id` points at it. Later
+  requests load history from that message on, sending the summary as a user message. Older messages stay in
+  the database.
+- A failed compaction increments the conversation's `compacted_count`; at `KNIK_COMPACTION_CIRCUIT_BREAKER`
+  (3) consecutive failures it is no longer tried.
+- The web backend's stream sends a `compaction` event when a turn compacted the conversation (see
+  [Streaming](../development/streaming.md)).
 
----
+`KNIK_COMPACTION_ENABLED=false` turns it off. See
+[Environment Variables](environment-variables.md#context-compaction).
 
-## Persistent History (ConversationDB)
-
-Used by Web, Bot, and any app mode with PostgreSQL configured. Conversations and messages are stored in the `conversations` table with full CRUD via `src/lib/services/conversation/db_client.py`.
-
-### Key Features
-
-- **PostgreSQL-backed** -- conversations survive app restarts
-- **Token tracking** -- per-message usage stored in `metadata.usage` (input_tokens, output_tokens, total_tokens)
-- **Automatic compaction** -- when token usage exceeds `KNIK_COMPACTION_THRESHOLD` (default 0.95), older messages are summarized and replaced with a cumulative summary
-- **Cumulative summaries** -- stored in `summary` and `summary_through_index` columns; each new summary incorporates the previous one
-- **Conversation API** -- full CRUD at `/api/conversations` with listing, creation, deletion, and message retrieval
-
-### Compaction Flow
-
-```
-New message → LLM call → _post_chat()
-    → increment_total_tokens()
-    → should_compact(total_tokens, model)?
-        → YES: ConversationSummarizer.run() as background task
-            → Load all messages from DB
-            → Fetch existing summary (cumulative)
-            → Split: messages_to_compact | last N turns kept
-            → Call LLM with compaction prompt
-            → Store new summary + through_index
-            → Reset total_tokens counter
-        → NO: Done
-```
-
-### Web API Endpoints
-
-| Method | Path                               | Description                                     |
-| ------ | ---------------------------------- | ----------------------------------------------- |
-| GET    | `/api/conversations/`              | List conversations (supports `limit`, `offset`) |
-| POST   | `/api/conversations/`              | Create a new conversation                       |
-| GET    | `/api/conversations/{id}`          | Get conversation with messages                  |
-| DELETE | `/api/conversations/{id}`          | Delete a conversation                           |
-| PATCH  | `/api/conversations/{id}`          | Update conversation title                       |
-| GET    | `/api/conversations/{id}/messages` | Get messages (optional `last_n`)                |
-
-### Compaction Configuration
-
-| Variable                          | Default | Description                                      |
-| --------------------------------- | ------- | ------------------------------------------------ |
-| `KNIK_COMPACTION_ENABLED`         | `true`  | Enable automatic compaction                      |
-| `KNIK_COMPACTION_THRESHOLD`       | `0.95`  | Fraction of context window to trigger compaction |
-| `KNIK_COMPACTION_CIRCUIT_BREAKER` | `3`     | Max consecutive failures before disabling        |
-| `KNIK_COMPACTION_PROMPT_BUFFER`   | `1024`  | Tokens reserved for compaction prompt            |
+The web API for stored conversations is listed in the [API Reference](api.md#conversations-apiconversations).

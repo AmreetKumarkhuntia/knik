@@ -2,114 +2,59 @@
 
 ## AIClient
 
-Unified AI client with multiple provider support and MCP tools.
+Unified AI client over the registered providers (`src/lib/services/ai_client/client.py`). Apps import it from
+`imports.py`; library code imports `lib.services.ai_client.client`.
 
-### Constructor
+### Building a client
 
-```python
-from lib.services.ai_client import AIClient
-
-client = AIClient(
-    provider="vertex",               # Provider name (default: "vertex")
-    auto_fallback_to_mock=True,      # Fall back to mock if unconfigured
-    mcp_registry=None,               # MCPServerRegistry for tool support
-    system_instruction=None,         # System prompt for the AI
-    tool_callback=None,              # Callback for tool execution events
-    **provider_kwargs                # Forwarded to provider constructor
-)
-```
-
-Provider-specific kwargs are passed through to the underlying provider. For example:
+Build clients with `build_client()` (`lib/services/ai_client/factory.py`). It hands each provider only the
+settings its constructor declares, passing the model as `model_name`, so a setting one provider does not take
+never reaches it.
 
 ```python
-# Vertex AI
-client = AIClient(
-    provider="vertex",
-    project_id="your-project-id",
-    location="us-central1",
-    model_name="gemini-2.5-flash"
-)
+from imports import ClientSettings, build_client, create_tool_registry
 
-# Custom OpenAI-compatible endpoint
-client = AIClient(
-    provider="custom",
-    model_name="llama3.1",
-    api_base="http://localhost:11434/v1"
+settings = ClientSettings(
+    provider="vertex",              # vertex, gemini, zhipuai, zai, zai_coding, custom, mock
+    model="gemini-2.5-flash",
+    system_instruction=None,
+    project_id="your-project-id",   # vertex
+    location="us-central1",         # vertex
+    api_base=None,                  # custom only (Z.AI reads ZAI_API_BASE / ZAI_CODING_API_BASE)
+    api_key=None,                   # custom only
+    temperature=None,
+    max_tokens=None,
 )
+client = build_client(settings, tool_registry=create_tool_registry())  # tool_registry=None for no tools
 ```
+
+`AIClient(provider=..., auto_fallback_to_mock=True, tool_registry=None, system_instruction=None,
+tool_callback=None, settings=None, **provider_kwargs)` is the underlying constructor.
 
 ### Methods
 
-#### `chat(prompt, max_tokens, temperature, history, **kwargs) -> str`
+| Method                                                                                                                 | Does                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `chat(prompt, max_tokens=1024, temperature=0.7, history=None) -> str`                                                  | One reply. Raises what the provider raised                                                                                                |
+| `chat_stream(prompt, ..., history=None) -> Generator[str]`                                                             | The reply as text chunks; a provider failure ends it with a `"Chat streaming error: ..."` chunk                                           |
+| `stream_events(prompt, ..., history=None)`                                                                             | The reply as typed events (see [Streaming](../development/streaming.md))                                                                  |
+| `async achat(prompt, conversation_id=None, user_id=None, source=None, ...)`                                            | `chat()` plus the stored conversation: returns `(text, conversation_id, usage)`; a conversation it creates records `user_id` and `source` |
+| `async achat_stream(prompt, conversation_id=None, user_id=None, source=None, ...)`                                     | `stream_events()` plus the stored conversation, from `ConversationReady` to `StreamDone`                                                  |
+| `set_model(model_name)`, `set_provider(name, model_name=None)`                                                         | Swap the provider in place, keeping the tool registry and system instruction                                                              |
+| `get_provider_name()`, `get_model_name()`, `get_info()`, `is_configured()`                                             | About the active provider                                                                                                                 |
+| `list_available_providers()` (static)                                                                                  | Registered provider names                                                                                                                 |
+| `list_models_for_provider(name=None)`, `list_all_models()`                                                             | Models from the provider APIs, with a static fallback                                                                                     |
+| `get_last_usage()`                                                                                                     | Token usage of the last call                                                                                                              |
+| `tool_registry`, `register_tool(definition, implementation)`, `get_registered_tools()`, `execute_tool(name, **kwargs)` | The client's tool registry. The model gets its tools when the provider is built, so register tools before building the client             |
 
-Get complete AI response.
-
-```python
-response = client.chat(
-    prompt="What is AI?",
-    max_tokens=1024,
-    temperature=0.7,
-    history=[]       # Optional conversation history
-)
-```
-
-#### `chat_stream(prompt, max_tokens, temperature, history, **kwargs) -> Generator[str]`
-
-Stream AI response chunks.
+`history` is a list of LangChain messages (`HumanMessage`, `AIMessage`, ...).
 
 ```python
 for chunk in client.chat_stream(prompt="Hello"):
     print(chunk, end="", flush=True)
-```
 
-#### `is_configured() -> bool`
-
-Check if the provider is properly configured.
-
-#### `get_info() -> dict`
-
-Get provider info (name, model, configuration details).
-
-#### `get_provider_name() -> str`
-
-Get the active provider name.
-
-#### `list_available_providers() -> list[str]` (static)
-
-List all registered provider names.
-
-```python
-providers = AIClient.list_available_providers()
-# ["vertex", "gemini", "zhipuai", "zai", "zai_coding", "custom", "mock"]
-```
-
-#### `register_tool(tool_dict, implementation)`
-
-Register an MCP tool.
-
-```python
-tool_def = {
-    "name": "my_tool",
-    "description": "Does something useful",
-    "parameters": {...}
-}
-
-def my_tool_impl(param):
-    return f"Result: {param}"
-
-client.register_tool(tool_def, my_tool_impl)
-```
-
-#### `get_registered_tools() -> list[dict]`
-
-List all registered tools.
-
-#### `execute_tool(tool_name, **kwargs) -> Any`
-
-Manually execute a registered tool.
-
-```python
-result = client.execute_tool("calculate", expression="2 + 2")
+AIClient.list_available_providers()
+# ['custom', 'gemini', 'mock', 'vertex', 'zai_coding', 'zai', 'zhipuai'] (registration order)
 ```
 
 ### Provider Support
@@ -142,119 +87,57 @@ BaseAIProvider (ABC)
 
 ### Auto-Fallback Behavior
 
-When `auto_fallback_to_mock=True` (default):
+When `auto_fallback_to_mock=True` (the default, and what `build_client()` uses):
 
-1. If the provider reports `is_configured() == False`, silently switches to `MockAIProvider`
-2. If the provider constructor throws an exception, catches it and falls back to `MockAIProvider`
+1. If the provider name is unknown, or its constructor raises, the client falls back to `MockAIProvider` with a warning
+2. If the provider reports `is_configured() == False`, the client falls back to `MockAIProvider` with a warning
 3. Set `auto_fallback_to_mock=False` to raise errors instead
 
 ## TTSAsyncProcessor
 
-Handles async voice processing with background threads.
-
-### Initialization
+Speaks text on background threads: one converts text to audio, the other plays it (the console uses it).
 
 ```python
-from lib import TTSAsyncProcessor
+import time
+
+from imports import TTSAsyncProcessor   # library code: from lib.services.tts import TTSAsyncProcessor
 
 processor = TTSAsyncProcessor(
     sample_rate=24000,           # Audio sample rate
-    voice_model="af_sarah",      # Voice name
-    play_voice=True,             # Enable playback
-    sleep_duration=0.3           # Thread sleep interval
+    play_voice=True,             # Play through the speakers
+    sleep_duration=0.3,          # Thread sleep interval
 )
-processor.start_async_processing()
+processor.start_async_processing()   # before play_async()
+processor.play_async("Hello world")  # non-blocking
+while not processor.is_processing_complete():
+    time.sleep(0.1)
 ```
 
-### Methods
+- `voice_model` is accepted but not applied: speech uses the Kokoro default voice, `af_heart`.
+- `set_save_dir(path)` saves the audio segments to a directory.
+- `is_text_queue_empty()`, `is_audio_queue_empty()`, `is_processing_complete()` report progress.
+- `set_voice()` and `set_language()` do not work yet: the audio processor they call has no such methods.
 
-#### `play_async(text: str)`
-
-Add text to processing queue (non-blocking).
-
-```python
-processor.play_async("Hello world")
-```
-
-#### `is_processing_complete() -> bool`
-
-Check if all processing is done (queues empty + not playing).
-
-#### `set_voice(voice: str)`
-
-Change voice model.
-
-```python
-processor.set_voice("am_adam")
-```
-
-#### `set_save_dir(save_dir: str)`
-
-Save audio segments to directory.
-
-### State Checks
-
-```python
-processor.is_text_queue_empty()    # Text queue status
-processor.is_audio_queue_empty()   # Audio queue status
-processor.is_processing_complete() # All done?
-```
+The web backend speaks through `KokoroVoiceModel` directly (`generate(text)` returns the audio and its sample
+rate).
 
 ## ConsoleApp
 
-Interactive AI console with voice.
-
-### Initialization
+Interactive AI console with voice (`src/console/`).
 
 ```python
-from apps.console import ConsoleApp, ConsoleConfig
+from console import ConsoleApp, ConsoleConfig   # from src/
 
-config = ConsoleConfig(
-    voice_name="af_sarah",
-    enable_voice_output=True
-)
-app = ConsoleApp(config)
-app.run()
+ConsoleApp(ConsoleConfig()).run()
 ```
 
-### Architecture
+Run it with `python src/main.py --mode console` or `npm run start:console`. See the
+[Console guide](../guides/console.md) for its commands.
 
-- **app.py** - Main ConsoleApp class
-- **history.py** - ConversationHistory for context management
-- **tools/** - Command handlers with registry pattern
-  - **index.py** - Command registry (`get_command_registry()`, `register_commands()`)
-  - Individual command files (`*_cmd.py`)
-
-### Console Commands (14)
-
-| Command         | Description               |
-| --------------- | ------------------------- |
-| `/help`         | Show available commands   |
-| `/exit`         | Exit the application      |
-| `/quit`         | Alias for exit            |
-| `/clear`        | Clear the screen          |
-| `/history`      | Show conversation history |
-| `/voice`        | Change voice settings     |
-| `/info`         | Show system information   |
-| `/toggle-voice` | Enable/disable TTS output |
-| `/tools`        | List registered MCP tools |
-| `/agent`        | Agent mode settings       |
-| `/provider`     | Switch AI provider        |
-| `/model`        | Switch AI model           |
-| `/debug`        | Toggle debug mode         |
-| `/workflow`     | Workflow management       |
-
-### ConversationHistory
-
-```python
-from apps.console.history import ConversationHistory
-
-history = ConversationHistory(max_size=50)
-history.add_entry("user input", "ai response")
-context = history.get_context(last_n=3)  # Get last 3 exchanges
-entries = history.get_all_entries()       # Get all entries
-history.clear()                           # Clear history
-```
+- **app.py** - `ConsoleApp`
+- **history.py** - `ConversationHistory`, the in-memory history (`add_entry`, `get_messages(last_n)`, `get_context(last_n)`, `get_all_entries()`, `clear()`)
+- **commands/** - `/help` and the shared command dispatcher
+- **tools/** - console-only commands (`index.py` registers them; one `*_cmd.py` each) and `consent_gate.py`
 
 ## Available Voices
 
@@ -262,57 +145,36 @@ history.clear()                           # Clear history
 
 **Male:** `am_adam`, `am_michael`, `am_leo`, `am_ryan`
 
-## Web API Endpoints (32)
+## Web API Endpoints (36 under `/api`)
+
+`GET /` and `GET /health` answer without an API key. With `KNIK_WEB_REQUIRE_API_KEY=true` every `/api` route
+needs `X-API-Key` (see [API keys](environment-variables.md#api-keys)). A database failure answers `503`.
 
 ### Chat (`/api/chat`)
 
-| Method | Path         | Description                            |
-| ------ | ------------ | -------------------------------------- |
-| POST   | `/api/chat/` | Send a chat message and get a response |
-
-### Chat Stream (`/api/chat/stream`)
-
-| Method | Path                | Description                    |
-| ------ | ------------------- | ------------------------------ |
-| POST   | `/api/chat/stream/` | Stream a chat response via SSE |
+| Method | Path                | Description                                                                       |
+| ------ | ------------------- | --------------------------------------------------------------------------------- |
+| POST   | `/api/chat/`        | Send a message; returns the reply text, its speech and usage                      |
+| POST   | `/api/chat/stream/` | Stream the reply as Server-Sent Events ([Streaming](../development/streaming.md)) |
 
 ### Admin (`/api/admin`)
 
-| Method | Path                   | Description                 |
-| ------ | ---------------------- | --------------------------- |
-| GET    | `/api/admin/settings`  | Get current settings        |
-| POST   | `/api/admin/settings`  | Update settings             |
-| GET    | `/api/admin/providers` | List available AI providers |
-| GET    | `/api/admin/models`    | List available AI models    |
-| GET    | `/api/admin/voices`    | List available voices       |
+| Method | Path                           | Description                                                              |
+| ------ | ------------------------------ | ------------------------------------------------------------------------ |
+| GET    | `/api/admin/settings`          | Current settings                                                         |
+| POST   | `/api/admin/settings`          | Save and apply provider, model, voice, temperature, max tokens, ...      |
+| GET    | `/api/admin/providers`         | Registered AI providers                                                  |
+| GET    | `/api/admin/models`            | Known models (`Config.AI_MODELS`)                                        |
+| GET    | `/api/admin/voices`            | Available voices                                                         |
+| GET    | `/api/admin/mcp-tools`         | Tool groups with their tool counts and whether they are enabled          |
+| PUT    | `/api/admin/mcp-tools/{group}` | Enable or disable a tool group for web chats: `{"enabled": false}`       |
+| GET    | `/api/admin/api-keys`          | API keys (never the secrets)                                             |
+| POST   | `/api/admin/api-keys`          | Create a key: `{"label": "...", "scopes": []}`; the key is returned once |
+| DELETE | `/api/admin/api-keys/{key_id}` | Delete a key                                                             |
 
-### History (`/api/history`)
+### Workflows (`/api/workflows`) and schedules (`/api/cron`)
 
-| Method | Path                 | Description                |
-| ------ | -------------------- | -------------------------- |
-| GET    | `/api/history/`      | Get conversation history   |
-| POST   | `/api/history/add`   | Add a message to history   |
-| POST   | `/api/history/clear` | Clear conversation history |
-
-### Workflows (`/api/workflows`)
-
-| Method | Path                                         | Description                    |
-| ------ | -------------------------------------------- | ------------------------------ |
-| GET    | `/api/workflows/`                            | List all workflows             |
-| GET    | `/api/workflows/{id}`                        | Get a specific workflow        |
-| DELETE | `/api/workflows/{id}`                        | Delete a workflow              |
-| POST   | `/api/workflows/{id}/execute`                | Execute a workflow             |
-| GET    | `/api/workflows/{id}/history`                | Get workflow execution history |
-| GET    | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details     |
-
-### Cron (`/api/cron`)
-
-| Method | Path                    | Description                      |
-| ------ | ----------------------- | -------------------------------- |
-| GET    | `/api/cron/`            | List all schedules               |
-| POST   | `/api/cron/`            | Add a new schedule               |
-| DELETE | `/api/cron/{id}`        | Remove a schedule                |
-| PATCH  | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
+See [Workflow Scheduler](../guides/scheduler.md#web-api).
 
 ### Analytics (`/api/analytics`)
 
@@ -335,6 +197,11 @@ history.clear()                           # Clear history
 | DELETE | `/api/conversations/{id}`          | Delete a conversation                                           |
 | PATCH  | `/api/conversations/{id}`          | Update a conversation's title                                   |
 | GET    | `/api/conversations/{id}/messages` | Get messages for a conversation (optional `last_n` query param) |
+
+Each conversation records its owner (`user_id`, a `users` row) and `source` (`web`, `telegram` or `console`); both appear in the
+conversation objects. The web lists and opens only the conversations it started (`source` web) and older ones saved before
+ownership was recorded. A Telegram user's conversation answers 404 on every `/api/conversations/{id}` route, and on
+`/api/chat/` and `/api/chat/stream/` when its id is given as `conversation_id`.
 
 ## File System Tools
 

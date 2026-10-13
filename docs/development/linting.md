@@ -1,6 +1,7 @@
 # Linting & Code Quality
 
-Knik uses **Ruff** for fast Python linting and code formatting.
+Knik uses **Ruff** for Python linting and formatting, **Pyright** for type checking and **import-linter** for the
+import rules in `pyproject.toml`.
 
 ## Quick Start
 
@@ -16,6 +17,10 @@ npm run format
 
 # Check if code is formatted correctly (without modifying)
 npm run format:check
+
+# Type check and import rules
+npm run typecheck
+npm run lint:imports
 ```
 
 ## Configuration
@@ -28,13 +33,7 @@ Linter settings are in `.ruff.toml`:
 
 ## VS Code Integration
 
-The `.vscode/settings.json` is configured to:
-
-- Format Python files on save
-- Auto-organize imports
-- Hide Python cache files
-
-**Recommended Extension**: Install the Ruff VS Code extension for real-time linting:
+The repository has no `.vscode/` settings. Install the Ruff VS Code extension for real-time linting:
 
 ```
 code --install-extension charliermarsh.ruff
@@ -66,7 +65,7 @@ ruff format --check .
 
 Some rules are relaxed for this project:
 
-- `E402` - Module-level import not at top
+- `E402` - Module-level import not at top (tool tests stub `sys.modules` before importing)
 - `E501` - Line too long (handled by formatter)
 - `B008` - Function calls in defaults
 - `C901` - Function complexity
@@ -75,16 +74,10 @@ Some rules are relaxed for this project:
 ## Per-File Ignores
 
 - `__init__.py` - Unused imports allowed (F401, F403)
-- `demo/**/*.py` - More relaxed rules for demo scripts
 
-## CI Integration (Future)
+## CI and pre-commit
 
-Add to GitHub Actions workflow:
-
-```yaml
-- name: Lint with Ruff
-  run: |
-    pip install ruff
-    ruff check .
-    ruff format --check .
-```
+`.github/workflows/ci.yml` runs `ruff check .`, `ruff format --check .`, `pyright`, the import contracts, a check
+that no `sys.path.insert` is left under `src/`, the migrations (applied twice) and `pytest`, plus the frontend's
+ESLint, Prettier, type check and build. The Husky pre-commit hook runs the `pre-commit` hooks
+(`.pre-commit-config.yaml`) and the frontend's `lint-staged`.
