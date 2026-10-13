@@ -1,6 +1,9 @@
 """Router for querying, managing, and executing Workflows via Web API."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 
 from backend.deps import get_state
 from backend.models.workflow import (
@@ -9,10 +12,33 @@ from backend.models.workflow import (
     WorkflowUpdateRequest,
 )
 from backend.state import AppState
-from imports import DB_ERRORS, ExecutionDB, NotFoundError, ValidationError, workflow_service
+from imports import DB_ERRORS, ExecutionDB, NotFoundError, ValidationError, WorkflowError, workflow_service
 
 
 router = APIRouter()
+
+
+def _rejected(error: ValueError) -> JSONResponse:
+    """400 for a definition the service or the engine rejects.
+
+    "detail" stays the message; the context a ValidationError carries ("details": the node, the available
+    functions...) sits beside it.
+    """
+    extra = error.extra if isinstance(error, WorkflowError) else {}
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(error), **{key: value for key, value in extra.items() if value is not None}},
+    )
+
+
+async def _saved(result: dict[str, Any]) -> dict[str, Any]:
+    """The reply to a create or update. Its definition is the stored, canonical one, not the request's spelling."""
+    workflow_id = result["workflow_id"]
+    workflow = await workflow_service.get_workflow(workflow_id)
+    if workflow is None:
+        # Deleted by another request since this one saved it.
+        raise NotFoundError(f"Workflow {workflow_id} not found", workflow_id=workflow_id)
+    return {"success": True, "workflow": workflow.definition, **result}
 
 
 @router.get("/")
@@ -44,9 +70,11 @@ async def create_workflow(request: WorkflowCreateRequest):
             definition=request.definition,
             description=request.description,
         )
-        return {"success": True, "workflow": request.definition, **result}
+        return await _saved(result)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        return _rejected(e)
     except DB_ERRORS:
         raise
     except Exception as e:
@@ -85,11 +113,11 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
             definition=definition,
             description=request.description,
         )
-        return {"success": True, "workflow": definition, **result}
+        return await _saved(result)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        return _rejected(e)
     except DB_ERRORS:
         raise
     except Exception as e:
@@ -115,9 +143,12 @@ async def execute_workflow(workflow_id: str, request: WorkflowExecuteRequest, st
     try:
         result = await state.scheduler.run(workflow_id, request.inputs)
         return {"success": True, "result": result}
-    except ValueError as e:
-        # NotFoundError for an unknown id, or the engine rejecting the workflow (invalid DAG, unknown node type).
+    except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    except ValueError as e:
+        # The engine rejecting the stored definition (invalid DAG, unknown node type or function). A failing node
+        # is a RuntimeError and stays a 500.
+        return _rejected(e)
     except DB_ERRORS:
         raise
     except Exception as e:

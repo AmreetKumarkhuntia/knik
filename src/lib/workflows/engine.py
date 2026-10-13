@@ -9,6 +9,7 @@ from typing import Any
 from lib.services.db import ExecutionDB
 from lib.services.db.models import Workflow
 from lib.utils import printer as logger
+from lib.workflows.errors import ValidationError
 from lib.workflows.nodes import AIClientFactory, BaseNode, ConditionalBranchNode, build_node
 from lib.workflows.validation import validate_workflow_definition
 
@@ -38,7 +39,10 @@ class WorkflowEngine:
         try:
             validation_result = validate_workflow_definition(workflow.definition)
             if not validation_result["valid"]:
-                raise ValueError(f"Invalid workflow definition: {validation_result['message']}")
+                raise ValidationError(
+                    f"Invalid workflow definition: {validation_result['message']}",
+                    details=validation_result.get("details"),
+                )
 
             nodes, adj_list, reverse_adj, in_degree = self._parse_dag(workflow.definition)
 
