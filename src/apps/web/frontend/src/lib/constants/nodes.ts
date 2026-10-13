@@ -7,7 +7,7 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Entry point',
     icon: 'play_arrow',
     colors: {
-      iconBg: 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)]',
+      iconBg: 'bg-[color-mix(in_srgb,var(--success)_14%,transparent)]',
       iconText: 'text-[var(--success)]',
     },
     handles: {
@@ -26,7 +26,7 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Completion',
     icon: 'flag',
     colors: {
-      iconBg: 'bg-surface-2',
+      iconBg: 'bg-[color-mix(in_srgb,var(--fg-3)_14%,transparent)]',
       iconText: 'text-fg-3',
     },
     handles: {
@@ -45,7 +45,7 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Code step',
     icon: 'code',
     colors: {
-      iconBg: 'bg-surface-2',
+      iconBg: 'bg-[color-mix(in_srgb,var(--fg-3)_14%,transparent)]',
       iconText: 'text-fg-3',
     },
     handles: {
@@ -70,7 +70,7 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Branch',
     icon: 'call_split',
     colors: {
-      iconBg: 'bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]',
+      iconBg: 'bg-[color-mix(in_srgb,var(--warning)_14%,transparent)]',
       iconText: 'text-[var(--warning)]',
     },
     handles: {
@@ -115,15 +115,15 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'Merge paths',
     icon: 'call_merge',
     colors: {
-      iconBg: 'bg-[color-mix(in_srgb,var(--info)_10%,transparent)]',
-      iconText: 'text-[var(--info)]',
+      iconBg: 'bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]',
+      iconText: 'text-[var(--acc-text)]',
     },
     handles: {
       inputs: [
-        { position: 'left', color: 'var(--info)' },
-        { position: 'top', color: 'var(--info)' },
+        { position: 'left', color: 'var(--primary)' },
+        { position: 'top', color: 'var(--primary)' },
       ],
-      outputs: [{ position: 'right', color: 'var(--info)' }],
+      outputs: [{ position: 'right', color: 'var(--primary)' }],
     },
     defaultData: { type: 'FlowMergeNode', merge_strategy: 'concat' },
     formFields: [
@@ -146,8 +146,8 @@ export const NODE_REGISTRY: NodeRegistry = {
     typeLabel: 'AI model',
     icon: 'psychology',
     colors: {
-      iconBg: 'bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]',
-      iconText: 'text-[var(--primary)]',
+      iconBg: 'bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]',
+      iconText: 'text-[var(--acc-text)]',
     },
     handles: {
       inputs: [{ position: 'left', id: 'input', label: 'Prompt', color: 'var(--primary)' }],

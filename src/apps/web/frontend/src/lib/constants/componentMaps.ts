@@ -8,8 +8,9 @@ import type { ToolCallKind, ToolCallStatus } from '$types/conversation'
 
 /** Modal max-width class per size (Modal). */
 export const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
+  sm: 'max-w-[420px]',
+  md: 'max-w-[460px]',
+  lg: 'max-w-[560px]',
 }
 
 /** Accent dot color per model badge (ModelPicker). */
@@ -44,3 +45,16 @@ export const TOOL_CALL_STATUS_LABELS: Record<ToolCallStatus, string> = {
   success: 'Done',
   error: 'Failed',
 }
+
+/** Material Symbols icon per MCP tool group (ToolGroupList); unknown groups use TOOL_GROUP_FALLBACK_ICON. */
+export const TOOL_GROUP_ICONS: Record<string, string> = {
+  shell: 'terminal',
+  filesystem: 'folder',
+  github: 'code',
+  browser: 'public',
+  gmail: 'mail',
+  slack: 'tag',
+  calendar: 'calendar_month',
+}
+
+export const TOOL_GROUP_FALLBACK_ICON = 'extension'

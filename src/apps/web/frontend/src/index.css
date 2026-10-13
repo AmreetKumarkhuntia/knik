@@ -29,7 +29,6 @@ body,
   color: var(--fg-2);
   font-family: var(--font-sans);
   line-height: var(--lh-base);
-  font-feature-settings: 'ss01', 'cv11', 'calt';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -46,6 +45,32 @@ body,
 }
 
 /* -----------------------------------------------------------------
+   Shell backdrop: two soft accent washes behind every glass panel
+   ----------------------------------------------------------------- */
+.knik-shell-bg {
+  background:
+    radial-gradient(900px 520px at 85% -10%, var(--acc-soft), transparent 60%),
+    radial-gradient(700px 400px at -10% 110%, var(--acc-soft), transparent 60%), var(--bg-base);
+}
+
+/* -----------------------------------------------------------------
+   Scrollbars
+   ----------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* -----------------------------------------------------------------
    Scrollbar hide utility
    ----------------------------------------------------------------- */
 .scrollbar-hide {
@@ -58,7 +83,7 @@ body,
 }
 
 .workflow-grid {
-  background-color: var(--bg-canvas);
+  background-color: transparent;
 }
 
 /* =================================================================

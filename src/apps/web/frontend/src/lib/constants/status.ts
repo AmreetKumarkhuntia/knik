@@ -9,13 +9,13 @@ export const executionStatusConfig: Record<
   }
 > = {
   pending: {
-    bg: 'bg-[var(--warning-bg)]',
-    text: 'text-[var(--warning)]',
+    bg: 'bg-panel-2',
+    text: 'text-fg-3',
     label: 'Pending',
   },
   running: {
-    bg: 'bg-[var(--info-bg)]',
-    text: 'text-[var(--info)]',
+    bg: 'bg-[var(--acc-soft)]',
+    text: 'text-[var(--acc-text)]',
     label: 'Running',
   },
   success: {

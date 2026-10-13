@@ -30,10 +30,10 @@ describe('FlowEdge execution motion', () => {
 
   it.each([
     ['failed', 'var(--danger)'],
-    ['success', 'var(--success)'],
-    ['running', 'var(--info)'],
-    ['pending', 'var(--fg-4)'],
-    [undefined, 'var(--fg-4)'],
+    ['success', 'color-mix(in srgb, var(--success) 60%, transparent)'],
+    ['running', 'var(--primary)'],
+    ['pending', 'var(--border-strong)'],
+    [undefined, 'var(--border-strong)'],
   ] as const)('strokes a %s edge with %s', (status, stroke) => {
     expect(renderEdge(status)?.getAttribute('style')).toContain(`stroke: ${stroke}`)
   })

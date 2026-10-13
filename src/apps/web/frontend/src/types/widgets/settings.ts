@@ -11,6 +11,8 @@ export interface ToolGroupListProps {
 }
 export interface VoiceOptionProps {
   voice: DemoVoiceOption
+  /** The selected voice shows a small live waveform. */
+  active?: boolean
 }
 export interface ApiKeyRowProps {
   apiKey: ApiKeyInfo
