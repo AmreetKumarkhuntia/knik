@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
-from imports import AIClient, MCPServerRegistry, MessagingClient, printer, register_all_tools
+from imports import AIClient, MCPServerRegistry, printer, register_all_tools
+
+
+if TYPE_CHECKING:
+    from .transport import MessagingTransport
 
 
 class UserClientManager:
@@ -12,29 +17,23 @@ class UserClientManager:
 
     def __init__(
         self,
-        provider: str,
+        ai_provider: str,
         system_instruction: str | None = None,
-        messaging_client: MessagingClient | None = None,
+        transport: MessagingTransport | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
-        self._provider = provider
+        self._ai_provider = ai_provider
         self._system_instruction = system_instruction
-        self._messaging_client = messaging_client
+        self._transport = transport
         self._loop = loop
         self._clients: dict[str, AIClient] = {}
-        self._chat_contexts: dict[str, tuple[str, str]] = {}
+        self._chat_ids: dict[str, str] = {}
 
-    def set_chat_context(self, user_id: str, chat_id: str, messaging_provider: str) -> None:
-        self._chat_contexts[user_id] = (chat_id, messaging_provider)
+    def set_chat_context(self, user_id: str, chat_id: str) -> None:
+        self._chat_ids[user_id] = chat_id
 
     def get(self, user_id: str) -> AIClient | None:
         return self._clients.get(user_id)
-
-    def set(self, user_id: str, client: AIClient) -> None:
-        self._clients[user_id] = client
-
-    def remove(self, user_id: str) -> None:
-        self._clients.pop(user_id, None)
 
     def cleanup_tools(self, user_id: str) -> None:
         client = self._clients.get(user_id)
@@ -59,20 +58,15 @@ class UserClientManager:
     def create_new(self, user_id: str) -> AIClient:
         registry = MCPServerRegistry()
         register_all_tools(registry)
-        if self._messaging_client and self._loop:
+        if self._transport and self._loop:
             from .consent import BotConsentGate
 
-            chat_id, messaging_provider = self._chat_contexts.get(user_id, ("", ""))
-            gate = BotConsentGate(
-                chat_id=chat_id,
-                messaging_client=self._messaging_client,
-                loop=self._loop,
-                provider=messaging_provider,
-            )
+            chat_id = self._chat_ids.get(user_id, "")
+            gate = BotConsentGate(chat_id=chat_id, transport=self._transport, loop=self._loop)
             registry.set_consent_gate(gate)
-            printer.info(f"Consent gate wired for user {user_id} (chat: {chat_id}, provider: {messaging_provider})")
+            printer.info(f"Consent gate wired for user {user_id} (chat: {chat_id})")
         return AIClient(
-            provider=self._provider,
+            provider=self._ai_provider,
             mcp_registry=registry,
             system_instruction=self._system_instruction,
         )

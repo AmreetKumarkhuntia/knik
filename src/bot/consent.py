@@ -1,11 +1,17 @@
 """Bot consent gate — Telegram message + Future-based reply detection."""
 
+from __future__ import annotations
+
 import asyncio
 from collections import deque
 from concurrent.futures import Future
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from imports import ConsentRequest, MessagingClient, printer
+from imports import ConsentRequest, printer
+
+
+if TYPE_CHECKING:
+    from .transport import MessagingTransport
 
 
 class PendingConsents:
@@ -43,25 +49,19 @@ class BotConsentGate:
     def __init__(
         self,
         chat_id: str,
-        messaging_client: MessagingClient,
+        transport: MessagingTransport,
         loop: asyncio.AbstractEventLoop,
-        provider: str,
     ) -> None:
         self._chat_id = chat_id
-        self._messaging_client = messaging_client
+        self._transport = transport
         self._loop = loop
-        self._provider = provider
 
     def request_sync(self, req: ConsentRequest, timeout: float = 30.0) -> str:
         args_preview = ", ".join(f"{k}={repr(v)[:60]}" for k, v in req.kwargs.items())
         text = f"Allow {req.tool_name}({args_preview})? Reply yes (y) / yes all (ya) / no"
         printer.info(f"Sending consent prompt to chat {self._chat_id} for {req.tool_name}")
 
-        send_coro = self._messaging_client.send_message(
-            chat_id=self._chat_id,
-            text=text,
-            provider=self._provider,
-        )
+        send_coro = self._transport.send_message(chat_id=self._chat_id, text=text)
         send_fut = asyncio.run_coroutine_threadsafe(send_coro, self._loop)
         try:
             send_fut.result(timeout=20.0)

@@ -12,8 +12,7 @@ import imports
 
 HUB_PATH = Path(imports.__file__)
 
-# Runs in a fresh interpreter: some tool tests replace lib.* packages in sys.modules with stubs,
-# and resolving against those would either fail or compare a stub with itself.
+# Runs in a fresh interpreter so the check sees the real modules, whatever earlier tests imported or patched.
 _RESOLVE_ALL = """
 import importlib
 import imports

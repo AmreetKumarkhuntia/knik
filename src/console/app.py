@@ -2,7 +2,7 @@
 
 import time
 
-from imports import AIClient, ConsoleProcessor, TTSAsyncProcessor, printer
+from imports import AIClient, TTSAsyncProcessor, printer
 
 
 try:
@@ -10,11 +10,13 @@ try:
     from .config import ConsoleConfig
     from .history import ConversationHistory
     from .identity import ConsoleIdentity
+    from .processor import ConsoleProcessor
 except ImportError:
     from console.commands import create_command_system
     from console.config import ConsoleConfig
     from console.history import ConversationHistory
     from console.identity import ConsoleIdentity
+    from console.processor import ConsoleProcessor
 
 from imports import BaseTool, CommandService, MCPServerRegistry, register_all_tools
 

@@ -10,8 +10,24 @@ on:
 
 jobs:
   backend:
-    name: Backend - Lint, Format & Typecheck
+    name: Backend - Lint, Format, Typecheck & Test
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: knik
+          # Throwaway CI database: trust auth means no password to commit.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: knik_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U knik"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -58,7 +74,24 @@ jobs:
         run: |
           ! grep -rn "sys.path.insert" src --include='*.py'
 
+      - name: Migrations apply and re-apply cleanly
+        env:
+          KNIK_DB_HOST: localhost
+          KNIK_DB_PORT: "5432"
+          KNIK_DB_USER: knik
+          KNIK_DB_NAME: knik_migrate
+        run: |
+          psql -h localhost -U knik -d knik_test -c "CREATE DATABASE knik_migrate"
+          scripts/migrate.sh
+          # Like an install that predates schema_migrations: every file runs again over the migrated schema.
+          psql -h localhost -U knik -d knik_migrate -c "DROP TABLE schema_migrations"
+          scripts/migrate.sh
+          scripts/migrate.sh | tee third-run.log
+          grep -q "Done: 0 applied" third-run.log
+
       - name: Run tests
+        env:
+          KNIK_TEST_DATABASE_URL: postgresql://knik@localhost:5432/knik_test
         run: |
           source .venv/bin/activate
           pytest -v

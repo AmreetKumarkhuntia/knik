@@ -6,7 +6,7 @@ CRUD operations for persisted conversation history.
 from fastapi import APIRouter, HTTPException
 
 from backend.models.conversations import ConversationCreate, ConversationUpdate
-from imports import BaseTool, ConversationDB
+from imports import DB_ERRORS, BaseTool, ConversationDB
 
 
 router = APIRouter()
@@ -23,6 +23,8 @@ async def list_conversations(limit: int = 20, offset: int = 0):
             "limit": limit,
             "offset": offset,
         }
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -34,6 +36,8 @@ async def create_conversation(request: ConversationCreate | None = None):
         title = request.title if request else None
         conversation_id = await ConversationDB.create_conversation(title=title)
         return {"id": conversation_id, "title": title, "status": "created"}
+    except DB_ERRORS:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -46,7 +50,7 @@ async def get_conversation(conversation_id: str):
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
         return conversation.to_dict()
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -62,7 +66,7 @@ async def delete_conversation(conversation_id: str):
         await ConversationDB.delete_conversation(conversation_id)
         BaseTool.cleanup_all()
         return {"status": "deleted", "id": conversation_id}
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -77,7 +81,7 @@ async def update_conversation(conversation_id: str, request: ConversationUpdate)
             raise HTTPException(status_code=404, detail="Conversation not found")
         await ConversationDB.update_title(conversation_id, request.title)
         return {"status": "updated", "id": conversation_id, "title": request.title}
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -101,7 +105,7 @@ async def get_messages(conversation_id: str, last_n: int | None = None):
             "messages": [m.to_dict() for m in messages],
             "count": len(messages),
         }
-    except HTTPException:
+    except (HTTPException, *DB_ERRORS):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

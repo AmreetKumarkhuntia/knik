@@ -6,9 +6,9 @@ import time
 from collections import defaultdict
 from typing import Any
 
-from lib.services.scheduler.db_client import SchedulerDB
+from lib.services.db import ExecutionDB
+from lib.services.db.models import Workflow
 from lib.utils import printer as logger
-from lib.workflows.models import Workflow
 from lib.workflows.nodes import (
     AIExecutionNode,
     BaseNode,
@@ -29,7 +29,7 @@ class WorkflowEngine:
         logger.info(f"Starting execution for Workflow: {workflow.id}")
         inputs = inputs or {}
 
-        execution_id = await SchedulerDB.create_execution(workflow.id, inputs)
+        execution_id = await ExecutionDB.create_execution(workflow.id, inputs)
         if not execution_id:
             raise RuntimeError("Failed to create execution record in the database")
 
@@ -81,7 +81,7 @@ class WorkflowEngine:
                         output = await node.execute(n_inputs)
                         node_duration_ms = int((time.perf_counter() - node_start) * 1000)
 
-                        await SchedulerDB.log_node_execution(
+                        await ExecutionDB.log_node_execution(
                             execution_id=execution_id,
                             node_id=nid,
                             node_type=node.__class__.__name__,
@@ -100,7 +100,7 @@ class WorkflowEngine:
                         node_duration_ms = int((time.perf_counter() - node_start) * 1000)
                         logger.error(f"[{nid}] Node execution failed: {e}")
                         try:
-                            await SchedulerDB.log_node_execution(
+                            await ExecutionDB.log_node_execution(
                                 execution_id=execution_id,
                                 node_id=nid,
                                 node_type=node.__class__.__name__,
@@ -180,7 +180,7 @@ class WorkflowEngine:
             if unvisited:
                 logger.warning(f"Nodes never became ready (possibly behind not-taken branches): {unvisited}")
 
-            await SchedulerDB.complete_execution(
+            await ExecutionDB.complete_execution(
                 execution_id,
                 status="success",
                 outputs=node_outputs,
@@ -189,7 +189,7 @@ class WorkflowEngine:
             return node_outputs
 
         except Exception as e:
-            await SchedulerDB.complete_execution(
+            await ExecutionDB.complete_execution(
                 execution_id,
                 status="failed",
                 error_message=str(e),

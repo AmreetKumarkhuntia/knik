@@ -1,62 +1,94 @@
 #!/usr/bin/env bash
-# Runs the database migrations using psql
-set -e
+# Applies every db/migrations/*.sql file not yet recorded in schema_migrations, in lexical order.
+# Each file runs in its own transaction together with its schema_migrations row, so a failing file
+# leaves no trace and the next run retries it.
+#
+# Connection settings come from KNIK_DB_HOST/PORT/USER/PASS/NAME (defaults match lib/core/config.py).
+# Values in .env fill in only variables that are not already set in the environment.
+set -euo pipefail
 
-# Move to the project root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-cd "$SCRIPT_DIR/.."
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+MIGRATIONS_DIR="$ROOT_DIR/db/migrations"
 
-# Defaults
-DB_HOST="localhost"
-DB_PORT="5432"
-DB_USER="postgres"
-DB_PASS=""
-DB_NAME="knik"
+# Reads KNIK_DB_* assignments from a dotenv file: `KEY=value` or `export KEY=value`, values optionally
+# single- or double-quoted, with `# comments` after unquoted values ignored.
+load_db_env() {
+    local file="$1" line key value
+    local assignment='^[[:space:]]*(export[[:space:]]+)?(KNIK_DB_[A-Z_]+)[[:space:]]*=[[:space:]]*(.*)$'
+    local double_quoted='^"(.*)"[[:space:]]*(#.*)?$'
+    local single_quoted="^'(.*)'[[:space:]]*(#.*)?\$"
+    while IFS= read -r line || [ -n "$line" ]; do
+        [[ "$line" =~ $assignment ]] || continue
+        key="${BASH_REMATCH[2]}"
+        value="${BASH_REMATCH[3]}"
+        if [[ "$value" =~ $double_quoted ]] || [[ "$value" =~ $single_quoted ]]; then
+            value="${BASH_REMATCH[1]}"
+        else
+            value="${value%%[[:space:]]#*}"
+            value="${value%"${value##*[![:space:]]}"}"
+        fi
+        if [ -z "${!key+set}" ]; then
+            export "$key=$value"
+        fi
+    done < "$file"
+}
 
-# Load the database config from .env if it exists
-if [ -f .env ]; then
-    echo "📝 Loading environment variables from .env..."
-
-    # Try parsing export format first
-    HOST_VAL=$(grep "^export KNIK_DB_HOST=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    PORT_VAL=$(grep "^export KNIK_DB_PORT=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    USER_VAL=$(grep "^export KNIK_DB_USER=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    PASS_VAL=$(grep "^export KNIK_DB_PASS=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    NAME_VAL=$(grep "^export KNIK_DB_NAME=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-
-    # Fallback to standard format if empty
-    if [ -z "$HOST_VAL" ]; then HOST_VAL=$(grep "^KNIK_DB_HOST=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
-    if [ -z "$PORT_VAL" ]; then PORT_VAL=$(grep "^KNIK_DB_PORT=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
-    if [ -z "$USER_VAL" ]; then USER_VAL=$(grep "^KNIK_DB_USER=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
-    if [ -z "$PASS_VAL" ]; then PASS_VAL=$(grep "^KNIK_DB_PASS=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
-    if [ -z "$NAME_VAL" ]; then NAME_VAL=$(grep "^KNIK_DB_NAME=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'"); fi
-
-    [ -n "$HOST_VAL" ] && DB_HOST="$HOST_VAL"
-    [ -n "$PORT_VAL" ] && DB_PORT="$PORT_VAL"
-    [ -n "$USER_VAL" ] && DB_USER="$USER_VAL"
-    [ -n "$PASS_VAL" ] && DB_PASS="$PASS_VAL"
-    [ -n "$NAME_VAL" ] && DB_NAME="$NAME_VAL"
+if [ -f "$ROOT_DIR/.env" ]; then
+    echo "Loading database settings from .env"
+    load_db_env "$ROOT_DIR/.env"
 fi
 
-# Check if psql is available
-if ! command -v psql >/dev/null 2>&1; then
-    echo "❌ Error: 'psql' is not installed or not in PATH."
-    echo "Please install PostgreSQL client tools to run migrations using pure shell."
-    echo "Debian/Ubuntu: sudo apt-get install postgresql-client"
-    echo "macOS (Homebrew): brew install postgresql"
+if ! command -v psql > /dev/null 2>&1; then
+    echo "Error: 'psql' is not installed or not in PATH." >&2
+    echo "Install the PostgreSQL client tools to run migrations:" >&2
+    echo "  Debian/Ubuntu: sudo apt-get install postgresql-client" >&2
+    echo "  macOS (Homebrew): brew install postgresql" >&2
     exit 1
 fi
 
-MIGRATION_FILE="db/migrations/001_initial_scheduler_schema.sql"
+DB_HOST="${KNIK_DB_HOST:-localhost}"
+DB_PORT="${KNIK_DB_PORT:-5432}"
+DB_USER="${KNIK_DB_USER:-postgres}"
+DB_NAME="${KNIK_DB_NAME:-knik}"
+if [ -n "${KNIK_DB_PASS:-}" ]; then
+    export PGPASSWORD="$KNIK_DB_PASS"
+fi
+# Silences the "already exists, skipping" notices that idempotent migrations emit on re-runs.
+export PGOPTIONS="${PGOPTIONS:-} -c client_min_messages=warning"
 
-if [ ! -f "$MIGRATION_FILE" ]; then
-    echo "Error: Migration file $MIGRATION_FILE not found."
+PSQL=(psql -X -q -v ON_ERROR_STOP=1 -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME")
+
+echo "Migrating $DB_USER@$DB_HOST:$DB_PORT/$DB_NAME"
+
+"${PSQL[@]}" -c "CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())"
+applied="$("${PSQL[@]}" -A -t -c "SELECT name FROM schema_migrations")"
+
+shopt -s nullglob
+sql_files=("$MIGRATIONS_DIR"/*.sql)
+if [ ${#sql_files[@]} -eq 0 ]; then
+    echo "Error: no migrations found in $MIGRATIONS_DIR" >&2
     exit 1
 fi
+# Sorted bytewise so the order is lexical whatever the caller's locale. A read loop rather than mapfile,
+# which macOS's stock bash 3.2 lacks.
+files=()
+while IFS= read -r file; do
+    files+=("$file")
+done < <(printf '%s\n' "${sql_files[@]}" | LC_ALL=C sort)
 
-echo "🚀 Applying migration: $MIGRATION_FILE to $DB_HOST:$DB_PORT/$DB_NAME"
+applied_count=0
+skipped_count=0
+for file in "${files[@]}"; do
+    name="$(basename "$file")"
+    if grep -qxF -- "$name" <<< "$applied"; then
+        echo "  skip   $name (already applied)"
+        skipped_count=$((skipped_count + 1))
+        continue
+    fi
+    echo "  apply  $name"
+    "${PSQL[@]}" --single-transaction -v name="$name" -f "$file" -f - <<< "INSERT INTO schema_migrations (name) VALUES (:'name');"
+    applied_count=$((applied_count + 1))
+done
 
-# Run the migration using psql
-PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$MIGRATION_FILE"
-
-echo "✅ Migration completed successfully."
+echo "Done: $applied_count applied, $skipped_count already applied."

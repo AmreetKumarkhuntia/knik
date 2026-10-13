@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from lib.services.ai_client.pricing import get_cost
 from lib.services.ai_client.registry import ProviderRegistry
 from lib.services.ai_client.token_utils import get_context_window
+from lib.services.db import DB_ERRORS, ConversationDB
 from lib.utils.printer import printer
 
 from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
@@ -19,7 +20,9 @@ from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdent
 
 if TYPE_CHECKING:
     from lib.services.ai_client.client import AIClient
-    from lib.services.conversation import ConversationDB
+
+
+DB_UNAVAILABLE_MESSAGE = "The conversation database is unavailable right now. Please try again later."
 
 
 class CommandService:
@@ -39,27 +42,24 @@ class CommandService:
     def ai_client(self) -> AIClient:
         return self._ai_client
 
-    @staticmethod
-    async def _get_db() -> type[ConversationDB]:
-        from lib.services.conversation import ConversationDB
-
-        return ConversationDB
-
     async def new_session(self, user_id: str) -> CommandResult:
         self._user_identity.clear_conversation_id(user_id)
         return CommandResult(success=True, message="New session started. Send a message to begin.")
 
     async def resume_session(self, user_id: str, conversation_id_or_index: str) -> CommandResult:
-        ConversationDB = await self._get_db()
+        try:
+            conv_id = await self._resolve_conversation_id(conversation_id_or_index)
+            conversation = await ConversationDB.get_conversation(conv_id) if conv_id else None
+        except DB_ERRORS as e:
+            printer.warning(f"Cannot resume {conversation_id_or_index}, database unavailable: {e}")
+            return CommandResult(success=False, message=DB_UNAVAILABLE_MESSAGE)
 
-        conv_id = await self._resolve_conversation_id(conversation_id_or_index)
         if conv_id is None:
             return CommandResult(
                 success=False,
                 message=f"Could not find conversation: {conversation_id_or_index}",
             )
 
-        conversation = await ConversationDB.get_conversation(conv_id)
         if conversation is None:
             return CommandResult(
                 success=False,
@@ -76,7 +76,15 @@ class CommandService:
         )
 
     async def list_sessions(self, limit: int = 10, offset: int = 0) -> list[SessionInfo]:
-        ConversationDB = await self._get_db()
+        """Recent sessions, newest first; empty when the database is unavailable."""
+        try:
+            return await self._list_sessions(limit, offset)
+        except DB_ERRORS as e:
+            printer.warning(f"Cannot list sessions, database unavailable: {e}")
+            return []
+
+    @staticmethod
+    async def _list_sessions(limit: int, offset: int) -> list[SessionInfo]:
         conversations = await ConversationDB.list_conversations(limit=limit, offset=offset)
         sessions: list[SessionInfo] = []
         for conv in conversations:
@@ -163,9 +171,8 @@ class CommandService:
         had_summarization = False
         total_context_tokens = 0
         last_input_tokens = 0
-        if conv_id:
-            ConversationDB = await self._get_db()
-            usage = await ConversationDB.get_conversation_token_usage(conv_id)
+        usage = await self._token_usage(conv_id) if conv_id else None
+        if usage:
             total_tokens = usage["db_total"]
             input_tokens = usage["total_input"]
             output_tokens = usage["total_output"]
@@ -195,23 +202,35 @@ class CommandService:
             context_window_size=context_window_size,
         )
 
+    @staticmethod
+    async def _token_usage(conversation_id: str) -> dict | None:
+        """The conversation's token usage, or None (reported as zeros) when the database is unavailable."""
+        try:
+            return await ConversationDB.get_conversation_token_usage(conversation_id)
+        except DB_ERRORS as e:
+            printer.warning(f"Token usage unavailable for {conversation_id}, database unavailable: {e}")
+            return None
+
     async def _resolve_conversation_id(self, ref: str) -> str | None:
+        """The full conversation id for `ref` (an id, an id prefix or `#<n>` from the session list).
+
+        Raises DB_ERRORS so the caller can tell "not found" from "database unavailable".
+        """
         if ref.startswith("#"):
             try:
                 index = int(ref[1:]) - 1
-                sessions = await self.list_sessions(limit=20)
+                sessions = await self._list_sessions(limit=20, offset=0)
                 if 0 <= index < len(sessions):
                     return sessions[index].conversation_id
             except ValueError:
                 pass
             return None
 
-        ConversationDB = await self._get_db()
         conversation = await ConversationDB.get_conversation(ref)
         if conversation:
             return ref
 
-        sessions = await self.list_sessions(limit=20)
+        sessions = await self._list_sessions(limit=20, offset=0)
         for s in sessions:
             if s.conversation_id.startswith(ref):
                 return s.conversation_id

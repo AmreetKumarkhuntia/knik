@@ -1,92 +1,13 @@
 """Tests for UtilsTool: calculate, time, date, and string reverse operations."""
 
-import importlib
-import importlib.util
-import os
-import sys
+import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-
-# ---------------------------------------------------------------------------
-# Direct module loading — bypass __init__.py chains to avoid circular imports.
-# ---------------------------------------------------------------------------
-
-_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "..", "src")
-_SRC = os.path.abspath(_SRC)
-
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
-
-def _load_module(name: str, filepath: str):
-    """Load a Python module from *filepath* without triggering its package __init__."""
-    if name in sys.modules:
-        return sys.modules[name]
-    spec = importlib.util.spec_from_file_location(name, filepath)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-# Load BaseTool first (no heavy deps)
-_base_tool_mod = _load_module(
-    "lib.services.ai_client.base_tool",
-    os.path.join(_SRC, "lib", "services", "ai_client", "base_tool.py"),
-)
-BaseTool = _base_tool_mod.BaseTool
-
-# Stub out printer so utils_tool import doesn't need the full lib tree
-if "lib.utils.printer" not in sys.modules:
-    _printer_stub = type(sys)("lib.utils.printer")
-    _printer_stub.printer = MagicMock()
-    sys.modules["lib.utils.printer"] = _printer_stub
-
-# Stub Config
-if "lib.core.config" not in sys.modules:
-    _config_stub_mod = type(sys)("lib.core.config")
-
-    class _StubConfig:
-        browser_headless = True
-        browser_profile_dir = "/tmp/test-browser-profile"
-
-    _config_stub_mod.Config = _StubConfig
-    sys.modules["lib.core.config"] = _config_stub_mod
-
-# Ensure relative imports resolve — package chain stubs.
-for pkg in ("lib", "lib.tools", "lib.core", "lib.services", "lib.services.ai_client", "lib.utils"):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = type(sys)(pkg)
-
-# Wire BaseTool into the stub package
-sys.modules["lib.services.ai_client"].base_tool = sys.modules["lib.services.ai_client.base_tool"]
-sys.modules["lib.services.ai_client.base_tool"] = _base_tool_mod
-
-# Stub lib.services.text (provides string_reverse)
-_text_service_stub = type(sys)("lib.services.text")
-_text_service_stub.string_reverse = MagicMock()
-sys.modules["lib.services.text"] = _text_service_stub
-
-# Stub lib.services.time (provides get_current_time, get_current_date)
-_time_service_stub = type(sys)("lib.services.time")
-_time_service_stub.get_current_time = MagicMock()
-_time_service_stub.get_current_date = MagicMock()
-sys.modules["lib.services.time"] = _time_service_stub
-
-# Stub lib.utils.async_utils (provides run_async)
-_async_utils_stub = type(sys)("lib.utils.async_utils")
-_async_utils_stub.run_async = MagicMock()
-sys.modules["lib.utils.async_utils"] = _async_utils_stub
-
-# Now load utils_tool
-_utils_tool_mod = _load_module(
-    "lib.tools.utils_tool",
-    os.path.join(_SRC, "lib", "tools", "utils_tool.py"),
-)
-UtilsTool = _utils_tool_mod.UtilsTool
-UTILS_DEFINITIONS = _utils_tool_mod.UTILS_DEFINITIONS
+from lib.services.ai_client.base_tool import BaseTool
+from lib.tools import utils_tool as _utils_tool_mod
+from lib.tools.utils_tool import UtilsTool
 
 
 # ---------------------------------------------------------------------------
@@ -95,11 +16,19 @@ UTILS_DEFINITIONS = _utils_tool_mod.UTILS_DEFINITIONS
 
 
 @pytest.fixture(autouse=True)
-def _clear_base_tool_instances():
-    """Reset BaseTool._instances before each test so tests don't leak."""
-    saved = BaseTool._instances[:]
-    yield
-    BaseTool._instances = saved
+def _clear_base_tool_instances(monkeypatch):
+    """Reset BaseTool._instances for each test so tests don't leak."""
+    monkeypatch.setattr(BaseTool, "_instances", [])
+
+
+@pytest.fixture
+def async_helpers(monkeypatch):
+    """Replace the async helpers so a patched run_async never leaves an unawaited coroutine behind."""
+    helpers = {}
+    for name in ("_async_get_current_time", "_async_get_current_date", "_async_string_reverse"):
+        helpers[name] = MagicMock(name=name)
+        monkeypatch.setattr(_utils_tool_mod, name, helpers[name])
+    return helpers
 
 
 @pytest.fixture
@@ -219,6 +148,7 @@ class TestCalculate:
 # ===========================================================================
 
 
+@pytest.mark.usefixtures("async_helpers")
 class TestGetCurrentTime:
     """Tests for the _get_current_time static method."""
 
@@ -231,12 +161,13 @@ class TestGetCurrentTime:
         mock_run_async.assert_called_once()
 
     @patch("lib.tools.utils_tool.run_async")
-    def test_passes_timezone_parameter(self, mock_run_async, utils_tool):
+    def test_passes_timezone_parameter(self, mock_run_async, utils_tool, async_helpers):
         """The timezone argument is forwarded to the async function."""
         mock_run_async.return_value = "2024-01-01 20:00:00 EST"
         result = utils_tool._get_current_time("US/Eastern")
         assert result == "2024-01-01 20:00:00 EST"
-        mock_run_async.assert_called_once()
+        async_helpers["_async_get_current_time"].assert_called_once_with("US/Eastern")
+        mock_run_async.assert_called_once_with(async_helpers["_async_get_current_time"].return_value)
 
 
 # ===========================================================================
@@ -244,6 +175,7 @@ class TestGetCurrentTime:
 # ===========================================================================
 
 
+@pytest.mark.usefixtures("async_helpers")
 class TestGetCurrentDate:
     """Tests for the _get_current_date static method."""
 
@@ -268,6 +200,7 @@ class TestGetCurrentDate:
 # ===========================================================================
 
 
+@pytest.mark.usefixtures("async_helpers")
 class TestReverseString:
     """Tests for the _reverse_string static method."""
 
@@ -280,12 +213,30 @@ class TestReverseString:
         mock_run_async.assert_called_once()
 
     @patch("lib.tools.utils_tool.run_async")
-    def test_passes_text_parameter(self, mock_run_async, utils_tool):
+    def test_passes_text_parameter(self, mock_run_async, utils_tool, async_helpers):
         """The text argument is forwarded to the async string_reverse function."""
         mock_run_async.return_value = "dcba"
         result = utils_tool._reverse_string("abcd")
         assert result == "dcba"
-        mock_run_async.assert_called_once()
+        async_helpers["_async_string_reverse"].assert_called_once_with("abcd")
+        mock_run_async.assert_called_once_with(async_helpers["_async_string_reverse"].return_value)
+
+
+class TestRealHelpers:
+    """End to end through run_async and the lib.utils *_ops helpers, nothing stubbed."""
+
+    def test_reverse_string(self, utils_tool):
+        assert utils_tool._reverse_string("hello") == "olleh"
+
+    def test_current_date_is_today(self, utils_tool):
+        assert utils_tool._get_current_date() == datetime.date.today().strftime("%Y-%m-%d")
+
+    def test_current_time_format(self, utils_tool):
+        result = utils_tool._get_current_time("UTC")
+        assert datetime.datetime.strptime(result, "%Y-%m-%d %H:%M:%S")
+
+    def test_current_time_invalid_timezone(self, utils_tool):
+        assert utils_tool._get_current_time("Not/AZone").startswith("Error: ")
 
 
 # ===========================================================================

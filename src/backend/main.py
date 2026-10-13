@@ -5,8 +5,9 @@ Main application entry point with middleware and route registration
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from backend import state
 from backend.config import WebBackendConfig
@@ -17,7 +18,7 @@ from backend.routes.chat_stream import router as chat_stream_router
 from backend.routes.conversations import router as conversations_router
 from backend.routes.cron import router as cron_router
 from backend.routes.workflow import router as workflow_router
-from imports import PostgresDB, SettingsDB, printer
+from imports import DB_ERRORS, DatabaseUnavailable, PostgresDB, SettingsDB, printer
 
 
 config = WebBackendConfig()
@@ -42,6 +43,18 @@ app.include_router(workflow_router, prefix="/api/workflows", tags=["workflows"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 
+async def database_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Any database failure a route lets through: 503, so clients can tell it from a bug and retry later."""
+    printer.warning(f"{request.method} {request.url.path} failed, database error: {exc}")
+    detail = "Database unavailable" if isinstance(exc, DatabaseUnavailable) else f"Database error: {exc}"
+    return JSONResponse(status_code=503, content={"detail": detail})
+
+
+# DB_ERRORS is DatabaseUnavailable plus psycopg.Error (which covers the pool's PoolTimeout).
+for _error in DB_ERRORS:
+    app.add_exception_handler(_error, database_error_handler)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan event handler for startup/shutdown"""
@@ -50,15 +63,16 @@ async def lifespan(app: FastAPI):
     try:
         await PostgresDB.initialize()
         printer.success("PostgreSQL connection pool initialized")
-    except Exception as e:
+    except DB_ERRORS as e:
+        # Queries reconnect lazily (at most every 30 s), so the backend recovers once Postgres is up.
         printer.warning(f"PostgreSQL init failed (conversations will not persist): {e}")
 
     try:
         persisted = await SettingsDB.get()
         if persisted:
-            state.set_persisted_overrides(persisted)
-            printer.info(f"Loaded persisted settings: {persisted.get('provider')}/{persisted.get('model')}")
-    except Exception as e:
+            state.set_persisted_overrides(persisted.to_dict())
+            printer.info(f"Loaded persisted settings: {persisted.provider}/{persisted.model}")
+    except DB_ERRORS as e:
         printer.warning(f"Could not load persisted settings: {e}")
 
     printer.success(f"Backend ready on http://{config.host}:{config.port}")

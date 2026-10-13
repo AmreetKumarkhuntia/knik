@@ -1,8 +1,9 @@
 """Tests for the consent gate: per-invocation approval, FIFO queue, and thread safety."""
 
+import asyncio
 import threading
+import time
 from concurrent.futures import Future
-from unittest.mock import MagicMock
 
 from bot.consent import BotConsentGate, PendingConsents
 from lib.services.ai_client.consent import ConsentRequest
@@ -217,27 +218,14 @@ class TestPendingConsentsFIFO:
 
 
 class TestBotConsentGateReturnType:
-    def test_request_sync_returns_string_on_timeout(self):
+    def test_request_sync_returns_string_on_timeout(self, transport):
         """BotConsentGate.request_sync must return 'no' (str) when consent times out."""
-        import asyncio
-
         loop = asyncio.new_event_loop()
         # Run the loop in a background thread so run_coroutine_threadsafe works
         loop_thread = threading.Thread(target=loop.run_forever, daemon=True)
         loop_thread.start()
 
-        async def fake_send(**kwargs):
-            return None
-
-        messaging = MagicMock()
-        messaging.send_message = fake_send
-
-        gate = BotConsentGate(
-            chat_id="chat_1",
-            messaging_client=messaging,
-            loop=loop,
-            provider="telegram",
-        )
+        gate = BotConsentGate(chat_id="chat_1", transport=transport, loop=loop)
 
         req = ConsentRequest(tool_name="shell", kwargs={"command": "ls"})
 
@@ -245,40 +233,27 @@ class TestBotConsentGateReturnType:
         result = gate.request_sync(req, timeout=0.2)
         assert isinstance(result, str)
         assert result == "no"
+        assert transport.messages[0].chat_id == "chat_1"
+        assert transport.messages[0].text == "Allow shell(command='ls')? Reply yes (y) / yes all (ya) / no"
 
         loop.call_soon_threadsafe(loop.stop)
         loop_thread.join(timeout=2)
         loop.close()
 
-    def test_request_sync_returns_resolved_value(self):
+    def test_request_sync_returns_resolved_value(self, transport):
         """BotConsentGate.request_sync returns the value resolved by PendingConsents."""
-        import asyncio
-
         PendingConsents._pending.clear()
 
         loop = asyncio.new_event_loop()
         loop_thread = threading.Thread(target=loop.run_forever, daemon=True)
         loop_thread.start()
 
-        async def fake_send(**kwargs):
-            return None
-
-        messaging = MagicMock()
-        messaging.send_message = fake_send
-
-        gate = BotConsentGate(
-            chat_id="chat_2",
-            messaging_client=messaging,
-            loop=loop,
-            provider="telegram",
-        )
+        gate = BotConsentGate(chat_id="chat_2", transport=transport, loop=loop)
 
         req = ConsentRequest(tool_name="file_read", kwargs={"path": "/tmp"})
 
         # Resolve from another thread after a short delay
         def resolver():
-            import time
-
             time.sleep(0.1)
             PendingConsents.resolve("chat_2", "yes_all")
 

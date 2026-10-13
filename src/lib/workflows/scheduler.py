@@ -2,12 +2,12 @@
 
 from typing import Any
 
-from lib.services.scheduler.db_client import SchedulerDB
+from lib.services.db import ScheduleDB, WorkflowDB
+from lib.services.db.models import Schedule
 from lib.utils import printer as logger
 from lib.workflows import workflow_service
 from lib.workflows.engine import WorkflowEngine
 from lib.workflows.loop import CronScheduler
-from lib.workflows.models import Schedule
 
 
 class Scheduler:
@@ -23,10 +23,10 @@ class Scheduler:
         """Register a workflow for execution.
 
         Delegates to workflow_service.create_workflow for new workflows,
-        or directly to SchedulerDB for pre-built Workflow objects.
+        or directly to WorkflowDB for pre-built Workflow objects.
         """
         try:
-            await SchedulerDB.create_workflow(workflow)
+            await WorkflowDB.create_workflow(workflow)
             logger.info(f"Registered workflow: {workflow.id}")
             return True
         except Exception as e:
@@ -52,7 +52,7 @@ class Scheduler:
 
     async def add_schedule(self, schedule: Schedule) -> int | None:
         """Create a new schedule in the database."""
-        schedule_id = await SchedulerDB.create_schedule(schedule)
+        schedule_id = await ScheduleDB.create_schedule(schedule)
         if schedule_id:
             logger.info(f"Added schedule ID {schedule_id} with target workflow {schedule.target_workflow_id}")
         return schedule_id
@@ -60,7 +60,7 @@ class Scheduler:
     async def remove_schedule(self, schedule_id: int) -> bool:
         """Delete a schedule by ID."""
         try:
-            await SchedulerDB.delete_schedule(schedule_id)
+            await ScheduleDB.delete_schedule(schedule_id)
             logger.info(f"Removed schedule ID {schedule_id}")
             return True
         except Exception as e:

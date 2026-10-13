@@ -6,10 +6,10 @@ web routes, and the Scheduler class.
 
 from typing import Any
 
-from lib.services.scheduler.db_client import SchedulerDB
+from lib.services.db import ScheduleDB
+from lib.services.db.models import Schedule
 from lib.utils import printer
 from lib.utils.timezone_utils import validate_timezone
-from lib.workflows.models import Schedule
 from lib.workflows.schedule_parser import calculate_first_run, parse_recurrence_seconds
 
 
@@ -61,7 +61,7 @@ async def create_schedule(
         recurrence_seconds=recurrence_seconds,
     )
 
-    schedule_id = await SchedulerDB.create_schedule(schedule)
+    schedule_id = await ScheduleDB.create_schedule(schedule)
 
     printer.info(f"Schedule created: id={schedule_id}")
     return {
@@ -73,9 +73,9 @@ async def create_schedule(
     }
 
 
-async def list_schedules() -> list[Schedule]:
-    """List all active (enabled) schedules."""
-    return await SchedulerDB.list_schedules()
+async def list_schedules(enabled_only: bool = False) -> list[Schedule]:
+    """List schedules; disabled ones are included unless `enabled_only`, so they can be re-enabled."""
+    return await ScheduleDB.list_schedules(enabled_only=enabled_only)
 
 
 async def delete_schedule(schedule_id: int) -> dict[str, Any]:
@@ -84,7 +84,7 @@ async def delete_schedule(schedule_id: int) -> dict[str, Any]:
     Returns:
         Dict with 'success' and 'schedule_id' on success.
     """
-    await SchedulerDB.delete_schedule(schedule_id)
+    await ScheduleDB.delete_schedule(schedule_id)
     printer.info(f"Schedule {schedule_id} deleted")
     return {
         "success": True,
@@ -99,4 +99,4 @@ async def toggle_schedule(schedule_id: int, enabled: bool) -> Schedule | None:
     Returns:
         The updated Schedule if found, or None if not found.
     """
-    return await SchedulerDB.toggle_schedule(schedule_id, enabled)
+    return await ScheduleDB.toggle_schedule(schedule_id, enabled)

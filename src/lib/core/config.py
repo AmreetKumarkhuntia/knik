@@ -156,6 +156,9 @@ Be reliable, efficient, and action focused like Jarvis."""
     db_user: str = field(default_factory=lambda: Config.from_env("KNIK_DB_USER", "postgres"))
     db_pass: str = field(default_factory=lambda: Config.from_env("KNIK_DB_PASS", ""))
     db_name: str = field(default_factory=lambda: Config.from_env("KNIK_DB_NAME", "knik"))
+    db_pool_min_size: int = field(default_factory=lambda: Config.from_env("KNIK_DB_POOL_MIN_SIZE", 1, int))
+    db_pool_max_size: int = field(default_factory=lambda: Config.from_env("KNIK_DB_POOL_MAX_SIZE", 10, int))
+    db_connect_timeout: float = field(default_factory=lambda: Config.from_env("KNIK_DB_CONNECT_TIMEOUT", 5.0, float))
 
     scheduler_check_interval: int = field(
         default_factory=lambda: Config.from_env("KNIK_SCHEDULER_CHECK_INTERVAL", 60, int)

@@ -49,6 +49,25 @@ npm run typecheck:frontend # Frontend type checking (tsc --noEmit)
 npm run test          # Backend tests (pytest; src/ is on the path via pyproject.toml)
 ```
 
+Tests that need Postgres are skipped unless `KNIK_TEST_DATABASE_URL` points at a disposable database. They migrate it and **truncate every table**, so never point it at a database you care about:
+
+```bash
+createdb knik_test
+KNIK_TEST_DATABASE_URL=postgresql://localhost/knik_test npm run test
+```
+
+## Database
+
+The schema lives in `db/migrations/*.sql`. `scripts/migrate.sh` applies every file not yet recorded in the `schema_migrations` table, in name order, each in its own transaction. Running it again applies nothing.
+
+```bash
+scripts/migrate.sh   # reads KNIK_DB_HOST/PORT/USER/PASS/NAME from the environment, then .env
+```
+
+To change the schema, add the next numbered file (for example `012_<what>.sql`) and write it so it can run twice without error (`IF NOT EXISTS`, guarded `DO` blocks). Never edit a migration that has already shipped. `db/setup/permissions.sql` is an optional, manual step that grants a separate application role access to the tables.
+
+Apps start without Postgres: the pool waits at most `KNIK_DB_CONNECT_TIMEOUT` seconds, logs a warning, and later queries reconnect on their own. The backend answers database routes with HTTP 503 until Postgres is back.
+
 ## Environment Setup
 
 - **Required:** `espeak-ng` (install via `brew install espeak-ng` on macOS)

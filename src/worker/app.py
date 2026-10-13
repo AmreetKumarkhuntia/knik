@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import signal
 
-from imports import Config, PostgresDB, Scheduler
+from imports import DB_ERRORS, Config, PostgresDB, Scheduler
 from imports import printer as logger
 
 
@@ -19,7 +19,11 @@ class WorkerApp:
         """Run the application until interrupted."""
         logger.info("Initializing worker...")
 
-        await PostgresDB.initialize()
+        try:
+            await PostgresDB.initialize()
+        except DB_ERRORS as e:
+            # Queries reconnect on their own once Postgres is back, so keep the loop running.
+            logger.warning(f"PostgresDB unavailable, continuing without it: {e}")
 
         loop = asyncio.get_running_loop()
         stop_event = asyncio.Event()

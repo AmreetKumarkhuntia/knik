@@ -48,11 +48,11 @@ UTILS_DEFINITIONS = [
         },
     },
 ]
-from lib.services.text import string_reverse as _async_string_reverse
-from lib.services.time import get_current_date as _async_get_current_date
-from lib.services.time import get_current_time as _async_get_current_time
 from lib.utils.async_utils import run_async
 from lib.utils.printer import printer
+from lib.utils.text_ops import string_reverse as _async_string_reverse
+from lib.utils.time_ops import get_current_date as _async_get_current_date
+from lib.utils.time_ops import get_current_time as _async_get_current_time
 
 
 _SAFE_MATH_FUNCTIONS = {

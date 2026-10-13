@@ -1,87 +1,12 @@
 """Tests for ShellTool: shell command execution with timeout and blocking."""
 
-import importlib
-import importlib.util
-import os
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-
-# ---------------------------------------------------------------------------
-# Direct module loading — bypass __init__.py chains to avoid circular imports.
-# ---------------------------------------------------------------------------
-
-_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "..", "src")
-_SRC = os.path.abspath(_SRC)
-
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
-
-def _load_module(name: str, filepath: str):
-    if name in sys.modules:
-        return sys.modules[name]
-    spec = importlib.util.spec_from_file_location(name, filepath)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-# Load BaseTool first
-_base_tool_mod = _load_module(
-    "lib.services.ai_client.base_tool",
-    os.path.join(_SRC, "lib", "services", "ai_client", "base_tool.py"),
-)
-BaseTool = _base_tool_mod.BaseTool
-
-# Stub printer
-if "lib.utils.printer" not in sys.modules:
-    _printer_stub = type(sys)("lib.utils.printer")
-    _printer_stub.printer = MagicMock()
-    sys.modules["lib.utils.printer"] = _printer_stub
-
-# Stub Config
-if "lib.core.config" not in sys.modules:
-    _config_stub_mod = type(sys)("lib.core.config")
-
-    class _StubConfig:
-        browser_headless = True
-        browser_profile_dir = "/tmp/test-browser-profile"
-
-    _config_stub_mod.Config = _StubConfig
-    sys.modules["lib.core.config"] = _config_stub_mod
-
-# Package chain stubs
-for pkg in ("lib", "lib.tools", "lib.core", "lib.services", "lib.services.ai_client", "lib.utils"):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = type(sys)(pkg)
-
-# Wire BaseTool
-sys.modules["lib.services.ai_client"].base_tool = sys.modules["lib.services.ai_client.base_tool"]
-sys.modules["lib.services.ai_client.base_tool"] = _base_tool_mod
-
-# Stub lib.services.shell (provides BLOCKED_COMMANDS, MAX_TIMEOUT, run_shell_command)
-_shell_service_stub = type(sys)("lib.services.shell")
-_shell_service_stub.BLOCKED_COMMANDS = ["rm -rf /", "format"]
-_shell_service_stub.MAX_TIMEOUT = 30
-_shell_service_stub.run_shell_command = MagicMock()  # async function stub
-sys.modules["lib.services.shell"] = _shell_service_stub
-
-# Stub lib.utils.async_utils (provides run_async)
-_async_utils_stub = type(sys)("lib.utils.async_utils")
-_async_utils_stub.run_async = MagicMock()
-sys.modules["lib.utils.async_utils"] = _async_utils_stub
-
-# Now load shell_tool
-_shell_tool_mod = _load_module(
-    "lib.tools.shell_tool",
-    os.path.join(_SRC, "lib", "tools", "shell_tool.py"),
-)
-ShellTool = _shell_tool_mod.ShellTool
-SHELL_DEFINITIONS = _shell_tool_mod.SHELL_DEFINITIONS
+from lib.services.ai_client.base_tool import BaseTool
+from lib.tools import shell_tool as _shell_tool_mod
+from lib.tools.shell_tool import ShellTool
 
 
 # ---------------------------------------------------------------------------
@@ -90,11 +15,15 @@ SHELL_DEFINITIONS = _shell_tool_mod.SHELL_DEFINITIONS
 
 
 @pytest.fixture(autouse=True)
-def _clear_base_tool_instances():
-    """Reset BaseTool._instances before each test so tests don't leak."""
-    saved = BaseTool._instances[:]
-    yield
-    BaseTool._instances = saved
+def _clear_base_tool_instances(monkeypatch):
+    """Reset BaseTool._instances for each test so tests don't leak."""
+    monkeypatch.setattr(BaseTool, "_instances", [])
+
+
+@pytest.fixture(autouse=True)
+def _stub_shell_service(monkeypatch):
+    """Replace the async executor so a patched run_async never leaves an unawaited coroutine behind."""
+    monkeypatch.setattr(_shell_tool_mod, "_async_run_shell_command", MagicMock(name="run_shell_command"))
 
 
 @pytest.fixture

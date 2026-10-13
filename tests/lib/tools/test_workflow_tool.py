@@ -1,91 +1,13 @@
 """Tests for WorkflowTool: workflow creation, listing, removal, and templates."""
 
-import importlib
-import importlib.util
-import os
-import sys
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-
-# ---------------------------------------------------------------------------
-# Direct module loading — bypass __init__.py chains to avoid circular imports.
-# ---------------------------------------------------------------------------
-
-_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "..", "src")
-_SRC = os.path.abspath(_SRC)
-
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
-
-def _load_module(name: str, filepath: str):
-    if name in sys.modules:
-        return sys.modules[name]
-    spec = importlib.util.spec_from_file_location(name, filepath)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-# Load BaseTool first
-_base_tool_mod = _load_module(
-    "lib.services.ai_client.base_tool",
-    os.path.join(_SRC, "lib", "services", "ai_client", "base_tool.py"),
-)
-BaseTool = _base_tool_mod.BaseTool
-
-# Stub printer
-if "lib.utils.printer" not in sys.modules:
-    _printer_stub = type(sys)("lib.utils.printer")
-    _printer_stub.printer = MagicMock()
-    sys.modules["lib.utils.printer"] = _printer_stub
-
-# Stub Config
-if "lib.core.config" not in sys.modules:
-    _config_stub_mod = type(sys)("lib.core.config")
-
-    class _StubConfig:
-        browser_headless = True
-        browser_profile_dir = "/tmp/test-browser-profile"
-
-    _config_stub_mod.Config = _StubConfig
-    sys.modules["lib.core.config"] = _config_stub_mod
-
-# Package chain stubs
-for pkg in ("lib", "lib.tools", "lib.core", "lib.services", "lib.services.ai_client", "lib.utils"):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = type(sys)(pkg)
-
-# Wire BaseTool
-sys.modules["lib.services.ai_client"].base_tool = sys.modules["lib.services.ai_client.base_tool"]
-sys.modules["lib.services.ai_client.base_tool"] = _base_tool_mod
-
-# Stub lib.workflows and lib.workflows.workflow_service
-_cron_stub = type(sys)("lib.workflows")
-_workflow_service_stub = type(sys)("lib.workflows.workflow_service")
-_workflow_service_stub.create_workflow = MagicMock()
-_workflow_service_stub.list_workflows = MagicMock()
-_workflow_service_stub.delete_workflow = MagicMock()
-_cron_stub.workflow_service = _workflow_service_stub
-sys.modules["lib.workflows"] = _cron_stub
-sys.modules["lib.workflows.workflow_service"] = _workflow_service_stub
-
-# Stub lib.utils.async_utils
-_async_utils_stub = type(sys)("lib.utils.async_utils")
-_async_utils_stub.run_async = MagicMock()
-sys.modules["lib.utils.async_utils"] = _async_utils_stub
-
-# Now load workflow_tool
-_workflow_tool_mod = _load_module(
-    "lib.tools.workflow_tool",
-    os.path.join(_SRC, "lib", "tools", "workflow_tool.py"),
-)
-WorkflowTool = _workflow_tool_mod.WorkflowTool
-WORKFLOW_DEFINITIONS = _workflow_tool_mod.WORKFLOW_DEFINITIONS
+from lib.services.ai_client.base_tool import BaseTool
+from lib.tools import workflow_tool as _workflow_tool_mod
+from lib.tools.workflow_tool import WorkflowTool
 
 
 # ---------------------------------------------------------------------------
@@ -109,11 +31,9 @@ def _make_workflow(id="wf-1", name="Test Workflow", description="desc", created_
 
 
 @pytest.fixture(autouse=True)
-def _clear_base_tool_instances():
-    """Reset BaseTool._instances before each test so tests don't leak."""
-    saved = BaseTool._instances[:]
-    yield
-    BaseTool._instances = saved
+def _clear_base_tool_instances(monkeypatch):
+    """Reset BaseTool._instances for each test so tests don't leak."""
+    monkeypatch.setattr(BaseTool, "_instances", [])
 
 
 @pytest.fixture(autouse=True)

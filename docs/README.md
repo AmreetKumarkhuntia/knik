@@ -49,7 +49,6 @@ python src/main.py --mode backend  # Any process without npm: backend | bot | wo
 - [Settings Page](plan/03-settings-page-browser.md) - Browser and app settings UI
 - [Conversation Compaction Frontend](plan/05-conversation-compaction-frontend.md) - Summarization UI in chat
 - [Tool Calls Frontend UI](plan/06-tool-calls-frontend-ui.md) - Tool call/result display in chat
-- [Discord Bot Integration](plan/DISCORD_BOT_INTEGRATION.md) - Discord bot reference
 
 ### Components
 
@@ -57,10 +56,6 @@ python src/main.py --mode backend  # Any process without npm: backend | bot | wo
 - [React Frontend](components/react-frontend.md) - React + Vite + TypeScript setup
 - [React Common Components](components/react-common-components.md) - Reusable UI components
 - [Electron Assets](components/electron-assets.md) - Desktop app icons and resources
-
-### Demos
-
-- [Demo Scripts](demos/README.md) - Demo scripts by functionality
 
 ### Design
 

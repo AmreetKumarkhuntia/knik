@@ -9,6 +9,7 @@ from backend.config import WebBackendConfig
 from backend.models.admin import ApiKeyCreate, McpToolToggle, SettingsUpdate
 from imports import (
     ALL_TOOL_CLASSES,
+    DB_ERRORS,
     ApiKeyDB,
     Config,
     KokoroVoiceModel,
@@ -38,7 +39,13 @@ _MCP_CATEGORY = {
 @router.get("/settings")
 async def get_settings():
     """Current settings: persisted preferences merged over env/runtime defaults."""
-    persisted = await SettingsDB.get() or {}
+    # Without a database this still answers with the env/runtime defaults, which are then what is in effect.
+    try:
+        settings = await SettingsDB.get()
+    except DB_ERRORS as e:
+        printer.warning(f"Persisted settings unavailable, showing defaults: {e}")
+        settings = None
+    persisted = settings.to_dict() if settings else {}
     temperature = persisted.get("temperature")
     return {
         "provider": persisted.get("provider") or state.get_factory_provider() or config.ai_provider,
@@ -76,10 +83,13 @@ async def update_settings(settings: SettingsUpdate):
         # Persist provided preferences so they survive restarts, then refresh the
         # in-memory overrides used the next time a client/TTS is (re)built.
         await SettingsDB.upsert(settings.model_dump(exclude_none=True))
-        state.set_persisted_overrides(await SettingsDB.get())
+        saved = await SettingsDB.get()
+        state.set_persisted_overrides(saved.to_dict() if saved else None)
 
         return {"status": "success", "message": "Settings updated"}
 
+    except DB_ERRORS:
+        raise
     except Exception as e:
         printer.error(f"Settings update error: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -121,7 +131,12 @@ async def list_voices():
 @router.get("/mcp-tools")
 async def list_mcp_tools():
     """List the built-in MCP tool groups with function counts and enabled state."""
-    overrides = await McpToolsDB.get_overrides()
+    try:
+        overrides = await McpToolsDB.get_overrides()
+    except DB_ERRORS as e:
+        # Every group is enabled unless overridden, so the defaults are a truthful answer.
+        printer.warning(f"MCP tool overrides unavailable, showing defaults: {e}")
+        overrides = {}
     tools = []
     for tool_cls in ALL_TOOL_CLASSES:
         try:
@@ -152,16 +167,14 @@ async def toggle_mcp_tool(tool_name: str, body: McpToolToggle):
 @router.get("/api-keys")
 async def list_api_keys():
     """List API keys (secrets are never returned)."""
-    return {"api_keys": await ApiKeyDB.list_keys()}
+    return {"api_keys": [key.to_dict() for key in await ApiKeyDB.list_keys()]}
 
 
 @router.post("/api-keys")
 async def create_api_key(body: ApiKeyCreate):
     """Create an API key. The full secret is returned exactly once."""
-    result = await ApiKeyDB.create(body.label, body.scopes)
-    if result is None:
-        raise HTTPException(status_code=500, detail="Failed to create API key")
-    return result
+    created = await ApiKeyDB.create(body.label, body.scopes)
+    return created.to_dict()
 
 
 @router.delete("/api-keys/{key_id}")

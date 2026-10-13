@@ -1,17 +1,18 @@
-"""Provider-adaptive streaming response delivery for the bot."""
+"""Streams an AI reply to a chat, one live message per text segment between tool calls."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from imports import AIClient, MessagingClient
+    from imports import AIClient
 
     from .config import BotConfig
+    from .transport import MessagingTransport
 
 
 @dataclass
@@ -24,19 +25,19 @@ class DeliveryResult:
 
 
 class StreamingResponseManager:
-    def __init__(self, messaging_client: MessagingClient, config: BotConfig):
-        self._messaging_client = messaging_client
+    def __init__(self, transport: MessagingTransport, config: BotConfig):
+        self._transport = transport
         self._config = config
 
     async def deliver(
         self,
-        provider: str,
         chat_id: str,
         ai_client: AIClient,
         prompt: str,
         conversation_id: str | None,
-        provider_meta: dict,
+        send_options: dict[str, Any] | None = None,
     ) -> DeliveryResult:
+        send_options = send_options or {}
         captured_conv_id: str | None = conversation_id
         captured_usage: dict[str, int] | None = None
         captured_text = ""
@@ -58,12 +59,7 @@ class StreamingResponseManager:
                     yield chunk
 
             segment_task = asyncio.create_task(
-                self._messaging_client.send_stream(
-                    chat_id=chat_id,
-                    text_stream=_pipe(),
-                    provider=provider,
-                    **provider_meta,
-                )
+                self._transport.send_stream(chat_id=chat_id, text_stream=_pipe(), **send_options)
             )
 
         async def _finish_segment() -> list[str]:
@@ -78,12 +74,7 @@ class StreamingResponseManager:
             return msg_ids
 
         async def _send_notification(text: str) -> list[str]:
-            result = await self._messaging_client.send_message(
-                chat_id=chat_id,
-                text=text,
-                provider=provider,
-                **provider_meta,
-            )
+            result = await self._transport.send_message(chat_id=chat_id, text=text, **send_options)
             return [result.message_id] if result.message_id else []
 
         try:
