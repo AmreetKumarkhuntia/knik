@@ -201,7 +201,8 @@ See [Workflow Scheduler](../guides/scheduler.md#web-api).
 Each conversation records its owner (`user_id`, a `users` row) and `source` (`web`, `telegram` or `console`); both appear in the
 conversation objects. The web lists and opens only the conversations it started (`source` web) and older ones saved before
 ownership was recorded. A Telegram user's conversation answers 404 on every `/api/conversations/{id}` route, and on
-`/api/chat/` and `/api/chat/stream/` when its id is given as `conversation_id`.
+`/api/chat/` and `/api/chat/stream/` when its id is given as `conversation_id`. If a database error stops that check, the chat
+still answers but saves nothing and returns no `conversation_id`.
 
 ## File System Tools
 

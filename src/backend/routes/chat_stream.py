@@ -91,6 +91,7 @@ async def stream_chat_response(
     state: AppState,
     prompt: str,
     conversation_id: str | None = None,
+    persist: bool = True,
 ) -> AsyncGenerator[str, None]:
     sentence_queue: asyncio.Queue = asyncio.Queue(maxsize=_TTS_QUEUE_MAX)
     audio_queue: asyncio.Queue = asyncio.Queue()
@@ -120,6 +121,7 @@ async def stream_chat_response(
             async for event in ai_client.achat_stream(
                 prompt=prompt,
                 conversation_id=conversation_id,
+                persist=persist,
                 source=SOURCE,
                 provider_meta={"provider": state.config.ai_provider, "model": state.config.ai_model},
             ):
@@ -215,9 +217,9 @@ async def stream_chat_response(
 @router.post("/")
 async def stream_chat(request: ChatRequest, state: AppState = Depends(get_state)):
     # Checked before the stream starts, so a refused conversation gets a 404 status rather than an error event.
-    conversation_id = await chat_conversation_id(request.conversation_id)
+    conversation_id, persist = await chat_conversation_id(request.conversation_id)
     return StreamingResponse(
-        stream_chat_response(state, request.message, conversation_id=conversation_id),
+        stream_chat_response(state, request.message, conversation_id=conversation_id, persist=persist),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

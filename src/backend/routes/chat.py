@@ -19,13 +19,14 @@ router = APIRouter()
 
 @router.post("/")
 async def chat(request: ChatRequest, state: AppState = Depends(get_state)):
-    requested_id = await chat_conversation_id(request.conversation_id)
+    requested_id, persist = await chat_conversation_id(request.conversation_id)
     try:
         config = state.config
         async with state.client(requested_id) as ai_client:
             response_text, conversation_id, usage = await ai_client.achat(
                 prompt=request.message,
                 conversation_id=requested_id,
+                persist=persist,
                 source=SOURCE,
                 provider_meta={"provider": config.ai_provider, "model": config.ai_model},
             )

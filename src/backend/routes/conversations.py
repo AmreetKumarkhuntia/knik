@@ -20,23 +20,24 @@ SOURCE = "web"
 SCOPE = ConversationScope.local()
 
 
-async def chat_conversation_id(conversation_id: str | None) -> str | None:
-    """The conversation a web chat may continue; raises a 404 for one outside the web's scope.
+async def chat_conversation_id(conversation_id: str | None) -> tuple[str | None, bool]:
+    """The conversation a web chat may continue, and whether the chat may save to one; a 404 for one outside the
+    web's scope.
 
-    An id no conversation has is kept, and the chat starts a new conversation, as it always has. Without a database
-    the check cannot run, so the chat goes on without the conversation, which it could not load or save anyway.
+    An id no conversation has is kept, and the chat starts a new conversation, as it always has. When a database
+    error stops the check, the chat answers without saving: it may neither continue an unchecked conversation nor
+    move the turn into a new one the caller did not ask for.
     """
     if conversation_id is None:
-        return None
+        return None, True
     try:
-        if await ConversationDB.get_conversation(conversation_id, SCOPE) is not None:
-            return conversation_id
-        if await ConversationDB.get_conversation(conversation_id) is None:
-            return conversation_id
+        in_scope = await ConversationDB.in_scope(conversation_id, SCOPE)
     except DB_ERRORS as e:
-        printer.warning(f"Chat goes on without conversation {conversation_id}, database unavailable: {e}")
-        return None
-    raise HTTPException(status_code=404, detail="Conversation not found")
+        printer.warning(f"Chat not persisted, conversation {conversation_id} could not be checked: {e}")
+        return None, False
+    if in_scope is False:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return conversation_id, True
 
 
 @router.get("/")

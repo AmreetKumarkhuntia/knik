@@ -90,6 +90,16 @@ class ConversationDB:
         return to_model(Conversation.from_row, row)
 
     @staticmethod
+    async def in_scope(conversation_id: str, scope: ConversationScope) -> bool | None:
+        """Whether `scope` admits the conversation, None when there is none; reads no messages."""
+        condition, params = _scope_condition(scope)
+        # The condition is NULL rather than FALSE when a column it compares is NULL.
+        row = await PostgresDB.fetch_one(
+            f"SELECT ({condition}) IS TRUE AS in_scope FROM conversations WHERE id = %s", (*params, conversation_id)
+        )
+        return None if row is None else row["in_scope"]
+
+    @staticmethod
     async def list_conversations(scope: ConversationScope, limit: int = 20, offset: int = 0) -> list[Conversation]:
         """The conversations in `scope`, most recently updated first, without message bodies (only a preview and the
         count)."""
@@ -128,10 +138,18 @@ class ConversationDB:
         return updated > 0
 
     @staticmethod
-    async def get_message_count(conversation_id: str) -> int:
-        count = await PostgresDB.fetch_val(
-            "SELECT jsonb_array_length(messages) FROM conversations WHERE id = %s", (conversation_id,)
-        )
+    async def get_message_count(conversation_id: str, role: str | None = None) -> int:
+        """The number of messages, or of those whose role is `role`; 0 for a missing conversation."""
+        if role is None:
+            count = await PostgresDB.fetch_val(
+                "SELECT jsonb_array_length(messages) FROM conversations WHERE id = %s", (conversation_id,)
+            )
+        else:
+            count = await PostgresDB.fetch_val(
+                "SELECT count(*) FROM conversations, jsonb_array_elements(messages) AS message "
+                "WHERE id = %s AND message ->> 'role' = %s",
+                (conversation_id, role),
+            )
         return count or 0
 
     @staticmethod

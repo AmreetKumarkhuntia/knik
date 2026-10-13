@@ -306,6 +306,7 @@ class AIClient:
         prompt: str,
         *,
         conversation_id: str | None = None,
+        persist: bool = True,
         user_id: str | None = None,
         source: str | None = None,
         disable_summarization: bool = False,
@@ -327,17 +328,23 @@ class AIClient:
         5. Persisting the assistant response
         6. Tracking tokens and triggering blocking compaction
            when the threshold is crossed
-        7. Auto-generating a title after the first exchange
+        7. Auto-generating a title after the conversation's first reply
 
         If the DB is unavailable every step degrades with a logged warning
         and the method still returns a valid LLM response.  If the
         provider fails, the error is raised (see :meth:`chat`) once the
-        user message is saved; no reply is saved for it.
+        user message is saved; no reply is saved for it.  A conversation
+        this call created is deleted first, as its id never reaches the
+        caller.
 
         Args:
             prompt: The user's message.
             conversation_id: Existing conversation UUID.  ``None`` to
                 create a new one (requires DB).
+            persist: ``False`` to answer without a stored conversation:
+                *conversation_id* is ignored and nothing is created,
+                loaded or saved.  For a caller that could not check the
+                conversation it was asked to continue.
             user_id: The owner (a users row) recorded on a conversation
                 this call creates.  An existing conversation keeps its own.
             source: The app recorded on a conversation this call creates:
@@ -361,22 +368,30 @@ class AIClient:
         meta = provider_meta or {}
         cfg = Config()
 
-        conversation_id = await self._ensure_conversation(conversation_id, user_id=user_id, source=source)
-
-        if conversation_id:
-            await self._append_message(conversation_id, "user", prompt, meta)
-
-        if history is None and conversation_id:
-            history = await self._load_history(conversation_id, cfg.history_context_size)
-
-        response_text, usage, tool_interactions = await asyncio.to_thread(
-            self._chat_with_usage,
-            prompt,
-            history,
-            max_tokens,
-            temperature,
-            **kwargs,
+        requested_id = conversation_id
+        conversation_id = (
+            await self._ensure_conversation(conversation_id, user_id=user_id, source=source) if persist else None
         )
+
+        try:
+            if conversation_id:
+                await self._append_message(conversation_id, "user", prompt, meta)
+
+            if history is None and conversation_id:
+                history = await self._load_history(conversation_id, cfg.history_context_size)
+
+            response_text, usage, tool_interactions = await asyncio.to_thread(
+                self._chat_with_usage,
+                prompt,
+                history,
+                max_tokens,
+                temperature,
+                **kwargs,
+            )
+        except Exception:
+            if conversation_id and conversation_id != requested_id:
+                await self._discard_conversation(conversation_id)
+            raise
 
         if conversation_id and response_text.strip():
             await self._post_chat(
@@ -397,6 +412,7 @@ class AIClient:
         prompt: str,
         *,
         conversation_id: str | None = None,
+        persist: bool = True,
         user_id: str | None = None,
         source: str | None = None,
         disable_summarization: bool = False,
@@ -422,13 +438,17 @@ class AIClient:
           last, once the reply is saved.
 
         An error outside the provider stream (a non-database failure
-        while saving, say) is raised instead of yielded.
+        while saving, say) is raised instead of yielded.  A conversation
+        this call created is kept even then: ``ConversationReady`` has
+        already given the caller its id.
 
         See :meth:`achat` for the lifecycle description.
 
         Args:
             prompt: The user's message.
             conversation_id: Existing conversation UUID.
+            persist: ``False`` to stream without a stored conversation
+                (see :meth:`achat`).
             user_id: Owner of a conversation this call creates.
             source: App of a conversation this call creates.
             disable_summarization: Skip summarisation trigger.
@@ -444,7 +464,9 @@ class AIClient:
         meta = provider_meta or {}
         cfg = Config()
 
-        conversation_id = await self._ensure_conversation(conversation_id, user_id=user_id, source=source)
+        conversation_id = (
+            await self._ensure_conversation(conversation_id, user_id=user_id, source=source) if persist else None
+        )
 
         # Emit conversation_id early so the caller can forward it
         if conversation_id:
@@ -537,6 +559,13 @@ class AIClient:
         except DB_ERRORS as e:
             printer.warning(f"Chat not persisted, database unavailable: {e}")
             return None
+
+    @staticmethod
+    async def _discard_conversation(conversation_id: str) -> None:
+        try:
+            await ConversationDB.delete_conversation(conversation_id)
+        except DB_ERRORS as e:
+            printer.warning(f"Conversation {conversation_id} not deleted, database unavailable: {e}")
 
     @staticmethod
     async def _append_message(
@@ -669,7 +698,8 @@ class AIClient:
         tool_interactions: list | None = None,
     ) -> None:
         """Handle post-call persistence: save response, track tokens,
-        trigger blocking compaction, and auto-generate title.
+        trigger blocking compaction, and auto-generate a title on the
+        conversation's first reply.
 
         The turn's ``total_tokens`` is added to the conversation's
         running total in the same write as the response.
@@ -717,12 +747,13 @@ class AIClient:
                 compactor = ConversationCompactor(self, model_name)
                 await compactor.compact(conversation_id)
 
+        # Counted by reply, not by message: a failed turn before this one may have left its user message.
         try:
-            msg_count = await ConversationDB.get_message_count(conversation_id)
+            replies = await ConversationDB.get_message_count(conversation_id, role="assistant")
         except DB_ERRORS as e:
             printer.warning(f"Title not generated for {conversation_id}, database unavailable: {e}")
             return
-        if msg_count == 2:
+        if replies == 1:
             self._schedule_background(
                 generate_and_set_title(
                     conversation_id=conversation_id,
