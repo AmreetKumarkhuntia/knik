@@ -137,20 +137,38 @@ class CronScheduler:
                 break
             if not schedule.enabled or not schedule.next_run_at or schedule.next_run_at > now:
                 continue
+            # Claim only what this worker can start now: the rest stay due, for a worker with a free slot or for this
+            # one once a run ends, instead of queueing here to run late, one after another.
+            if self._run_slots.locked():
+                logger.debug("CronScheduler: every run slot is busy, leaving the remaining due schedules unclaimed")
+                break
             try:
                 await self._fire(schedule, schedule.next_run_at, now)
             except Exception as e:
                 logger.error(f"Error processing schedule {schedule.id}: {e}")
 
     async def _fire(self, schedule: Schedule, due_at: datetime, now: datetime) -> None:
-        """Claim the occurrence due at ``due_at`` and, if this poller got it, start the workflow."""
+        """Take a free run slot, claim the occurrence due at ``due_at`` and, if this poller got it, start the workflow."""
         next_run = None
         if schedule.recurrence_seconds:
             next_run = calculate_next_run(due_at, schedule.recurrence_seconds, schedule.timezone, now)
 
-        if not await ScheduleDB.claim_due_run(schedule.id, due_at, next_run):
+        await self._run_slots.acquire()
+        try:
+            claimed = await ScheduleDB.claim_due_run(schedule.id, due_at, next_run)
+        except BaseException:
+            self._run_slots.release()
+            raise
+        if not claimed:
+            self._run_slots.release()
             logger.debug(f"Schedule ID {schedule.id}: the run due at {due_at} was already claimed")
             return
+
+        run = asyncio.create_task(self._trigger_workflow(schedule.target_workflow_id))
+        self._runs.add(run)
+        # The run's slot is freed by a done callback, not inside the run: a task cancelled before its first step
+        # never executes its body.
+        run.add_done_callback(self._run_done)
 
         logger.info(
             f"Schedule ID {schedule.id} triggered at {due_at}. "
@@ -161,21 +179,21 @@ class CronScheduler:
         else:
             logger.info(f"Schedule ID {schedule.id} was a one-shot schedule and is now disabled")
 
-        run = asyncio.create_task(self._trigger_workflow(schedule.target_workflow_id))
-        self._runs.add(run)
-        run.add_done_callback(self._runs.discard)
+    def _run_done(self, run: asyncio.Task) -> None:
+        """Forget a finished run and free its slot."""
+        self._runs.discard(run)
+        self._run_slots.release()
 
     async def _trigger_workflow(self, workflow_id: str):
-        """Run a scheduled workflow once a run slot is free; failures are logged, never raised into the loop."""
+        """Run a scheduled workflow in the slot _fire took for it; failures are logged, never raised into the loop."""
         try:
-            async with self._run_slots:
-                workflow = await WorkflowDB.get_workflow(workflow_id)
-                if not workflow:
-                    logger.error(f"Scheduled Workflow {workflow_id} not found locally.")
-                    return
+            workflow = await WorkflowDB.get_workflow(workflow_id)
+            if not workflow:
+                logger.error(f"Scheduled Workflow {workflow_id} not found locally.")
+                return
 
-                logger.info(f"Triggering Workflow from Cron: {workflow.name}")
-                await self.engine.execute_workflow(workflow)
+            logger.info(f"Triggering Workflow from Cron: {workflow.name}")
+            await self.engine.execute_workflow(workflow)
         except asyncio.CancelledError:
             logger.warning(f"Scheduled run of workflow {workflow_id} cancelled")
             raise
