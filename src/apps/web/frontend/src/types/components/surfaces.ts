@@ -2,7 +2,7 @@ import type * as React from 'react'
 import type { ReactNode } from 'react'
 
 /** Available sizes for a modal dialog. */
-export type ModalSize = 'sm' | 'md'
+export type ModalSize = 'sm' | 'md' | 'lg'
 
 /** Props for a modal dialog. */
 export interface ModalProps {

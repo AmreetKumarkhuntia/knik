@@ -3,13 +3,22 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 12px 14px;
   border: 1px solid var(--border-2);
-  border-radius: 10px;
-  background: var(--bg-surface);
+  border-radius: 16px;
+  background: var(--panel-2);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   color: var(--fg-1);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 4%);
+  box-shadow: 0 12px 30px -24px rgb(0 0 0 / 70%);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
+}
+
+.graph-node--editable:hover {
+  border-color: var(--border-strong);
 }
 
 .graph-node--editable {
@@ -22,10 +31,17 @@
   padding: 12px;
 }
 
+/* Builder start/end steps are compact pills; execution keeps a card for the status row. */
+.graph-node--terminal.graph-node--editable {
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+}
+
 .graph-node--execution {
   justify-content: space-between;
   gap: 8px;
-  padding: 12px;
+  padding: 12px 14px;
 }
 
 .graph-node--execution.graph-node--terminal {
@@ -35,7 +51,9 @@
 .graph-node--selected,
 .knik-flow .react-flow__node:focus-visible .graph-node {
   border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary);
+  box-shadow:
+    0 0 0 4px var(--acc-soft),
+    0 24px 50px -30px var(--acc-glow);
 }
 
 .graph-node__header {
@@ -47,16 +65,16 @@
 
 .graph-node__icon {
   display: flex;
-  flex: 0 0 32px;
+  flex: 0 0 30px;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
 }
 
 .graph-node__icon .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .graph-node--terminal .graph-node__icon {
@@ -69,7 +87,7 @@
   flex-basis: 24px;
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: 7px;
 }
 
 .graph-node__heading {
@@ -83,7 +101,7 @@
   color: var(--fg-1);
   font-size: var(--fs-h4);
   font-weight: 600;
-  line-height: 20px;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -93,11 +111,15 @@
 .graph-node__support {
   margin: 0;
   overflow: hidden;
-  color: var(--fg-3);
+  color: var(--fg-4);
   font-size: var(--fs-caption);
-  line-height: 18px;
+  line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.graph-node__type {
+  margin-top: 2px;
 }
 
 .graph-node__content {
@@ -110,6 +132,7 @@
 
 .graph-node__detail {
   color: var(--fg-2);
+  font-family: var(--font-mono);
 }
 
 .graph-node__execution {
@@ -118,51 +141,65 @@
   justify-content: space-between;
   gap: 8px;
   min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-1);
   font-size: var(--fs-caption);
-  line-height: 18px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.graph-node--terminal .graph-node__execution {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .graph-node__status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   text-transform: capitalize;
   color: var(--fg-3);
 }
 
 .graph-node__status .material-symbols-outlined {
-  font-size: 14px;
+  font-size: 15px;
 }
 
-.graph-node__status--success .material-symbols-outlined {
+.graph-node__status--success {
   color: var(--success);
 }
 
-.graph-node__status--failed .material-symbols-outlined {
+.graph-node__status--failed {
   color: var(--danger);
 }
 
+.graph-node__status--running {
+  color: var(--acc-text);
+}
+
 .graph-node__status--running .material-symbols-outlined {
-  color: var(--info);
+  animation: knik-spin 1.2s linear infinite;
 }
 
 .graph-node__duration {
   margin-left: auto;
-  color: var(--fg-3);
+  color: var(--fg-4);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 .react-flow__handle.graph-node__handle {
   width: 10px;
   height: 10px;
-  border: 2px solid var(--bg-surface);
+  border: 2px solid var(--bg-base);
 }
 
 .graph-node__port-label {
   position: absolute;
   z-index: 1;
-  padding: 1px 3px;
-  background: var(--bg-canvas);
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--bg-base);
   color: var(--fg-3);
   font-size: var(--fs-micro);
   font-weight: 500;
@@ -194,16 +231,21 @@
   transform: translateX(-50%);
 }
 
-/* Execution status motion: ambient only while running; reduced-motion handled globally. */
-.graph-node--execution {
-  transition:
-    border-color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out);
+/* Execution status: ambient motion only while running; reduced motion is handled globally. */
+.graph-node--running {
+  border-color: var(--acc-border);
+  box-shadow:
+    0 0 0 4px var(--acc-soft),
+    0 20px 40px -24px var(--acc-glow);
+  animation: knik-pulse 1.6s ease-out infinite;
 }
 
-.graph-node--running {
-  border-color: color-mix(in srgb, var(--info) 60%, var(--border-2));
-  animation: graph-node-pulse 1.6s var(--ease-in-out) infinite;
+.graph-node--success {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+
+.graph-node--failed {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
 }
 
 .graph-node__status,
@@ -211,27 +253,11 @@
   transition: color var(--dur-base) var(--ease-out);
 }
 
-@keyframes graph-node-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 0%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 22%, transparent);
-  }
-}
-
 .graph-edge {
-  transition: stroke var(--dur-base) var(--ease-out);
+  transition: stroke 0.4s var(--ease-out);
 }
 
 .graph-edge--running {
-  stroke-dasharray: 5 5;
-  animation: graph-edge-flow 1s linear infinite;
-}
-
-@keyframes graph-edge-flow {
-  to {
-    stroke-dashoffset: -20;
-  }
+  stroke-dasharray: 6 6;
+  animation: knik-flow 0.6s linear infinite;
 }

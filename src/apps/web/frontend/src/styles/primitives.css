@@ -3,7 +3,7 @@
    Reusable visual classes built on design tokens. Use these for
    consistent styling across all components.
 
-   Reference: docs/design/README.md (Visual Foundations)
+   Reference: the Claude Design "Knik Redesign" prototype
    ================================================================= */
 
 /* -----------------------------------------------------------------
@@ -31,10 +31,11 @@
   border-radius: var(--r-btn);
   cursor: pointer;
   transition:
-    background-color var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform 0.3s var(--ease-spring);
 }
 
 .knik-btn:active:not(:disabled) {
@@ -49,22 +50,26 @@
 .knik-btn--primary {
   background: var(--primary);
   color: var(--on-primary);
+  font-weight: 600;
   border: 1px solid transparent;
+  box-shadow: var(--shadow-glow);
 }
 
 .knik-btn--primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .knik-btn--secondary {
-  background: var(--bg-surface-2);
+  background: var(--panel-2);
   color: var(--fg-2);
   border: 1px solid var(--border-2);
 }
 
 .knik-btn--secondary:hover:not(:disabled) {
-  background: var(--bg-surface-3);
-  border-color: var(--border-3);
+  background: var(--panel-3);
+  border-color: var(--border-strong);
+  color: var(--fg-1);
 }
 
 .knik-btn--ghost {
@@ -74,19 +79,18 @@
 }
 
 .knik-btn--ghost:hover:not(:disabled) {
-  background: var(--bg-surface-3);
+  background: var(--panel-2);
   color: var(--fg-1);
 }
 
 .knik-btn--danger {
   background: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
 .knik-btn--danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.24);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: color-mix(in srgb, var(--danger) 24%, transparent);
 }
 
 /* Sizes */
@@ -101,7 +105,7 @@
   min-height: 36px;
   padding: var(--space-1) var(--space-3);
   font-size: var(--fs-label);
-  gap: var(--space-1);
+  gap: 6px;
 }
 
 .knik-btn--md {
@@ -110,16 +114,28 @@
   gap: var(--space-2);
 }
 
+/* Square icon-only button; pair with a size class. */
+.knik-btn--icon {
+  padding: 0;
+  min-width: 36px;
+}
+
+/* Hover tint for destructive icon actions (delete, remove). */
+.knik-btn--ghost.knik-btn--destructive:hover:not(:disabled) {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
 /* -----------------------------------------------------------------
-   Badges
+   Badges: status pills with a leading dot
    ----------------------------------------------------------------- */
 .knik-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
   font-family: var(--font-sans);
   font-weight: 500;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 
@@ -129,18 +145,30 @@
 }
 
 .knik-badge--md {
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-1) 10px var(--space-1) var(--space-2);
   font-size: var(--fs-caption);
 }
 
 .knik-badge--default {
-  background: var(--bg-surface-3);
-  color: var(--fg-2);
+  background: var(--panel-3);
+  color: var(--fg-3);
 }
 
 .knik-badge--success {
   background: var(--success-bg);
   color: var(--success);
+}
+
+.knik-badge__dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.knik-badge--live .knik-badge__dot {
+  animation: knik-breath 1s ease-in-out infinite;
 }
 
 /* -----------------------------------------------------------------
@@ -153,27 +181,146 @@
   font-size: var(--fs-body);
   line-height: var(--lh-base);
   color: var(--fg-1);
-  background: var(--bg-surface);
+  background: var(--panel);
   border: 1px solid var(--border-3);
   border-radius: var(--r-btn);
   padding: 6px var(--space-3);
   outline: none;
   transition:
-    border-color var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
 }
 
 .knik-input::placeholder {
-  color: var(--fg-5);
+  color: var(--fg-4);
 }
 
 .knik-input:focus {
-  box-shadow: 0 0 0 2px var(--border-focus);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-focus);
 }
 
 .knik-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------------
+   Glass surfaces
+   Blur sits on containers only; rows inside them use plain panel fills.
+   ----------------------------------------------------------------- */
+.knik-glass {
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  backdrop-filter: blur(var(--blur-glass));
+}
+
+.knik-card {
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-xl);
+}
+
+/* Square icon well used in rows, cards and node headers. */
+.knik-tile {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  border: 1px solid var(--border-1);
+  color: var(--fg-3);
+}
+
+.knik-tile--accent {
+  background: var(--acc-soft);
+  border-color: var(--acc-border);
+  color: var(--acc-text);
+}
+
+/* Welcome suggestion card; overrides the Button variant it is applied to. */
+.knik-suggestion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  height: auto;
+  padding: 14px 14px 14px 12px;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid var(--border-1);
+  background: var(--panel);
+  color: var(--fg-2);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  backdrop-filter: blur(var(--blur-glass));
+  transition:
+    background-color 0.25s var(--ease-out),
+    border-color 0.25s var(--ease-out),
+    box-shadow 0.35s var(--ease-out),
+    transform 0.4s var(--ease-spring);
+}
+
+.knik-suggestion:hover:not(:disabled) {
+  background: var(--panel-2);
+  border-color: var(--acc-border);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px -24px var(--acc-glow);
+}
+
+.knik-suggestion:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* -----------------------------------------------------------------
+   Brand glyph: five sound-wave bars sized from --glyph-size
+   ----------------------------------------------------------------- */
+.knik-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--glyph-size) * 0.11);
+  height: var(--glyph-size);
+}
+
+.knik-glyph__bar {
+  display: block;
+  width: max(2px, calc(var(--glyph-size) * 0.12));
+  border-radius: 2px;
+  background: var(--primary);
+  transform-origin: center;
+}
+
+.knik-glyph__bar:nth-child(1) {
+  height: calc(var(--glyph-size) * 0.14);
+}
+.knik-glyph__bar:nth-child(2) {
+  height: calc(var(--glyph-size) * 0.32);
+  animation-delay: 0.1s;
+}
+.knik-glyph__bar:nth-child(3) {
+  height: calc(var(--glyph-size) * 0.68);
+  animation-delay: 0.2s;
+}
+.knik-glyph__bar:nth-child(4) {
+  height: calc(var(--glyph-size) * 0.41);
+  animation-delay: 0.3s;
+}
+.knik-glyph__bar:nth-child(5) {
+  height: calc(var(--glyph-size) * 0.23);
+  animation-delay: 0.4s;
+}
+
+.knik-glyph--animated .knik-glyph__bar {
+  animation-name: knik-wave;
+  animation-duration: 1.1s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
 
 /* -----------------------------------------------------------------
@@ -223,11 +370,149 @@
   }
 }
 
+/* Streaming caret at the end of a reply. */
+.knik-caret {
+  display: inline-block;
+  width: 8px;
+  height: 18px;
+  margin-left: 2px;
+  border-radius: 2px;
+  background: var(--primary);
+  vertical-align: -3px;
+  animation: knik-caret 0.9s steps(1) infinite;
+}
+
 /* -----------------------------------------------------------------
-   Material Symbols Outlined defaults
+   Entrance motion
+   Durations scale with --m so reduced motion finishes them instantly.
+   Stagger with an inline animation-delay.
+   ----------------------------------------------------------------- */
+.knik-enter-rise {
+  animation: knik-rise calc(0.6s * var(--m)) var(--ease-out) both;
+}
+
+.knik-enter-fade {
+  animation: knik-fade calc(0.3s * var(--m)) var(--ease-out) both;
+}
+
+.knik-enter-pop {
+  animation: knik-pop calc(0.45s * var(--m)) var(--ease-spring) both;
+}
+
+.knik-enter-modal {
+  animation: knik-modal calc(0.4s * var(--m)) var(--ease-spring) both;
+}
+
+.knik-enter-drawer {
+  animation: knik-drawer calc(0.45s * var(--m)) var(--ease-spring) both;
+}
+
+@keyframes knik-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes knik-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes knik-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes knik-modal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes knik-drawer {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes knik-wave {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+  50% {
+    transform: scaleY(1.15);
+  }
+}
+
+@keyframes knik-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes knik-breath {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes knik-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--acc-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+@keyframes knik-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* -----------------------------------------------------------------
+   Material Symbols defaults
+   The class keeps its historical name; the glyphs come from the
+   Rounded family loaded in tokens.css.
    ----------------------------------------------------------------- */
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: 'Material Symbols Rounded';
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -260,6 +545,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --m: 0.01;
+  }
   *,
   *::before,
   *::after {

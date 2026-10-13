@@ -4,7 +4,11 @@ export default {
   theme: {
     /* ---- Font size: the type scale is the only option (no Tailwind defaults) ---- */
     fontSize: {
-      h1: ['var(--fs-h1)', { lineHeight: '2rem', letterSpacing: '-0.019em', fontWeight: '600' }],
+      display: [
+        'var(--fs-display)',
+        { lineHeight: '2.4375rem', letterSpacing: '-0.025em', fontWeight: '600' },
+      ],
+      h1: ['var(--fs-h1)', { lineHeight: '2rem', letterSpacing: '-0.02em', fontWeight: '600' }],
       h2: ['var(--fs-h2)', { lineHeight: '1.75rem', letterSpacing: '-0.017em', fontWeight: '600' }],
       h3: ['var(--fs-h3)', { lineHeight: '1.5rem', letterSpacing: '-0.011em', fontWeight: '600' }],
       h4: ['var(--fs-h4)', { lineHeight: '1.25rem', letterSpacing: '-0.006em', fontWeight: '600' }],
@@ -31,6 +35,13 @@ export default {
           DEFAULT: 'var(--border-2)',
           1: 'var(--border-1)',
           2: 'var(--border-2)',
+          3: 'var(--border-3)',
+          strong: 'var(--border-strong)',
+        },
+        panel: {
+          DEFAULT: 'var(--panel)',
+          2: 'var(--panel-2)',
+          3: 'var(--panel-3)',
         },
         aurora: {
           300: 'var(--aurora-300)',
@@ -55,6 +66,7 @@ export default {
         md: 'var(--radius-md)',
         lg: 'var(--radius-lg)',
         xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
         pill: 'var(--radius-pill)',
       },
 
@@ -74,12 +86,21 @@ export default {
       boxShadow: {
         'knik-2': 'var(--shadow-2)',
         'knik-3': 'var(--shadow-3)',
+        'knik-glow': 'var(--shadow-glow)',
+        'knik-focus': 'var(--shadow-focus)',
       },
 
       /* ---- Transition timing from motion tokens ---- */
       transitionDuration: {
         fast: 'var(--dur-fast)',
         base: 'var(--dur-base)',
+        slow: 'var(--dur-slow)',
+      },
+
+      /* ---- Easing curves from motion tokens ---- */
+      transitionTimingFunction: {
+        out: 'var(--ease-out)',
+        spring: 'var(--ease-spring)',
       },
     },
   },

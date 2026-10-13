@@ -19,6 +19,8 @@ export interface NavLinkProps {
   active?: boolean
   href: string
   onClick?: () => void
+  /** Shared framer-motion layoutId so the active highlight slides between sibling links. */
+  highlightId?: string
 }
 
 /** A single tab item. */

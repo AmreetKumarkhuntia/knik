@@ -1,38 +1,52 @@
 /* =================================================================
    KNIK Design Tokens
    Single source of truth for colors, typography, spacing, motion,
-   shadows and radii. Fixed teal palette with light and dark modes.
+   shadows and radii. Warm graphite surfaces with a periwinkle accent,
+   in light and dark modes.
 
-   Approved palette: docs/plan/07-frontend-component-consolidation.md
+   Identity: the Claude Design "Knik Redesign" prototype (2026-10-13),
+   which supersedes the teal/Inter rules in docs/plan/07.
    Design-system copy: docs/design/colors_and_type.css
    ================================================================= */
 
-@import url('https://rsms.me/inter/inter.css');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 :root {
   /* -----------------------------------------------------------------
      Surfaces (dark / default)
+     Surface tokens stay opaque: tests/styles composites colours over
+     them. The translucent glass fills live in --panel-*.
      ----------------------------------------------------------------- */
-  --bg-base: #18191b;
-  --bg-surface: #202225;
-  --bg-surface-2: #282b2f;
-  --bg-surface-3: #303439;
+  --bg-base: #151311;
+  --bg-surface: #1a1815;
+  --bg-surface-2: #292623;
+  --bg-surface-3: #33302c;
   --bg-canvas: var(--bg-base);
-  --bg-code: #1b1d20;
+  --bg-code: #100f0d;
+
+  /* -----------------------------------------------------------------
+     Glass panels (translucent, sit over the shell gradient)
+     ----------------------------------------------------------------- */
+  --panel: rgba(255, 241, 224, 0.045);
+  --panel-2: rgba(255, 241, 224, 0.085);
+  --panel-3: rgba(255, 241, 224, 0.13);
+  --blur-glass: 14px;
 
   /* -----------------------------------------------------------------
      Text / Foreground
+     --fg-3 and --fg-4 differ from the prototype so 12px metadata keeps
+     4.5:1 on surface-2 in both themes; --fg-5 carries the prototype's
+     dimmest tone and is for decoration only, never for text.
      ----------------------------------------------------------------- */
-  --fg-1: #f1f2f3;
-  --fg-2: #d7dade;
-  --fg-3: #a5abb3;
-  --fg-4: #a5abb3;
-  --fg-5: #929aa4;
+  --fg-1: #f4efe7;
+  --fg-2: #d4cec4;
+  --fg-3: #9b948a;
+  --fg-4: #948c81;
+  --fg-5: #6e685f;
 
   /* -----------------------------------------------------------------
-     Brand: Aurora (KNIK teal — primary accent)
+     Brand: Aurora (primary accent aliases)
      300/400 follow the active theme's primary so accent text keeps
      its contrast in light mode.
      ----------------------------------------------------------------- */
@@ -40,67 +54,69 @@
   --aurora-400: var(--primary);
 
   /* -----------------------------------------------------------------
-     Brand: Deep-teal (workflow / secondary accent)
+     Brand: secondary hues (model dots, legacy accents)
      ----------------------------------------------------------------- */
-  --teal-400: #55b8ac;
-
-  /* -----------------------------------------------------------------
-     Brand: Violet (legacy / preset accent)
-     ----------------------------------------------------------------- */
-  --violet-400: #a78bfa;
+  --teal-400: #7fd1b9;
+  --violet-400: #c9a0ff;
 
   /* -----------------------------------------------------------------
      Semantic status colors
      Text tones stay >= 4.5:1 on surface and surface-2 in both themes,
      including over their own -bg tint (enforced by tests/styles).
      ----------------------------------------------------------------- */
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.12);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.12);
-  --danger: #f87171;
-  --danger-bg: rgba(239, 68, 68, 0.12);
-  --info: #60a5fa;
-  --info-bg: rgba(59, 130, 246, 0.12);
+  --success: #8fd4a6;
+  --success-bg: color-mix(in srgb, var(--success) 12%, transparent);
+  --warning: #e6c072;
+  --warning-bg: color-mix(in srgb, var(--warning) 12%, transparent);
+  --danger: #f09a8e;
+  --danger-bg: color-mix(in srgb, var(--danger) 12%, transparent);
+  --info: var(--primary);
+  --info-bg: color-mix(in srgb, var(--info) 12%, transparent);
 
   /* -----------------------------------------------------------------
      Borders / dividers — three depths only
      --border-3 also outlines form controls, so it keeps >= 3:1 against
-     the surfaces they sit on (WCAG 1.4.11).
+     the surfaces they sit on (WCAG 1.4.11) and stays opaque.
+     --border-strong is the translucent hover outline and idle graph edge.
      ----------------------------------------------------------------- */
-  --border-1: #2d3136;
-  --border-2: #363a40;
-  --border-3: #707881;
+  --border-1: rgba(255, 241, 224, 0.08);
+  --border-2: rgba(255, 241, 224, 0.14);
+  --border-3: #7d766c;
+  --border-strong: rgba(255, 241, 224, 0.28);
   --border-focus: var(--primary);
 
   /* -----------------------------------------------------------------
      Primary semantic aliases (theme-aware — overridden by the
      [data-theme='light'] block below)
      ----------------------------------------------------------------- */
-  --primary: #55b8ac;
-  --primary-hover: #6dc7bc;
-  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
-  --on-primary: #101c1a;
+  --primary: #9fb8ff;
+  --primary-hover: #b7c7ff;
+  --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+  --on-primary: #0f1424;
   --acc: var(--primary);
   --acc-text: var(--primary);
   --acc-soft: var(--primary-soft);
-  --acc-border: color-mix(in srgb, var(--primary) 45%, var(--border-2));
-  --r-btn: 6px;
+  --acc-border: color-mix(in srgb, var(--primary) 42%, transparent);
+  --acc-glow: color-mix(in srgb, var(--primary) 22%, transparent);
+  --r-btn: 10px;
 
   /* -----------------------------------------------------------------
      Shadows / elevation
      ----------------------------------------------------------------- */
-  --shadow-2: 0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
-  --shadow-3: 0 20px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  --shadow-2: 0 10px 30px -24px rgba(0, 0, 0, 0.6);
+  --shadow-3: 0 24px 60px -24px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 18px 40px -24px var(--acc-glow);
+  --shadow-focus: 0 0 0 3px var(--acc-soft);
 
   /* -----------------------------------------------------------------
      Border radii
      ----------------------------------------------------------------- */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
   --radius-pill: 999px;
 
   /* -----------------------------------------------------------------
@@ -115,14 +131,14 @@
   /* -----------------------------------------------------------------
      Type families
      ----------------------------------------------------------------- */
-  --font-sans:
-    'Inter var', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, 'Cascadia Mono', Menlo, monospace;
+  --font-sans: 'Figtree', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* -----------------------------------------------------------------
      Type scale
      ----------------------------------------------------------------- */
-  --fs-h1: 1.5rem; /* 24 / 32 page titles */
+  --fs-display: 2.125rem; /* 34 / 39 welcome hero only */
+  --fs-h1: 1.625rem; /* 26 / 32 page titles */
   --fs-h2: 1.25rem; /* 20 / 28 section titles */
   --fs-h3: 1rem; /* 16 / 24 panel + dialog titles */
   --fs-h4: 0.875rem; /* 14 / 20 card + group titles */
@@ -143,61 +159,69 @@
   /* -----------------------------------------------------------------
      Letter spacing / tracking
      ----------------------------------------------------------------- */
-  --tracking-tight: -0.012em;
+  --tracking-tight: -0.02em;
   --tracking-wide: 0.02em;
 
   /* -----------------------------------------------------------------
      Motion / easing
+     --m scales every entrance animation; reduced motion sets it to
+     0.01 so CSS entrances finish instantly.
      ----------------------------------------------------------------- */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --dur-fast: 120ms;
   --dur-base: 200ms;
+  --dur-slow: 450ms;
+  --m: 1;
 
   /* -----------------------------------------------------------------
      Effects
      ----------------------------------------------------------------- */
-  --graph-grid: #363a40;
-  --graph-minimap-node: #747e88;
-  --graph-minimap-mask: rgba(24, 25, 27, 0.72);
+  --graph-grid: var(--border-2);
+  --graph-minimap-node: var(--fg-4);
+  --graph-minimap-mask: rgba(21, 19, 17, 0.8);
 }
 
 /* -----------------------------------------------------------------
    Light mode overrides
    ----------------------------------------------------------------- */
 [data-theme='light'] {
-  --bg-base: #f7f8f8;
-  --bg-surface: #ffffff;
-  --bg-surface-2: #f0f2f3;
-  --bg-surface-3: #e7ebee;
+  --bg-base: #f3efe9;
+  --bg-surface: #ece7df;
+  --bg-surface-2: #e4e0da;
+  --bg-surface-3: #dcd7d1;
   --bg-canvas: var(--bg-base);
-  --bg-code: #f1f3f5;
+  --bg-code: #fbf9f5;
 
-  --fg-1: #1c2024;
-  --fg-2: #30373e;
-  --fg-3: #59636e;
-  --fg-4: #59636e;
-  --fg-5: #68737d;
+  --panel: rgba(30, 24, 16, 0.04);
+  --panel-2: rgba(30, 24, 16, 0.07);
+  --panel-3: rgba(30, 24, 16, 0.11);
 
-  --border-1: #e6e9ec;
-  --border-2: #dce1e5;
-  --border-3: #7c8791;
+  --fg-1: #1d1a16;
+  --fg-2: #3b362f;
+  --fg-3: #615b52;
+  --fg-4: #655f56;
+  --fg-5: #8f887e;
 
-  --primary: #147d73;
-  --primary-hover: #10665e;
-  --primary-soft: color-mix(in srgb, var(--primary) 9%, transparent);
+  --border-1: rgba(30, 24, 16, 0.08);
+  --border-2: rgba(30, 24, 16, 0.14);
+  --border-3: #7a736a;
+  --border-strong: rgba(30, 24, 16, 0.3);
+
+  --primary: #4a63c9;
+  --primary-hover: #3b53b8;
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
   /* Selected rows set --acc-text on --acc-soft, where light --primary stays under 4.5:1. */
-  --acc-text: var(--primary-hover);
+  --acc-text: #3549ab;
   --on-primary: #ffffff;
-  --success: #167348;
-  --warning: #895600;
-  --danger: #b42f2f;
-  --info: #285eaf;
+  --success: #15603b;
+  --warning: #784d00;
+  --danger: #9c3025;
+  --info: #3549ab;
 
-  --shadow-2: 0 4px 14px -2px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(0, 0, 0, 0.04) inset;
-  --shadow-3: 0 20px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+  --shadow-2: 0 10px 30px -24px rgba(0, 0, 0, 0.25);
+  --shadow-3: 0 24px 60px -24px rgba(0, 0, 0, 0.25);
 
-  --graph-grid: #d0d7dc;
-  --graph-minimap-node: #87929c;
-  --graph-minimap-mask: rgba(247, 248, 248, 0.72);
+  --graph-minimap-mask: rgba(243, 239, 233, 0.8);
 }

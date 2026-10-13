@@ -68,6 +68,8 @@ export interface KbdProps {
 
 export interface KnikGlyphProps {
   size?: number
+  /** Bars pulse like a live waveform, e.g. while a reply streams. */
+  animated?: boolean
   className?: string
 }
 
