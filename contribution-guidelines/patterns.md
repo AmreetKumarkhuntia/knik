@@ -21,7 +21,7 @@ Apps never import each other. `npm run lint:imports` checks these rules.
 ## Registry Pattern (Providers & Tools)
 
 - **ProviderRegistry**: Maps provider names to implementation classes. Use class methods - no instances needed.
-- **MCPServerRegistry**: Holds tool schemas + implementations per instance. Each app creates one and fills it with `register_all_tools(registry)`, then passes it to `AIClient(mcp_registry=...)`.
+- **ToolRegistry** (`lib/tools/registry.py`): Holds tool schemas + implementations per instance. Each app builds one with `create_tool_registry(consent_gate=..., disabled=...)` and passes it to `build_client(settings, tool_registry=...)`.
 
 ## Async TTS Workflow
 
@@ -37,20 +37,22 @@ while not processor.is_processing_complete():  # Wait before exiting
 
 There are two kinds of console commands with different patterns:
 
-### Shared commands (model, provider, sessions, new, resume, status, help)
+### Shared commands (model, provider, sessions, new, resume, status)
 
-These delegate to `CommandService` from `lib/commands/`. Add a handler in `src/console/commands/handlers.py` (and `src/bot/commands/handlers.py` for the bot):
-
-```python
-def handle_my_cmd(command_service: CommandService, args: str, user_id: str) -> CommandResult:
-    return asyncio.run(command_service.some_operation(user_id, args))
-```
-
-Register in `src/console/commands/__init__.py`:
+These delegate to `CommandService` and live in `src/lib/commands/handlers.py`, so the console and the bot both get them. `/help` is not shared: each app words it for its own commands. An app can replace a shared command by registering the same name after `register_shared_commands()`; the bot does this for `/new` (its welcome text and tool cleanup), so a change to the shared `/new` also needs `src/bot/commands/handlers.py`. Add an async handler and an entry in `SHARED_COMMANDS`:
 
 ```python
-registry.register("my-cmd", "Description of command", handle_my_cmd)
+async def handle_my_cmd(command_service: CommandService, args: str, user_id: str) -> CommandResult:
+    return await command_service.some_operation(user_id, args)
+
+
+SHARED_COMMANDS = (
+    ...,
+    ("my-cmd", "Description of command", handle_my_cmd),
+)
 ```
+
+A command only one app has goes in `src/console/commands/handlers.py` or `src/bot/commands/handlers.py` and is registered in that package's `create_command_system()`.
 
 ### Console-only commands (exit, clear, history, voice, etc.)
 
@@ -75,7 +77,7 @@ Use with: `/my argument`
 Tools live in `src/lib/tools/`, one `*_tool.py` per tool group:
 
 ```python
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 
 MY_DEFINITIONS = [
     {
@@ -115,5 +117,6 @@ class MyTool(BaseTool):
 - Module-level one-liner docstrings are fine. Remove class/method docstrings that just paraphrase the name
 - Keep documentation simple and straightforward
 - Prefer small modules, helper functions, and shared logic via unified base functions
-- Return structured dicts with a `success` flag and descriptive `error` messages
+- AI tool implementations return structured dicts with a `success` flag and descriptive `error` messages
+- `workflow_service` and `schedule_service` raise `NotFoundError`/`ValidationError` (`lib/workflows/errors.py`) instead of returning error dicts; routes map them to 404/400, and tools return `e.to_dict()`
 - Use `printer` for internal logging (`printer.info()`, `printer.success()`, `printer.error()`). Use `print()` for direct user output

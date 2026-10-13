@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 
 
 FILE_DEFINITIONS = [

@@ -1,11 +1,12 @@
-"""MCP tool registry"""
+"""Tool registry: the tool schemas, implementations and consent state one AI client works with."""
 
 import threading
+import weakref
 from collections.abc import Callable
 from typing import Any
 
-from lib.services.ai_client.base_tool import BaseTool
-from lib.services.ai_client.consent import ConsentGate, ConsentRequest
+from lib.tools.base_tool import BaseTool
+from lib.tools.consent import ConsentGate, ConsentRequest
 from lib.utils.printer import printer
 
 
@@ -19,12 +20,26 @@ except ImportError:
     StructuredTool = None
 
 
-class MCPServerRegistry:
+# Weak so a registry nobody holds any more (and the tools it owns) can be collected; app shutdown
+# still reaches every live one through cleanup_all_tools().
+_live_registries: weakref.WeakSet["ToolRegistry"] = weakref.WeakSet()
+_live_registries_lock = threading.Lock()
+
+
+def cleanup_all_tools() -> None:
+    """Run cleanup_tools() on every live registry, for app shutdown."""
+    with _live_registries_lock:
+        registries = list(_live_registries)
+    for registry in registries:
+        registry.cleanup_tools()
+
+
+class ToolRegistry:
     """Registry for tool schemas and implementations.
 
-    Each instance owns its own tool state. Create a new instance for an
-    isolated set of tools; reuse an existing instance when you want to
-    share tools across components (e.g. an app-level registry).
+    Each instance owns its own tool state and the tool instances registered on it. Create a new
+    instance for an isolated set of tools; reuse an existing instance when you want to share tools
+    across components (e.g. an app-level registry).
     """
 
     def __init__(self):
@@ -34,6 +49,8 @@ class MCPServerRegistry:
         self._consent_gate: ConsentGate | None = None
         self._allowed_tools: set[str] = set()
         self._consent_lock = threading.Lock()
+        with _live_registries_lock:
+            _live_registries.add(self)
 
     def set_consent_gate(self, gate: ConsentGate) -> None:
         self._consent_gate = gate
@@ -103,7 +120,7 @@ class MCPServerRegistry:
             try:
                 tool.cleanup()
             except Exception as e:
-                printer.warning(f"[MCPServerRegistry] cleanup error for {tool.name}: {e}")
+                printer.warning(f"[ToolRegistry] cleanup error for {tool.name}: {e}")
         self.revoke_allowed_tools()
 
     def create_langchain_tools(self) -> list:

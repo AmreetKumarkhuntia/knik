@@ -13,23 +13,37 @@ from collections.abc import AsyncGenerator
 
 import numpy as np
 import soundfile as sf
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from backend import state
-from backend.config import WebBackendConfig
-from backend.models.chat import StreamChatRequest
-from imports import DB_ERRORS, ConversationDB, is_speakable, printer
+from backend.deps import get_state
+from backend.models.chat import ChatRequest
+from backend.state import AppState
+from imports import (
+    DB_ERRORS,
+    ConversationDB,
+    ConversationReady,
+    StreamDone,
+    StreamError,
+    TextDelta,
+    ToolCallFinished,
+    ToolCallStarted,
+    VoiceModel,
+    is_speakable,
+    printer,
+)
 
 
 router = APIRouter()
-
-config = WebBackendConfig()
 
 _TTS_DONE = object()
 
 # Provides natural back-pressure if the LLM streams much faster than TTS.
 _TTS_QUEUE_MAX = 10
+
+
+def _sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
 def _encode_audio(audio_data: np.ndarray, sample_rate: int) -> str:
@@ -39,6 +53,7 @@ def _encode_audio(audio_data: np.ndarray, sample_rate: int) -> str:
 
 
 async def _tts_worker(
+    tts: VoiceModel,
     sentence_queue: asyncio.Queue,
     audio_queue: asyncio.Queue,
 ) -> None:
@@ -50,7 +65,7 @@ async def _tts_worker(
 
         try:
             printer.info(f"[TTS worker] Generating audio for: '{sentence[:50]}...'")
-            audio_data, sr = await asyncio.to_thread(state.tts_processor.generate, sentence)
+            audio_data, sr = await asyncio.to_thread(tts.generate, sentence)
             audio_b64 = _encode_audio(audio_data, sr)
             await audio_queue.put({"audio": audio_b64, "sample_rate": sr})
             printer.success("[TTS worker] Audio chunk ready")
@@ -71,7 +86,11 @@ async def _summary_message_id(conversation_id: str | None) -> str | None:
     return summary_message_id
 
 
-async def stream_chat_response(prompt: str, conversation_id: str | None = None) -> AsyncGenerator[str, None]:
+async def stream_chat_response(
+    state: AppState,
+    prompt: str,
+    conversation_id: str | None = None,
+) -> AsyncGenerator[str, None]:
     sentence_queue: asyncio.Queue = asyncio.Queue(maxsize=_TTS_QUEUE_MAX)
     audio_queue: asyncio.Queue = asyncio.Queue()
     tts_task: asyncio.Task | None = None
@@ -85,120 +104,104 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
             if item is _TTS_DONE:
                 await audio_queue.put(_TTS_DONE)
                 break
-            yield f"event: audio\ndata: {json.dumps(item)}\n\n"
+            yield _sse("audio", item)
 
     try:
-        await state.init(config)
+        async with state.client(conversation_id) as ai_client:
+            tts_task = asyncio.create_task(_tts_worker(state.tts, sentence_queue, audio_queue))
 
-        ai_client = await state.get_or_create_ai_client(conversation_id)
+            text_buffer = ""
+            sentence_endings = [".", "!", "?", "\n"]
+            audio_count = 0
+            active_conversation_id = conversation_id
+            pre_compaction_state = await _summary_message_id(conversation_id)
 
-        tts_task = asyncio.create_task(_tts_worker(sentence_queue, audio_queue))
+            async for event in ai_client.achat_stream(
+                prompt=prompt,
+                conversation_id=conversation_id,
+                provider_meta={"provider": state.config.ai_provider, "model": state.config.ai_model},
+            ):
+                match event:
+                    case ConversationReady(conversation_id=conv_id):
+                        active_conversation_id = conv_id
+                        yield _sse("conversation_id", {"conversation_id": conv_id})
 
-        text_buffer = ""
-        full_response = ""
-        sentence_endings = [".", "!", "?", "\n"]
-        audio_count = 0
-        active_conversation_id = conversation_id
-        pre_compaction_state = await _summary_message_id(conversation_id)
+                    case StreamDone(usage=usage):
+                        # If achat_stream created a new conversation_id, register this client
+                        if active_conversation_id and active_conversation_id != conversation_id:
+                            state.set_client(active_conversation_id, ai_client)
 
-        async for chunk in ai_client.achat_stream(
-            prompt=prompt,
-            conversation_id=conversation_id,
-            provider_meta={"provider": config.ai_provider, "model": config.ai_model},
-        ):
-            if isinstance(chunk, dict) and "__conversation_id__" in chunk:
-                conv_id = chunk["__conversation_id__"]
-                active_conversation_id = conv_id
-                yield f"event: conversation_id\ndata: {json.dumps({'conversation_id': conv_id})}\n\n"
-                continue
+                        if text_buffer.strip() and is_speakable(text_buffer):
+                            printer.info(f"Queueing remaining text for TTS: '{text_buffer[:50]}...'")
+                            await sentence_queue.put(text_buffer.strip())
 
-            if isinstance(chunk, dict) and chunk.get("__done__"):
-                full_response = chunk.get("full_response", full_response)
-                usage = chunk.get("usage")
+                        await sentence_queue.put(_TTS_DONE)
 
-                # If achat_stream created a new conversation_id, register this client
-                if active_conversation_id and active_conversation_id != conversation_id:
-                    state.set_client(active_conversation_id, ai_client)
+                        try:
+                            await asyncio.wait_for(tts_task, timeout=30.0)
+                        except TimeoutError:
+                            printer.warning("TTS worker timed out after 30s, sending done anyway")
+                            tts_task.cancel()
 
-                if text_buffer.strip() and is_speakable(text_buffer):
-                    printer.info(f"Queueing remaining text for TTS: '{text_buffer[:50]}...'")
-                    await sentence_queue.put(text_buffer.strip())
+                        while True:
+                            try:
+                                item = await asyncio.wait_for(audio_queue.get(), timeout=0.1)
+                            except (TimeoutError, asyncio.QueueEmpty):
+                                break
+                            if item is _TTS_DONE:
+                                break
+                            audio_count += 1
+                            printer.success(f"Sent audio chunk {audio_count}")
+                            yield _sse("audio", item)
 
-                await sentence_queue.put(_TTS_DONE)
+                        if usage:
+                            printer.info(
+                                f"Token usage: {usage.get('input_tokens', 0)} in / "
+                                f"{usage.get('output_tokens', 0)} out / "
+                                f"{usage.get('total_tokens', 0)} total"
+                            )
+                            yield _sse("usage", {"usage": usage})
 
-                try:
-                    await asyncio.wait_for(tts_task, timeout=30.0)
-                except TimeoutError:
-                    printer.warning("TTS worker timed out after 30s, sending done anyway")
-                    tts_task.cancel()
+                        if active_conversation_id:
+                            post_compaction_state = await _summary_message_id(active_conversation_id)
+                            if post_compaction_state and post_compaction_state != pre_compaction_state:
+                                yield _sse("compaction", {"summary_message_id": post_compaction_state})
 
-                while True:
-                    try:
-                        item = await asyncio.wait_for(audio_queue.get(), timeout=0.1)
-                    except (TimeoutError, asyncio.QueueEmpty):
-                        break
-                    if item is _TTS_DONE:
-                        break
-                    audio_count += 1
-                    printer.success(f"Sent audio chunk {audio_count}")
-                    yield f"event: audio\ndata: {json.dumps(item)}\n\n"
+                        printer.info(f"Stream complete: sent {audio_count} audio chunks")
+                        yield _sse("done", {"audio_count": audio_count})
 
-                if usage:
-                    printer.info(
-                        f"Token usage: {usage.get('input_tokens', 0)} in / "
-                        f"{usage.get('output_tokens', 0)} out / "
-                        f"{usage.get('total_tokens', 0)} total"
-                    )
-                    yield f"event: usage\ndata: {json.dumps({'usage': usage})}\n\n"
+                    case ToolCallStarted(tool_name=tool_name, tool_args=tool_args):
+                        yield _sse("tool_start", {"tool_name": tool_name, "tool_args": tool_args})
 
-                if active_conversation_id:
-                    post_compaction_state = await _summary_message_id(active_conversation_id)
-                    if post_compaction_state and post_compaction_state != pre_compaction_state:
-                        yield f"event: compaction\ndata: {json.dumps({'summary_message_id': post_compaction_state})}\n\n"
+                    case ToolCallFinished(tool_name=tool_name, result_preview=result_preview):
+                        yield _sse("tool_end", {"tool_name": tool_name, "tool_result_preview": result_preview})
 
-                printer.info(f"Stream complete: sent {audio_count} audio chunks")
-                yield f"event: done\ndata: {json.dumps({'audio_count': audio_count})}\n\n"
-                continue
+                    # A provider failure reads as reply text ("Chat streaming error: ..."), as it always has.
+                    case TextDelta(text=text) | StreamError(message=text):
+                        yield _sse("text", {"text": text})
 
-            if isinstance(chunk, dict) and chunk.get("__tool_call_start__"):
-                yield f"event: tool_start\ndata: {json.dumps({'tool_name': chunk.get('tool_name', 'unknown'), 'tool_args': chunk.get('tool_args', {})})}\n\n"
-                continue
+                        text_buffer += text
 
-            if isinstance(chunk, dict) and chunk.get("__tool_call_end__"):
-                yield f"event: tool_end\ndata: {json.dumps({'tool_name': chunk.get('tool_name', 'unknown'), 'tool_result_preview': chunk.get('tool_result_preview', '')})}\n\n"
-                continue
+                        for ending in sentence_endings:
+                            if ending in text_buffer:
+                                parts = text_buffer.split(ending, 1)
+                                sentence = (parts[0] + ending).strip()
 
-            if isinstance(chunk, dict):
-                continue
+                                if sentence and is_speakable(sentence):
+                                    printer.info(f"Queueing for TTS: '{sentence[:50]}...'")
+                                    await sentence_queue.put(sentence)
 
-            if not isinstance(chunk, str):
-                continue
+                                text_buffer = parts[1] if len(parts) > 1 else ""
+                                break
 
-            yield f"event: text\ndata: {json.dumps({'text': chunk})}\n\n"
-
-            full_response += chunk
-            text_buffer += chunk
-
-            for ending in sentence_endings:
-                if ending in text_buffer:
-                    parts = text_buffer.split(ending, 1)
-                    sentence = (parts[0] + ending).strip()
-
-                    if sentence and is_speakable(sentence):
-                        printer.info(f"Queueing for TTS: '{sentence[:50]}...'")
-                        await sentence_queue.put(sentence)
-
-                    text_buffer = parts[1] if len(parts) > 1 else ""
-                    break
-
-            async for audio_event in _drain_audio():
-                audio_count += 1
-                printer.success(f"Sent audio chunk {audio_count}")
-                yield audio_event
+                        async for audio_event in _drain_audio():
+                            audio_count += 1
+                            printer.success(f"Sent audio chunk {audio_count}")
+                            yield audio_event
 
     except Exception as e:
         printer.error(f"Stream error: {e}")
-        yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+        yield _sse("error", {"error": str(e)})
 
     finally:
         if tts_task and not tts_task.done():
@@ -208,9 +211,9 @@ async def stream_chat_response(prompt: str, conversation_id: str | None = None) 
 
 
 @router.post("/")
-async def stream_chat(request: StreamChatRequest):
+async def stream_chat(request: ChatRequest, state: AppState = Depends(get_state)):
     return StreamingResponse(
-        stream_chat_response(request.message, conversation_id=request.conversation_id),
+        stream_chat_response(state, request.message, conversation_id=request.conversation_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

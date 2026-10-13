@@ -8,9 +8,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from lib.services.ai_client.base_tool import BaseTool
 from lib.services.browser import session as session_mod
+from lib.tools import registry as registry_mod
 from lib.tools.browser_tool import BROWSER_DEFINITIONS, BrowserTool
+from lib.tools.registry import ToolRegistry, cleanup_all_tools
 
 
 def _make_mock_page():
@@ -38,7 +39,7 @@ def _wire(tool: BrowserTool, page=None):
 
 @pytest.fixture(autouse=True)
 def _isolated_registries(monkeypatch):
-    monkeypatch.setattr(BaseTool, "_instances", [])
+    monkeypatch.setattr(registry_mod, "_live_registries", weakref.WeakSet())
     monkeypatch.setattr(session_mod, "_sessions", weakref.WeakSet())
 
 
@@ -414,12 +415,14 @@ class TestSessionDelegation:
     def test_cleanup_on_fresh_tool_is_noop(self, browser_tool):
         browser_tool.cleanup()
 
-    def test_cleanup_all_closes_browser_sessions(self):
+    def test_cleanup_all_tools_closes_browser_sessions_of_live_registries(self):
         tool = BrowserTool()
+        registry = ToolRegistry()
+        registry.add_tool_instance(tool)
         _page, ctx, _pw = _wire(tool)
         tool._navigate("https://example.com")
 
-        BaseTool.cleanup_all()
+        cleanup_all_tools()
 
         ctx.close.assert_called_once()
         assert tool._session.last_used == 0.0

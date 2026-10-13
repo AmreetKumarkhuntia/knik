@@ -20,8 +20,8 @@ class WorkflowCreateRequest(BaseModel):
 
 
 class WorkflowUpdateRequest(BaseModel):
-    """Request body for updating a workflow."""
+    """Request body for updating a workflow; a field left out (or null) keeps its current value."""
 
-    name: str
-    definition: dict[str, Any]
+    name: str | None = None
+    definition: dict[str, Any] | None = None
     description: str | None = None

@@ -1,6 +1,6 @@
 import re
 
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 
 
 TEXT_DEFINITIONS = [

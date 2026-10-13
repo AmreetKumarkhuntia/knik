@@ -10,6 +10,7 @@ from lib.services.db import ExecutionDB
 from lib.services.db.models import Workflow
 from lib.utils import printer as logger
 from lib.workflows.nodes import (
+    AIClientFactory,
     AIExecutionNode,
     BaseNode,
     ConditionalBranchNode,
@@ -20,7 +21,13 @@ from lib.workflows.validation import VALID_NODE_TYPES, validate_workflow_definit
 
 
 class WorkflowEngine:
-    """Executes a parsed Workflow definition resolving its nodes topologically."""
+    """Executes a parsed Workflow definition resolving its nodes topologically.
+
+    ``ai_client_factory`` builds the client for each AI node; without one, AI nodes run without tools.
+    """
+
+    def __init__(self, ai_client_factory: AIClientFactory | None = None) -> None:
+        self.ai_client_factory = ai_client_factory
 
     async def execute_workflow(self, workflow: Workflow, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
@@ -288,6 +295,7 @@ class WorkflowEngine:
                 model=data.get("model", "gemini-3.0-flash"),
                 provider=data.get("provider", "vertex"),
                 use_tools=data.get("use_tools", True),
+                ai_client_factory=self.ai_client_factory,
             )
             return ai_node
 

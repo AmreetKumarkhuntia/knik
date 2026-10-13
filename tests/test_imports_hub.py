@@ -11,6 +11,7 @@ import imports
 
 
 HUB_PATH = Path(imports.__file__)
+APP_DIRS = ("backend", "bot", "console", "worker")
 
 # Runs in a fresh interpreter so the check sees the real modules, whatever earlier tests imported or patched.
 _RESOLVE_ALL = """
@@ -43,6 +44,23 @@ def test_every_export_resolves_to_its_source():
         [sys.executable, "-c", _RESOLVE_ALL], cwd=HUB_PATH.parent, capture_output=True, text=True, timeout=300
     )
     assert result.returncode == 0, result.stderr
+
+
+def _names_apps_import_from_the_hub() -> dict[str, list[str]]:
+    used: dict[str, list[str]] = {}
+    for app in APP_DIRS:
+        for path in sorted((HUB_PATH.parent / app).rglob("*.py")):
+            for node in ast.walk(ast.parse(path.read_text())):
+                if isinstance(node, ast.ImportFrom) and node.module == "imports" and node.level == 0:
+                    for alias in node.names:
+                        used.setdefault(alias.name, []).append(str(path.relative_to(HUB_PATH.parent)))
+    return used
+
+
+def test_every_name_the_apps_import_is_exported():
+    # Pyright cannot catch a missing name: the hub's module __getattr__ types any unknown name as Any.
+    missing = {name: files for name, files in _names_apps_import_from_the_hub().items() if name not in imports._EXPORTS}
+    assert not missing, missing
 
 
 def test_unknown_name_raises_attribute_error():

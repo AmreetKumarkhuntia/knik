@@ -1,17 +1,10 @@
-"""Request models for the chat and chat-streaming endpoints."""
+"""Request model for the chat and chat-streaming endpoints."""
 
 from pydantic import BaseModel
 
 
-class SimpleChatRequest(BaseModel):
-    """Request body for the unified (text + TTS) chat endpoint."""
-
-    message: str
-    conversation_id: str | None = None
-
-
-class StreamChatRequest(BaseModel):
-    """Request body for the SSE streaming chat endpoint."""
+class ChatRequest(BaseModel):
+    """Request body for both chat endpoints: the unified (text + TTS) one and the SSE streaming one."""
 
     message: str
     conversation_id: str | None = None

@@ -3,6 +3,9 @@
 Provides a single CommandService class that any app (bot, console, web)
 can use to execute session, model, and status operations.  All heavy
 logic lives here so that app-level handlers stay thin.
+
+The model, provider and status operations act on the AI client of the user who sent the command, which the
+app's client resolver supplies; the session operations need no client.
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ from lib.services.ai_client.token_utils import get_context_window
 from lib.services.db import DB_ERRORS, ConversationDB
 from lib.utils.printer import printer
 
-from .models import CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
+from .models import ClientResolver, CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
 
 
 if TYPE_CHECKING:
@@ -26,21 +29,11 @@ DB_UNAVAILABLE_MESSAGE = "The conversation database is unavailable right now. Pl
 
 
 class CommandService:
-    def __init__(
-        self,
-        ai_client: AIClient,
-        user_identity: UserIdentityProtocol,
-        mcp_registry=None,
-        system_instruction: str | None = None,
-    ) -> None:
-        self._ai_client = ai_client
+    def __init__(self, client_resolver: ClientResolver, user_identity: UserIdentityProtocol) -> None:
+        # /model and /provider swap the provider inside the caller's client (AIClient.set_model/set_provider),
+        # which keeps its tool registry and system instruction, so the service never builds or replaces a client.
+        self._client_for = client_resolver
         self._user_identity = user_identity
-        self._mcp_registry = mcp_registry
-        self._system_instruction = system_instruction
-
-    @property
-    def ai_client(self) -> AIClient:
-        return self._ai_client
 
     async def new_session(self, user_id: str) -> CommandResult:
         self._user_identity.clear_conversation_id(user_id)
@@ -99,13 +92,14 @@ class CommandService:
             )
         return sessions
 
-    async def switch_model(self, model_name: str) -> CommandResult:
+    async def switch_model(self, user_id: str, model_name: str) -> CommandResult:
+        client = await self._client_for(user_id)
         if not model_name:
-            return self._show_current_model()
+            return self._show_current_model(client)
 
         try:
-            old_model = self._ai_client.get_model_name()
-            self._ai_client.set_model(model_name)
+            old_model = client.get_model_name()
+            client.set_model(model_name)
             printer.info(f"Switched model: {old_model} -> {model_name}")
             return CommandResult(
                 success=True,
@@ -116,9 +110,9 @@ class CommandService:
             printer.error(f"Failed to switch model: {e}")
             return CommandResult(success=False, message=f"Failed to switch model: {e}")
 
-    async def switch_provider(self, provider_name: str) -> CommandResult:
+    async def switch_provider(self, user_id: str, provider_name: str) -> CommandResult:
         if not provider_name:
-            return self._show_current_provider()
+            return self._show_current_provider(await self._client_for(user_id))
 
         if not ProviderRegistry.is_registered(provider_name):
             available = ", ".join(ProviderRegistry.list_providers())
@@ -127,10 +121,11 @@ class CommandService:
                 message=f"Unknown provider: {provider_name}. Available: {available}",
             )
 
+        client = await self._client_for(user_id)
         try:
-            old_provider = self._ai_client.provider_name
-            current_model = self._ai_client.get_model_name()
-            self._ai_client.set_provider(provider_name, model_name=current_model)
+            old_provider = client.provider_name
+            current_model = client.get_model_name()
+            client.set_provider(provider_name, model_name=current_model)
             printer.info(f"Switched provider: {old_provider} -> {provider_name}")
             return CommandResult(
                 success=True,
@@ -141,8 +136,12 @@ class CommandService:
             printer.error(f"Failed to switch provider: {e}")
             return CommandResult(success=False, message=f"Failed to switch provider: {e}")
 
-    def list_models(self) -> list[ModelInfo]:
-        raw = self._ai_client.list_models_for_provider()
+    async def list_models(self, user_id: str) -> list[ModelInfo]:
+        return self._models(await self._client_for(user_id))
+
+    @staticmethod
+    def _models(client: AIClient) -> list[ModelInfo]:
+        raw = client.list_models_for_provider()
         models: list[ModelInfo] = []
         for m in raw:
             if isinstance(m, dict):
@@ -160,8 +159,9 @@ class CommandService:
         return ProviderRegistry.list_providers()
 
     async def get_status(self, user_id: str) -> StatusInfo:
+        client = await self._client_for(user_id)
         conv_id = self._user_identity.get_conversation_id(user_id)
-        info = self._ai_client.get_info()
+        info = client.get_info()
         model = info.get("model", "unknown")
         total_tokens = 0
         input_tokens = 0
@@ -186,7 +186,7 @@ class CommandService:
         context_window_size = get_context_window(model)
 
         return StatusInfo(
-            provider=self._ai_client.provider_name,
+            provider=client.provider_name,
             model=model,
             conversation_id=conv_id,
             user_id=user_id,
@@ -237,9 +237,9 @@ class CommandService:
 
         return None
 
-    def _show_current_model(self) -> CommandResult:
-        current = self._ai_client.get_model_name()
-        models = self.list_models()
+    def _show_current_model(self, client: AIClient) -> CommandResult:
+        current = client.get_model_name()
+        models = self._models(client)
         lines = [f"Current model: {current}", "", "Available models:"]
         for m in models:
             indicator = " -> " if m.name == current else "    "
@@ -249,8 +249,8 @@ class CommandService:
         lines.append("Usage: /model <name>")
         return CommandResult(success=True, message="\n".join(lines))
 
-    def _show_current_provider(self) -> CommandResult:
-        current = self._ai_client.provider_name
+    def _show_current_provider(self, client: AIClient) -> CommandResult:
+        current = client.provider_name
         providers = self.list_providers()
         lines = [f"Current provider: {current}", "", "Available providers:"]
         for p in providers:

@@ -3,10 +3,12 @@ Conversations API
 CRUD operations for persisted conversation history.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from backend.deps import get_state
 from backend.models.conversations import ConversationCreate, ConversationUpdate
-from imports import DB_ERRORS, BaseTool, ConversationDB
+from backend.state import AppState
+from imports import DB_ERRORS, ConversationDB
 
 
 router = APIRouter()
@@ -57,14 +59,14 @@ async def get_conversation(conversation_id: str):
 
 
 @router.delete("/{conversation_id}")
-async def delete_conversation(conversation_id: str):
+async def delete_conversation(conversation_id: str, state: AppState = Depends(get_state)):
     """Delete a conversation."""
     try:
         conversation = await ConversationDB.get_conversation(conversation_id)
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
         await ConversationDB.delete_conversation(conversation_id)
-        BaseTool.cleanup_all()
+        state.remove_client(conversation_id)
         return {"status": "deleted", "id": conversation_id}
     except (HTTPException, *DB_ERRORS):
         raise

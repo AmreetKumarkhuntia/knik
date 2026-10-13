@@ -1,7 +1,7 @@
 """Service layer for Schedule (cron) CRUD operations.
 
-Single entry point for all schedule management — used by MCP tools,
-web routes, and the Scheduler class.
+Single entry point for all schedule management — used by the AI tools and web routes.
+Rejected input raises ``ValidationError`` from ``lib.workflows.errors``.
 """
 
 from typing import Any
@@ -10,6 +10,7 @@ from lib.services.db import ScheduleDB
 from lib.services.db.models import Schedule
 from lib.utils import printer
 from lib.utils.timezone_utils import validate_timezone
+from lib.workflows.errors import ValidationError
 from lib.workflows.schedule_parser import calculate_first_run, parse_recurrence_seconds
 
 
@@ -26,26 +27,29 @@ async def create_schedule(
         timezone: Timezone string (IANA or GMT/UTC offset). Default: 'UTC'.
 
     Returns:
-        Dict with 'success', 'schedule_id', 'next_run_at', 'recurrence_seconds' on success,
-        or 'error' (and optionally 'hint') on failure.
+        Dict with 'success', 'schedule_id', 'next_run_at', 'recurrence_seconds' and 'message'.
+
+    Raises:
+        ValidationError: an argument is missing, the timezone is unknown, or the description cannot be
+            parsed (that one carries a 'hint' in ``extra``).
     """
     if not target_workflow_id:
-        return {"error": "target_workflow_id is required"}
+        raise ValidationError("target_workflow_id is required")
 
     if not schedule_description:
-        return {"error": "schedule_description is required"}
+        raise ValidationError("schedule_description is required")
 
     is_valid_tz, tz_error = validate_timezone(timezone)
     if not is_valid_tz:
-        return {"error": tz_error}
+        raise ValidationError(tz_error)
 
     try:
         first_run = calculate_first_run(schedule_description, timezone)
     except ValueError as e:
-        return {
-            "error": f"Invalid schedule description: {str(e)}",
-            "hint": "Try formats like 'every 5 minutes', 'daily at 9am', 'every Monday at 2pm', or 'hourly'",
-        }
+        raise ValidationError(
+            f"Invalid schedule description: {str(e)}",
+            hint="Try formats like 'every 5 minutes', 'daily at 9am', 'every Monday at 2pm', or 'hourly'",
+        ) from e
 
     recurrence_seconds = parse_recurrence_seconds(schedule_description)
 

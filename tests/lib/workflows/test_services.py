@@ -1,10 +1,14 @@
-"""workflow_service and schedule_service against a real database (validation paths need none)."""
+"""workflow_service and schedule_service against a real database (validation and not-found paths need none)."""
+
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
 from lib.services.db import ExecutionDB, ScheduleDB
 from lib.workflows import schedule_service, workflow_service
 from lib.workflows.engine import WorkflowEngine
+from lib.workflows.errors import NotFoundError, ValidationError
 from tests.db_support import requires_db
 
 
@@ -18,17 +22,72 @@ DEFINITION = {
 }
 
 
+BAD_NODE_TYPE = {"nodes": {"a": {"type": "Teleport"}}, "connections": []}
+
+
+@pytest.fixture
+def no_workflows(monkeypatch):
+    """WorkflowDB as seen by workflow_service, holding no workflows."""
+    workflows = SimpleNamespace(get_workflow=AsyncMock(return_value=None), create_workflow=AsyncMock())
+    monkeypatch.setattr(workflow_service, "WorkflowDB", workflows)
+    return workflows
+
+
 async def test_create_workflow_rejects_an_invalid_definition():
-    result = await workflow_service.create_workflow("Bad", {"nodes": {}})
-    assert result["error"] == "Invalid workflow definition: Definition must contain 'connections' key"
+    with pytest.raises(ValidationError) as caught:
+        await workflow_service.create_workflow("Bad", {"nodes": {}})
+    assert caught.value.to_dict() == {
+        "error": "Invalid workflow definition: Definition must contain 'connections' key",
+        "details": None,
+    }
+
+    with pytest.raises(ValidationError) as caught:
+        await workflow_service.create_workflow("Bad", BAD_NODE_TYPE)
+    assert str(caught.value) == "Invalid workflow definition: Node a has invalid type 'Teleport'"
+    assert caught.value.extra["details"]["invalid_type"] == "Teleport"
 
 
-async def test_create_schedule_rejects_bad_input():
-    assert await schedule_service.create_schedule("", "every 5 minutes") == {"error": "target_workflow_id is required"}
-    assert await schedule_service.create_schedule("w", "") == {"error": "schedule_description is required"}
-    result = await schedule_service.create_schedule("w", "whenever you like")
-    assert result["error"].startswith("Invalid schedule description")
-    assert "hint" in result
+async def test_update_and_delete_of_an_unknown_workflow_raise_not_found(no_workflows):
+    expected = {"error": "Workflow missing not found", "workflow_id": "missing"}
+
+    # The id is checked before the definition, so an invalid one still reports the missing workflow.
+    for definition in (DEFINITION, BAD_NODE_TYPE):
+        with pytest.raises(NotFoundError) as caught:
+            await workflow_service.update_workflow("missing", "x", definition)
+        assert caught.value.to_dict() == expected
+
+    with pytest.raises(NotFoundError) as caught:
+        await workflow_service.delete_workflow("missing")
+    assert caught.value.to_dict() == expected
+    no_workflows.create_workflow.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        (("", "every 5 minutes"), {"error": "target_workflow_id is required"}),
+        (("w", ""), {"error": "schedule_description is required"}),
+        (
+            ("w", "every 5 minutes", "Mars/Olympus"),
+            {
+                "error": "Invalid timezone: 'Mars/Olympus'. Use IANA format (e.g., 'America/New_York', "
+                "'Asia/Kolkata') or GMT/UTC offset (e.g., 'GMT+5:30', 'UTC-5')"
+            },
+        ),
+    ],
+)
+async def test_create_schedule_rejects_bad_input(args, expected):
+    with pytest.raises(ValidationError) as caught:
+        await schedule_service.create_schedule(*args)
+    assert caught.value.to_dict() == expected
+
+
+async def test_an_unparseable_schedule_description_comes_with_a_hint():
+    with pytest.raises(ValidationError) as caught:
+        await schedule_service.create_schedule("w", "whenever you like")
+    assert str(caught.value).startswith("Invalid schedule description")
+    assert list(caught.value.to_dict()) == ["error", "hint"]
+    assert caught.value.extra["hint"].startswith("Try formats like")
 
 
 @requires_db
@@ -38,7 +97,10 @@ async def test_workflow_lifecycle(db):
 
     updated = await workflow_service.update_workflow("w1", "Nightly v2", DEFINITION)
     assert updated == {"success": True, "workflow_id": "w1", "name": "Nightly v2", "description": "d"}
-    assert (await workflow_service.update_workflow("missing", "x", DEFINITION))["error"] == "Workflow missing not found"
+    with pytest.raises(NotFoundError):
+        await workflow_service.update_workflow("missing", "x", DEFINITION)
+    with pytest.raises(ValidationError):
+        await workflow_service.update_workflow("w1", "Broken", BAD_NODE_TYPE)
 
     workflow = await workflow_service.get_workflow("w1")
     assert workflow is not None
@@ -96,5 +158,6 @@ async def test_delete_workflow_reports_the_schedules_it_removed(db):
         "deleted_schedules": 0,
         "message": "Workflow removed",
     }
-    assert (await workflow_service.delete_workflow("w1"))["error"] == "Workflow w1 not found"
+    with pytest.raises(NotFoundError, match="^Workflow w1 not found$"):
+        await workflow_service.delete_workflow("w1")
     assert await schedule_service.list_schedules() == []

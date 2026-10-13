@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import signal
 
-from imports import DB_ERRORS, Config, PostgresDB, Scheduler
+from imports import DB_ERRORS, Config, PostgresDB, Scheduler, build_workflow_client
 from imports import printer as logger
 
 
@@ -13,7 +13,7 @@ class WorkerApp:
 
     def __init__(self):
         self.config = Config()
-        self.scheduler = Scheduler()
+        self.scheduler = Scheduler(ai_client_factory=build_workflow_client)
 
     async def run(self):
         """Run the application until interrupted."""

@@ -1,7 +1,8 @@
 from typing import Any
 
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 from lib.workflows import workflow_service
+from lib.workflows.errors import WorkflowError
 
 
 WORKFLOW_DEFINITIONS = [
@@ -100,6 +101,8 @@ class WorkflowTool(BaseTool):
             printer.info(f"Creating workflow: {name}")
             result = run_async(workflow_service.create_workflow(name, definition, description))
             return result
+        except WorkflowError as e:
+            return e.to_dict()
         except Exception as e:
             printer.error(f"Error creating workflow: {e}")
             return {"error": f"Failed to create workflow: {str(e)}"}
@@ -131,6 +134,8 @@ class WorkflowTool(BaseTool):
         try:
             result = run_async(workflow_service.delete_workflow(workflow_id, cascade=True))
             return result
+        except WorkflowError as e:
+            return e.to_dict()
         except Exception as e:
             printer.error(f"Error removing workflow: {e}")
             return {"error": f"Failed to remove workflow: {str(e)}", "workflow_id": workflow_id}

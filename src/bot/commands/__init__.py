@@ -1,36 +1,29 @@
-"""Bot command system - registry, dispatcher, and handler registration."""
+"""Bot command system: the shared commands plus the bot's own /new wording, /revoke and /help."""
 
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING
 
-from .handlers import (
-    handle_help,
-    handle_model,
-    handle_new,
-    handle_provider,
-    handle_resume,
-    handle_revoke,
-    handle_sessions,
-    handle_status,
-)
+from imports import register_shared_commands
+
+from .handlers import handle_help, handle_new, handle_revoke
 from .registry import BotCommandDispatcher, BotCommandRegistry
 
 
 if TYPE_CHECKING:
+    from bot.user_client_manager import UserClientManager
     from imports import CommandService
 
 
-def create_command_system(command_service: CommandService) -> tuple[BotCommandRegistry, BotCommandDispatcher]:
+def create_command_system(
+    command_service: CommandService, user_clients: UserClientManager
+) -> tuple[BotCommandRegistry, BotCommandDispatcher]:
     registry = BotCommandRegistry()
 
-    registry.register("new", "Start a fresh conversation", handle_new)
-    registry.register("resume", "Resume a previous conversation", handle_resume)
-    registry.register("sessions", "List recent conversations", handle_sessions)
-    registry.register("model", "Show or switch AI model", handle_model)
-    registry.register("provider", "Show or switch AI provider", handle_provider)
-    registry.register("status", "Show current configuration", handle_status)
-    registry.register("revoke", "Revoke all tool approvals", handle_revoke)
+    register_shared_commands(registry)
+    registry.register("new", "Start a fresh conversation", partial(handle_new, user_clients=user_clients))
+    registry.register("revoke", "Revoke all tool approvals", partial(handle_revoke, user_clients=user_clients))
     registry.register("help", "Show available commands", handle_help)
 
     dispatcher = BotCommandDispatcher(registry, command_service)

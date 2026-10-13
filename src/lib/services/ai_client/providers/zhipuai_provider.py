@@ -20,7 +20,7 @@ from .base_provider import LangChainProvider
 
 
 if TYPE_CHECKING:
-    from ..registry import MCPServerRegistry
+    from ..tool_provider import ToolProvider
 
 try:
     from langchain.agents import create_agent
@@ -39,11 +39,11 @@ class ZhipuAIProvider(LangChainProvider):
     def get_provider_name(cls) -> str:
         return "zhipuai"
 
-    def _create_agent(self, llm, mcp_registry, system_instruction):
-        if not create_agent or not mcp_registry:
+    def _create_agent(self, llm, tool_registry, system_instruction):
+        if not create_agent or not tool_registry:
             return None
 
-        tools = mcp_registry.create_langchain_tools()
+        tools = tool_registry.create_langchain_tools()
 
         if not tools:
             printer.warning("GLM: No tools available for agent creation")
@@ -65,7 +65,7 @@ class ZhipuAIProvider(LangChainProvider):
         model_name: str = "glm-4.5-flash",
         temperature: float = 0.7,
         max_tokens: int | None = None,
-        mcp_registry: Optional["MCPServerRegistry"] = None,
+        tool_registry: Optional["ToolProvider"] = None,
         system_instruction: str | None = None,
         tool_callback=None,
         **kwargs,
@@ -112,13 +112,13 @@ class ZhipuAIProvider(LangChainProvider):
             **filtered_kwargs,
         )
 
-        agent = self._create_agent(llm, mcp_registry, system_instruction)
+        agent = self._create_agent(llm, tool_registry, system_instruction)
 
         super().__init__(
             llm=llm,
             agent=agent,
             provider_name="glm",
-            mcp_registry=mcp_registry,
+            tool_registry=tool_registry,
             system_instruction=system_instruction,
             tool_callback=tool_callback,
             model=model_name,

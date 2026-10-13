@@ -1,91 +1,27 @@
 """Admin API endpoints — manage AI client settings and configuration."""
 
-import asyncio
+from fastapi import APIRouter, Depends, HTTPException
 
-from fastapi import APIRouter, HTTPException
-
-from backend import state
-from backend.config import WebBackendConfig
+from backend.deps import get_state
 from backend.models.admin import ApiKeyCreate, McpToolToggle, SettingsUpdate
-from imports import (
-    ALL_TOOL_CLASSES,
-    DB_ERRORS,
-    ApiKeyDB,
-    Config,
-    KokoroVoiceModel,
-    McpToolsDB,
-    ProviderRegistry,
-    SettingsDB,
-    printer,
-)
+from backend.state import AppState
+from imports import DB_ERRORS, ApiKeyDB, Config, ProviderRegistry, printer
 
 
 router = APIRouter()
 
-config = WebBackendConfig()
-
-# Display categories for the built-in MCP tool groups.
-_MCP_CATEGORY = {
-    "file": "System",
-    "shell": "System",
-    "text": "Dev",
-    "utils": "Dev",
-    "cron": "Automation",
-    "workflow": "Automation",
-    "browser": "Web",
-}
-
 
 @router.get("/settings")
-async def get_settings():
-    """Current settings: persisted preferences merged over env/runtime defaults."""
-    # Without a database this still answers with the env/runtime defaults, which are then what is in effect.
-    try:
-        settings = await SettingsDB.get()
-    except DB_ERRORS as e:
-        printer.warning(f"Persisted settings unavailable, showing defaults: {e}")
-        settings = None
-    persisted = settings.to_dict() if settings else {}
-    temperature = persisted.get("temperature")
-    return {
-        "provider": persisted.get("provider") or state.get_factory_provider() or config.ai_provider,
-        "model": persisted.get("model") or state.get_factory_model() or config.ai_model,
-        "voice": persisted.get("voice") or config.voice_name,
-        "temperature": temperature if temperature is not None else config.temperature,
-        "max_tokens": persisted.get("max_tokens") or config.max_tokens,
-        "sample_rate": config.sample_rate,
-        "stream_responses": persisted.get("stream_responses", True),
-        "send_telemetry": persisted.get("send_telemetry", False),
-        "display_name": persisted.get("display_name"),
-        "username": persisted.get("username"),
-        "initialized": state.is_initialized(),
-    }
+async def get_settings(state: AppState = Depends(get_state)):
+    """Current settings: persisted preferences merged over the values in effect and the env defaults."""
+    return await state.settings.view()
 
 
 @router.post("/settings")
-async def update_settings(settings: SettingsUpdate):
+async def update_settings(settings: SettingsUpdate, state: AppState = Depends(get_state)):
+    """Persist the given preferences and apply them: new chats use the new AI settings, TTS the new voice."""
     try:
-        await state.init(config)
-
-        if settings.provider or settings.model or settings.api_base or settings.api_key:
-            state.update_factory_config(
-                provider=settings.provider,
-                model=settings.model,
-                api_base=settings.api_base,
-                api_key=settings.api_key,
-            )
-            printer.info(f"AI factory config updated: {settings.provider or 'same'}/{settings.model or 'same'}")
-
-        if settings.voice:
-            state.tts_processor = await asyncio.to_thread(KokoroVoiceModel, voice=settings.voice)
-            printer.info(f"TTS voice updated: {settings.voice}")
-
-        # Persist provided preferences so they survive restarts, then refresh the
-        # in-memory overrides used the next time a client/TTS is (re)built.
-        await SettingsDB.upsert(settings.model_dump(exclude_none=True))
-        saved = await SettingsDB.get()
-        state.set_persisted_overrides(saved.to_dict() if saved else None)
-
+        await state.update_settings(settings)
         return {"status": "success", "message": "Settings updated"}
 
     except DB_ERRORS:
@@ -129,38 +65,15 @@ async def list_voices():
 
 
 @router.get("/mcp-tools")
-async def list_mcp_tools():
+async def list_mcp_tools(state: AppState = Depends(get_state)):
     """List the built-in MCP tool groups with function counts and enabled state."""
-    try:
-        overrides = await McpToolsDB.get_overrides()
-    except DB_ERRORS as e:
-        # Every group is enabled unless overridden, so the defaults are a truthful answer.
-        printer.warning(f"MCP tool overrides unavailable, showing defaults: {e}")
-        overrides = {}
-    tools = []
-    for tool_cls in ALL_TOOL_CLASSES:
-        try:
-            instance = tool_cls()
-            name = instance.name
-            count = len(instance.get_definitions())
-        except Exception as e:
-            printer.debug(f"Skipping MCP tool {tool_cls.__name__}: {e}")
-            continue
-        tools.append(
-            {
-                "name": name,
-                "category": _MCP_CATEGORY.get(name, "Tools"),
-                "count": count,
-                "enabled": overrides.get(name, True),
-            }
-        )
-    return {"tools": tools}
+    return {"tools": await state.settings.tool_groups()}
 
 
 @router.put("/mcp-tools/{tool_name}")
-async def toggle_mcp_tool(tool_name: str, body: McpToolToggle):
-    """Enable or disable a built-in MCP tool group."""
-    await McpToolsDB.set_enabled(tool_name, body.enabled)
+async def toggle_mcp_tool(tool_name: str, body: McpToolToggle, state: AppState = Depends(get_state)):
+    """Enable or disable a built-in MCP tool group, for every chat from its next message on."""
+    await state.set_tool_group_enabled(tool_name, body.enabled)
     return {"status": "success", "tool_name": tool_name, "enabled": body.enabled}
 
 

@@ -48,12 +48,6 @@ modules = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Services never import tools, workflows or commands"
-type = "forbidden"
-source_modules = ["lib.services"]
-forbidden_modules = ["lib.tools", "lib.workflows", "lib.commands"]
-
-[[tool.importlinter.contracts]]
 name = "The database service imports no other service"
 type = "forbidden"
 source_modules = ["lib.services.db"]
@@ -65,8 +59,16 @@ forbidden_modules = [
     "lib.services.tts",
 ]
 
+# Higher layers may import lower ones, never the reverse. workflows and commands sit side by side and
+# do not import each other; services never reach up to tools, workflows or commands.
 [[tool.importlinter.contracts]]
-name = "Utils and core stay at the bottom of lib"
-type = "forbidden"
-source_modules = ["lib.utils", "lib.core"]
-forbidden_modules = ["lib.services", "lib.tools", "lib.workflows", "lib.commands"]
+name = "lib layers: tools over workflows and commands (independent) over services over utils over core"
+type = "layers"
+containers = ["lib"]
+layers = [
+    "tools",
+    "workflows | commands",
+    "services",
+    "utils",
+    "core",
+]

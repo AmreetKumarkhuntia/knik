@@ -3,11 +3,17 @@
 import asyncio
 import json
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import Any
 
 from lib.services.ai_client.client import AIClient
-from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
+from lib.services.ai_client.factory import ClientSettings, build_client
 from lib.utils import printer as logger
+
+
+# Builds the client for an AI node; the bool is the node's use_tools. Workflows sit below the tools, so the
+# apps pass a factory that adds them. The node owns the client it gets and cleans up its tools afterwards.
+AIClientFactory = Callable[[ClientSettings, bool], AIClient]
 
 
 class BaseNode(ABC):
@@ -171,6 +177,7 @@ class AIExecutionNode(BaseNode):
         provider: str = "vertex",
         temperature: float = 0.7,
         use_tools: bool = True,
+        ai_client_factory: AIClientFactory | None = None,
     ):
         super().__init__(node_id)
         self.prompt = prompt
@@ -178,6 +185,7 @@ class AIExecutionNode(BaseNode):
         self.provider = provider
         self.temperature = temperature
         self.use_tools = use_tools
+        self.ai_client_factory = ai_client_factory
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Run the configured AI model and return its response."""
@@ -189,22 +197,15 @@ class AIExecutionNode(BaseNode):
             # .invoke() call to a worker thread so nothing blocks the asyncio
             # event loop (matches the web backend _build_ai + to_thread pattern).
             def _build_and_chat() -> tuple[str, dict | None]:
-                if self.use_tools:
-                    # Imported here: lib.tools imports lib.workflows, so a module-level import would be circular.
-                    from lib.tools.index import register_all_tools
-
-                    mcp_registry = MCPServerRegistry()
-                    register_all_tools(mcp_registry)
-                else:
-                    mcp_registry = None
-
-                ai_client = AIClient(
-                    provider=self.provider,
-                    model=self.model,
-                    temperature=self.temperature,
-                    mcp_registry=mcp_registry,
-                )
-                chat_response = ai_client.chat(prompt=resolved_prompt)
+                settings = ClientSettings(provider=self.provider, model=self.model, temperature=self.temperature)
+                factory = self.ai_client_factory
+                # Without a factory there is no way to reach the tools, so the node runs without them.
+                ai_client = factory(settings, self.use_tools) if factory else build_client(settings)
+                try:
+                    chat_response = ai_client.chat(prompt=resolved_prompt)
+                finally:
+                    if ai_client.tool_registry is not None:
+                        ai_client.tool_registry.cleanup_tools()
                 usage = ai_client.last_usage
                 if usage is None:
                     usage = AIClient._estimate_usage(resolved_prompt, chat_response, self.model)

@@ -1,0 +1,16 @@
+"""What the AI client needs from a tool registry. The registry itself lives in ``lib.tools``, above the services."""
+
+from collections.abc import Callable
+from typing import Any, Protocol
+
+
+class ToolProvider(Protocol):
+    def create_langchain_tools(self) -> list: ...
+
+    def register_tool(self, tool_dict: dict[str, Any], implementation: Callable | None = None) -> None: ...
+
+    def get_tools(self) -> list[dict[str, Any]]: ...
+
+    def execute_tool(self, tool_name: str, **kwargs: Any) -> Any: ...
+
+    def cleanup_tools(self) -> None: ...

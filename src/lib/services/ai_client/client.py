@@ -14,6 +14,7 @@ import asyncio
 import contextlib
 import json
 from collections.abc import AsyncGenerator, Generator
+from dataclasses import replace
 from typing import Any, ClassVar
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
@@ -25,7 +26,11 @@ from .compaction import ConversationCompactor
 from .providers import BaseAIProvider
 from .providers.base_provider import ChatResult
 from .registry import ProviderRegistry
+from .settings import ClientSettings
+from .settings import provider_kwargs as settings_for_provider
+from .stream_events import ConversationReady, ProviderEvent, StreamDone, StreamError, StreamEvent, TextDelta
 from .titles import generate_and_set_title
+from .tool_provider import ToolProvider
 
 
 class AIClient:
@@ -49,15 +54,16 @@ class AIClient:
         self,
         provider: str = "vertex",
         auto_fallback_to_mock: bool = True,
-        mcp_registry=None,
+        tool_registry: ToolProvider | None = None,
         system_instruction: str | None = None,
         tool_callback=None,
+        settings: ClientSettings | None = None,
         **provider_kwargs,
     ):
         self.provider_name = provider.lower()
         self.auto_fallback_to_mock = auto_fallback_to_mock
         self._provider: BaseAIProvider | None = None
-        self._mcp_registry = mcp_registry
+        self._tool_registry = tool_registry
         self.tool_callback = tool_callback
         self.last_usage: dict[str, int] | None = None
         self.last_tool_tokens: dict | None = None
@@ -65,9 +71,12 @@ class AIClient:
         self.last_context_tokens: int = 0
         self._system_instruction = system_instruction
         self._provider_kwargs = dict(provider_kwargs)
+        # Every setting the client was built from, kept so a model or provider switch can pass the new
+        # provider the settings it accepts (build_client hands each provider only its own).
+        self._settings = settings
 
-        if mcp_registry:
-            provider_kwargs["mcp_registry"] = mcp_registry
+        if tool_registry:
+            provider_kwargs["tool_registry"] = tool_registry
         if system_instruction:
             provider_kwargs["system_instruction"] = system_instruction
         if tool_callback:
@@ -85,7 +94,7 @@ class AIClient:
             if not self._provider.is_configured() and auto_fallback_to_mock:
                 printer.warning(f"{provider} not configured. Using mock provider.")
                 mock_class = ProviderRegistry.get("mock")
-                self._provider = mock_class(mcp_registry=mcp_registry)
+                self._provider = mock_class(tool_registry=tool_registry)
                 self.provider_name = "mock"
             else:
                 # Eagerly discover models to warm the context-window cache.
@@ -99,16 +108,20 @@ class AIClient:
                 printer.warning(f"Error initializing {provider}: {e}")
                 printer.info("Using mock provider.")
                 mock_class = ProviderRegistry.get("mock")
-                self._provider = mock_class(mcp_registry=mcp_registry)
+                self._provider = mock_class(tool_registry=tool_registry)
                 self.provider_name = "mock"
             else:
                 raise
 
+    @property
+    def tool_registry(self) -> ToolProvider | None:
+        return self._tool_registry
+
     def _build_provider_kwargs(self, **overrides) -> dict[str, Any]:
         """Build provider kwargs from stored state, with optional overrides."""
         kwargs: dict[str, Any] = dict(self._provider_kwargs)
-        if self._mcp_registry:
-            kwargs["mcp_registry"] = self._mcp_registry
+        if self._tool_registry:
+            kwargs["tool_registry"] = self._tool_registry
         if self._system_instruction:
             kwargs["system_instruction"] = self._system_instruction
         if self.tool_callback:
@@ -116,12 +129,22 @@ class AIClient:
         kwargs.update(overrides)
         return kwargs
 
+    def _switch_settings(self, *, provider: str, model: str | None) -> dict[str, Any]:
+        """Provider kwargs for a switch, filtered from the full settings for the provider switched to."""
+        assert self._settings is not None
+        self._settings = replace(self._settings, provider=provider, model=model)
+        self._provider_kwargs = settings_for_provider(self._settings)
+        return self._build_provider_kwargs()
+
     def set_model(self, model_name: str) -> None:
         """Swap the model in-place, preserving registry and all other state."""
         provider_class = ProviderRegistry.get(self.provider_name)
         if provider_class is None:
             raise ValueError(f"Unknown provider: {self.provider_name}")
-        kwargs = self._build_provider_kwargs(model_name=model_name)
+        if self._settings is not None:
+            kwargs = self._switch_settings(provider=self.provider_name, model=model_name)
+        else:
+            kwargs = self._build_provider_kwargs(model_name=model_name)
         self._provider = provider_class(**kwargs)
         printer.info(f"Model swapped to {model_name} (provider: {self.provider_name})")
 
@@ -132,9 +155,12 @@ class AIClient:
         if provider_class is None:
             available = ProviderRegistry.list_providers()
             raise ValueError(f"Unknown provider: {provider_name}. Available: {', '.join(available)}")
-        kwargs = self._build_provider_kwargs()
-        if model_name:
-            kwargs["model_name"] = model_name
+        if self._settings is not None:
+            kwargs = self._switch_settings(provider=provider_name, model=model_name or self._settings.model)
+        else:
+            kwargs = self._build_provider_kwargs()
+            if model_name:
+                kwargs["model_name"] = model_name
         self._provider = provider_class(**kwargs)
         self.provider_name = provider_name
         printer.info(f"Provider swapped to {provider_name}")
@@ -150,7 +176,7 @@ class AIClient:
         """
         Send a chat message and get a response.
 
-        Tool usage is automatic - if mcp_registry was provided during initialization,
+        Tool usage is automatic - if tool_registry was provided during initialization,
         the AI can use registered tools. Otherwise, it's just a direct LLM call.
 
         Token usage from the call is stored in ``self.last_usage``,
@@ -205,9 +231,9 @@ class AIClient:
         **kwargs,
     ) -> Generator[str, None, None]:
         """
-        Stream a chat response.
+        Stream a chat response as text: the text of :meth:`stream_events`, without the tool calls.
 
-        Tool usage is automatic - if mcp_registry was provided during initialization,
+        Tool usage is automatic - if tool_registry was provided during initialization,
         the AI can use registered tools. Otherwise, it's just a direct LLM streaming.
 
         Token usage is available in self.last_usage after the stream completes.
@@ -220,7 +246,28 @@ class AIClient:
             **kwargs: Additional provider-specific parameters
 
         Yields:
-            str: Chunks of the AI's response
+            str: Chunks of the AI's response; on a provider failure, the "Chat streaming error: ..." text
+        """
+        for event in self.stream_events(
+            prompt=prompt, max_tokens=max_tokens, temperature=temperature, history=history, **kwargs
+        ):
+            match event:
+                case TextDelta(text=text) | StreamError(message=text):
+                    yield text
+
+    def stream_events(
+        self,
+        prompt: str,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        history: list | None = None,
+        **kwargs,
+    ) -> Generator[ProviderEvent | StreamError, None, None]:
+        """Stream a chat response as typed events, provider-only like :meth:`chat_stream`.
+
+        Yields the provider's ``TextDelta``s, with ``ToolCallStarted``/``ToolCallFinished`` around each tool call.
+        If the provider fails, the error is logged and a ``StreamError`` ends the stream. Token usage is in
+        ``self.last_usage`` once the stream is exhausted (None after a failure).
         """
         try:
             self.last_usage = None
@@ -245,7 +292,7 @@ class AIClient:
             self.last_tool_tokens = None
             self.last_tool_interactions = None
             self.last_context_tokens = 0
-            yield error_msg
+            yield StreamError(error_msg)
 
     async def achat(
         self,
@@ -341,16 +388,24 @@ class AIClient:
         history: list | None = None,
         provider_meta: dict[str, str] | None = None,
         **kwargs,
-    ) -> AsyncGenerator[str | dict, None]:
+    ) -> AsyncGenerator[StreamEvent, None]:
         """Async streaming chat with full conversation lifecycle.
 
-        Yields ``str`` chunks during streaming.  After the stream is
-        exhausted two *dict* sentinels may be yielded:
+        Yields typed events (``stream_events.py``), in this order:
 
-        * ``{"__conversation_id__": "<uuid>"}`` — emitted first so the
-          caller can forward it before any text arrives.
-        * ``{"__done__": True, "conversation_id": ..., "usage": ...,
-          "full_response": ...}`` — emitted last with metadata.
+        * ``ConversationReady(conversation_id)`` — first, so the caller
+          can forward the id before any text.  Not sent when the
+          database is unavailable.
+        * ``TextDelta(text)`` — the reply as it streams.  Each tool call
+          sits between a ``ToolCallStarted`` and a ``ToolCallFinished``.
+        * ``StreamError(message)`` — only if the provider fails; its
+          message counts as reply text (shown and saved like a
+          ``TextDelta``) and nothing but ``StreamDone`` follows.
+        * ``StreamDone(conversation_id, usage, full_response)`` — always
+          last, once the reply is saved.
+
+        An error outside the provider stream (a non-database failure
+        while saving, say) is raised instead of yielded.
 
         See :meth:`achat` for the lifecycle description.
 
@@ -365,7 +420,7 @@ class AIClient:
             **kwargs: Forwarded to the underlying provider.
 
         Yields:
-            ``str`` text chunks, then a metadata ``dict``.
+            ``StreamEvent``s, ending with ``StreamDone``.
         """
         meta = provider_meta or {}
         cfg = Config()
@@ -374,7 +429,7 @@ class AIClient:
 
         # Emit conversation_id early so the caller can forward it
         if conversation_id:
-            yield {"__conversation_id__": conversation_id}
+            yield ConversationReady(conversation_id)
 
         if conversation_id:
             await self._append_message(conversation_id, "user", prompt, meta)
@@ -382,34 +437,30 @@ class AIClient:
         if history is None and conversation_id:
             history = await self._load_history(conversation_id, cfg.history_context_size)
 
-        queue: asyncio.Queue[str | dict | None] = asyncio.Queue()
+        queue: asyncio.Queue[ProviderEvent | StreamError | None] = asyncio.Queue()
         loop = asyncio.get_running_loop()
 
         def _produce():
             try:
-                for chunk in self.chat_stream(
+                for event in self.stream_events(
                     prompt=prompt,
                     history=history,
                     max_tokens=max_tokens,
                     temperature=temperature,
                     **kwargs,
                 ):
-                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
             finally:
                 loop.call_soon_threadsafe(queue.put_nowait, None)
 
         producer = loop.run_in_executor(None, _produce)
 
         full_response = ""
-        while True:
-            chunk = await queue.get()
-            if chunk is None:
-                break
-            if isinstance(chunk, dict):
-                yield chunk
-            else:
-                yield chunk
-                full_response += chunk
+        while (event := await queue.get()) is not None:
+            yield event
+            match event:
+                case TextDelta(text=text) | StreamError(message=text):
+                    full_response += text
 
         await producer
 
@@ -428,12 +479,7 @@ class AIClient:
                 tool_interactions=tool_interactions,
             )
 
-        yield {
-            "__done__": True,
-            "conversation_id": conversation_id,
-            "usage": usage,
-            "full_response": full_response,
-        }
+        yield StreamDone(conversation_id=conversation_id, usage=usage, full_response=full_response)
 
     def _chat_with_usage(
         self,
@@ -742,18 +788,18 @@ class AIClient:
             tool_dict: Tool schema (name, description, parameters)
             implementation: Python function that implements the tool
         """
-        if self._mcp_registry:
-            self._mcp_registry.register_tool(tool_dict, implementation)
+        if self._tool_registry:
+            self._tool_registry.register_tool(tool_dict, implementation)
 
     def get_registered_tools(self) -> list[dict[str, Any]]:
-        if self._mcp_registry:
-            return self._mcp_registry.get_tools()
+        if self._tool_registry:
+            return self._tool_registry.get_tools()
         return []
 
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
-        if self._mcp_registry:
-            return self._mcp_registry.execute_tool(tool_name, **kwargs)
-        raise ValueError("No MCP registry configured")
+        if self._tool_registry:
+            return self._tool_registry.execute_tool(tool_name, **kwargs)
+        raise ValueError("No tool registry configured")
 
 
 class MockAIClient(AIClient):

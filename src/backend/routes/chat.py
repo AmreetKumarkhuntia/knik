@@ -5,37 +5,33 @@ import base64
 import io
 
 import soundfile as sf
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from backend import state
-from backend.config import WebBackendConfig
-from backend.models.chat import SimpleChatRequest
+from backend.deps import get_state
+from backend.models.chat import ChatRequest
+from backend.state import AppState
 from imports import printer
 
 
 router = APIRouter()
 
-config = WebBackendConfig()
-
 
 @router.post("/")
-async def chat(request: SimpleChatRequest):
+async def chat(request: ChatRequest, state: AppState = Depends(get_state)):
     try:
-        await state.init(config)
+        config = state.config
+        async with state.client(request.conversation_id) as ai_client:
+            response_text, conversation_id, usage = await ai_client.achat(
+                prompt=request.message,
+                conversation_id=request.conversation_id,
+                provider_meta={"provider": config.ai_provider, "model": config.ai_model},
+            )
 
-        ai_client = await state.get_or_create_ai_client(request.conversation_id)
+            # If achat created a new conversation_id, register this client for it
+            if conversation_id and conversation_id != request.conversation_id:
+                state.set_client(conversation_id, ai_client)
 
-        response_text, conversation_id, usage = await ai_client.achat(
-            prompt=request.message,
-            conversation_id=request.conversation_id,
-            provider_meta={"provider": config.ai_provider, "model": config.ai_model},
-        )
-
-        # If achat created a new conversation_id, register this client for it
-        if conversation_id and conversation_id != request.conversation_id:
-            state.set_client(conversation_id, ai_client)
-
-        audio_data, sample_rate = await asyncio.to_thread(state.tts_processor.generate, response_text)
+        audio_data, sample_rate = await asyncio.to_thread(state.tts.generate, response_text)
 
         buffer = io.BytesIO()
         sf.write(buffer, audio_data, sample_rate, format="WAV")

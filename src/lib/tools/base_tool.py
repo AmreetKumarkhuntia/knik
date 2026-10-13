@@ -1,10 +1,13 @@
+"""Base class for a tool group: JSON Schema definitions plus the functions that implement them."""
+
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any, ClassVar
 
 
 class BaseTool(ABC):
-    _instances: ClassVar[list["BaseTool"]] = []
+    """Instances are owned by the ToolRegistry that registered them, which calls cleanup()."""
+
     consent_required_for: ClassVar[frozenset[str]] = frozenset()
 
     @property
@@ -19,11 +22,3 @@ class BaseTool(ABC):
 
     def cleanup(self) -> None:  # noqa: B027
         pass
-
-    def __init__(self) -> None:
-        BaseTool._instances.append(self)
-
-    @classmethod
-    def cleanup_all(cls) -> None:
-        for instance in cls._instances:
-            instance.cleanup()

@@ -6,9 +6,10 @@
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A new AI provider                                    | `src/lib/services/ai_client/providers/` - extend `LangChainProvider`, register via `ProviderRegistry`                                                                |
 | A new tool group                                     | `src/lib/tools/<group>_tool.py` (a `BaseTool` subclass), then add the class to `ALL_TOOL_CLASSES` in `src/lib/tools/catalog.py`                                      |
-| A new shared command (model/provider/sessions logic) | Logic in `src/lib/commands/service.py`; handlers in `src/console/commands/handlers.py` and `src/bot/commands/handlers.py`, registered in each `commands/__init__.py` |
+| A new shared command (model/provider/sessions logic) | Logic in `src/lib/commands/service.py`; an async handler plus a `SHARED_COMMANDS` entry in `src/lib/commands/handlers.py` (both apps get it; the bot overrides `/new`). App-only commands go in `src/<app>/commands/handlers.py` |
 | A new console-only command                           | `src/console/tools/` as `*_cmd.py`, register in `tools/index.py`                                                                                                     |
 | A new web API route                                  | `src/backend/routes/`, with its Pydantic models in `src/backend/models/`; include the router in `src/backend/main.py`                                                |
+| State shared by backend routes                       | An attribute on `AppState` in `src/backend/state.py`, reached through `Depends(get_state)`; settings logic goes in `src/backend/settings_service.py`                  |
 | A new bot feature                                    | `src/bot/`                                                                                                                                                           |
 | A new React page/widget                              | Under `src/apps/web/frontend/src/lib/`: pages in `pages/`, widgets in `widgets/`, components in `components/`                                                        |
 | A new integration (external system, DB, device)      | `src/lib/services/<name>/`                                                                                                                                           |
@@ -29,4 +30,4 @@ Know these when debugging startup or tracing execution flow:
 - `src/console/app.py` - Console app
 - `src/apps/web/frontend/src/main.tsx` - React frontend
 - `src/lib/tools/index.py` - Tool registration (`register_all_tools`)
-- `src/lib/workflows/scheduler.py` - Scheduler (`loop.py` holds the poll loop)
+- `src/lib/workflows/scheduler.py` - Scheduler facade: `run(workflow_id)`, `start()`/`stop()` (`loop.py` holds the poll loop)
