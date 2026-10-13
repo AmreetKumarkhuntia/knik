@@ -47,7 +47,9 @@ def _assert_frontend_run(outputs: dict, factory: RecordingAIFactory) -> None:
     [(settings, use_tools)] = factory.calls
     assert settings == ClientSettings(provider="vertex", model="gemini-3.0-flash", temperature=0.2)
     assert use_tools is False
-    assert factory.client.chat.call_args.kwargs["prompt"].startswith("Summarise tides")
+    chat_kwargs = factory.client.chat.call_args.kwargs
+    assert chat_kwargs["prompt"].startswith("Summarise tides")
+    assert chat_kwargs["temperature"] == 0.2
 
 
 async def test_a_frontend_definition_runs_with_its_markers_as_steps(executions):
