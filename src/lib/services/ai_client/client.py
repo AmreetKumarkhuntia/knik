@@ -11,7 +11,6 @@ audio encoding, etc.).
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import json
 from collections.abc import AsyncGenerator, Generator
 from dataclasses import replace
@@ -100,8 +99,12 @@ class AIClient:
                 # Eagerly discover models to warm the context-window cache.
                 # This ensures get_context_window() returns API-sourced values
                 # before the first should_compact() call.
-                with contextlib.suppress(Exception):
+                try:
                     self._provider.get_models_with_fallback()
+                except Exception as e:
+                    printer.warning(
+                        f"Model list for {self.provider_name} not loaded; using default context windows: {e}"
+                    )
 
         except Exception as e:
             if auto_fallback_to_mock:
@@ -191,36 +194,38 @@ class AIClient:
 
         Returns:
             str: The AI's response
+
+        Raises:
+            Whatever the provider raised, with the token attributes cleared. The error is never returned as the
+            reply, so callers cannot save, summarise or title it by mistake.
         """
+        # Held for the whole call: a /model or /provider may swap self._provider while it runs.
+        provider = self._provider
         try:
-            result = self._provider.chat(
+            result = provider.chat(
                 prompt=prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 history=history,
                 **kwargs,
             )
-
-            if isinstance(result, ChatResult):
-                self.last_usage = result.usage
-                self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
-                self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
-                self.last_context_tokens = getattr(self._provider, "last_context_tokens", 0)
-                return result.content
-            else:
-                self.last_usage = getattr(self._provider, "last_usage", None)
-                self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
-                self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
-                self.last_context_tokens = getattr(self._provider, "last_context_tokens", 0)
-                return result
-        except Exception as e:
-            error_msg = f"Chat error: {e}"
-            printer.error(error_msg)
+        except Exception:
             self.last_usage = None
             self.last_tool_tokens = None
             self.last_tool_interactions = None
             self.last_context_tokens = 0
-            return error_msg
+            raise
+
+        if isinstance(result, ChatResult):
+            self.last_usage = result.usage
+            content = result.content
+        else:
+            self.last_usage = getattr(provider, "last_usage", None)
+            content = result
+        self.last_tool_tokens = getattr(provider, "last_tool_tokens", None)
+        self.last_tool_interactions = getattr(provider, "last_tool_interactions", None)
+        self.last_context_tokens = getattr(provider, "last_context_tokens", 0)
+        return content
 
     def chat_stream(
         self,
@@ -269,22 +274,24 @@ class AIClient:
         If the provider fails, the error is logged and a ``StreamError`` ends the stream. Token usage is in
         ``self.last_usage`` once the stream is exhausted (None after a failure).
         """
+        # Held for the whole stream: a /model or /provider may swap self._provider while it runs.
+        provider = self._provider
         try:
             self.last_usage = None
             self.last_tool_tokens = None
             self.last_tool_interactions = None
             self.last_context_tokens = 0
-            yield from self._provider.chat_stream(
+            yield from provider.chat_stream(
                 prompt=prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 history=history,
                 **kwargs,
             )
-            self.last_usage = getattr(self._provider, "last_usage", None)
-            self.last_tool_tokens = getattr(self._provider, "last_tool_tokens", None)
-            self.last_tool_interactions = getattr(self._provider, "last_tool_interactions", None)
-            self.last_context_tokens = getattr(self._provider, "last_context_tokens", 0)
+            self.last_usage = getattr(provider, "last_usage", None)
+            self.last_tool_tokens = getattr(provider, "last_tool_tokens", None)
+            self.last_tool_interactions = getattr(provider, "last_tool_interactions", None)
+            self.last_context_tokens = getattr(provider, "last_context_tokens", 0)
         except Exception as e:
             error_msg = f"Chat streaming error: {e}"
             printer.error(error_msg)
@@ -321,7 +328,9 @@ class AIClient:
         7. Auto-generating a title after the first exchange
 
         If the DB is unavailable every step degrades with a logged warning
-        and the method still returns a valid LLM response.
+        and the method still returns a valid LLM response.  If the
+        provider fails, the error is raised (see :meth:`chat`) once the
+        user message is saved; no reply is saved for it.
 
         Args:
             prompt: The user's message.
@@ -518,10 +527,12 @@ class AIClient:
             return None
 
     @staticmethod
-    async def _append_message(conversation_id: str, role: str, content: str, metadata: dict[str, Any]) -> None:
+    async def _append_message(
+        conversation_id: str, role: str, content: str, metadata: dict[str, Any], tokens: int = 0
+    ) -> None:
         try:
             await ConversationDB.append_message(
-                conversation_id=conversation_id, role=role, content=content, metadata=metadata
+                conversation_id=conversation_id, role=role, content=content, metadata=metadata, tokens=tokens
             )
         except DB_ERRORS as e:
             printer.warning(f"{role.capitalize()} message not saved to {conversation_id}, database unavailable: {e}")
@@ -648,6 +659,9 @@ class AIClient:
         """Handle post-call persistence: save response, track tokens,
         trigger blocking compaction, and auto-generate title.
 
+        The turn's ``total_tokens`` is added to the conversation's
+        running total in the same write as the response.
+
         Uses API-reported ``input_tokens`` as the primary context usage
         metric.  Falls back to tiktoken estimation when the provider did
         not report usage.  Compaction is **blocking** — the caller waits
@@ -678,7 +692,9 @@ class AIClient:
         if tool_interactions:
             msg_metadata["tool_calls"] = tool_interactions
 
-        await self._append_message(conversation_id, "assistant", response_text.strip(), msg_metadata)
+        await self._append_message(
+            conversation_id, "assistant", response_text.strip(), msg_metadata, tokens=usage.get("total_tokens", 0)
+        )
 
         if usage.get("input_tokens") and not disable_summarization:
             context_tokens = usage["input_tokens"]

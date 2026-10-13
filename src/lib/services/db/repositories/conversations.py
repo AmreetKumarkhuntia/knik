@@ -87,7 +87,10 @@ class ConversationDB:
         role: str,
         content: str,
         metadata: dict[str, Any] | None = None,
+        tokens: int = 0,
     ) -> None:
+        """`tokens` is added to the conversation's total_tokens in the same statement, so a turn and its cost are saved
+        together and concurrent turns cannot lose each other's count."""
         message = {
             "role": role,
             "content": content,
@@ -97,11 +100,12 @@ class ConversationDB:
         query = """
             UPDATE conversations
             SET messages = COALESCE(messages, '[]'::jsonb) || %s::jsonb,
+                total_tokens = COALESCE(total_tokens, 0) + %s,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s
         """
         # Provider metadata can carry values json cannot encode; store their str() rather than fail the turn.
-        await PostgresDB.execute(query, (json_param([message], default=str), conversation_id))
+        await PostgresDB.execute(query, (json_param([message], default=str), tokens, conversation_id))
 
     @staticmethod
     async def get_messages(conversation_id: str) -> list[ConversationMessage]:
@@ -135,7 +139,8 @@ class ConversationDB:
     async def get_conversation_token_usage(conversation_id: str) -> dict[str, Any]:
         """Token totals summed from assistant messages' metadata.usage, plus the conversation's own counters.
 
-        `db_total` is the conversations.total_tokens column. `has_estimates` is True when any usage was
+        `db_total` is the conversations.total_tokens column, the running total append_message keeps (turns saved
+        before it was kept are missing from it). `has_estimates` is True when any usage was
         estimated locally, `partial_data` when some assistant messages carry no usage (sessions that
         predate token tracking), and `had_summarization` when the conversation has been compacted.
         A missing conversation reports all zeros.

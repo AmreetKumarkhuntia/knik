@@ -7,11 +7,11 @@ import contextlib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from imports import ConversationReady, StreamDone, StreamError, TextDelta, ToolCallFinished, ToolCallStarted
+from imports import ConversationReady, StreamDone, StreamError, TextDelta, ToolCallFinished, ToolCallStarted, printer
 
 
 if TYPE_CHECKING:
-    from imports import AIClient
+    from imports import AIClient, MessageResult
 
     from .config import BotConfig
     from .transport import MessagingTransport
@@ -23,7 +23,15 @@ class DeliveryResult:
     conversation_id: str | None = None
     usage: dict[str, int] | None = None
     message_ids: list[str] = field(default_factory=list)
+    # The AI reply could not be produced; nothing after the failure was sent.
     error: str | None = None
+    # Sends the transport reported as failed. The reply itself was produced (and saved), but the user did not
+    # see all of it.
+    send_errors: list[str] = field(default_factory=list)
+
+    @property
+    def delivered(self) -> bool:
+        return self.error is None and not self.send_errors
 
 
 class StreamingResponseManager:
@@ -44,9 +52,18 @@ class StreamingResponseManager:
         captured_usage: dict[str, int] | None = None
         captured_text = ""
         all_message_ids: list[str] = []
+        send_errors: list[str] = []
 
         segment_queue: asyncio.Queue[str | None] | None = None
         segment_task: asyncio.Task | None = None
+
+        def _sent(result: MessageResult, what: str) -> list[str]:
+            if not result.success:
+                error = result.error or "unknown error"
+                printer.warning(f"Failed to send {what} to chat {chat_id}: {error}")
+                send_errors.append(error)
+                return []
+            return [result.message_id] if result.message_id else []
 
         async def _start_segment() -> None:
             nonlocal segment_queue, segment_task
@@ -70,14 +87,13 @@ class StreamingResponseManager:
                 return []
             await segment_queue.put(None)
             result = await segment_task
-            msg_ids = [result.message_id] if result.message_id else []
             segment_queue = None
             segment_task = None
-            return msg_ids
+            return _sent(result, "a reply segment")
 
         async def _send_notification(text: str) -> list[str]:
             result = await self._transport.send_message(chat_id=chat_id, text=text, **send_options)
-            return [result.message_id] if result.message_id else []
+            return _sent(result, "a tool notice")
 
         try:
             async for event in ai_client.achat_stream(prompt=prompt, conversation_id=conversation_id):
@@ -114,6 +130,7 @@ class StreamingResponseManager:
                 conversation_id=captured_conv_id,
                 usage=captured_usage,
                 message_ids=all_message_ids,
+                send_errors=send_errors,
             )
         except Exception as e:
             if segment_queue is not None:
@@ -124,4 +141,5 @@ class StreamingResponseManager:
                 response_text=captured_text,
                 conversation_id=captured_conv_id,
                 error=str(e),
+                send_errors=send_errors,
             )

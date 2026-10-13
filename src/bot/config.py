@@ -16,5 +16,7 @@ class BotConfig(Config):
         default_factory=lambda: Config.from_env("KNIK_BOT_CONCURRENT_LIMIT", BotConfig.DEFAULT_CONCURRENT_LIMIT, int)
     )
 
-    busy_message: str = "I'm still thinking about your previous message."
+    busy_message: str = (
+        "I'm still answering your previous message, so I didn't read this one. Please send it again once I'm done."
+    )
     error_message: str = "Sorry, an error occurred while processing your message."

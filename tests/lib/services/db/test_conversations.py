@@ -1,11 +1,12 @@
 """ConversationDB against a real database."""
 
+import asyncio
 from datetime import UTC, datetime
 
 import pytest
 
 from lib.services.db import ConversationDB, PostgresDB
-from tests.db_support import requires_db
+from tests.db_support import MIGRATIONS_DIR, requires_db
 
 
 pytestmark = [requires_db, pytest.mark.asyncio]
@@ -124,6 +125,38 @@ async def test_token_usage(db):
         "total_context_tokens": 100,
         "last_input_tokens": 20,
     }
+
+
+async def test_appended_messages_add_their_tokens_to_the_total(db):
+    conversation_id = await ConversationDB.create_conversation()
+    await ConversationDB.append_message(conversation_id, "user", "q")
+
+    # Concurrent turns each add their own share: the increment happens in the UPDATE, not in Python.
+    await asyncio.gather(
+        *(ConversationDB.append_message(conversation_id, "assistant", "a", tokens=5) for _ in range(8))
+    )
+
+    conversation = await ConversationDB.get_conversation(conversation_id)
+    assert (conversation.total_tokens, conversation.message_count) == (40, 9)
+
+
+async def test_the_backfill_migration_rebuilds_totals_from_saved_usage(db):
+    unwritten = await ConversationDB.create_conversation()
+    await ConversationDB.append_message(unwritten, "user", "q")
+    for tokens in (30, 12):
+        await ConversationDB.append_message(unwritten, "assistant", "a", metadata={"usage": {"total_tokens": tokens}})
+    await ConversationDB.append_message(unwritten, "assistant", "no usage saved")
+    counted = await ConversationDB.create_conversation()
+    await ConversationDB.append_message(counted, "assistant", "a", metadata={"usage": {"total_tokens": 10}}, tokens=99)
+    migration = (MIGRATIONS_DIR / "013_backfill_conversation_total_tokens.sql").read_bytes()
+
+    for _ in range(2):
+        async with PostgresDB.get_connection() as conn:
+            await conn.execute(migration)
+
+        totals = {cid: (await ConversationDB.get_conversation(cid)).total_tokens for cid in (unwritten, counted)}
+        # A total is only ever raised, so one that code already wrote is kept.
+        assert totals == {unwritten: 42, counted: 99}
 
 
 async def test_token_usage_of_missing_conversation_is_zero(db):

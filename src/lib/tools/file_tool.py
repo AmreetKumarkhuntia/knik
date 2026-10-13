@@ -387,8 +387,8 @@ class FileTool(BaseTool):
                                     "total_matches": max_results,
                                     "max_results_reached": True,
                                 }
-                except Exception:
-                    pass
+                except Exception as e:
+                    printer.warning(f"search_in_files skipped {file_path}: {e}")
 
             return {
                 "success": True,
@@ -420,8 +420,8 @@ class FileTool(BaseTool):
                 try:
                     with open(p, encoding="utf-8") as f:
                         info["lines"] = len(f.readlines())
-                except Exception:
-                    pass
+                except Exception as e:
+                    printer.warning(f"file_info could not count the lines of {p}: {e}")
             return info
         except Exception as e:
             return {"error": f"Error getting file info: {e}"}

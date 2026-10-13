@@ -5,6 +5,7 @@ The bot and console command tests share them so both apps are checked against th
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime
 
 from lib.services.db.connection import DatabaseUnavailable
@@ -82,8 +83,9 @@ class FakeConversations:
             raise DatabaseUnavailable("Postgres unavailable")
 
     async def list_conversations(self, limit: int = 20, offset: int = 0) -> list[Conversation]:
+        """Like the real listing: no message bodies, only their count."""
         self._check()
-        return self.conversations[offset : offset + limit]
+        return [replace(c, messages=[]) for c in self.conversations[offset : offset + limit]]
 
     async def get_conversation(self, conversation_id: str) -> Conversation | None:
         self._check()
