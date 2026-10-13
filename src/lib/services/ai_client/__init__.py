@@ -1,23 +1,5 @@
+"""AI client: provider-agnostic chat over LangChain with a provider registry.
+
+Import from submodules (``lib.services.ai_client.client``). Importing the client
+module registers every provider as a side effect of loading ``providers``.
 """
-AI Client module for interacting with various AI providers.
-
-Provides unified interface with dynamic provider loading and MCP server support.
-Use AIClient.list_available_providers() to see all registered providers.
-"""
-
-from .base_tool import BaseTool
-from .client import AIClient, MockAIClient
-from .providers import BaseAIProvider, MockAIProvider, VertexAIProvider
-from .registry import MCPServerRegistry, ProviderRegistry
-
-
-__all__ = [
-    "AIClient",
-    "MockAIClient",
-    "BaseAIProvider",
-    "ProviderRegistry",
-    "MCPServerRegistry",
-    "VertexAIProvider",
-    "MockAIProvider",
-    "BaseTool",
-]
