@@ -39,6 +39,9 @@ class Scheduler:
         """Start polling for due schedules; a no-op while already started."""
         self.cron_scheduler.start()
 
-    def stop(self) -> None:
-        """Stop polling for due schedules; a no-op while stopped."""
-        self.cron_scheduler.stop()
+    async def stop(self) -> None:
+        """Stop polling for due schedules and cancel the scheduled runs in flight, recording them as failed.
+
+        A no-op while stopped.
+        """
+        await self.cron_scheduler.stop()

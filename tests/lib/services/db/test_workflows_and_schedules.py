@@ -104,8 +104,7 @@ async def test_schedule_crud(db):
     assert stored.last_executed_at is None
 
     next_run = datetime(2026, 2, 1, tzinfo=UTC)
-    await ScheduleDB.update_schedule_next_run(schedule_id, next_run)
-    await ScheduleDB.record_schedule_execution(schedule_id)
+    await ScheduleDB.claim_due_run(schedule_id, stored.next_run_at, next_run)
     [stored] = await ScheduleDB.list_schedules()
     assert stored.next_run_at == next_run
     assert stored.last_executed_at is not None

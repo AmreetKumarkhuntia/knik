@@ -19,6 +19,7 @@ pytestmark = pytest.mark.asyncio
 def scheduler(monkeypatch) -> MagicMock:
     """Scheduler as the worker sees it; each WorkerApp gets this one and the kwargs are recorded."""
     scheduler = MagicMock()
+    scheduler.stop = AsyncMock()
     scheduler.created_with = []
 
     def make_scheduler(**kwargs):
@@ -59,7 +60,7 @@ async def test_worker_starts_the_scheduler_and_stops_it_on_sigterm(scheduler, da
 
     database.initialize.assert_awaited_once_with()
     scheduler.start.assert_called_once_with()
-    scheduler.stop.assert_called_once_with()
+    scheduler.stop.assert_awaited_once_with()
     database.close.assert_awaited_once_with()
 
 
@@ -69,4 +70,15 @@ async def test_worker_keeps_running_while_postgres_is_down(scheduler, database):
     await _run_until_sigterm(app_mod.WorkerApp(), scheduler)
 
     scheduler.start.assert_called_once_with()
-    scheduler.stop.assert_called_once_with()
+    scheduler.stop.assert_awaited_once_with()
+
+
+async def test_worker_closes_the_pool_only_once_the_scheduler_has_stopped(scheduler, database):
+    order = []
+    scheduler.stop.side_effect = lambda: order.append("scheduler stopped")
+    database.close.side_effect = lambda: order.append("pool closed")
+
+    await _run_until_sigterm(app_mod.WorkerApp(), scheduler)
+
+    # Cancelled runs record their failure through the pool, so it must outlive them.
+    assert order == ["scheduler stopped", "pool closed"]

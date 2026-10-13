@@ -7,7 +7,7 @@ datetime values and recurrence intervals.
 """
 
 import re
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import dateparser
 
@@ -34,6 +34,8 @@ def parse_recurrence_seconds(schedule_description: str) -> int | None:
         (r"hourly", lambda m: 3600),
         (r"daily", lambda m: 86400),
         (r"weekly", lambda m: 604800),
+        (r"every\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)", lambda m: 604800),
+        (r"everyday", lambda m: 86400),
     ]
 
     for pattern, converter in patterns:
@@ -42,6 +44,33 @@ def parse_recurrence_seconds(schedule_description: str) -> int | None:
             return converter(match)
 
     return None
+
+
+def calculate_next_run(
+    due_at: datetime, recurrence_seconds: int, timezone: str = "UTC", now: datetime | None = None
+) -> datetime:
+    """The first occurrence after `now` of a schedule that was due at `due_at` and repeats every `recurrence_seconds`.
+
+    Occurrences are counted from `due_at`, not from `now`, so a late poll does not push later runs back, and
+    occurrences missed while no worker ran are skipped rather than run one after another. A whole number of days
+    is stepped in the schedule's timezone, so "daily at 9am" stays at 9am local time across daylight saving changes.
+    """
+    if recurrence_seconds <= 0:
+        raise ValueError(f"recurrence_seconds must be positive, got {recurrence_seconds}")
+    now = now or datetime.now(UTC)
+    if recurrence_seconds % 86400 == 0:
+        anchor = due_at.astimezone(parse_timezone(timezone))
+        step = timedelta(days=recurrence_seconds // 86400)
+    else:
+        anchor = due_at.astimezone(UTC)
+        step = timedelta(seconds=recurrence_seconds)
+
+    # Adding days to a local time keeps its wall-clock time, so the real gap can be an hour off `step`:
+    # start one occurrence early and walk forward.
+    count = max(1, (now - anchor) // step - 1)
+    while anchor + count * step <= now:
+        count += 1
+    return anchor + count * step
 
 
 def calculate_first_run(schedule_description: str, timezone: str = "UTC") -> datetime:

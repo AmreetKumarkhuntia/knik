@@ -44,7 +44,7 @@ class WorkerApp:
             logger.info("Worker cancelled")
         finally:
             logger.info("Shutting down worker...")
-            self.scheduler.stop()
+            await self.scheduler.stop()
             await PostgresDB.close()
             logger.info("Shutdown complete.")
 

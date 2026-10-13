@@ -1,5 +1,6 @@
-"""Tests for how the workflow engine builds AI clients: through an injected factory, or without tools."""
+"""The workflow engine: how it builds AI clients (through an injected factory, or without tools) and records a cancelled run."""
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
@@ -102,3 +103,57 @@ async def test_scheduler_builds_one_engine_with_the_factory_for_runs_and_the_loo
 
     assert scheduler.workflow_engine.ai_client_factory is factory
     assert scheduler.cron_scheduler.engine is scheduler.workflow_engine
+
+
+SLOW_WORKFLOW = SimpleNamespace(
+    id="w1",
+    definition={
+        "nodes": {"wait": {"type": "FunctionExecutionNode", "function": "sleep", "params": {"seconds": 30}}},
+        "connections": [],
+    },
+)
+
+
+async def _cancel_while_running(no_database) -> asyncio.Task:
+    started = asyncio.Event()
+    no_database.create_execution.side_effect = lambda *_args: started.set() or "exec-1"
+    run = asyncio.create_task(WorkflowEngine().execute_workflow(SLOW_WORKFLOW))
+    await asyncio.wait_for(started.wait(), timeout=5)
+    await asyncio.sleep(0.01)
+    run.cancel()
+    return run
+
+
+async def test_a_cancelled_run_is_recorded_as_failed_and_the_cancellation_propagates(no_database):
+    run = await _cancel_while_running(no_database)
+
+    with pytest.raises(asyncio.CancelledError):
+        await run
+
+    no_database.complete_execution.assert_awaited_once()
+    assert no_database.complete_execution.await_args.args == ("exec-1",)
+    assert no_database.complete_execution.await_args.kwargs["status"] == "failed"
+    assert no_database.complete_execution.await_args.kwargs["error_message"] == "cancelled"
+
+
+async def test_cancelling_again_does_not_lose_the_failure_record(no_database):
+    writing, finish_write = asyncio.Event(), asyncio.Event()
+    recorded = []
+
+    async def complete_execution(execution_id, **fields):
+        writing.set()
+        await finish_write.wait()
+        recorded.append((execution_id, fields["status"], fields["error_message"]))
+
+    no_database.complete_execution.side_effect = complete_execution
+    run = await _cancel_while_running(no_database)
+    await asyncio.wait_for(writing.wait(), timeout=5)
+
+    run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await run
+    finish_write.set()
+    for _ in range(10):
+        await asyncio.sleep(0)
+
+    assert recorded == [("exec-1", "failed", "cancelled")]
