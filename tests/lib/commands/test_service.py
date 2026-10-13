@@ -9,15 +9,19 @@ from lib.commands.service import CommandService
 from lib.services.ai_client.client import AIClient
 from lib.services.ai_client.factory import build_client
 from lib.services.ai_client.settings import ClientSettings
-from lib.services.db.repositories.conversations import ConversationDB
+from lib.services.db import UserDB
+from lib.services.db.repositories.conversations import ConversationDB, ConversationScope
 from tests.db_support import requires_db
 
 from . import fakes
 
 
 class _Identity:
-    def __init__(self) -> None:
+    """A bot's users: each sees only their own conversations. With `local`, the console's single user."""
+
+    def __init__(self, local: bool = False) -> None:
         self.conversations: dict[str, str | None] = {}
+        self.local = local
 
     def get_conversation_id(self, user_id: str) -> str | None:
         return self.conversations.get(user_id)
@@ -27,6 +31,9 @@ class _Identity:
 
     def clear_conversation_id(self, user_id: str) -> None:
         self.conversations[user_id] = None
+
+    def conversation_scope(self, user_id: str) -> ConversationScope:
+        return ConversationScope.local() if self.local else ConversationScope.owned_by(user_id)
 
 
 @pytest.fixture
@@ -88,7 +95,7 @@ async def test_status_and_models_describe_the_callers_client(service, fake_db):
 async def test_operations_without_a_client_never_resolve_one(service, resolved, fake_db):
     await service.new_session("alice")
     await service.resume_session("alice", "#1")
-    await service.list_sessions()
+    await service.list_sessions("alice")
     await service.switch_provider("alice", "not-a-provider")
     assert service.list_providers() == ["gemini", "mock", "vertex"]
 
@@ -106,25 +113,74 @@ async def test_a_failing_resolver_reaches_the_caller(fake_db):
         await service.get_status("alice")
 
 
+async def _bot_user(name: str) -> str:
+    return (await UserDB.get_or_create("telegram", name)).id
+
+
 @requires_db
 @pytest.mark.asyncio
 async def test_resume_finds_conversations_in_postgres(db, service):
-    older = await ConversationDB.create_conversation("Older")
-    newer = await ConversationDB.create_conversation("Newer")
+    alice = await _bot_user("alice")
+    older = await ConversationDB.create_conversation("Older", user_id=alice, source="telegram")
+    newer = await ConversationDB.create_conversation("Newer", user_id=alice, source="telegram")
     await ConversationDB.append_message(newer, "user", "hi")
     await ConversationDB.append_message(newer, "assistant", "hello")
 
-    by_index = await service.resume_session("alice", "#2")
-    by_prefix = await service.resume_session("alice", newer[:8])
-    missing = await service.resume_session("alice", "ffffffff")
+    by_index = await service.resume_session(alice, "#2")
+    by_prefix = await service.resume_session(alice, newer[:8])
+    missing = await service.resume_session(alice, "ffffffff")
 
     assert by_index.message == "Resumed: Older (0 messages)"
     assert by_index.data["conversation_id"] == older
     assert by_prefix.message == "Resumed: Newer (2 messages)"
-    assert service._user_identity.get_conversation_id("alice") == newer
+    assert service._user_identity.get_conversation_id(alice) == newer
     assert (missing.success, missing.message) == (False, "Could not find conversation: ffffffff")
-    sessions = await service.list_sessions()
+    sessions = await service.list_sessions(alice)
     assert [(s.title, s.message_count) for s in sessions] == [("Newer", 2), ("Older", 0)]
+
+
+async def _one_of_each() -> dict[str, str]:
+    """A conversation of each kind, oldest first: two bot users', the web's and a legacy one."""
+    alice, bob = await _bot_user("alice"), await _bot_user("bob")
+    conversations = {
+        "alice": await ConversationDB.create_conversation("Alice's", user_id=alice, source="telegram"),
+        "bob": await ConversationDB.create_conversation("Bob's", user_id=bob, source="telegram"),
+        "web": await ConversationDB.create_conversation("Web", source="web"),
+        "legacy": await ConversationDB.create_conversation("Legacy"),
+    }
+    return {"alice_id": alice, **conversations}
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_a_bot_user_lists_and_resumes_only_their_own_conversations(db, service):
+    made = await _one_of_each()
+    alice = made["alice_id"]
+
+    assert [s.title for s in await service.list_sessions(alice)] == ["Alice's"]
+    for other in ("bob", "web", "legacy"):
+        for ref in (made[other], made[other][:8]):
+            result = await service.resume_session(alice, ref)
+            assert (result.success, result.message) == (False, f"Could not find conversation: {ref}")
+    assert (await service.resume_session(alice, "#2")).message == "Could not find conversation: #2"
+    assert service._user_identity.get_conversation_id(alice) is None
+
+    resumed = await service.resume_session(alice, made["alice"][:8])
+    assert resumed.message == "Resumed: Alice's (0 messages)"
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_the_console_lists_and_resumes_the_web_and_legacy_conversations(db):
+    made = await _one_of_each()
+    service = CommandService(client_resolver=None, user_identity=_Identity(local=True))
+
+    assert [s.title for s in await service.list_sessions("console_user")] == ["Legacy", "Web"]
+    for bot_user in ("alice", "bob"):
+        result = await service.resume_session("console_user", made[bot_user])
+        assert result.success is False
+    assert (await service.resume_session("console_user", made["web"])).message == "Resumed: Web (0 messages)"
+    assert (await service.resume_session("console_user", "#1")).message == "Resumed: Legacy (0 messages)"
 
 
 @requires_db

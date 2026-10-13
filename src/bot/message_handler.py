@@ -131,7 +131,7 @@ class BotMessageHandler:
         chat_id = incoming.chat_id
 
         try:
-            identity = self._user_identity.resolve(incoming)
+            identity = await self._user_identity.resolve(incoming)
             session_version = self._user_identity.session_version(identity.user_id)
 
             self._user_client_manager.set_chat_context(identity.user_id, chat_id)
@@ -143,6 +143,7 @@ class BotMessageHandler:
                     ai_client=ai_client,
                     prompt=incoming.text or "",
                     conversation_id=identity.conversation_id,
+                    user_id=identity.user_id,
                 )
 
             if result.error:

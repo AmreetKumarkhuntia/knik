@@ -280,3 +280,19 @@ class TestSegmentedDelivery:
 
         assert result.error is None
         assert [s.text for s in transport.streams] == ["Only segment."]
+
+
+@pytest.mark.asyncio
+async def test_a_conversation_the_reply_starts_belongs_to_the_telegram_user(manager):
+    calls: list[dict] = []
+    client = MagicMock()
+
+    async def achat_stream(**kwargs):
+        calls.append(kwargs)
+        yield StreamDone(conversation_id="conv_1", usage=None, full_response="")
+
+    client.achat_stream = achat_stream
+
+    await manager.deliver(chat_id="chat_123", ai_client=client, prompt="Hello", conversation_id=None, user_id="usr_1")
+
+    assert calls == [{"prompt": "Hello", "conversation_id": None, "user_id": "usr_1", "source": "telegram"}]

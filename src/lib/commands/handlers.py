@@ -24,7 +24,7 @@ async def handle_resume(command_service: CommandService, args: str, user_id: str
     if args:
         return await command_service.resume_session(user_id, args)
 
-    sessions = await command_service.list_sessions(limit=5)
+    sessions = await command_service.list_sessions(user_id, limit=5)
     if not sessions:
         return CommandResult(success=True, message="No previous conversations found.")
     lines = ["Recent conversations:", "", *_session_lines(sessions, first_index=1)]
@@ -41,7 +41,7 @@ async def handle_sessions(command_service: CommandService, args: str, user_id: s
             return CommandResult(success=False, message="Usage: /sessions [page]\nExample: /sessions 2")
 
     offset = (page - 1) * SESSIONS_PAGE_SIZE
-    sessions = await command_service.list_sessions(limit=SESSIONS_PAGE_SIZE, offset=offset)
+    sessions = await command_service.list_sessions(user_id, limit=SESSIONS_PAGE_SIZE, offset=offset)
 
     if not sessions and page == 1:
         return CommandResult(success=True, message="No conversations found.")

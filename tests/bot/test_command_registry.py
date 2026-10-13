@@ -46,7 +46,7 @@ async def test_dispatch_resolves_user_id_from_sender():
 
     identity = UserIdentityManager()
     message = IncomingMessage(chat_id="1", text="/ping@knik_bot now", sender_id="42")
-    user_id = identity.resolve(message).user_id
+    user_id = (await identity.resolve(message)).user_id
 
     result = await dispatcher.try_dispatch(message, identity)
 

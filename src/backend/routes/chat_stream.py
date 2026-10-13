@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse
 
 from backend.deps import get_state
 from backend.models.chat import ChatRequest
+from backend.routes.conversations import SOURCE, chat_conversation_id
 from backend.state import AppState
 from imports import (
     DB_ERRORS,
@@ -119,6 +120,7 @@ async def stream_chat_response(
             async for event in ai_client.achat_stream(
                 prompt=prompt,
                 conversation_id=conversation_id,
+                source=SOURCE,
                 provider_meta={"provider": state.config.ai_provider, "model": state.config.ai_model},
             ):
                 match event:
@@ -212,8 +214,10 @@ async def stream_chat_response(
 
 @router.post("/")
 async def stream_chat(request: ChatRequest, state: AppState = Depends(get_state)):
+    # Checked before the stream starts, so a refused conversation gets a 404 status rather than an error event.
+    conversation_id = await chat_conversation_id(request.conversation_id)
     return StreamingResponse(
-        stream_chat_response(state, request.message, conversation_id=request.conversation_id),
+        stream_chat_response(state, request.message, conversation_id=conversation_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from imports import ConversationScope
+
 from .commands.registry import CONSOLE_USER_ID
 
 
@@ -19,6 +21,11 @@ class ConsoleIdentity:
 
     def clear_conversation_id(self, user_id: str) -> None:
         self._conversation_id = None
+
+    def conversation_scope(self, user_id: str) -> ConversationScope:
+        """The console belongs to whoever runs the app, as the web app does, so it sees what the web sees; never a
+        bot user's conversations."""
+        return ConversationScope.local()
 
     @property
     def user_id(self) -> str:

@@ -44,4 +44,4 @@ class BotCommandDispatcher(CommandDispatcher):
         if incoming.sender_id is None or not self.handles(text):
             return None
         # resolve() registers a sender seen for the first time, so a first-message /resume or /model sticks.
-        return await self.dispatch(text, user_identity.resolve(incoming).user_id)
+        return await self.dispatch(text, (await user_identity.resolve(incoming)).user_id)

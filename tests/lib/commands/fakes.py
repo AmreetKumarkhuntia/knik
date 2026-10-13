@@ -10,6 +10,7 @@ from datetime import datetime
 
 from lib.services.db.connection import DatabaseUnavailable
 from lib.services.db.models import Conversation, ConversationMessage
+from lib.services.db.repositories.conversations import ConversationScope
 
 
 class FakeClient:
@@ -66,8 +67,23 @@ def make_conversation(n: int, title: str | None = None) -> Conversation:
     )
 
 
-# Newest first, as ConversationDB.list_conversations returns them; #3 has no title.
+# Newest first, as ConversationDB.list_conversations returns them; #3 has no title. Legacy rows: no owner, no source.
 CONVERSATIONS = [make_conversation(n, None if n == 3 else f"Topic {n}") for n in range(1, 7)]
+
+
+def owned(conversations: list[Conversation], user_id: str | None, source: str | None) -> list[Conversation]:
+    return [replace(c, user_id=user_id, source=source) for c in conversations]
+
+
+def admits(scope: ConversationScope | None, conversation: Conversation) -> bool:
+    """What ConversationDB's scope condition admits, for a conversation in memory."""
+    if scope is None:
+        return True
+    return (
+        (scope.user_id is not None and conversation.user_id == scope.user_id)
+        or conversation.source in scope.sources
+        or (scope.legacy and conversation.source is None and conversation.user_id is None)
+    )
 
 
 class FakeConversations:
@@ -82,14 +98,19 @@ class FakeConversations:
         if self.unavailable:
             raise DatabaseUnavailable("Postgres unavailable")
 
-    async def list_conversations(self, limit: int = 20, offset: int = 0) -> list[Conversation]:
-        """Like the real listing: no message bodies, only their count."""
+    async def list_conversations(
+        self, scope: ConversationScope, limit: int = 20, offset: int = 0
+    ) -> list[Conversation]:
+        """Like the real listing: only the conversations in scope, and no message bodies, only their count."""
         self._check()
-        return [replace(c, messages=[]) for c in self.conversations[offset : offset + limit]]
+        in_scope = [c for c in self.conversations if admits(scope, c)]
+        return [replace(c, messages=[]) for c in in_scope[offset : offset + limit]]
 
-    async def get_conversation(self, conversation_id: str) -> Conversation | None:
+    async def get_conversation(
+        self, conversation_id: str, scope: ConversationScope | None = None
+    ) -> Conversation | None:
         self._check()
-        return next((c for c in self.conversations if c.id == conversation_id), None)
+        return next((c for c in self.conversations if c.id == conversation_id and admits(scope, c)), None)
 
     async def get_conversation_token_usage(self, conversation_id: str) -> dict:
         self._check()

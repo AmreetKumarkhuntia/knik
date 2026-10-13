@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+import pytest_asyncio
 
 from bot.commands import create_command_system
 from bot.user_identity import UserIdentityManager
@@ -15,8 +16,9 @@ SENDER = "42"
 
 
 @pytest.fixture
-def conversations(monkeypatch):
-    store = fakes.FakeConversations()
+def conversations(monkeypatch, user_id):
+    """The golden conversations, all the default sender's."""
+    store = fakes.FakeConversations(fakes.owned(fakes.CONVERSATIONS, user_id, "telegram"))
     fakes.install(monkeypatch, store)
     return store
 
@@ -31,9 +33,9 @@ def identity():
     return UserIdentityManager()
 
 
-@pytest.fixture
-def user_id(identity):
-    return identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id=SENDER)).user_id
+@pytest_asyncio.fixture
+async def user_id(identity):
+    return (await identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id=SENDER))).user_id
 
 
 @pytest.fixture
@@ -137,7 +139,7 @@ async def test_model_and_provider_switch_the_client(dispatcher, identity, user_i
 
 @pytest.mark.asyncio
 async def test_model_and_provider_change_only_the_callers_client(dispatcher, identity, user_id, clients, client):
-    other = identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id="77")).user_id
+    other = (await identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id="77"))).user_id
     clients[other] = other_client = fakes.FakeClient(model="other-model")
 
     await _run(dispatcher, identity, "/model gemini-2.5-pro", sender="77")
@@ -150,16 +152,50 @@ async def test_model_and_provider_change_only_the_callers_client(dispatcher, ide
 
 
 @pytest.mark.asyncio
-async def test_a_first_message_command_registers_the_sender(dispatcher, identity, clients):
+async def test_a_first_message_command_registers_the_sender(dispatcher, identity, clients, conversations, users):
+    known = await users.get_or_create("telegram", "99")
+    conversations.conversations = fakes.owned(fakes.CONVERSATIONS, known.id, "telegram")
     message = IncomingMessage(chat_id="1", text="/resume #2", sender_id="99")
 
     await dispatcher.try_dispatch(message, identity)
     await _run(dispatcher, identity, "/model gemini-2.5-pro", sender="99")
 
-    identity_99 = identity.resolve(message)
+    identity_99 = await identity.resolve(message)
+    assert identity_99.user_id == known.id
     assert identity_99.conversation_id == "22222222-bbbb"
     assert clients[identity_99.user_id].model == "gemini-2.5-pro"
     assert None not in clients
+
+
+@pytest.mark.asyncio
+async def test_a_user_lists_and_resumes_only_their_own_conversations(dispatcher, identity, user_id, conversations):
+    other = (await identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id="77"))).user_id
+    mine, theirs, web, legacy = (fakes.CONVERSATIONS[i : i + 1] for i in range(4))
+    conversations.conversations = [
+        *fakes.owned(mine, user_id, "telegram"),
+        *fakes.owned(theirs, other, "telegram"),
+        *fakes.owned(web, None, "web"),
+        *legacy,
+    ]
+
+    listed = await _run(dispatcher, identity, "/sessions")
+    assert "Topic 1" in listed.message
+    assert not any(title in listed.message for title in ("Topic 2", "Untitled", "Topic 4"))
+    for ref in ("22222222-bbbb", "2222", "33333333-cccc", "3333", "44444444-dddd", "#2"):
+        result = await _run(dispatcher, identity, f"/resume {ref}")
+        assert (result.success, result.message) == (False, f"Could not find conversation: {ref}")
+    assert identity.get_conversation_id(user_id) is None
+
+    assert (await _run(dispatcher, identity, "/resume 2222", sender="77")).message == "Resumed: Topic 2 (2 messages)"
+    assert (await _run(dispatcher, identity, "/resume 1111", sender="77")).success is False
+
+
+@pytest.mark.asyncio
+async def test_without_postgres_a_user_has_no_conversations_to_list(dispatcher, identity, conversations, users):
+    users.unavailable = True
+    conversations.unavailable = True
+
+    assert (await _run(dispatcher, identity, "/sessions", sender="55")).message == "No conversations found."
 
 
 @pytest.mark.asyncio

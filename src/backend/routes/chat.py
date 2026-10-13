@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from backend.deps import get_state
 from backend.models.chat import ChatRequest
+from backend.routes.conversations import SOURCE, chat_conversation_id
 from backend.state import AppState
 from imports import printer
 
@@ -18,17 +19,19 @@ router = APIRouter()
 
 @router.post("/")
 async def chat(request: ChatRequest, state: AppState = Depends(get_state)):
+    requested_id = await chat_conversation_id(request.conversation_id)
     try:
         config = state.config
-        async with state.client(request.conversation_id) as ai_client:
+        async with state.client(requested_id) as ai_client:
             response_text, conversation_id, usage = await ai_client.achat(
                 prompt=request.message,
-                conversation_id=request.conversation_id,
+                conversation_id=requested_id,
+                source=SOURCE,
                 provider_meta={"provider": config.ai_provider, "model": config.ai_model},
             )
 
             # If achat created a new conversation_id, register this client for it
-            if conversation_id and conversation_id != request.conversation_id:
+            if conversation_id and conversation_id != requested_id:
                 state.set_client(conversation_id, ai_client)
 
         audio_data, sample_rate = await asyncio.to_thread(state.tts.generate, response_text)

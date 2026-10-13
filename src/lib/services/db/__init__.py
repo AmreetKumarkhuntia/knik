@@ -15,9 +15,20 @@ from .models import (
     McpToolState,
     NodeExecutionRecord,
     Schedule,
+    User,
     Workflow,
 )
-from .repositories import ApiKeyDB, ConversationDB, ExecutionDB, McpToolsDB, ScheduleDB, SettingsDB, WorkflowDB
+from .repositories import (
+    ApiKeyDB,
+    ConversationDB,
+    ConversationScope,
+    ExecutionDB,
+    McpToolsDB,
+    ScheduleDB,
+    SettingsDB,
+    UserDB,
+    WorkflowDB,
+)
 
 
 __all__ = [
@@ -29,6 +40,7 @@ __all__ = [
     "Conversation",
     "ConversationDB",
     "ConversationMessage",
+    "ConversationScope",
     "CreatedApiKey",
     "DatabaseUnavailable",
     "ExecutionDB",
@@ -40,6 +52,8 @@ __all__ = [
     "Schedule",
     "ScheduleDB",
     "SettingsDB",
+    "User",
+    "UserDB",
     "Workflow",
     "WorkflowDB",
 ]

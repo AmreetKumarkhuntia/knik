@@ -49,7 +49,7 @@ def mock_user_clients():
 @pytest.fixture
 def mock_user_identity():
     manager = MagicMock()
-    manager.resolve = MagicMock(return_value=MagicMock(user_id="user_abc", is_new=False, conversation_id=None))
+    manager.resolve = AsyncMock(return_value=MagicMock(user_id="user_abc", is_new=False, conversation_id=None))
     manager.set_conversation_id = MagicMock()
     manager.get_user_id_for_sender = MagicMock(side_effect=lambda sender: f"usr_{sender}" if sender else None)
     return manager
@@ -153,7 +153,7 @@ class TestBotMessageHandler:
         assert sorted(processed) == ["chat_1", "chat_2"]
 
     async def test_error_sends_user_message(self, handler, transport, incoming_message):
-        handler._user_identity.resolve = MagicMock(side_effect=Exception("Boom!"))
+        handler._user_identity.resolve = AsyncMock(side_effect=Exception("Boom!"))
 
         await handler.handle(incoming_message)
         await asyncio.sleep(0.1)
@@ -180,7 +180,7 @@ class TestBotMessageHandler:
         assert handler.get_active_count() == 0
 
     async def test_conversation_id_cached_after_delivery(self, handler, incoming_message):
-        handler._user_identity.resolve = MagicMock(return_value=MagicMock(user_id="user_abc", conversation_id=None))
+        handler._user_identity.resolve = AsyncMock(return_value=MagicMock(user_id="user_abc", conversation_id=None))
         handler._streaming.deliver = AsyncMock(
             return_value=DeliveryResult(response_text="Hello!", conversation_id="conv_new_456")
         )
@@ -191,7 +191,7 @@ class TestBotMessageHandler:
         handler._user_identity.set_conversation_id.assert_called_once_with("user_abc", "conv_new_456")
 
     async def test_conversation_id_not_updated_when_same(self, handler, incoming_message):
-        handler._user_identity.resolve = MagicMock(
+        handler._user_identity.resolve = AsyncMock(
             return_value=MagicMock(user_id="user_abc", conversation_id="conv_123")
         )
         handler._streaming.deliver = AsyncMock(
@@ -216,7 +216,7 @@ class TestBotMessageHandler:
 
     async def test_full_message_flow(self, handler):
         identity = MagicMock(user_id="user_abc", conversation_id=None, is_new=True)
-        handler._user_identity.resolve = MagicMock(return_value=identity)
+        handler._user_identity.resolve = AsyncMock(return_value=identity)
         handler._streaming.deliver = AsyncMock(
             return_value=DeliveryResult(
                 response_text="Hello! How can I help?",
@@ -231,12 +231,13 @@ class TestBotMessageHandler:
         await handler.handle(incoming)
         await asyncio.sleep(0.1)
 
-        handler._user_identity.resolve.assert_called_once_with(incoming)
+        handler._user_identity.resolve.assert_awaited_once_with(incoming)
         handler._streaming.deliver.assert_called_once_with(
             chat_id="chat_456",
             ai_client=handler._user_client_manager.get_or_create.return_value,
             prompt="What is AI?",
             conversation_id=None,
+            user_id="user_abc",
         )
         handler._user_identity.set_conversation_id.assert_called_once_with("user_abc", "conv_789")
         assert handler.get_active_count() == 0

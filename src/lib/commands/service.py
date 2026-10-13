@@ -5,7 +5,8 @@ can use to execute session, model, and status operations.  All heavy
 logic lives here so that app-level handlers stay thin.
 
 The model, provider and status operations act on the AI client of the user who sent the command, which the
-app's client resolver supplies; the session operations need no client.
+app's client resolver supplies; the session operations need no client, and list and resume only the conversations
+the app's user identity puts in the user's scope.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from typing import TYPE_CHECKING
 from lib.services.ai_client.pricing import get_cost
 from lib.services.ai_client.registry import ProviderRegistry
 from lib.services.ai_client.token_utils import get_context_window
-from lib.services.db import DB_ERRORS, ConversationDB
+from lib.services.db import DB_ERRORS, ConversationDB, ConversationScope
 from lib.utils.printer import printer
 
 from .models import ClientResolver, CommandResult, ModelInfo, SessionInfo, StatusInfo, UserIdentityProtocol
@@ -40,9 +41,10 @@ class CommandService:
         return CommandResult(success=True, message="New session started. Send a message to begin.")
 
     async def resume_session(self, user_id: str, conversation_id_or_index: str) -> CommandResult:
+        scope = self._user_identity.conversation_scope(user_id)
         try:
-            conv_id = await self._resolve_conversation_id(conversation_id_or_index)
-            conversation = await ConversationDB.get_conversation(conv_id) if conv_id else None
+            conv_id = await self._resolve_conversation_id(conversation_id_or_index, scope)
+            conversation = await ConversationDB.get_conversation(conv_id, scope) if conv_id else None
         except DB_ERRORS as e:
             printer.warning(f"Cannot resume {conversation_id_or_index}, database unavailable: {e}")
             return CommandResult(success=False, message=DB_UNAVAILABLE_MESSAGE)
@@ -68,18 +70,18 @@ class CommandService:
             data={"conversation_id": conv_id, "title": title, "message_count": msg_count},
         )
 
-    async def list_sessions(self, limit: int = 10, offset: int = 0) -> list[SessionInfo]:
-        """Recent sessions, newest first; empty when the database is unavailable."""
+    async def list_sessions(self, user_id: str, limit: int = 10, offset: int = 0) -> list[SessionInfo]:
+        """The user's recent sessions, newest first; empty when the database is unavailable."""
         try:
-            return await self._list_sessions(limit, offset)
+            return await self._list_sessions(self._user_identity.conversation_scope(user_id), limit, offset)
         except DB_ERRORS as e:
             printer.warning(f"Cannot list sessions, database unavailable: {e}")
             return []
 
     @staticmethod
-    async def _list_sessions(limit: int, offset: int) -> list[SessionInfo]:
+    async def _list_sessions(scope: ConversationScope, limit: int, offset: int) -> list[SessionInfo]:
         # The listing leaves out message bodies, so the count comes from message_count, not from messages.
-        conversations = await ConversationDB.list_conversations(limit=limit, offset=offset)
+        conversations = await ConversationDB.list_conversations(scope, limit=limit, offset=offset)
         return [
             SessionInfo(
                 conversation_id=conv.id,
@@ -210,26 +212,27 @@ class CommandService:
             printer.warning(f"Token usage unavailable for {conversation_id}, database unavailable: {e}")
             return None
 
-    async def _resolve_conversation_id(self, ref: str) -> str | None:
-        """The full conversation id for `ref` (an id, an id prefix or `#<n>` from the session list).
+    async def _resolve_conversation_id(self, ref: str, scope: ConversationScope) -> str | None:
+        """The full id of the conversation in `scope` that `ref` names (an id, an id prefix or `#<n>` from the
+        session list).
 
         Raises DB_ERRORS so the caller can tell "not found" from "database unavailable".
         """
         if ref.startswith("#"):
             try:
                 index = int(ref[1:]) - 1
-                sessions = await self._list_sessions(limit=20, offset=0)
+                sessions = await self._list_sessions(scope, limit=20, offset=0)
                 if 0 <= index < len(sessions):
                     return sessions[index].conversation_id
             except ValueError:
                 pass
             return None
 
-        conversation = await ConversationDB.get_conversation(ref)
+        conversation = await ConversationDB.get_conversation(ref, scope)
         if conversation:
             return ref
 
-        sessions = await self._list_sessions(limit=20, offset=0)
+        sessions = await self._list_sessions(scope, limit=20, offset=0)
         for s in sessions:
             if s.conversation_id.startswith(ref):
                 return s.conversation_id
