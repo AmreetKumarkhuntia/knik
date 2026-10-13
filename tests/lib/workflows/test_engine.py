@@ -10,6 +10,7 @@ from lib.services.ai_client.factory import ClientSettings
 from lib.workflows import engine as engine_mod
 from lib.workflows import nodes as nodes_mod
 from lib.workflows.engine import WorkflowEngine
+from lib.workflows.errors import ValidationError
 from lib.workflows.scheduler import Scheduler
 
 
@@ -122,6 +123,17 @@ async def _cancel_while_running(no_database) -> asyncio.Task:
     await asyncio.sleep(0.01)
     run.cancel()
     return run
+
+
+async def test_an_invalid_definition_raises_a_validation_error_with_its_details(no_database):
+    workflow = SimpleNamespace(id="w1", definition={"nodes": {"x": {"type": "Nope"}}, "connections": []})
+
+    with pytest.raises(ValidationError) as raised:
+        await WorkflowEngine().execute_workflow(workflow)
+
+    assert str(raised.value).startswith("Invalid workflow definition:")
+    assert raised.value.extra["details"]["invalid_type"] == "Nope"
+    assert no_database.complete_execution.await_args.kwargs["status"] == "failed"
 
 
 async def test_a_cancelled_run_is_recorded_as_failed_and_the_cancellation_propagates(no_database):

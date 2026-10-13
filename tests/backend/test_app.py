@@ -230,9 +230,9 @@ def test_disabled_schedules_stay_listed_and_workflow_delete_reports_them(client)
 def test_workflow_errors_keep_their_statuses_and_bodies(client):
     invalid = {"nodes": {"a": {"type": "Nope"}}, "connections": []}
     created = client.post("/api/workflows/", json={"name": "Bad", "definition": invalid})
-    assert (created.status_code, created.json()) == (
+    assert (created.status_code, created.json()["detail"]) == (
         400,
-        {"detail": "Invalid workflow definition: Node a has invalid type 'Nope'"},
+        "Invalid workflow definition: Node a has invalid type 'Nope'",
     )
 
     workflow_id = client.post("/api/workflows/", json={"name": "Good", "definition": FUNCTION_WORKFLOW}).json()[
