@@ -143,11 +143,12 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Scheduler
 
-| Variable                        | Default | Description                            |
-| ------------------------------- | ------- | -------------------------------------- |
-| `KNIK_SCHEDULER_CHECK_INTERVAL` | `60`    | Seconds between schedule poll checks   |
-| `KNIK_SCHEDULER_WORKERS`        | `4`     | Worker pool size                       |
-| `KNIK_SCHEDULER_MAX_CONCURRENT` | `10`    | Maximum concurrent workflow executions |
+| Variable                                 | Default | Description                                                                                                                       |
+| ---------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `KNIK_SCHEDULER_CHECK_INTERVAL`          | `60`    | Seconds between schedule poll checks                                                                                              |
+| `KNIK_SCHEDULER_WORKERS`                 | `4`     | Not used; `KNIK_SCHEDULER_MAX_CONCURRENT` bounds scheduled runs                                                                   |
+| `KNIK_SCHEDULER_MAX_CONCURRENT`          | `10`    | Most scheduled workflow runs a worker executes at once; further due runs wait for a free slot                                     |
+| `KNIK_SCHEDULER_STALE_EXECUTION_SECONDS` | `3600`  | At worker startup, executions still `running` that started longer ago than this are marked failed (newer ones may be manual runs) |
 
 ## Logging
 

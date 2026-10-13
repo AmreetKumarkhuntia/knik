@@ -40,6 +40,21 @@ class ExecutionDB:
         await PostgresDB.execute(query, (status, outputs_json, error_message, duration_ms, execution_id))
 
     @staticmethod
+    async def fail_stale_executions(older_than_seconds: int, error_message: str) -> int:
+        """Mark failed every execution still 'running' that started more than `older_than_seconds` ago.
+
+        Returns how many were marked.
+        """
+        query = """
+            UPDATE executions
+            SET status = 'failed',
+                error_message = %s,
+                completed_at = CURRENT_TIMESTAMP
+            WHERE status = 'running' AND started_at < CURRENT_TIMESTAMP - make_interval(secs => %s)
+        """
+        return await PostgresDB.execute(query, (error_message, older_than_seconds))
+
+    @staticmethod
     async def log_node_execution(
         execution_id: int,
         node_id: str,

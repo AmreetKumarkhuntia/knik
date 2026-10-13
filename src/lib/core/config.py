@@ -167,6 +167,9 @@ Be reliable, efficient, and action focused like Jarvis."""
     scheduler_max_concurrent: int = field(
         default_factory=lambda: Config.from_env("KNIK_SCHEDULER_MAX_CONCURRENT", 10, int)
     )
+    scheduler_stale_execution_seconds: int = field(
+        default_factory=lambda: Config.from_env("KNIK_SCHEDULER_STALE_EXECUTION_SECONDS", 3600, int)
+    )
 
     browser_headless: bool = field(default_factory=lambda: Config.from_env("KNIK_BROWSER_HEADLESS", False, bool))
     browser_profile_dir: str = field(

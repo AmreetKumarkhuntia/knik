@@ -57,7 +57,7 @@ async def test_start_and_stop_drive_the_polling_loop_and_repeat_safely(monkeypat
 
     async def poll_loop(self):
         polling.set()
-        await asyncio.Event().wait()
+        await self._sleep(3600)
 
     monkeypatch.setattr(loop_mod.CronScheduler, "_poll_loop", poll_loop)
     scheduler = Scheduler()
@@ -68,7 +68,7 @@ async def test_start_and_stop_drive_the_polling_loop_and_repeat_safely(monkeypat
     assert task is not None and scheduler.cron_scheduler._task is task
     await asyncio.wait_for(polling.wait(), timeout=5)
 
-    scheduler.stop()
-    scheduler.stop()
-    with pytest.raises(asyncio.CancelledError):
-        await task
+    # stop() ends the wait between polls, so the loop finishes on its own rather than being cancelled.
+    await asyncio.wait_for(scheduler.stop(), timeout=5)
+    await scheduler.stop()
+    assert task.done() and not task.cancelled()

@@ -195,6 +195,21 @@ class WorkflowEngine:
             )
             return node_outputs
 
+        except asyncio.CancelledError:
+            try:
+                # Shielded: a second cancellation (the event loop shutting down) must not leave the run 'running'.
+                await asyncio.shield(
+                    ExecutionDB.complete_execution(
+                        execution_id,
+                        status="failed",
+                        error_message="cancelled",
+                        duration_ms=int((time.perf_counter() - workflow_start) * 1000),
+                    )
+                )
+            except Exception as e:
+                logger.error(f"Could not record cancelled execution {execution_id}: {e}")
+            raise
+
         except Exception as e:
             await ExecutionDB.complete_execution(
                 execution_id,

@@ -46,19 +46,26 @@ class ScheduleDB:
         return to_models(Schedule.from_row, rows)
 
     @staticmethod
-    async def update_schedule_next_run(schedule_id: int, next_run_at: datetime) -> None:
-        await PostgresDB.execute(
-            "UPDATE schedules SET next_run_at = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
-            (next_run_at, schedule_id),
-        )
+    async def claim_due_run(schedule_id: int, due_at: datetime, next_run_at: datetime | None) -> Schedule | None:
+        """Take the occurrence of an enabled schedule due at `due_at`, so that only one caller runs it.
 
-    @staticmethod
-    async def record_schedule_execution(schedule_id: int) -> None:
-        """Stamp the time the schedule last triggered its workflow."""
-        await PostgresDB.execute(
-            "UPDATE schedules SET last_executed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
-            (schedule_id,),
+        Moves the schedule on to `next_run_at`, or disables it when that is None (a one-shot schedule), and stamps
+        `last_executed_at`. Returns the updated schedule, or None when the schedule is no longer enabled and due at
+        `due_at`: another poller claimed the occurrence first, or the schedule was changed or deleted meanwhile.
+        """
+        row = await PostgresDB.fetch_one(
+            """
+            UPDATE schedules
+            SET next_run_at = COALESCE(%s, next_run_at),
+                enabled = %s,
+                last_executed_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND enabled AND next_run_at = %s
+            RETURNING *
+            """,
+            (next_run_at, next_run_at is not None, schedule_id, due_at),
         )
+        return to_model(Schedule.from_row, row)
 
     @staticmethod
     async def toggle_schedule(schedule_id: int, enabled: bool) -> Schedule | None:

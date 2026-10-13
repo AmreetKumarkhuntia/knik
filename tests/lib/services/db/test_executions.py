@@ -165,3 +165,24 @@ async def test_recent_activity_is_raw_rows(db):
 
     assert len(await ExecutionDB.get_recent_activity(limit=1)) == 1
     assert len(await ExecutionDB.get_recent_activity(limit=10, hours_back=24 * 7)) == 3
+
+
+async def test_fail_stale_executions_marks_only_old_running_ones(db):
+    await _workflows("w1")
+    old_running = await ExecutionDB.create_execution("w1", {})
+    new_running = await ExecutionDB.create_execution("w1", {})
+    old_finished = await ExecutionDB.create_execution("w1", {})
+    await ExecutionDB.complete_execution(old_finished, "success")
+    await PostgresDB.execute(
+        "UPDATE executions SET started_at = started_at - interval '2 hours' WHERE id IN (%s, %s)",
+        (old_running, old_finished),
+    )
+
+    assert await ExecutionDB.fail_stale_executions(3600, "abandoned") == 1
+    assert await ExecutionDB.fail_stale_executions(3600, "abandoned") == 0
+
+    [new, old_done, old] = await ExecutionDB.get_execution_history()
+    assert (old.id, old.status, old.error_message) == (old_running, "failed", "abandoned")
+    assert old.completed_at is not None
+    assert (new.id, new.status) == (new_running, "running")
+    assert (old_done.id, old_done.status, old_done.error_message) == (old_finished, "success", None)
