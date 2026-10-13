@@ -153,7 +153,9 @@ Workflows run from the web app (`POST /api/workflows/{id}/execute`) are not cove
 
 With `KNIK_WEB_REQUIRE_API_KEY=true`, every `/api` route needs a stored key in the `X-API-Key` header. A
 request without one, or with an unknown one, gets `401`; while the database is down it gets `503`. `/` and
-`/health` stay open. Each key's `last_used_at` is updated when it opens a request.
+`/health` stay open. Each key's `last_used_at` is updated when it opens a request. Only `false`, `0`, `no`, `off`
+or an empty value turn the check off; any other value turns it on, and one that is not `true`, `1`, `yes` or `on`
+also logs a warning at startup.
 
 Keys are created, listed and deleted under `/api/admin/api-keys`. Only a hash of each key is stored, so the
 full key is shown once, when it is created. Create the first key while the check is still off, then restart

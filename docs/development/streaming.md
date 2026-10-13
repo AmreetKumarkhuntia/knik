@@ -138,7 +138,8 @@ endpoints.
 the chat through the `MessagingTransport` (`TelegramClient` in production):
 
 - Text goes to the chat one segment at a time: the text between two tool calls is one segment, streamed with
-  `transport.send_stream()`.
+  `transport.send_stream()`. A segment starts at its first visible text, so whitespace alone (which models often
+  send before a tool call) sends nothing.
 - A tool call closes the current segment and sends a notice, `🔧 Calling <tool>(<args>)...`, then
   `✓ <tool> completed` (or `✓ <tool> completed (no output)`) when it returns.
 - `TelegramClient.send_stream()` shows the segment as a live draft (`sendMessageDraft`, private chats only,
@@ -147,14 +148,17 @@ the chat through the `MessagingTransport` (`TelegramClient` in production):
 
 It returns a `DeliveryResult`:
 
-| Field                      | Meaning                                                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| `response_text`            | The full reply                                                                            |
-| `conversation_id`, `usage` | From the stream                                                                           |
-| `message_ids`              | The messages sent                                                                         |
-| `error`                    | Set when the reply could not be produced; nothing after the failure was sent              |
-| `send_errors`              | Sends the transport reported as failed: the reply was produced but not all of it was seen |
-| `delivered`                | `True` when there is neither an `error` nor a `send_error`                                |
+| Field                      | Meaning                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `response_text`            | The full reply                                                                                        |
+| `conversation_id`, `usage` | From the stream                                                                                       |
+| `message_ids`              | The messages sent                                                                                     |
+| `error`                    | Set when the reply could not be produced; nothing after the failure was sent                          |
+| `send_errors`              | Reply segments the transport reported as failed: the reply was produced but not all its text was seen |
+| `delivered`                | `True` when there is neither an `error` nor a `send_error`                                            |
+
+A tool notice that fails to send is only logged: its tools have already run, and the bot's error reply would have
+the user run them again.
 
 ## Console
 

@@ -27,8 +27,8 @@ class DeliveryResult:
     message_ids: list[str] = field(default_factory=list)
     # The AI reply could not be produced; nothing after the failure was sent.
     error: str | None = None
-    # Sends the transport reported as failed. The reply itself was produced (and saved), but the user did not
-    # see all of it.
+    # Reply segments the transport reported as failed. The reply itself was produced (and saved), but the user did
+    # not see all of its text. A tool notice that fails to send is only logged.
     send_errors: list[str] = field(default_factory=list)
 
     @property
@@ -63,9 +63,7 @@ class StreamingResponseManager:
 
         def _sent(result: MessageResult, what: str) -> list[str]:
             if not result.success:
-                error = result.error or "unknown error"
-                printer.warning(f"Failed to send {what} to chat {chat_id}: {error}")
-                send_errors.append(error)
+                printer.warning(f"Failed to send {what} to chat {chat_id}: {result.error or 'unknown error'}")
                 return []
             return [result.message_id] if result.message_id else []
 
@@ -93,9 +91,12 @@ class StreamingResponseManager:
             result = await segment_task
             segment_queue = None
             segment_task = None
+            if not result.success:
+                send_errors.append(result.error or "unknown error")
             return _sent(result, "a reply segment")
 
         async def _send_notification(text: str) -> list[str]:
+            # Not a send error: the tools have run by now, and the error reply would have the user run them again.
             result = await self._transport.send_message(chat_id=chat_id, text=text, **send_options)
             return _sent(result, "a tool notice")
 
@@ -126,6 +127,10 @@ class StreamingResponseManager:
                     # A provider failure reads as reply text ("Chat streaming error: ..."), as it always has.
                     case TextDelta(text=text) | StreamError(message=text):
                         if segment_queue is None:
+                            # A segment starts at its first visible text: whitespace alone, which models often send
+                            # before a tool call, is a message Telegram refuses.
+                            if not text.strip():
+                                continue
                             await _start_segment()
                         await segment_queue.put(text)
 

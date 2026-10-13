@@ -1,5 +1,7 @@
 """WebBackendConfig: the access settings it reads from the environment, and their safe defaults."""
 
+from unittest.mock import patch
+
 import pytest
 
 from backend.config import WebBackendConfig
@@ -41,8 +43,21 @@ def test_tool_consent_is_deny_unless_set_to_allow(env, value, expected):
     assert WebBackendConfig().tool_consent == expected
 
 
-@pytest.mark.parametrize(("value", "expected"), [("true", True), ("1", True), ("false", False), ("", False)])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("true", True), ("1", True), (" TRUE ", True), ("false", False), (" Off ", False), ("0", False), ("", False)],
+)
 def test_require_api_key_is_a_boolean(env, value, expected):
     env.setenv("KNIK_WEB_REQUIRE_API_KEY", value)
 
     assert WebBackendConfig().require_api_key is expected
+
+
+@pytest.mark.parametrize("value", ["enabled", "y", "required", "ture"])
+def test_an_unrecognised_require_api_key_value_checks_keys_and_warns(env, value):
+    env.setenv("KNIK_WEB_REQUIRE_API_KEY", value)
+
+    with patch("backend.config.printer") as printer:
+        assert WebBackendConfig().require_api_key is True
+
+    assert repr(value) in printer.warning.call_args.args[0]

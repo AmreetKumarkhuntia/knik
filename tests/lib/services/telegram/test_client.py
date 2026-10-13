@@ -248,6 +248,15 @@ class TestSendStream:
         bot.send_message.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_whitespace_only_stream_sends_nothing(self, client, bot):
+        # Telegram rejects a message with no visible text ("Bad Request: message text is empty").
+        result = await client.send_stream("123", _stream("\n", " \n"))
+
+        assert result.success is True
+        assert result.message_id is None
+        bot.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_long_text_is_sent_in_chunks(self, client, bot):
         client.max_message_length = 10
         bot.send_message.side_effect = [_sent(1), _sent(2)]
