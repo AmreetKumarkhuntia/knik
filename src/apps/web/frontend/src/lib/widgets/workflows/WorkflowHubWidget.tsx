@@ -29,32 +29,39 @@ export default function WorkflowHubWidget() {
   }
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
-      <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 pb-8">
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 pt-6 pb-8">
         <SectionHeader
           title="Workflows"
           subtitle={`${rows.length} of ${count} shown`}
           actions={
             <Link
               to={ROUTES.builder}
-              className="inline-flex min-h-9 max-sm:min-h-11 items-center gap-2 rounded-md bg-primary px-3 text-label text-[var(--on-primary)] whitespace-nowrap"
+              className="knik-btn knik-btn--primary knik-btn--sm knik-focus rounded-[11px] pl-2.5 pr-3.5 whitespace-nowrap"
             >
-              <MS name="add" size={16} />
+              <MS name="add" size={18} />
               New workflow
             </Link>
           }
         />
         <HubMetricStrip metrics={metrics} />
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <Input
-            fullWidth={false}
-            aria-label="Search workflows"
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-            placeholder="Search workflows…"
-            className="!px-3 !py-2 sm:max-w-72"
-          />
+          <div className="relative w-full sm:w-72">
+            <MS
+              name="search"
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-4 pointer-events-none"
+            />
+            <Input
+              aria-label="Search workflows"
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="Search workflows…"
+              className="!pl-9 rounded-[11px]"
+            />
+          </div>
           <Segmented
             size="sm"
+            label="Filter workflows"
             value={filter}
             onChange={setFilter}
             options={[
@@ -72,15 +79,15 @@ export default function WorkflowHubWidget() {
         <HubWorkflowsTable rows={rows} isEmpty={count === 0} onRun={handleRun} canRun={canRun} />
         <SectionHeader
           level="section"
-          className="mb-3"
+          className="mb-3 !items-center"
           title="Recent executions"
           actions={
             <Link
               to={ROUTES.executions}
-              className="inline-flex items-center gap-1 text-label text-[var(--acc-text,var(--aurora-300))]"
+              className="inline-flex items-center gap-1 hover:gap-2 px-2 py-1.5 rounded-[9px] text-label text-[var(--acc-text)] hover:bg-[var(--acc-soft)] transition-all duration-base ease-out knik-focus"
             >
               View all
-              <MS name="arrow_forward" size={15} />
+              <MS name="arrow_forward" size={16} />
             </Link>
           }
         />

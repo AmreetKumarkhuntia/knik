@@ -120,6 +120,16 @@
   min-width: 36px;
 }
 
+/* Dense rows (tool calls, composer tools, copy actions) use the prototype's
+   30px controls on desktop; the touch block below restores 44px targets. */
+.knik-btn--compact {
+  min-height: 30px;
+}
+
+.knik-btn--compact.knik-btn--icon {
+  min-width: 30px;
+}
+
 /* Hover tint for destructive icon actions (delete, remove). */
 .knik-btn--ghost.knik-btn--destructive:hover:not(:disabled) {
   background: var(--danger-bg);
@@ -385,26 +395,27 @@
 /* -----------------------------------------------------------------
    Entrance motion
    Durations scale with --m so reduced motion finishes them instantly.
-   Stagger with an inline animation-delay.
+   Stagger with an inline animation-delay. Fill mode is backwards so a
+   finished entrance never pins transform and blocks hover lifts.
    ----------------------------------------------------------------- */
 .knik-enter-rise {
-  animation: knik-rise calc(0.6s * var(--m)) var(--ease-out) both;
+  animation: knik-rise calc(0.6s * var(--m)) var(--ease-out) backwards;
 }
 
 .knik-enter-fade {
-  animation: knik-fade calc(0.3s * var(--m)) var(--ease-out) both;
+  animation: knik-fade calc(0.3s * var(--m)) var(--ease-out) backwards;
 }
 
 .knik-enter-pop {
-  animation: knik-pop calc(0.45s * var(--m)) var(--ease-spring) both;
+  animation: knik-pop calc(0.45s * var(--m)) var(--ease-spring) backwards;
 }
 
 .knik-enter-modal {
-  animation: knik-modal calc(0.4s * var(--m)) var(--ease-spring) both;
+  animation: knik-modal calc(0.4s * var(--m)) var(--ease-spring) backwards;
 }
 
 .knik-enter-drawer {
-  animation: knik-drawer calc(0.45s * var(--m)) var(--ease-spring) both;
+  animation: knik-drawer calc(0.45s * var(--m)) var(--ease-spring) backwards;
 }
 
 @keyframes knik-rise {
@@ -531,7 +542,8 @@
 }
 
 @media (max-width: 767px), (pointer: coarse) {
-  .knik-btn {
+  .knik-btn,
+  .knik-btn.knik-btn--compact {
     min-height: 44px;
     min-width: 44px;
   }
@@ -551,6 +563,7 @@
   *,
   *::before,
   *::after {
+    animation-delay: 0s !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

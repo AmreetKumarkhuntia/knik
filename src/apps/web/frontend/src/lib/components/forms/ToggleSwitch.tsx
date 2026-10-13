@@ -27,11 +27,12 @@ export default function ToggleSwitch({
         className="sr-only peer"
       />
       <div
-        className="relative w-10 h-[22px] rounded-full bg-[var(--border-3)] transition-colors duration-fast
-          peer-checked:bg-[var(--aurora-400)]
-          after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-[18px] after:w-[18px]
-          after:rounded-full after:bg-white after:transition-all after:duration-fast
-          peer-checked:after:translate-x-[18px]
+        className="relative shrink-0 w-[38px] h-[22px] rounded-full bg-[var(--border-3)] transition-colors duration-base ease-out
+          peer-checked:bg-[var(--primary)]
+          after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:h-4 after:w-4
+          after:rounded-full after:bg-white after:shadow-[0_1px_3px_rgba(0,0,0,.4)]
+          after:transition-transform after:duration-slow after:ease-spring
+          peer-checked:after:translate-x-4
           peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--border-focus)] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[var(--bg-base)]
           peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
       />

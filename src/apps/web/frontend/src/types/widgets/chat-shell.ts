@@ -36,6 +36,8 @@ export interface SidebarAccountProps {
   name: string
   initials: string
   onNavigate?: () => void
+  /** The settings route is open, so the account row carries the active tint. */
+  active?: boolean
 }
 export interface TopBarProps {
   crumbs: string[]

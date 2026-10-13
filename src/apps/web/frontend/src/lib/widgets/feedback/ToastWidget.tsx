@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Toast from '$components/feedback/Toast'
 import { useFeedbackStore } from '$stores/feedback'
+import { MOTION_DURATION, MOTION_EASE_SPRING } from '$lib/constants/motion'
 import type { DemoToast } from '$types/demo-session'
 
 const TOAST_DURATION_MS = 5000
@@ -24,9 +25,15 @@ function SessionToast({ id, message, type }: DemoToast) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: 12 }}
-      animate={{ opacity: 1, x: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
-      exit={{ opacity: 0, x: 8, transition: { duration: 0.12, ease: 'easeIn' } }}
+      className="pointer-events-auto"
+      initial={{ opacity: 0, y: 16, scale: 0.96 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: { duration: MOTION_DURATION.slow, ease: MOTION_EASE_SPRING },
+      }}
+      exit={{ opacity: 0, transition: { duration: MOTION_DURATION.fast, ease: 'easeIn' } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
@@ -47,7 +54,7 @@ export default function ToastWidget() {
   const region = (assertive: boolean) => (
     <div
       aria-live={assertive ? 'assertive' : 'polite'}
-      className="flex flex-col gap-3 empty:absolute"
+      className="flex flex-col items-center gap-2 empty:absolute"
     >
       <AnimatePresence>
         {toasts
@@ -59,7 +66,10 @@ export default function ToastWidget() {
     </div>
   )
   return (
-    <section aria-label="Notifications" className="fixed top-6 right-6 z-50 flex flex-col gap-3">
+    <section
+      aria-label="Notifications"
+      className="fixed inset-x-0 bottom-5 z-[130] flex flex-col items-center gap-2 px-4 pointer-events-none"
+    >
       {region(true)}
       {region(false)}
     </section>

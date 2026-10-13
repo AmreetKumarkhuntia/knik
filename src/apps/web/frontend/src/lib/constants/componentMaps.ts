@@ -29,6 +29,14 @@ export const BANNER_ROLE: Record<NonNullable<BannerProps['variant']>, 'alert' | 
   success: 'status',
 }
 
+/** Default Material Symbols icon per banner variant; an explicit `icon` prop wins (Banner). */
+export const BANNER_ICON: Record<NonNullable<BannerProps['variant']>, string> = {
+  info: 'info',
+  success: 'check_circle',
+  warning: 'warning',
+  danger: 'error',
+}
+
 /** Icon, label and plural nouns per tool call kind (ToolCallCard, ToolCallList). */
 export const TOOL_CALL_KINDS: Record<
   ToolCallKind,

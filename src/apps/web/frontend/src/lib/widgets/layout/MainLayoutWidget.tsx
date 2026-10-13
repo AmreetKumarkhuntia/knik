@@ -60,7 +60,7 @@ export default function MainLayoutWidget({ children }: MainLayoutWidgetProps) {
 
   return (
     <>
-      <div className="h-dvh bg-background text-foreground flex flex-col overflow-hidden">
+      <div className="h-dvh knik-shell-bg text-fg-2 flex flex-col overflow-hidden">
         <div className="flex flex-1 min-h-0 relative">
           <SidebarWidget
             viewport={viewport}

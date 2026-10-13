@@ -5,11 +5,12 @@ import type { SidebarBrandProps } from '$types/widgets/chat-shell'
 export default function SidebarBrand({ collapsed, onToggle }: SidebarBrandProps) {
   if (collapsed)
     return (
-      <div className="flex justify-center mb-4">
+      <div className="flex justify-center h-9 mb-4">
         {onToggle ? (
           <Button
             variant="ghost"
             size="sm"
+            className="knik-btn--icon rounded-[9px]"
             onClick={onToggle}
             aria-label="Expand sidebar"
             title="Expand sidebar"
@@ -26,11 +27,12 @@ export default function SidebarBrand({ collapsed, onToggle }: SidebarBrandProps)
   return (
     <div className="flex items-center h-9 mb-4 gap-2 px-2">
       <KnikGlyph size={22} />
-      <span className="flex-1 text-h4 text-fg-1">Knik</span>
+      <span className="flex-1 text-h3 text-fg-1">Knik</span>
       {onToggle && (
         <Button
           variant="ghost"
           size="sm"
+          className="knik-btn--icon rounded-[9px]"
           onClick={onToggle}
           aria-label="Collapse sidebar"
           title="Collapse sidebar"

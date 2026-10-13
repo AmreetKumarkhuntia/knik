@@ -10,40 +10,36 @@ export default function Table<T>({
   stickyHeader = false,
 }: TableProps<T>) {
   return (
-    <div className="min-w-0 rounded-lg border border-[var(--border-2)] bg-surface overflow-hidden">
+    <div className="knik-card min-w-0 overflow-hidden">
       {!data.length ? (
         <div className="p-4">{empty ?? 'No records to display.'}</div>
       ) : (
         <div className="overflow-auto" style={{ maxHeight }}>
           <TableRoot className="w-full text-left border-collapse">
-            <TableHead
-              className={
-                stickyHeader
-                  ? 'sticky top-0 bg-surface-2 z-10'
-                  : 'border-b border-[var(--border-2)]'
-              }
-            >
-              <TableRow className="bg-surface-2">
+            <TableHead className={stickyHeader ? 'sticky top-0 z-10 bg-surface' : undefined}>
+              <TableRow>
                 {columns.map(column => (
                   <TableHeaderCell
                     key={String(column.key)}
-                    className="px-4 py-2 text-label text-fg-3 whitespace-nowrap"
+                    className="px-4 py-2 border-b border-border-1 text-micro font-semibold uppercase tracking-[.08em] text-fg-4 whitespace-nowrap"
                   >
                     {column.label}
                   </TableHeaderCell>
                 ))}
               </TableRow>
             </TableHead>
-            <TableBody className="divide-y divide-[var(--border-1)]">
-              {data.map(row => (
+            <TableBody>
+              {data.map((row, index) => (
                 <TableRow
                   key={getRowKey(row)}
-                  className="h-11 hover:bg-surface-2 transition-colors"
+                  className="knik-enter-rise border-b border-border-1 last:border-0 transition-colors duration-base ease-out hover:bg-panel-2"
+                  // Capped so long lists never hold rows back for seconds; --m drops the delay under reduced motion.
+                  style={{ animationDelay: `calc(${Math.min(index, 8) * 0.05}s * var(--m))` }}
                 >
                   {columns.map(column => (
                     <TableCell
                       key={String(column.key)}
-                      className="px-4 py-2 text-body-sm text-fg-2"
+                      className="px-4 py-3 align-middle text-body-sm text-fg-2"
                     >
                       {column.render
                         ? column.render(row[column.key as keyof T], row)

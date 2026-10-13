@@ -2,13 +2,7 @@ import type { EyebrowProps } from '$types'
 
 export default function Eyebrow({ children }: EyebrowProps) {
   return (
-    <div
-      className="text-caption font-medium"
-      style={{
-        color: 'var(--fg-4)',
-        padding: '10px 11px 7px',
-      }}
-    >
+    <div className="px-2 pb-2.5 text-micro font-semibold uppercase tracking-[.09em] text-fg-4">
       {children}
     </div>
   )

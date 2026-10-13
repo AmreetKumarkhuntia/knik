@@ -8,6 +8,7 @@ it('collapses every CSS animation and transition when reduced motion is requeste
   const block = css.slice(start, css.indexOf('\n}', start))
   expect(block).toMatch(/\*,\s*\*::before,\s*\*::after\s*\{/)
   for (const declaration of [
+    'animation-delay: 0s !important',
     'animation-duration: 0.01ms !important',
     'animation-iteration-count: 1 !important',
     'transition-duration: 0.01ms !important',

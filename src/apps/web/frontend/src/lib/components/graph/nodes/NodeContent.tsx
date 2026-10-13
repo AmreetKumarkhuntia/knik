@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 // The builder keeps edited params as raw JSON text until save, so count keys only once it parses.
 function countParameters(params: unknown): number {
   let value = params
@@ -11,19 +13,38 @@ function countParameters(params: unknown): number {
   return value && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value).length : 0
 }
 
+function DetailRow({
+  name,
+  title,
+  children,
+}: {
+  name: string
+  title?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-2 min-w-0 text-caption">
+      <span className="w-[52px] shrink-0 text-fg-4">{name}</span>
+      <span className="graph-node__detail min-w-0" title={title}>
+        {children}
+      </span>
+    </div>
+  )
+}
+
 export function FunctionContent({ data }: { data: Record<string, unknown> }) {
   const functionName = data.function_name as string
   const parameterCount = countParameters(data.params)
 
   return (
     <>
-      <p className="graph-node__detail font-mono" title={functionName}>
+      <DetailRow name="fn" title={functionName}>
         {functionName || 'Unnamed function'}
-      </p>
+      </DetailRow>
       {parameterCount > 0 && (
-        <span className="graph-node__support">
+        <DetailRow name="params">
           {parameterCount} {parameterCount === 1 ? 'parameter' : 'parameters'}
-        </span>
+        </DetailRow>
       )}
     </>
   )
@@ -32,23 +53,23 @@ export function FunctionContent({ data }: { data: Record<string, unknown> }) {
 export function ConditionalContent({ data }: { data: Record<string, unknown> }) {
   const condition = data.condition as string
   return (
-    <p className="graph-node__detail font-mono" title={condition}>
+    <DetailRow name="if" title={condition}>
       {condition || 'No condition'}
-    </p>
+    </DetailRow>
   )
 }
 
 export function MergeContent({ data }: { data: Record<string, unknown> }) {
   const strategy = data.merge_strategy as string
-  return <p className="graph-node__detail">{strategy || 'concat'}</p>
+  return <DetailRow name="strategy">{strategy || 'concat'}</DetailRow>
 }
 
 export function AIContent({ data }: { data: Record<string, unknown> }) {
   const model = data.model as string
   return (
-    <p className="graph-node__detail" title={model}>
+    <DetailRow name="model" title={model}>
       {model || 'No model selected'}
-    </p>
+    </DetailRow>
   )
 }
 

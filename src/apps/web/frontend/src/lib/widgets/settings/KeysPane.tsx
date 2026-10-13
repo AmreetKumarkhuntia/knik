@@ -23,7 +23,7 @@ export default function KeysPane() {
           />
         ))
       ) : (
-        <p className="text-body-sm text-[var(--fg-4)] py-2.5">No API keys available.</p>
+        <p className="py-3 text-body-sm text-fg-4">No API keys available.</p>
       )}
       <ConfirmDialog
         isOpen={!!deleting}

@@ -10,24 +10,41 @@ export default function FlowViewportControls({ onFit }: FlowViewportControlsProp
     <div
       role="group"
       aria-label="Graph view controls"
-      className="absolute bottom-4 left-4 z-10 flex items-center gap-1 p-1 rounded-[10px] border border-border bg-surface shadow-knik-2 nodrag nopan"
+      className="absolute bottom-4 left-4 z-10 flex flex-col gap-0.5 p-1 rounded-[12px] bg-surface border border-border-2 shadow-[0_10px_30px_-20px_rgba(0,0,0,.8)] nodrag nopan"
     >
-      <Button variant="ghost" size="sm" aria-label="Zoom Out" onClick={() => void zoomOut()}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="knik-btn--icon rounded-[9px]"
+        aria-label="Zoom In"
+        onClick={() => void zoomIn()}
+      >
+        <MS name="add" size={18} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="knik-btn--icon rounded-[9px]"
+        aria-label="Zoom Out"
+        onClick={() => void zoomOut()}
+      >
         <MS name="remove" size={18} />
       </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="knik-btn--icon rounded-[9px]"
+        aria-label="Fit View"
+        onClick={onFit}
+      >
+        <MS name="fit_screen" size={18} />
+      </Button>
       <output
-        className="w-12 text-center text-caption text-secondary tabular-nums"
+        className="pt-0.5 pb-1 text-center font-mono text-micro text-fg-4 tabular-nums"
         aria-label="Zoom level"
       >
         {Math.round(zoom * 100)}%
       </output>
-      <Button variant="ghost" size="sm" aria-label="Zoom In" onClick={() => void zoomIn()}>
-        <MS name="add" size={18} />
-      </Button>
-      <span className="h-5 w-px bg-border-2 mx-1" aria-hidden="true" />
-      <Button variant="ghost" size="sm" aria-label="Fit View" onClick={onFit}>
-        <MS name="center_focus_strong" size={18} />
-      </Button>
     </div>
   )
 }

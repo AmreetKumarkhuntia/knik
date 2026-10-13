@@ -52,6 +52,19 @@ describe('workflow builder canvas', () => {
     expect(scroller).toHaveFocus()
   })
 
+  it('places the notice strip between the navbar and the canvas', () => {
+    render(<Canvas {...props()} error={null} notice={<p>Run is unavailable</p>} />)
+    const notice = screen.getByText('Run is unavailable')
+    expect(
+      screen.getByRole('banner').compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(
+      notice.compareDocumentPosition(screen.getByTestId('flow-canvas')) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(screen.getByRole('banner')).not.toContainElement(notice)
+  })
+
   it('takes its narrow layout from the narrow prop rather than reading the window', () => {
     const selectedNode = { id: 'start', type: 'StartNode', position: { x: 0, y: 0 }, data: {} }
     const view = render(<Canvas {...props()} selectedNode={selectedNode} />)

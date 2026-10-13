@@ -6,15 +6,15 @@ import Button from '../buttons/Button'
 import MS from '../display/MS'
 import type { ModalProps } from '$types/components'
 import { MODAL_SIZE_CLASSES } from '$lib/constants'
+import { MOTION_DURATION, MOTION_EASE_OUT, MOTION_EASE_SPRING } from '$lib/constants/motion'
 
-const EASE_OUT = [0.16, 1, 0.3, 1] as const
-const ENTER = { duration: 0.18, ease: EASE_OUT }
-const EXIT = { duration: 0.12, ease: 'easeIn' } as const
-// Drawers slide in from their edge; centred dialogs settle from a slight scale.
+const BACKDROP_ENTER = { duration: MOTION_DURATION.base, ease: MOTION_EASE_OUT }
+const PANEL_ENTER = { duration: MOTION_DURATION.slow, ease: MOTION_EASE_SPRING }
+const EXIT = { duration: MOTION_DURATION.fast, ease: 'easeIn' } as const
 const PANEL_HIDDEN = {
-  center: { opacity: 0, scale: 0.98, y: 4 },
-  left: { x: '-100%' },
-  right: { x: '100%' },
+  center: { opacity: 0, scale: 0.96, y: 16 },
+  left: { opacity: 0, x: -32 },
+  right: { opacity: 0, x: 32 },
 }
 
 export default function Modal({
@@ -22,11 +22,13 @@ export default function Modal({
   onClose,
   children,
   title,
+  titleHidden = false,
   className = '',
   size = 'md',
   placement = 'center',
 }: ModalProps) {
   const panel = useRef<HTMLDivElement>(null)
+  const body = useRef<HTMLDivElement>(null)
   const closeRef = useRef(onClose)
   useEffect(() => {
     closeRef.current = onClose
@@ -38,11 +40,14 @@ export default function Modal({
     const overlay = registerOverlay(true)
     const selector =
       'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]'
-    const focusable = (): HTMLElement[] =>
-      [...(panel.current?.querySelectorAll<HTMLElement>(selector) ?? [])].filter(
+    const focusable = (root = panel.current): HTMLElement[] =>
+      [...(root?.querySelectorAll<HTMLElement>(selector) ?? [])].filter(
         el => !el.hidden && el.getAttribute('aria-hidden') !== 'true'
       )
-    const initialFocus: HTMLElement | undefined = focusable().at(0)
+    // Centred dialogs open on their first field rather than the header close button; drawers open
+    // on the close button so a long panel is announced from its top.
+    const initialFocus: HTMLElement | undefined =
+      (placement === 'center' ? focusable(body.current).at(0) : undefined) ?? focusable().at(0)
     if (initialFocus) initialFocus.focus()
     else panel.current?.focus()
     const keydown = (event: KeyboardEvent) => {
@@ -77,17 +82,18 @@ export default function Modal({
       document.removeEventListener('keydown', keydown)
       if (wasTop && previous?.isConnected) previous.focus()
     }
-  }, [isOpen])
+  }, [isOpen, placement])
   const hidden = PANEL_HIDDEN[placement]
+  const header = Boolean(title) && !titleHidden
   return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: ENTER }}
+          animate={{ opacity: 1, transition: BACKDROP_ENTER }}
           // The fading backdrop must not swallow clicks meant for the page underneath.
           exit={{ opacity: 0, pointerEvents: 'none', transition: EXIT }}
-          className={`fixed inset-0 z-[120] flex bg-black/50 ${placement === 'center' ? 'items-center justify-center' : placement === 'left' ? 'justify-start' : 'justify-end'}`}
+          className={`fixed inset-0 z-[120] flex bg-[rgba(10,8,6,0.5)] backdrop-blur-[8px] ${placement === 'center' ? 'items-center justify-center' : placement === 'left' ? 'justify-start' : 'justify-end'}`}
           onMouseDown={event => {
             if (event.target === event.currentTarget) onClose()
           }}
@@ -95,28 +101,42 @@ export default function Modal({
           <motion.div
             ref={panel}
             initial={hidden}
-            animate={{ opacity: 1, scale: 1, x: 0, y: 0, transition: ENTER }}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0, transition: PANEL_ENTER }}
             exit={{ ...hidden, transition: EXIT }}
             tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? labelId : undefined}
             aria-label={title ? undefined : 'Dialog'}
-            className={`relative border border-[var(--border-2)] bg-surface shadow-knik-3 w-full flex flex-col min-h-0 ${placement === 'center' ? `rounded-xl ${MODAL_SIZE_CLASSES[size]} mx-4 max-h-[90dvh]` : `h-dvh max-w-full sm:max-w-[360px] ${placement === 'left' ? 'border-l-0' : 'border-r-0'}`} ${className}`}
+            className={`relative flex flex-col min-h-0 bg-surface border-border-2 shadow-knik-3 outline-none ${placement === 'center' ? `w-full ${MODAL_SIZE_CLASSES[size]} mx-4 max-h-[90dvh] rounded-2xl border` : `h-dvh w-[min(380px,100%)] ${placement === 'left' ? 'border-r' : 'border-l'}`} ${className}`}
           >
-            {title && (
-              <div className="px-4 py-3 border-b border-[var(--border-2)] flex items-center justify-between gap-3 shrink-0">
-                <h2 id={labelId} className="text-h3 text-fg-1">
+            {header && (
+              <div className="flex items-center justify-between gap-3 shrink-0 pl-5 pr-3.5 pt-3.5 pb-2">
+                <h2 id={labelId} className="text-h3 text-fg-1 min-w-0">
                   {title}
                 </h2>
-                {placement !== 'center' && (
-                  <Button variant="ghost" size="sm" aria-label={`Close ${title}`} onClick={onClose}>
-                    <MS name="close" size={18} />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="knik-btn--icon rounded-[9px]"
+                  aria-label={`Close ${title}`}
+                  onClick={onClose}
+                >
+                  <MS name="close" size={18} />
+                </Button>
               </div>
             )}
-            <div className="p-4 min-h-0 overflow-y-auto flex-1">{children}</div>
+            {title && titleHidden && (
+              <h2 id={labelId} className="sr-only">
+                {title}
+              </h2>
+            )}
+            <div
+              ref={body}
+              className={`min-h-0 overflow-y-auto flex-1 ${header ? 'px-5 pb-5 pt-1.5' : titleHidden ? 'p-2.5' : 'p-5'}`}
+            >
+              {children}
+            </div>
           </motion.div>
         </motion.div>
       )}

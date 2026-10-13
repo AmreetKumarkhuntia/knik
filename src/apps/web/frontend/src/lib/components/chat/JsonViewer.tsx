@@ -35,13 +35,13 @@ export default function JsonViewer({
         id={`${id}-panel-${activeTab}`}
         aria-labelledby={tabs?.length ? `${id}-tab-${activeTab}` : undefined}
         tabIndex={tabs?.length ? 0 : undefined}
-        className="max-h-[600px] overflow-auto"
+        className={`max-h-[600px] overflow-auto ${tabs?.length ? 'mt-2' : ''}`}
       >
         {json === undefined ? (
           <p className="p-4 text-body text-fg-4">No data supplied.</p>
         ) : typeof displayData === 'string' ? (
           // Text (e.g. a skill's markdown answer) reads better as is than as a quoted JSON string.
-          <pre className="m-0 p-3 font-mono text-mono-sm text-fg-2 whitespace-pre-wrap break-words">
+          <pre className="m-0 rounded-[10px] bg-code border border-border-1 px-3 py-2.5 font-mono text-mono-sm leading-[1.55] text-fg-2 whitespace-pre-wrap break-words">
             {displayData}
           </pre>
         ) : (

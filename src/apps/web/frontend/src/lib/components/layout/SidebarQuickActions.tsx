@@ -10,7 +10,7 @@ export default function SidebarQuickActions({ collapsed, onNewChat }: SidebarQui
         onClick={onNewChat}
         aria-label="New Chat"
         title={collapsed ? 'New Chat' : undefined}
-        className={`w-full ${collapsed ? 'justify-center px-0' : 'justify-start'}`}
+        className={`w-full rounded-[11px] ${collapsed ? 'justify-center px-0' : 'justify-start px-2.5'}`}
         icon={<MS name="add" size={18} />}
       >
         {!collapsed && 'New chat'}

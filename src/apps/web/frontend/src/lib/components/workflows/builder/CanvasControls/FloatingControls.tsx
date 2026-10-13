@@ -25,31 +25,42 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
         open={popoverOpen}
         onOpenChange={setPopoverOpen}
         placement="bottom-start"
+        label="Choose a step"
         renderTrigger={props => (
-          <Button {...props} variant="secondary" size="sm" icon={<MS name="add" size={18} />}>
+          <Button
+            {...props}
+            variant="secondary"
+            size="sm"
+            className="!bg-surface hover:!bg-panel-3 border-border-2 text-fg-1 rounded-[11px] shadow-[0_10px_30px_-20px_rgba(0,0,0,.8)]"
+            icon={
+              <MS
+                name="add"
+                size={18}
+                className={`transition-transform duration-slow ease-spring ${popoverOpen ? 'rotate-45' : ''}`}
+              />
+            }
+          >
             Add Node
           </Button>
         )}
         content={
-          <div className="w-60 p-1">
-            <p className="px-3 py-2 text-caption text-secondary">Choose a step</p>
+          <div className="flex w-[246px] max-w-full flex-col">
+            <p className="px-3 pt-2 pb-1.5 text-caption text-fg-4">Choose a step</p>
             {getAllNodeTypes().map(node => (
               <Button
                 key={node.type}
                 variant="ghost"
                 onClick={() => handleAdd(node.type)}
-                className="!justify-start w-full text-left gap-3 !py-2"
+                className="w-full !justify-start gap-3 px-2.5 !py-2 rounded-[10px] text-left"
               >
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${node.colors.iconBg} ${node.colors.iconText}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] ${node.colors.iconBg} ${node.colors.iconText}`}
                 >
                   <MS name={node.icon} size={18} />
                 </span>
-                <span>
-                  <span className="block text-label">{node.label}</span>
-                  <span className="block text-caption font-normal text-secondary">
-                    {node.typeLabel}
-                  </span>
+                <span className="min-w-0">
+                  <span className="block text-label text-fg-1">{node.label}</span>
+                  <span className="block text-caption text-fg-4 font-normal">{node.typeLabel}</span>
                 </span>
               </Button>
             ))}

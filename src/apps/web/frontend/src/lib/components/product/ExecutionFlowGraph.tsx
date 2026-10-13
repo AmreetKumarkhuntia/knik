@@ -85,7 +85,7 @@ export default function ExecutionFlowGraph({
 
   if (definitionError) {
     return (
-      <div className={`${className} flex items-center justify-center bg-surface-2`}>
+      <div className={`${className} flex items-center justify-center bg-panel`}>
         <p className="text-[var(--danger)]">{definitionError}</p>
       </div>
     )
@@ -93,7 +93,7 @@ export default function ExecutionFlowGraph({
 
   if (!definition) {
     return (
-      <div className={`${className} flex items-center justify-center bg-surface-2`}>
+      <div className={`${className} flex items-center justify-center bg-panel`}>
         <LoadingSpinner />
       </div>
     )
@@ -101,7 +101,7 @@ export default function ExecutionFlowGraph({
 
   if (!graphData) {
     return (
-      <div className={`${className} flex items-center justify-center bg-surface-2`}>
+      <div className={`${className} flex items-center justify-center bg-panel`}>
         <p className="text-[var(--danger)]">Failed to load execution graph</p>
       </div>
     )
@@ -111,7 +111,7 @@ export default function ExecutionFlowGraph({
     <div
       ref={container}
       data-flow-direction={direction}
-      className={`${className} bg-[var(--bg-canvas)] overflow-hidden workflow-grid`}
+      className={`${className} overflow-hidden workflow-grid`}
     >
       {/* Rotating the layout remounts the canvas so xyflow re-measures every rotated handle. */}
       <FlowCanvas

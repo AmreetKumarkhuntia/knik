@@ -42,6 +42,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 12px 14px;
+  animation: knik-fade calc(0.3s * var(--m)) var(--ease-out) backwards;
 }
 
 .graph-node--execution.graph-node--terminal {
@@ -71,10 +72,6 @@
   width: 30px;
   height: 30px;
   border-radius: 9px;
-}
-
-.graph-node__icon .material-symbols-outlined {
-  font-size: 17px;
 }
 
 .graph-node--terminal .graph-node__icon {
@@ -107,8 +104,7 @@
 }
 
 .graph-node__type,
-.graph-node__detail,
-.graph-node__support {
+.graph-node__detail {
   margin: 0;
   overflow: hidden;
   color: var(--fg-4);
@@ -231,13 +227,17 @@
   transform: translateX(-50%);
 }
 
-/* Execution status: ambient motion only while running; reduced motion is handled globally. */
+/* Execution status: ambient motion only while running; reduced motion is handled globally.
+   The entrance fade stays in the list so a running node does not replay it when it finishes,
+   and it animates opacity only because xyflow measures handles from the node's box. */
 .graph-node--running {
   border-color: var(--acc-border);
   box-shadow:
     0 0 0 4px var(--acc-soft),
     0 20px 40px -24px var(--acc-glow);
-  animation: knik-pulse 1.6s ease-out infinite;
+  animation:
+    knik-fade calc(0.3s * var(--m)) var(--ease-out) backwards,
+    knik-pulse 1.6s ease-out infinite;
 }
 
 .graph-node--success {

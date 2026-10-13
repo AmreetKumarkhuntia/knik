@@ -1,4 +1,4 @@
-import { MS } from '$components'
+import { Kbd, MS } from '$components'
 import Button from '$components/buttons/Button'
 import Breadcrumb from '$components/navigation/Breadcrumb'
 import { LAYOUT } from '$lib/constants/dimensions'
@@ -13,13 +13,14 @@ export default function TopBar({
 }: TopBarProps) {
   return (
     <header
-      className="flex items-center flex-shrink-0 px-3 sm:px-6 gap-3 border-b border-border bg-background"
+      className="flex items-center flex-shrink-0 px-3 sm:px-6 gap-3 border-b border-border-1"
       style={{ height: LAYOUT.headerHeight }}
     >
       {onOpenNavigation && (
         <Button
           variant="ghost"
           size="sm"
+          className="knik-btn--icon rounded-[10px]"
           aria-label="Open navigation"
           onClick={onOpenNavigation}
           icon={<MS name="menu" size={20} />}
@@ -30,16 +31,21 @@ export default function TopBar({
       </div>
       <div className="flex items-center flex-shrink-0 ml-auto gap-1">
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
+          className="gap-2 pl-3 pr-2.5 rounded-[10px] border-border-1 bg-panel text-fg-3 text-caption font-medium hover:!bg-panel-2 hover:!border-border-2 max-sm:px-0"
           aria-label="Search commands"
           title="Search commands (⌘K)"
           onClick={onOpenSearch}
-          icon={<MS name="search" size={19} />}
-        />
+          icon={<MS name="search" size={18} />}
+        >
+          <span className="hidden sm:inline">Search</span>
+          <Kbd className="hidden sm:inline-flex bg-transparent text-fg-4">⌘K</Kbd>
+        </Button>
         <Button
           variant="ghost"
           size="sm"
+          className="knik-btn--icon rounded-[10px] hover:-rotate-[15deg]"
           aria-label={dark ? 'Light mode' : 'Dark mode'}
           title={dark ? 'Light mode' : 'Dark mode'}
           onClick={onToggleTheme}

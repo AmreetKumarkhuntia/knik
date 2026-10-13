@@ -50,8 +50,8 @@ export default memo(function CodeBlock({
   className = '',
 }: CodeBlockProps) {
   return (
-    <div className={`bg-code border border-border-2 rounded-[10px] overflow-hidden ${className}`}>
-      <div className="flex items-center px-3.5 py-1.5 bg-surface-2 border-b border-border-1">
+    <div className={`bg-code border border-border-1 rounded-[14px] overflow-hidden ${className}`}>
+      <div className="flex items-center gap-2 px-3.5 py-1.5 bg-panel-2 border-b border-border-1">
         <span className="font-mono text-mono-sm text-fg-3">{language}</span>
         {copyable && onCopy && (
           <Button
@@ -59,7 +59,7 @@ export default memo(function CodeBlock({
             size="xs"
             onClick={() => onCopy(code)}
             aria-label={copied ? 'Copied code' : 'Copy code'}
-            className="ml-auto"
+            className="knik-btn--icon knik-btn--compact ml-auto w-7 h-7 rounded-[9px]"
           >
             <MS name={copied ? 'check' : 'content_copy'} size={15} />
           </Button>
@@ -79,7 +79,7 @@ export default memo(function CodeBlock({
           lineNumberStyle={{
             minWidth: '28px',
             paddingRight: '14px',
-            color: 'var(--fg-3)',
+            color: 'var(--fg-4)',
             textAlign: 'right',
             userSelect: 'none',
           }}

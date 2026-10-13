@@ -13,14 +13,14 @@ export default function VerticalTabs({
   const active = controlled ?? internal,
     id = useId()
   return (
-    <div className={`flex min-w-0 flex-col gap-6 md:flex-row md:gap-8 ${className}`}>
+    <div className={`flex min-w-0 flex-col gap-6 md:flex-row md:gap-7 ${className}`}>
       <Tabs
         tabs={tabs}
         active={active}
         idPrefix={id}
         orientation={orientation}
         variant="pills"
-        className="w-full shrink-0 overflow-x-auto pb-1 md:w-[176px] md:self-start"
+        className="w-full shrink-0 overflow-x-auto md:sticky md:top-0 md:w-[200px] md:self-start md:overflow-visible"
         onChange={value => {
           setInternal(value)
           onChange?.(value)

@@ -34,7 +34,7 @@ const components: Components = {
   code({ children, className }) {
     return (
       <code
-        className={`px-1.5 py-0.5 rounded-md bg-surface-2 text-fg-2 font-mono ${className || ''}`}
+        className={`font-mono px-1.5 py-px rounded-xs bg-panel-2 border border-border-1 text-fg-1 ${className || ''}`}
         style={{ fontSize: '0.9em' }}
       >
         {children}
@@ -42,25 +42,33 @@ const components: Components = {
     )
   },
   p({ children }) {
-    return <p className="mb-4 last:mb-0 text-body-lg">{children}</p>
+    return <p className="mb-3 last:mb-0 text-body-lg leading-[1.65]">{children}</p>
   },
   ul({ children }) {
-    return <ul className="list-disc list-inside mb-4 space-y-2 text-body-lg">{children}</ul>
+    return (
+      <ul className="list-disc list-outside pl-[22px] mb-3 flex flex-col gap-1.5 text-body-lg">
+        {children}
+      </ul>
+    )
   },
   ol({ children }) {
-    return <ol className="list-decimal list-inside mb-4 space-y-2 text-body-lg">{children}</ol>
+    return (
+      <ol className="list-decimal list-outside pl-[22px] mb-3 flex flex-col gap-1.5 text-body-lg">
+        {children}
+      </ol>
+    )
   },
   li({ children }) {
-    return <li className="leading-relaxed">{children}</li>
+    return <li className="leading-[1.65] marker:text-fg-3">{children}</li>
   },
   h1({ children }) {
-    return <h1 className="text-h2 font-bold mb-4 mt-6 first:mt-0">{children}</h1>
+    return <h1 className="text-h2 text-fg-1 mb-3 mt-6 first:mt-0">{children}</h1>
   },
   h2({ children }) {
-    return <h2 className="text-h3 font-bold mb-3 mt-5 first:mt-0">{children}</h2>
+    return <h2 className="text-h3 text-fg-1 mb-2.5 mt-5 first:mt-0">{children}</h2>
   },
   h3({ children }) {
-    return <h3 className="text-h4 font-bold mb-2 mt-4 first:mt-0">{children}</h3>
+    return <h3 className="text-h4 text-fg-1 mb-2 mt-4 first:mt-0">{children}</h3>
   },
   a({ children, href }) {
     return (
@@ -68,26 +76,26 @@ const components: Components = {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[var(--info)] hover:opacity-80 underline underline-offset-2"
+        className="text-[var(--acc-text)] underline underline-offset-2 decoration-[var(--acc-border)] hover:decoration-current transition-colors duration-base"
       >
         {children}
       </a>
     )
   },
   strong({ children }) {
-    return <strong className="font-bold text-fg-1">{children}</strong>
+    return <strong className="font-semibold text-fg-1">{children}</strong>
   },
   blockquote({ children }) {
     return (
-      <blockquote className="border-l-4 border-[var(--border-2)] pl-4 py-1 mb-4 my-2 text-fg-3 italic">
+      <blockquote className="border-l-2 border-border-2 pl-4 py-1 mb-3 text-fg-3">
         {children}
       </blockquote>
     )
   },
   table({ children }) {
     return (
-      <div className="overflow-x-auto mb-4">
-        <TableRoot className="min-w-full divide-y divide-[var(--border-2)]">{children}</TableRoot>
+      <div className="overflow-x-auto mb-3 rounded-[14px] border border-border-1">
+        <TableRoot className="min-w-full">{children}</TableRoot>
       </div>
     )
   },
@@ -102,14 +110,14 @@ const components: Components = {
   },
   th({ children }) {
     return (
-      <TableHeaderCell className="px-4 py-2 text-left text-body-sm font-semibold text-fg-2">
+      <TableHeaderCell className="px-3.5 py-2 text-left text-caption font-semibold text-fg-3 bg-panel">
         {children}
       </TableHeaderCell>
     )
   },
   td({ children }) {
     return (
-      <TableCell className="px-4 py-2 text-body-sm border-t border-[var(--border-2)]">
+      <TableCell className="px-3.5 py-2 text-body-sm text-fg-2 border-t border-border-1">
         {children}
       </TableCell>
     )
@@ -123,15 +131,14 @@ export const MarkdownMessage = memo(function MarkdownMessage({
   onCopy,
 }: MarkdownMessageProps) {
   return (
-    <div className="max-w-none text-fg-2 overflow-hidden">
+    // Outer block margins are trimmed so every reply ends flush, whichever block closes it.
+    <div className="max-w-none text-fg-1 overflow-hidden [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
       <CopyContext.Provider value={onCopy}>
         <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
           {content}
         </ReactMarkdown>
       </CopyContext.Provider>
-      {isStreaming && (
-        <span className="inline-block w-0.5 h-5 bg-[var(--primary)] ml-1 mt-1 animate-pulse align-middle" />
-      )}
+      {isStreaming && <span className="knik-caret" aria-hidden="true" />}
     </div>
   )
 })

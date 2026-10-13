@@ -50,13 +50,18 @@ export default function WorkflowBuilderWidget({ workflowId }: WorkflowBuilderWid
   }
   return (
     <div className="flex-1 flex flex-col overflow-hidden w-full h-full relative">
-      {!view.canRun && (
-        <Banner variant="info">
-          Run is unavailable until a matching demo scenario is supplied. Editing and JSON export are
-          available.
-        </Banner>
-      )}
       <Canvas
+        notice={
+          view.canRun ? undefined : (
+            <Banner
+              variant="info"
+              className="rounded-none border-x-0 border-t-0 px-4 py-2.5 text-body-sm"
+            >
+              Run is unavailable until a matching demo scenario is supplied. Editing and JSON export
+              are available.
+            </Banner>
+          )
+        }
         nodes={draft.nodes}
         edges={draft.edges}
         selectedNode={view.selectedNode}

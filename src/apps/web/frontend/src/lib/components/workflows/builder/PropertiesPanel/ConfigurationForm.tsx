@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import { Banner, Chip, Input, MS, Select, Slider } from '$components'
+import { Chip, Input, MS, Select, Slider } from '$components'
 import Button from '$components/buttons/Button'
 import Textarea from '$components/forms/Textarea'
 import type { ConfigurationFormProps } from '$types/sections/workflow-builder'
@@ -17,20 +17,22 @@ function TagsField({ field, value, onChange, draft = '', onDraftChange }: NodeFi
     onDraftChange?.('')
   }
   return (
-    <div className="space-y-2">
-      <label htmlFor={id} className="text-micro text-secondary uppercase tracking-wide">
+    <div>
+      <label htmlFor={id} className="block text-label text-fg-3 mb-2">
         {field.label}
       </label>
-      <div className="flex flex-wrap gap-1.5">
-        {tags.map(tag => (
-          <Chip
-            key={tag}
-            label={tag}
-            variant="tag"
-            onRemove={() => onChange(tags.filter(item => item !== tag))}
-          />
-        ))}
-      </div>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {tags.map(tag => (
+            <Chip
+              key={tag}
+              label={tag}
+              variant="tag"
+              onRemove={() => onChange(tags.filter(item => item !== tag))}
+            />
+          ))}
+        </div>
+      )}
       <div className="flex gap-2">
         <Input
           id={id}
@@ -43,9 +45,8 @@ function TagsField({ field, value, onChange, draft = '', onDraftChange }: NodeFi
             }
           }}
           placeholder={field.tagPlaceholder ?? 'Add…'}
-          className="!px-3 !py-2 text-label"
         />
-        <Button variant="secondary" size="sm" onClick={add}>
+        <Button variant="secondary" size="sm" className="rounded-[10px]" onClick={add}>
           Add
         </Button>
       </div>
@@ -55,6 +56,8 @@ function TagsField({ field, value, onChange, draft = '', onDraftChange }: NodeFi
 
 function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldProps) {
   const id = useId()
+  const tipId = `${id}-tip`
+  const describedBy = field.tip ? tipId : undefined
   const [expanded, setExpanded] = useState(false)
   if (field.type === 'tags')
     return (
@@ -71,15 +74,17 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
       ? JSON.stringify(value, null, 2)
       : String(value ?? '')
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label htmlFor={id} className="text-micro text-secondary uppercase tracking-wide">
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <label htmlFor={id} className="block text-label text-fg-3">
           {field.label}
         </label>
         {field.type === 'textarea-collapsible' && (
           <Button
             variant="ghost"
             size="sm"
+            // Negative margin keeps the full touch target without stretching the label row.
+            className="knik-btn--icon rounded-[9px] -my-2"
             onClick={() => setExpanded(current => !current)}
             aria-label={`${expanded ? 'Collapse' : 'Expand'} ${field.label}`}
             aria-expanded={expanded}
@@ -106,6 +111,8 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
           placeholder="No models available"
           value={text}
           onChange={onChange}
+          aria-describedby={describedBy}
+          className="w-full"
         />
       ) : field.type === 'textarea' || field.type === 'textarea-collapsible' ? (
         <Textarea
@@ -114,7 +121,8 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
           onChange={event => onChange(event.target.value)}
           placeholder={field.placeholder}
           rows={field.type === 'textarea' ? 3 : expanded ? 6 : 2}
-          className="w-full !px-3 !py-2 text-label"
+          aria-describedby={describedBy}
+          className="py-2.5 font-mono text-body-sm resize-y"
         />
       ) : (
         <Input
@@ -125,14 +133,16 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
             onChange(field.type === 'number' ? Number(event.target.value) : event.target.value)
           }
           placeholder={field.placeholder}
-          className="!px-3 !py-2 text-label"
+          aria-describedby={describedBy}
         />
       )}
       {field.tip && (
-        <Banner variant="info" icon={<MS name={field.tip.icon} size={16} />}>
-          <span className="font-medium">{field.tip.title}</span>
-          <p className="text-caption mt-1">{field.tip.description}</p>
-        </Banner>
+        <p id={tipId} className="flex items-start gap-1.5 mt-2 text-caption text-fg-3">
+          <MS name={field.tip.icon} size={15} className="shrink-0 mt-px text-[var(--acc-text)]" />
+          <span>
+            <span className="sr-only">{field.tip.title}:</span> {field.tip.description}
+          </span>
+        </p>
       )}
     </div>
   )
@@ -149,7 +159,7 @@ export default function ConfigurationForm({
   if (!metadata) return null
   const { id: nodeId, data } = node
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-4">
       {metadata.formFields.map(field => (
         <NodeField
           key={field.field}

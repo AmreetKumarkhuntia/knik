@@ -39,13 +39,14 @@ export default function GeneralPane() {
           }}
         >
           <FormRow label="Display name" htmlFor={`${id}-display-name`}>
-            <Input
-              id={`${id}-display-name`}
-              value={displayName}
-              onChange={event => patch({ displayName: event.target.value })}
-              fullWidth={false}
-              className="w-full sm:w-[260px]"
-            />
+            <div className="w-full min-w-0 sm:w-[260px]">
+              <Input
+                id={`${id}-display-name`}
+                value={displayName}
+                onChange={event => patch({ displayName: event.target.value })}
+                className="bg-surface"
+              />
+            </div>
           </FormRow>
           <FormRow
             label="Username"
@@ -54,17 +55,18 @@ export default function GeneralPane() {
             hintId={`${id}-username-hint`}
             last
           >
-            <Input
-              id={`${id}-username`}
-              aria-describedby={`${id}-username-hint`}
-              value={username}
-              onChange={event => patch({ username: event.target.value })}
-              fullWidth={false}
-              className="w-full sm:w-[260px]"
-            />
+            <div className="w-full min-w-0 sm:w-[260px]">
+              <Input
+                id={`${id}-username`}
+                aria-describedby={`${id}-username-hint`}
+                value={username}
+                onChange={event => patch({ username: event.target.value })}
+                className="bg-surface"
+              />
+            </div>
           </FormRow>
-          <div className="flex justify-end gap-2 mt-3">
-            <Button size="sm" disabled={!dirty} onClick={resetDraft}>
+          <div className="flex justify-end gap-2 pb-3.5">
+            <Button variant="secondary" size="sm" disabled={!dirty} onClick={resetDraft}>
               Cancel
             </Button>
             <Button type="submit" variant="primary" size="sm" disabled={!dirty}>
@@ -84,7 +86,7 @@ export default function GeneralPane() {
             id={`${id}-model`}
             aria-describedby={`${id}-model-hint`}
             presentation="native"
-            className="w-full sm:w-[260px]"
+            className="w-full bg-surface sm:w-[260px]"
             options={modelOptions}
             value={settings.model}
             onValueChange={model => updateSettings({ model })}
@@ -111,7 +113,11 @@ export default function GeneralPane() {
           />
         </FormRow>
       </FormGroup>
-      <FormGroup title="Conversation history" sub="Changes apply to this session">
+      <FormGroup
+        title="Conversation history"
+        sub="Changes apply to this session"
+        bodyClassName="px-[18px]"
+      >
         <FormRow
           label="Delete all conversations"
           hint="Reload restores the supplied demo source"
@@ -120,8 +126,9 @@ export default function GeneralPane() {
           <Button
             variant="danger"
             size="sm"
+            className="pl-2.5"
             aria-label="Delete conversations"
-            icon={<MS name="delete_forever" size={15} />}
+            icon={<MS name="delete_forever" size={16} />}
             disabled={conversationCount === 0}
             onClick={() => patch({ confirmClear: true })}
           >

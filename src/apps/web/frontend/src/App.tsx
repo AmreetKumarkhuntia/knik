@@ -7,6 +7,7 @@ import { MainLayoutWidget } from '$widgets/layout'
 import { ErrorBoundaryWidget } from '$widgets/feedback'
 import LoadingSpinner from '$components/feedback/LoadingSpinner'
 import { ROUTES } from '$lib/constants/navigation'
+import { MOTION_DURATION, MOTION_EASE_OUT } from '$lib/constants/motion'
 import {
   Home,
   Workflows,
@@ -29,9 +30,14 @@ function AnimatedRoutes() {
       <motion.div
         key={visit.id}
         className="flex flex-col flex-1 min-h-0"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
-        exit={{ opacity: 0, transition: { duration: 0.12, ease: 'easeOut' } }}
+        initial={{ opacity: 0, y: 14, scale: 0.985 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { duration: MOTION_DURATION.page, ease: MOTION_EASE_OUT },
+        }}
+        exit={{ opacity: 0, transition: { duration: MOTION_DURATION.fast, ease: 'easeOut' } }}
       >
         <Suspense fallback={<LoadingSpinner className="py-20" />}>
           {/* The explicit location keeps the exiting page on its own route while it fades out. */}

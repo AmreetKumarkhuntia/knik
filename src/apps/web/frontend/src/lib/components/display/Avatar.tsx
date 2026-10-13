@@ -1,28 +1,20 @@
 import type { AvatarProps } from '$types'
-/** Compact initials avatar; the accent variant uses a subtle teal fill. */
-export default function Avatar({ initials, size = 30, color = 'surface', className }: AvatarProps) {
-  const isAccent = color === 'accent'
+/** Circular initials avatar; the accent variant marks the signed-in account. */
+export default function Avatar({
+  initials,
+  size = 30,
+  color = 'surface',
+  className = '',
+}: AvatarProps) {
   return (
     <div
-      className={className}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: Math.round(size * 0.3),
-        flexShrink: 0,
-        background: isAccent ? 'var(--acc-soft)' : 'var(--bg-surface-3)',
-        border: isAccent
-          ? '1px solid var(--acc-border, rgba(0,217,244,0.4))'
-          : '1px solid var(--border-2)',
-        color: 'var(--fg-1)',
-        fontFamily: 'var(--font-mono)',
-        fontSize: size * 0.36,
-        fontWeight: 600,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        letterSpacing: '-0.02em',
-      }}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border font-sans font-semibold leading-none ${
+        color === 'accent'
+          ? 'bg-[var(--acc-soft)] border-[var(--acc-border)] text-[var(--acc-text)]'
+          : 'bg-panel-3 border-border-2 text-fg-1'
+      } ${className}`}
+      // Initials scale with the avatar, which no fixed type-scale step can do.
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.37) }}
     >
       {initials}
     </div>

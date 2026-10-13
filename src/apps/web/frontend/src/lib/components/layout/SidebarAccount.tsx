@@ -8,13 +8,15 @@ export default function SidebarAccount({
   name,
   initials,
   onNavigate,
+  active = false,
 }: SidebarAccountProps) {
   return (
-    <div style={{ marginTop: 10, paddingTop: 12, borderTop: '1px solid var(--border-1)' }}>
+    <div className="mt-2.5 pt-3 border-t border-border-1 md:[&>a]:min-h-10 [&>a]:px-2 [&>a]:text-fg-2 [&>a:hover]:text-fg-1">
       <NavLink
         href={ROUTES.settings}
-        icon={<Avatar initials={initials} size={collapsed ? 32 : 30} color="accent" />}
+        icon={<Avatar initials={initials} size={30} color="accent" />}
         label={name || 'Session account'}
+        active={active}
         collapsed={collapsed}
         onClick={onNavigate}
       />

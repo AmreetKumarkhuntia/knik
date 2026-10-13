@@ -46,6 +46,8 @@ export interface RadioProps {
   onChange: (value: string) => void
   name: string
   presentation?: 'standard' | 'card' | 'chip' | 'segmented'
+  /** Extra classes for the element wrapping the options, appended to the presentation's layout (e.g. a grid). */
+  optionsClassName?: string
   label?: string
   /** Keeps the legend for assistive tech only, when the surrounding row already shows the label. */
   hideLabel?: boolean
@@ -85,6 +87,8 @@ export interface SliderProps {
   value: number
   onChange: (value: number) => void
   step?: number
+  /** Text for the value readout, e.g. "1.0×"; defaults to the raw number. */
+  formatValue?: (value: number) => string
 }
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
