@@ -10,6 +10,8 @@ from lib.tools import workflow_tool as _workflow_tool_mod
 from lib.tools.workflow_tool import WorkflowTool
 from lib.workflows import workflow_service
 from lib.workflows.errors import NotFoundError, ValidationError
+from lib.workflows.functions import WORKFLOW_FUNCTIONS
+from lib.workflows.validation import validate_workflow_definition
 
 
 # ---------------------------------------------------------------------------
@@ -344,6 +346,15 @@ class TestGetWorkflowTemplates:
         assert isinstance(guide["template_selection_tips"], list)
         assert len(guide["template_selection_tips"]) > 0
 
+    def test_every_template_definition_is_valid_and_canonical(self, workflow_tool):
+        """Templates are copied by the model, so each must pass validation, which rejects unknown functions."""
+        for key, template in workflow_tool._get_workflow_templates()["templates"].items():
+            definition = template.get("example_definition") or template["example_workflow_creation"]["definition"]
+
+            assert validate_workflow_definition(definition)["valid"], (key, validate_workflow_definition(definition))
+            for node in definition["nodes"].values():
+                assert "function" not in node, key
+
     def test_each_non_scheduled_template_has_required_fields(self, workflow_tool):
         """Each template (except scheduled_task) has name, description, use_cases, and difficulty."""
         result = workflow_tool._get_workflow_templates()
@@ -379,6 +390,12 @@ class TestDefinitionsAndImplementations:
         assert set(impls.keys()) == {"create_workflow", "remove_workflow", "list_workflows", "get_workflow_templates"}
         for key, func in impls.items():
             assert callable(func), f"Implementation '{key}' is not callable"
+
+    def test_create_workflow_lists_every_function_a_node_can_call(self, workflow_tool):
+        [create] = [d for d in workflow_tool.get_definitions() if d["name"] == "create_workflow"]
+
+        assert ", ".join(WORKFLOW_FUNCTIONS) in create["description"]
+        assert "'function_name'" in create["parameters"]["properties"]["definition"]["description"]
 
     def test_name_property_returns_workflow(self, workflow_tool):
         """The name property returns 'workflow'."""

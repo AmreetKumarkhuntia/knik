@@ -3,12 +3,15 @@ from typing import Any
 from lib.tools.base_tool import BaseTool
 from lib.workflows import workflow_service
 from lib.workflows.errors import WorkflowError
+from lib.workflows.functions import WORKFLOW_FUNCTIONS
 
 
 WORKFLOW_DEFINITIONS = [
     {
         "name": "create_workflow",
-        "description": "Create a new workflow from a JSON definition. Auto-generates a UUID for workflow_id. CRITICAL: Before calling this, always use get_workflow_templates to see example definitions and choose the best template for your task. DEFINITION STRUCTURE: definition = {'nodes': NODES_OBJECT, 'connections': CONNECTIONS_ARRAY}. NODES_OBJECT format: {'node_id': {'type': NODE_TYPE, ...fields}} where node_id matches pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores, no spaces). SUPPORTED NODE TYPES (choose exactly one): 1) FunctionExecutionNode: {'type': 'FunctionExecutionNode', 'function': 'function_name', 'params': {}} OR {'type': 'FunctionExecutionNode', 'code': 'python_code', 'params': {}}. 2) AIExecutionNode: {'type': 'AIExecutionNode', 'prompt': 'prompt_string', 'model': 'gemini-1.5-flash', 'provider': 'vertex', 'use_tools': True, 'temperature': 0.7}. 3) ConditionalBranchNode: {'type': 'ConditionalBranchNode', 'condition': 'boolean_expression'}. 4) FlowMergeNode: {'type': 'FlowMergeNode', 'merge_strategy': 'concat' or 'merge'}. CONNECTIONS_ARRAY format: [{'from_id': 'source_node_id', 'to_id': 'target_node_id', 'condition': 'true' or 'false' (optional)}]. Both from_id and to_id must exist in nodes. Optional condition field used only with ConditionalBranchNode connections ('true' for condition=True branch, 'false' for condition=False branch). Workflow must be acyclic (DAG - no cycles).",
+        "description": "Create a new workflow from a JSON definition. Auto-generates a UUID for workflow_id. CRITICAL: Before calling this, always use get_workflow_templates to see example definitions and choose the best template for your task. DEFINITION STRUCTURE: definition = {'nodes': NODES_OBJECT, 'connections': CONNECTIONS_ARRAY}. NODES_OBJECT format: {'node_id': {'type': NODE_TYPE, ...fields}} where node_id matches pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores, no spaces). SUPPORTED NODE TYPES (choose exactly one): 1) FunctionExecutionNode: {'type': 'FunctionExecutionNode', 'function_name': FUNCTION, 'params': {}} OR {'type': 'FunctionExecutionNode', 'code': 'python_code', 'params': {}}, where FUNCTION is one of: "
+        + ", ".join(WORKFLOW_FUNCTIONS)
+        + ". params are passed to the function by name. A function that returns a dict adds its keys to the node's output; any other result is the node's 'output'. 2) AIExecutionNode: {'type': 'AIExecutionNode', 'prompt': 'prompt_string', 'model': 'gemini-1.5-flash', 'provider': 'vertex', 'use_tools': True, 'temperature': 0.7}. 3) ConditionalBranchNode: {'type': 'ConditionalBranchNode', 'condition': 'boolean_expression'}. 4) FlowMergeNode: {'type': 'FlowMergeNode', 'merge_strategy': 'concat' or 'merge'} ('concat', the default, flattens the incoming outputs into one dict; 'merge' keeps each under its node id). CONNECTIONS_ARRAY format: [{'from_id': 'source_node_id', 'to_id': 'target_node_id', 'condition': 'true' or 'false' (optional)}]. Both from_id and to_id must exist in nodes. Optional condition field used only with ConditionalBranchNode connections ('true' for condition=True branch, 'false' for condition=False branch). Workflow must be acyclic (DAG - no cycles).",
         "parameters": {
             "type": "object",
             "properties": {
@@ -22,7 +25,7 @@ WORKFLOW_DEFINITIONS = [
                 },
                 "definition": {
                     "type": "object",
-                    "description": "Complete workflow DAG with required 'nodes' object and 'connections' array. STRUCTURE: {'nodes': {'node_id': NODE_DEFINITION}, 'connections': [CONNECTION_DEFINITION]}. NODES: map of node_id strings to node definitions. Each node must specify one type: FunctionExecutionNode (requires 'function' OR 'code'), AIExecutionNode (requires 'prompt', optional 'model', 'provider', 'use_tools', 'temperature'), ConditionalBranchNode (requires 'condition'), FlowMergeNode (optional 'merge_strategy' with values 'concat' or 'merge'). CONNECTIONS: array of objects with 'from_id', 'to_id' strings matching node IDs, optional 'condition' field (values 'true' or 'false'). Node IDs must match pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores only). Workflow must be a DAG (no cycles, directed acyclic graph).",
+                    "description": "Complete workflow DAG with required 'nodes' object and 'connections' array. STRUCTURE: {'nodes': {'node_id': NODE_DEFINITION}, 'connections': [CONNECTION_DEFINITION]}. NODES: map of node_id strings to node definitions. Each node must specify one type: FunctionExecutionNode (requires 'function_name' OR 'code'), AIExecutionNode (requires 'prompt', optional 'model', 'provider', 'use_tools', 'temperature'), ConditionalBranchNode (requires 'condition'), FlowMergeNode (optional 'merge_strategy' with values 'concat' or 'merge'). CONNECTIONS: array of objects with 'from_id', 'to_id' strings matching node IDs, optional 'condition' field (values 'true' or 'false'). Node IDs must match pattern ^[a-zA-Z0-9_]+$ (alphanumeric + underscores only). Workflow must be a DAG (no cycles, directed acyclic graph).",
                     "required": ["nodes", "connections"],
                     "properties": {
                         "nodes": {
@@ -160,7 +163,7 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "fetch_data": {
                                 "type": "FunctionExecutionNode",
-                                "function": "http_get",
+                                "function_name": "http_get",
                                 "params": {"url": "https://api.example.com/data"},
                             }
                         },
@@ -206,7 +209,7 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "http_get": {
                                 "type": "FunctionExecutionNode",
-                                "function": "http_get",
+                                "function_name": "http_get",
                                 "params": {
                                     "url": "https://api.example.com/data",
                                 },
@@ -235,33 +238,33 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "fetch": {
                                 "type": "FunctionExecutionNode",
-                                "function": "http_get",
+                                "function_name": "http_get",
                                 "params": {
                                     "url": "https://api.example.com/json",
                                 },
                             },
                             "parse": {
                                 "type": "FunctionExecutionNode",
-                                "function": "json_parse",
+                                "function_name": "json_parse",
                                 "params": {
-                                    "data": "{fetch.data}",
+                                    "data": "{fetch.content}",
                                 },
                             },
-                            "transform": {
+                            "select": {
                                 "type": "FunctionExecutionNode",
-                                "function": "dict_merge",
+                                "function_name": "dict_filter",
                                 "params": {
-                                    "source": "{parse.data}",
-                                    "extra": {"key": "value"},
+                                    "data": "{parse}",
+                                    "keys": ["id", "name"],
                                 },
                             },
                         },
                         "connections": [
                             {"from_id": "fetch", "to_id": "parse"},
-                            {"from_id": "parse", "to_id": "transform"},
+                            {"from_id": "parse", "to_id": "select"},
                         ],
                     },
-                    "customizable_fields": ["data", "keys", "dicts"],
+                    "customizable_fields": ["url", "keys"],
                     "difficulty": "beginner",
                 },
                 "utility": {
@@ -277,23 +280,28 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "wait": {
                                 "type": "FunctionExecutionNode",
-                                "function": "sleep",
+                                "function_name": "sleep",
                                 "params": {
-                                    "seconds": "5",
+                                    "seconds": 5,
                                 },
                             },
                             "generate_id": {
                                 "type": "FunctionExecutionNode",
-                                "function": "uuid_generate",
+                                "function_name": "uuid_generate",
+                            },
+                            "now": {
+                                "type": "FunctionExecutionNode",
+                                "function_name": "current_timestamp",
                             },
                             "process": {
                                 "type": "AIExecutionNode",
-                                "prompt": "Process with ID: {generate_id.uuid} and timestamp: {generate_id.current_timestamp}",
+                                "prompt": "Process with ID: {generate_id.output} and timestamp: {now.output}",
                             },
                         },
                         "connections": [
                             {"from_id": "wait", "to_id": "generate_id"},
                             {"from_id": "generate_id", "to_id": "process"},
+                            {"from_id": "now", "to_id": "process"},
                         ],
                     },
                     "customizable_fields": ["seconds"],
@@ -313,26 +321,26 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "fetch_data": {
                                 "type": "FunctionExecutionNode",
-                                "function": "fetch_source_data",
-                                "params": {"source": "database"},
+                                "function_name": "http_get",
+                                "params": {"url": "https://api.example.com/orders"},
                             },
-                            "transform_data": {
+                            "extract_items": {
                                 "type": "FunctionExecutionNode",
-                                "function": "transform_data",
-                                "params": {"transformation": "normalize"},
+                                "function_name": "dict_get_path",
+                                "params": {"data": "{fetch_data.data}", "path": "orders", "default": []},
                             },
-                            "save_result": {
+                            "serialize": {
                                 "type": "FunctionExecutionNode",
-                                "function": "save_to_storage",
-                                "params": {"destination": "s3"},
+                                "function_name": "json_stringify",
+                                "params": {"data": "{extract_items.output}"},
                             },
                         },
                         "connections": [
-                            {"from_id": "fetch_data", "to_id": "transform_data"},
-                            {"from_id": "transform_data", "to_id": "save_result"},
+                            {"from_id": "fetch_data", "to_id": "extract_items"},
+                            {"from_id": "extract_items", "to_id": "serialize"},
                         ],
                     },
-                    "customizable_fields": ["nodes", "functions", "connections", "data flow"],
+                    "customizable_fields": ["url", "path", "functions", "connections"],
                     "difficulty": "intermediate",
                 },
                 "conditional_branching": {
@@ -349,17 +357,17 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "check_condition": {
                                 "type": "ConditionalBranchNode",
-                                "condition": "{input.status} == 'success'",
+                                "condition": "'{input.status}' == 'success'",
                             },
                             "process_success": {
                                 "type": "FunctionExecutionNode",
-                                "function": "handle_success",
-                                "params": {"action": "proceed"},
+                                "function_name": "string_format",
+                                "params": {"template": "Succeeded: {detail}", "detail": "{input.detail}"},
                             },
                             "handle_failure": {
                                 "type": "FunctionExecutionNode",
-                                "function": "handle_error",
-                                "params": {"action": "retry"},
+                                "function_name": "string_format",
+                                "params": {"template": "Failed, will retry: {detail}", "detail": "{input.detail}"},
                             },
                             "merge_results": {"type": "FlowMergeNode", "merge_strategy": "concat"},
                         },
@@ -387,18 +395,18 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "fetch_source_1": {
                                 "type": "FunctionExecutionNode",
-                                "function": "fetch_data",
-                                "params": {"source": "api1"},
+                                "function_name": "http_get",
+                                "params": {"url": "https://api1.example.com/data"},
                             },
                             "fetch_source_2": {
                                 "type": "FunctionExecutionNode",
-                                "function": "fetch_data",
-                                "params": {"source": "api2"},
+                                "function_name": "http_get",
+                                "params": {"url": "https://api2.example.com/data"},
                             },
                             "fetch_source_3": {
                                 "type": "FunctionExecutionNode",
-                                "function": "fetch_data",
-                                "params": {"source": "api3"},
+                                "function_name": "http_get",
+                                "params": {"url": "https://api3.example.com/data"},
                             },
                             "merge_results": {"type": "FlowMergeNode", "merge_strategy": "concat"},
                         },
@@ -408,7 +416,7 @@ class WorkflowTool(BaseTool):
                             {"from_id": "fetch_source_3", "to_id": "merge_results"},
                         ],
                     },
-                    "customizable_fields": ["parallel_nodes", "sources", "merge_strategy"],
+                    "customizable_fields": ["parallel_nodes", "urls", "merge_strategy"],
                     "difficulty": "advanced",
                 },
                 "scheduled_task": {
@@ -428,7 +436,7 @@ class WorkflowTool(BaseTool):
                             "nodes": {
                                 "fetch_weather": {
                                     "type": "FunctionExecutionNode",
-                                    "function": "http_get",
+                                    "function_name": "http_get",
                                     "params": {"url": "https://weather.tomorrow.io/"},
                                 }
                             },
@@ -467,7 +475,7 @@ class WorkflowTool(BaseTool):
                         "nodes": {
                             "fetch_weather": {
                                 "type": "FunctionExecutionNode",
-                                "function": "http_get",
+                                "function_name": "http_get",
                                 "params": {
                                     "url": "https://weather.tomorrow.io/",
                                     "headers": {"Accept": "application/json"},

@@ -5,11 +5,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from lib.services.db import ExecutionDB, ScheduleDB
+from lib.services.db import ExecutionDB, ScheduleDB, Workflow, WorkflowDB
 from lib.workflows import schedule_service, workflow_service
 from lib.workflows.engine import WorkflowEngine
 from lib.workflows.errors import NotFoundError, ValidationError
 from tests.db_support import requires_db
+from tests.lib.workflows.support import FRONTEND_DEFINITION, LEGACY_DEFINITION, LEGACY_DEFINITION_CANONICAL
 
 
 pytestmark = pytest.mark.asyncio
@@ -45,6 +46,26 @@ async def test_create_workflow_rejects_an_invalid_definition():
         await workflow_service.create_workflow("Bad", BAD_NODE_TYPE)
     assert str(caught.value) == "Invalid workflow definition: Node a has invalid type 'Teleport'"
     assert caught.value.extra["details"]["invalid_type"] == "Teleport"
+
+
+async def test_a_definition_naming_an_unknown_function_is_rejected(no_workflows):
+    definition = {"nodes": {"a": {"type": "FunctionExecutionNode", "function_name": "teleport"}}, "connections": []}
+
+    with pytest.raises(ValidationError) as caught:
+        await workflow_service.create_workflow("Bad", definition)
+
+    assert str(caught.value) == "Invalid workflow definition: Node a calls unknown function 'teleport'"
+    assert caught.value.extra["details"]["function_name"] == "teleport"
+    no_workflows.create_workflow.assert_not_awaited()
+
+
+async def test_create_and_update_store_the_canonical_definition(no_workflows):
+    await workflow_service.create_workflow("Old", LEGACY_DEFINITION, workflow_id="w1")
+    no_workflows.get_workflow.return_value = Workflow(id="w1", name="Old", definition={})
+    await workflow_service.update_workflow("w1", "Old", LEGACY_DEFINITION)
+
+    stored = [call.args[0].definition for call in no_workflows.create_workflow.await_args_list]
+    assert stored == [LEGACY_DEFINITION_CANONICAL, LEGACY_DEFINITION_CANONICAL]
 
 
 async def test_update_and_delete_of_an_unknown_workflow_raise_not_found(no_workflows):
@@ -161,3 +182,28 @@ async def test_delete_workflow_reports_the_schedules_it_removed(db):
     with pytest.raises(NotFoundError, match="^Workflow w1 not found$"):
         await workflow_service.delete_workflow("w1")
     assert await schedule_service.list_schedules() == []
+
+
+@requires_db
+async def test_a_frontend_definition_is_stored_and_read_back_as_sent(db):
+    created = await workflow_service.create_workflow("Builder", FRONTEND_DEFINITION)
+
+    workflow = await workflow_service.get_workflow(created["workflow_id"])
+    assert workflow is not None
+    assert workflow.definition == FRONTEND_DEFINITION
+    [listed] = await workflow_service.list_workflows()
+    assert listed.definition == FRONTEND_DEFINITION
+
+
+@requires_db
+async def test_an_older_stored_definition_is_read_in_canonical_form(db):
+    await WorkflowDB.create_workflow(Workflow(id="old", name="Old", definition=LEGACY_DEFINITION))
+
+    workflow = await workflow_service.get_workflow("old")
+    assert workflow is not None
+    assert workflow.definition == LEGACY_DEFINITION_CANONICAL
+    [listed] = await workflow_service.list_workflows()
+    assert listed.definition == LEGACY_DEFINITION_CANONICAL
+    # Reading does not rewrite the row; the next save does.
+    stored = await WorkflowDB.get_workflow("old")
+    assert stored is not None and stored.definition == LEGACY_DEFINITION

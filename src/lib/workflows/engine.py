@@ -9,15 +9,8 @@ from typing import Any
 from lib.services.db import ExecutionDB
 from lib.services.db.models import Workflow
 from lib.utils import printer as logger
-from lib.workflows.nodes import (
-    AIClientFactory,
-    AIExecutionNode,
-    BaseNode,
-    ConditionalBranchNode,
-    FlowMergeNode,
-    FunctionExecutionNode,
-)
-from lib.workflows.validation import VALID_NODE_TYPES, validate_workflow_definition
+from lib.workflows.nodes import AIClientFactory, BaseNode, ConditionalBranchNode, build_node
+from lib.workflows.validation import validate_workflow_definition
 
 
 class WorkflowEngine:
@@ -290,29 +283,4 @@ class WorkflowEngine:
 
     def _instantiate_node(self, node_id: str, data: dict[str, Any]) -> BaseNode:
         """Create the appropriate node instance from definition data."""
-        node_type = data.get("type")
-
-        if node_type not in VALID_NODE_TYPES:
-            raise ValueError(f"Unknown node type '{node_type}' for node {node_id}")
-
-        if node_type == "FunctionExecutionNode":
-            return FunctionExecutionNode(
-                node_id=node_id, function_name=data.get("function"), params=data.get("params"), code=data.get("code")
-            )
-        elif node_type == "ConditionalBranchNode":
-            return ConditionalBranchNode(node_id=node_id, condition=data.get("condition", ""))
-        elif node_type == "FlowMergeNode":
-            return FlowMergeNode(node_id=node_id, merge_strategy=data.get("merge_strategy", "concat"))
-        elif node_type == "AIExecutionNode":
-            ai_node = AIExecutionNode(
-                node_id=node_id,
-                prompt=data.get("prompt", ""),
-                model=data.get("model", "gemini-3.0-flash"),
-                provider=data.get("provider", "vertex"),
-                use_tools=data.get("use_tools", True),
-                ai_client_factory=self.ai_client_factory,
-            )
-            return ai_node
-
-        # Unreachable due to VALID_NODE_TYPES guard above, but satisfies type checker
-        raise ValueError(f"Unknown node type '{node_type}' for node {node_id}")
+        return build_node(node_id, data, self.ai_client_factory)
