@@ -37,17 +37,20 @@ Verification covers keyboard and focus behavior, Enter/Shift+Enter/IME, draft re
 
 ## Architecture diagrams
 
-Start with [domain ownership](../../.archify/store-architecture/domain-stores/domain-stores.html), then follow the data and interaction views. Each linked HTML file is standalone, static by default, and includes its own dark/light viewer.
+The diagrams were generated with Archify under `.archify/store-architecture/`, which Git ignores, so they exist
+only in the checkout that generated them and are not linked from here. Each view is a standalone HTML file with
+a validation receipt (`*.finalize-summary.json`) beside it:
 
-| View                                                                                         | The question it answers                                                    | Validation receipt                                                                                       |
-| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| [Architecture](../../.archify/store-architecture/domain-stores/domain-stores.html)           | Which store owns my ongoing chat, workflow draft, settings, or list state? | [Receipt](../../.archify/store-architecture/domain-stores/review-3/domain-stores.finalize-summary.json)  |
-| [Data flow](../../.archify/store-architecture/store-dataflow/store-dataflow.html)            | How do demo records become store data and component props?                 | [Receipt](../../.archify/store-architecture/store-dataflow/store-dataflow.finalize-summary.json)         |
-| [Interactions](../../.archify/store-architecture/store-interactions/store-interactions.html) | What happens on edit, Save, Send, Run, Cancel, and navigation?             | [Receipt](../../.archify/store-architecture/store-interactions/store-interactions.finalize-summary.json) |
-| [Session lifecycle](../../.archify/store-architecture/store-lifecycle/store-lifecycle.html)  | What survives leaving a page, returning, and reloading?                    | [Receipt](../../.archify/store-architecture/store-lifecycle/store-lifecycle.finalize-summary.json)       |
-| [Migration](../../.archify/store-architecture/store-migration/store-migration.html)          | In what order do state ownership and consumers change?                     | [Receipt](../../.archify/store-architecture/store-migration/store-migration.finalize-summary.json)       |
+| View (under `.archify/store-architecture/`)  | The question it answers                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------- |
+| `domain-stores/domain-stores.html`           | Which store owns my ongoing chat, workflow draft, settings, or list state? |
+| `store-dataflow/store-dataflow.html`         | How do demo records become store data and component props?                 |
+| `store-interactions/store-interactions.html` | What happens on edit, Save, Send, Run, Cancel, and navigation?             |
+| `store-lifecycle/store-lifecycle.html`       | What survives leaving a page, returning, and reloading?                    |
+| `store-migration/store-migration.html`       | In what order do state ownership and consumers change?                     |
 
-These diagrams are labeled **proposed** because they specify the approved target behavior. Diagram validation verifies the specification and rendered artifacts; application verification is a separate gate. The [artifact index](../../.archify/store-architecture/README.md) records provenance and reproduction details. Generated outputs live under `.archify/store-architecture/`; timestamped authoring originals also remain under `.archify/`. This directory is ignored by Git, so diagram links are local to this checkout.
+These diagrams are labeled **proposed** because they specify the approved target behavior. Diagram validation
+verifies the specification and rendered artifacts; application verification is a separate gate.
 
 The Archify artifacts preserve the earlier proposed design and have not been regenerated for the 2026-10-09 chat clarification. The current Send contract is the chat flow below: save valid user messages independently of reply availability.
 

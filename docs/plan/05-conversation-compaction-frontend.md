@@ -1,5 +1,7 @@
 # Plan 05: Conversation Compaction — Frontend
 
+> **Backend part changed:** compaction now appends a summary message and moves the conversation's `summary_message_id` pointer (see [Conversation History](../reference/conversation-history.md#compaction)), and the stream sends a `compaction` event. The `ConversationSummarizer`, `summary_through_index` and the 75% threshold below are from the earlier design. Paths that start with `src/apps/web/backend` refer to the old layout, now `src/backend`.
+
 **Status:** Planning
 **Last Updated:** April 2026
 

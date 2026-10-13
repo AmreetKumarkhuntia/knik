@@ -1,362 +1,328 @@
-# Workflow Scheduler System
+# Workflows and Scheduler
 
-## Overview
+A workflow is a directed acyclic graph (DAG) of nodes: function calls, AI prompts, conditional branches and
+merges. Workflows are stored in Postgres and run on demand (web API, console, AI tools) or from a schedule
+written in plain English ("every 5 minutes", "daily at 9am"). The code lives in `src/lib/workflows/`.
 
-Knik's Workflow Scheduler is a poll-based system with node-based workflow execution. It supports directed acyclic graph (DAG) workflows with AI execution nodes, function execution nodes, conditional branching, and flow merging capabilities.
+## Where workflows are run and managed
 
-**Key Features:**
+| Process                                          | What it does                                                                                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Worker (`npm run start:worker`, `--mode worker`) | Polls the schedules and runs the due ones. **Schedules fire only while a worker runs.**                                                  |
+| Web backend                                      | Runs a workflow on request (`POST /api/workflows/{id}/execute`); it does not poll schedules                                              |
+| Console                                          | `/workflow list`, `/workflow run <id> [inputs_json]`                                                                                     |
+| AI tools                                         | Create, list and remove workflows and schedules (`create_workflow`, `add_cron_schedule`, ...; see [Tools](mcp.md)); they do not run them |
 
-- **Natural language scheduling** - Describe schedules in plain English (e.g., "every 5 minutes", "daily at 9am")
-- **Node-based workflows** - Modular execution units connected as directed graphs
-- **AI integration** - Execute AI queries as workflow nodes with full AIClient capabilities
-- **Function execution** - Run MCP tools or custom Python functions as workflow nodes
-- **Conditional branching** - Dynamic flow routing based on node results
-- **Flow merging** - Combine results from parallel execution branches
-- **Async execution** - Non-blocking workflow processing with background asyncio tasks
-- **Execution history** - Track workflow runs with detailed node-level traces
-- **PostgreSQL persistence** - All data stored in PostgreSQL for reliability
+`--mode cron` and `npm run start:cron` are aliases of the worker. The worker, the backend and the console each
+build a `Scheduler(ai_client_factory=build_workflow_client)`, so AI nodes get tools the same way everywhere.
 
-## Architecture
+## Layout
 
-### Three-Layer Structure
+| File                  | Holds                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| `schema.py`           | The definition model (`WorkflowDefinition`, one spec per node type) and `normalize_definition()` |
+| `validation.py`       | `validate_workflow_definition()`, used when a definition is saved and before it runs             |
+| `nodes.py`            | The node classes and `build_node()`; `AIClientFactory`                                           |
+| `engine.py`           | `WorkflowEngine.execute_workflow()`: runs the DAG and records the execution                      |
+| `functions.py`        | `WORKFLOW_FUNCTIONS`, the functions a function node can call                                     |
+| `scheduler.py`        | `Scheduler`: `run(workflow_id, inputs)`, `start()`, `stop()`                                     |
+| `loop.py`             | `CronScheduler`, the schedule polling loop                                                       |
+| `schedule_parser.py`  | Natural-language schedule parsing and next-run arithmetic                                        |
+| `workflow_service.py` | Workflow create/update/get/list/delete; raises `NotFoundError` / `ValidationError` (`errors.py`) |
+| `schedule_service.py` | Schedule create/list/delete/toggle                                                               |
 
-```mermaid
-mindmap
-  root((src/lib/workflows))
-    models.py
-      Workflow
-      Schedule
-      ExecutionRecord
-      NodeExecutionRecord
-    nodes.py
-      BaseNode
-      AIExecutionNode
-      FunctionExecutionNode
-      ConditionalBranchNode
-      FlowMergeNode
-    engine.py
-    scheduler.py
-    loop.py
-    schedule_parser.py
-    schedule_service.py
-    workflow_service.py
-    functions.py
-    validation.py
+The row models (`Workflow`, `Schedule`, `ExecutionRecord`, `NodeExecutionRecord`) live in
+`lib/services/db/models.py`, the queries in `lib/services/db/repositories/`.
+
+## Workflow definitions
+
+`schema.py` owns the one definition shape that the web builder, the AI tools, the services and the engine share:
+
+```json
+{
+  "nodes": {
+    "<node_id>": { "type": "<node type>", "...": "fields of that type" }
+  },
+  "connections": [
+    {
+      "from_id": "<node_id>",
+      "to_id": "<node_id>",
+      "condition": "true | false (optional)"
+    }
+  ]
+}
 ```
 
-### Component Hierarchy
+| `type`                  | Fields (defaults)                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `StartNode`, `EndNode`  | `label` (optional). Mark where the builder's flow begins and ends; they run as steps that do nothing              |
+| `FunctionExecutionNode` | `function_name` and `params`, or `code` (inline Python). One of `function_name` / `code` is required              |
+| `AIExecutionNode`       | `prompt` (`""`), `model` (`gemini-3.0-flash`), `provider` (`vertex`), `temperature` (`0.7`), `use_tools` (`true`) |
+| `ConditionalBranchNode` | `condition` (`""`)                                                                                                |
+| `FlowMergeNode`         | `merge_strategy`: `concat` (default), `overwrite` or `merge`                                                      |
 
-```mermaid
-mindmap
-  root((Scheduler))
-    CronScheduler
-      Asyncio poll loop
-      Schedule checking
-      Workflow triggering
-    WorkflowEngine
-      DAG validation
-      Topological sort execution
-      Node registry
-    ScheduleParser
-      Natural language parsing
-      Recurrence calculation
-      First run calculation
-```
+- Keys a node type does not use (a `label`, the builder's editor-only fields) are kept and ignored when the
+  workflow runs.
+- Older spellings are still read: `function` for `function_name`, and any other merge strategy, which means
+  `merge`. `normalize_definition()` rewrites them; the services store definitions in this canonical form, and
+  `GET /api/workflows/{id}` returns it (a definition stored in an older spelling is converted when read).
+- An empty `model` or `provider` on an AI node means the default, as an unset one does.
 
-## Scheduling (Natural Language)
+A definition is rejected, when saved and again before it runs, unless: `nodes` is an object and `connections`
+a list; every node has a known `type`; every connection names existing nodes; the graph has no cycle; each
+node's fields match its type; and every function node without `code` names a function in `WORKFLOW_FUNCTIONS`.
 
-Schedules are created using **natural language descriptions**, not cron expressions. The parser converts descriptions into a `next_run_at` datetime and a `recurrence_seconds` interval.
+## Nodes
 
-### Supported Formats
-
-```text
-every 5 minutes          -> recurrence: 300s
-every 2 hours            -> recurrence: 7200s
-every 3 days             -> recurrence: 259200s
-every 2 weeks            -> recurrence: 1209600s
-hourly                   -> recurrence: 3600s
-daily                    -> recurrence: 86400s
-weekly                   -> recurrence: 604800s
-daily at 9am             -> recurrence: 86400s, first run at next 9:00 AM
-every Monday at 2pm      -> recurrence: 604800s, first run at next Monday 2:00 PM
-```
-
-The parser uses regex matching for common patterns and falls back to the `dateparser` library for more complex expressions like "tomorrow at 3pm" or "in 5 minutes".
-
-### Schedule Model
-
-```python
-@dataclass
-class Schedule:
-    id: int
-    target_workflow_id: str        # References a Workflow.id
-    enabled: bool = True
-    timezone: str = "UTC"
-    schedule_description: str | None = None  # Natural language description
-    next_run_at: datetime          # Computed next execution time
-    recurrence_seconds: int        # Interval in seconds
-    created_at: datetime
-    updated_at: datetime
-    last_executed_at: datetime
-```
-
-### Creating a Schedule (via API)
-
-```bash
-# POST /api/cron/
-curl -X POST http://localhost:8010/api/cron/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_workflow_id": "daily_summary",
-    "schedule_description": "every day at 9am",
-    "timezone": "America/New_York"
-  }'
-```
-
-## Node Types
-
-### BaseNode (Abstract)
-
-```python
-class BaseNode(ABC):
-    node_id: str
-
-    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        """Execute node logic. Return dict with results."""
-
-    def validate(self) -> bool:
-        """Validate node configuration."""
-
-    def get_info(self) -> dict[str, Any]:
-        """Get node metadata."""
-```
-
-### AIExecutionNode
-
-Executes AI queries using `AIClient.chat()`. Automatically receives context from predecessor nodes as structured XML.
-
-```python
-AIExecutionNode(
-    node_id="analyze",
-    prompt="Summarize this data: {input.data}",
-    model="gemini-1.5-flash",       # Default
-    provider="vertex",              # Default
-    temperature=0.7,                # Default
-    use_tools=True                  # Default — enables MCP tool access
-)
-```
-
-Template variables like `{input.data}` or `{node_id.output}` are resolved from predecessor outputs.
+Every node receives `{"input": <the run's inputs>, "<predecessor id>": <its output>, ...}`: the run's inputs plus
+the outputs of its **direct** predecessors only. A scheduled run starts with empty inputs.
 
 ### FunctionExecutionNode
 
-Executes registered Python functions or MCP tools. Can also run raw Python code via `exec()`.
+Calls `WORKFLOW_FUNCTIONS[function_name]` with `params` as keyword arguments. A param whose whole value is a
+placeholder such as `"{input.text}"` or `"{fetch.output}"` is replaced by the value at that path (of any type);
+anything else, including a placeholder inside longer text, is passed as written, as is a path that does not
+exist. The node's output is `{"status": "success", ...}` plus the keys of a dict result, or
+`{"status": "success", "output": <result>}` for any other result. A dict result with an `error` key fails the
+node.
 
-```python
-# Using a registered function
-FunctionExecutionNode(
-    node_id="read_logs",
-    function_name="read_file",
-    params={"file_path": "/var/log/app.log"}
-)
+With `code` (which wins over `function_name`), the node runs that Python (`exec`) with the resolved params and
+`inputs` as local variables, and its output is `{"status": "success", "output": <the code's output or result
+variable>}`.
 
-# Using inline Python code
-FunctionExecutionNode(
-    node_id="transform",
-    function_name="custom",
-    code="output = len(inputs.get('data', ''))"
-)
-```
+### AIExecutionNode
+
+Builds a client through the engine's AI client factory and sends one prompt. In the prompt, `{input.name}` and
+`{node_id.key}` placeholders are replaced by text, and the non-empty outputs of the node's predecessors are
+appended as JSON inside a `<previous_execution>` block. With `use_tools` on, the client gets every built-in tool
+with **no consent gate**: tools such as `run_shell_command` and `write_file` run without asking anyone. The node
+cleans up its tools when the call ends. Output: `{"status": "success", "output": "<reply>", "tokens": {...}}`.
 
 ### ConditionalBranchNode
 
-Evaluates a boolean expression and routes execution to different paths. Downstream edges use `condition` labels (`"true"` / `"false"`) to determine which path to follow.
-
-```python
-ConditionalBranchNode(
-    node_id="check_size",
-    condition="{check.output.size} > 1000000"    # Template vars resolved from inputs
-)
-```
+Replaces `{input.name}` and `{node_id.key}` placeholders in `condition` with text, evaluates the result as a
+Python expression (`eval`) and outputs `{"result": true | false}`; an expression that raises counts as false. A connection leaving
+it with `"condition": "true"` or `"false"` is followed only on that result; one without a condition is always
+followed. Nodes reachable only through a branch that was not taken are skipped, and a node with another live
+predecessor still runs.
 
 ### FlowMergeNode
 
-Merges outputs from multiple parallel branches into a single output.
+`concat` and `overwrite` flatten everything the node receives (the run's input and each predecessor's output)
+into one dict, a later key replacing an earlier one; since function results share the `output` key, only one of
+them survives. `merge` keeps every input under its node id:
+`{"merged_inputs": {"input": {...}, "a": {...}, "b": {...}}}`.
 
-```python
-FlowMergeNode(
-    node_id="merge",
-    merge_strategy="concat"    # Default: flattens all inputs into one dict
-)
-```
+### StartNode and EndNode
 
-## Workflow Model
+No-ops with an empty output (`{}`), which an AI node leaves out of its prompt context. They run as steps, so an
+execution has a step for every node the builder drew.
 
-```python
-@dataclass
-class Workflow:
-    id: str
-    name: str
-    definition: dict[str, Any]     # Full workflow structure (nodes + connections)
-    description: str | None
-    created_at: datetime
-    updated_at: datetime
-    last_executed_at: datetime
-```
+> `code` and `condition` run Python with the worker's or backend's permissions, as does `run_shell_command`.
+> Only let trusted users create workflows.
 
-The `definition` dict contains the nodes and their connections, which the `WorkflowEngine` parses into a DAG for execution.
+## Workflow functions (24)
 
-## Execution Pipeline
+| Function            | Parameters                                                               | Function            | Parameters                    |
+| ------------------- | ------------------------------------------------------------------------ | ------------------- | ----------------------------- |
+| `http_get`          | `url, headers=None, timeout=30`                                          | `string_replace`    | `text, old, new`              |
+| `http_post`         | `url, data=None, headers=None, timeout=30`                               | `string_concat`     | `strings` (a list)            |
+| `http_request`      | `method, url, data=None, headers=None, timeout=30`                       | `string_join`       | `separator, strings` (a list) |
+| `json_parse`        | `data`                                                                   | `string_split`      | `text, separator`             |
+| `json_stringify`    | `data, indent=2`                                                         | `string_to_lower`   | `text`                        |
+| `dict_get_path`     | `data, path, default=None`                                               | `string_to_upper`   | `text`                        |
+| `dict_merge`        | `dicts` (a list)                                                         | `string_strip`      | `text`                        |
+| `dict_filter`       | `data, keys`                                                             | `string_length`     | `text`                        |
+| `dict_set_path`     | `data, path, value`                                                      | `sleep`             | `seconds`                     |
+| `string_format`     | `template, **values`                                                     | `current_timestamp` | none                          |
+| `uuid_generate`     | none                                                                     | `base64_encode`     | `data`                        |
+| `run_shell_command` | `command, timeout=30` (at most 30 s; the shell tool's blocklist applies) | `base64_decode`     | `data`                        |
 
-### Poll-Based Scheduling
+These are not the AI tools: `read_file`, for example, is a tool and not a workflow function.
 
-1. `CronScheduler.start()` creates an asyncio task running `_poll_loop()`
-2. The poll loop checks all schedules at a configurable interval (`KNIK_SCHEDULER_CHECK_INTERVAL`, default: 60s)
-3. For each enabled schedule where `next_run_at <= now`:
-   - Triggers `_trigger_workflow(workflow_id)` as a detached asyncio task
-   - Bumps `next_run_at = now + timedelta(seconds=recurrence_seconds)`
-   - Records the execution timestamp
+## Running a workflow
 
-### DAG Execution (WorkflowEngine)
+`WorkflowEngine.execute_workflow()`:
 
-1. Validates the workflow definition
-2. Parses nodes and connections into an adjacency list with in-degree map
-3. Executes via **topological BFS**: starts with zero-in-degree nodes, passes predecessor outputs as input context
-4. `ConditionalBranchNode` only follows edges whose `condition` label matches the boolean result
-5. Every node execution is logged individually (`NodeExecutionRecord`)
-6. The overall execution is logged as an `ExecutionRecord` with status, duration, and outputs
+1. Records an execution as `running` with the run's inputs.
+2. Validates the definition and builds every node (`build_node()`).
+3. Runs the DAG level by level: all nodes whose predecessors are done run at once (`asyncio.gather`). Each node
+   is recorded in `node_executions` with its inputs, output, status and duration.
+4. If a node fails, the other nodes of its level finish and are recorded, then the run fails.
+5. Completes the execution as `success` with every node's output, or as `failed` with the error. A cancelled run
+   (the worker stopping) is recorded as `failed` with the error `cancelled`.
 
-## Node Flow Diagrams
+## Schedules
 
-### Simple Linear Workflow
+A schedule targets a workflow by `target_workflow_id` and is described in plain English, not a cron expression.
+Creating one stores the description, the timezone, the first run (`next_run_at`) and the repeat interval
+(`recurrence_seconds`, or none for a one-shot schedule). The target workflow is not checked when the schedule is
+created; deleting a workflow through the API or the AI tool also deletes its schedules.
 
-```mermaid
-flowchart LR
-    Start([Workflow Input]) --> N1[Read File]
-    N1 --> N2[Analyze Content]
-    N2 --> N3[Generate Summary]
-    N3 --> End([Workflow Output])
-```
+| Description                                                         | Repeats every      | First run                             |
+| ------------------------------------------------------------------- | ------------------ | ------------------------------------- |
+| `every 5 minutes`, `every 2 hours`, `every 3 days`, `every 2 weeks` | that interval      | the next whole minute                 |
+| `hourly`, `daily`, `weekly`                                         | 1 h, 1 day, 7 days | the next whole minute                 |
+| `daily at 9am`, `everyday at 18:30`                                 | 1 day              | the next 9:00 (18:30) in the timezone |
+| `every Monday at 2pm`, `every friday at 17:00`                      | 7 days             | the next Monday 14:00 (Friday 17:00)  |
+| `in 10 minutes`, `tomorrow at 3pm`, `at 5pm`                        | does not repeat    | that time (one-shot)                  |
 
-### Conditional Branching
+Descriptions such as `every day at 9am`, `every weekday at 9am`, `every monday` (no time) and `every 30 seconds`
+are rejected. The timezone is an IANA name (`America/New_York`) or a GMT/UTC offset (`GMT+5:30`, `UTC-5`),
+`UTC` by default.
 
-```mermaid
-flowchart TD
-    Start([Input]) --> N1[Get File Info]
-    N1 --> N2{Check Size > 1MB?}
-    N2 --> |true| N3[Summarize Large File]
-    N2 --> |false| N4[Read Full File]
-    N3 --> End([Output])
-    N4 --> End
-```
+### How the worker runs schedules
 
-### Parallel Execution with Merge
+Every `KNIK_SCHEDULER_CHECK_INTERVAL` seconds (60 by default) the worker's `CronScheduler`:
 
-```mermaid
-flowchart TD
-    Start([Input]) --> N1[Prepare]
-    N1 --> N2[Model 1: Flash]
-    N1 --> N3[Model 2: Pro]
-    N2 --> N4[Merge Results]
-    N3 --> N4
-    N4 --> N5[Compare]
-    N5 --> End([Output])
-```
+1. On its first poll that reaches the database, marks failed the executions still `running` that started more
+   than `KNIK_SCHEDULER_STALE_EXECUTION_SECONDS` ago (3600 by default): runs a stopped worker abandoned. Newer ones
+   are left alone, since the backend records its manual runs as `running` too.
+2. Loads the enabled schedules and, for each one whose `next_run_at` has passed, claims that occurrence with
+   `ScheduleDB.claim_due_run()`. The claim is one atomic update, so a due occurrence runs once however many
+   workers poll the same database.
+3. The claim moves a recurring schedule on to the first occurrence after now, counted from the time it was due
+   (due time + k × interval), so a late poll does not push later runs back and occurrences missed while no
+   worker ran are skipped, not run one after another. A whole number of days is stepped in the schedule's
+   timezone, so `daily at 9am` stays at 9:00 local time across daylight-saving changes. A one-shot schedule is
+   disabled by its claim.
+4. Starts the workflow in the background. At most `KNIK_SCHEDULER_MAX_CONCURRENT` scheduled runs (10 by
+   default) execute at once per worker; further due runs wait for a free slot.
 
-## Web API
+A schedule re-enabled after its `next_run_at` has passed runs on the next poll, once, and then steps forward
+from there. While Postgres is unreachable the schedules pause (logged once) and resume when it is back.
 
-### Workflow Endpoints (`/api/workflows`)
-
-| Method | Path                                         | Description                |
-| ------ | -------------------------------------------- | -------------------------- |
-| GET    | `/api/workflows/`                            | List all workflows         |
-| GET    | `/api/workflows/{id}`                        | Get a specific workflow    |
-| DELETE | `/api/workflows/{id}`                        | Delete a workflow          |
-| POST   | `/api/workflows/{id}/execute`                | Execute a workflow         |
-| GET    | `/api/workflows/{id}/history`                | Get execution history      |
-| GET    | `/api/workflows/{id}/executions/{eid}/nodes` | Get node execution details |
-
-### Schedule Endpoints (`/api/cron`)
-
-| Method | Path                    | Description                      |
-| ------ | ----------------------- | -------------------------------- |
-| GET    | `/api/cron/`            | List all schedules               |
-| POST   | `/api/cron/`            | Add a new schedule               |
-| DELETE | `/api/cron/{id}`        | Remove a schedule                |
-| PATCH  | `/api/cron/{id}/toggle` | Toggle schedule enabled/disabled |
-
-### Analytics Endpoints (`/api/analytics`)
-
-| Method | Path                            | Description                      |
-| ------ | ------------------------------- | -------------------------------- |
-| GET    | `/api/analytics/dashboard`      | Dashboard summary                |
-| GET    | `/api/analytics/metrics`        | System metrics                   |
-| GET    | `/api/analytics/top-workflows`  | Top workflows by execution count |
-| GET    | `/api/analytics/executions`     | Paginated execution records      |
-| GET    | `/api/analytics/workflows/list` | Workflows list for analytics     |
-| GET    | `/api/analytics/activity`       | Activity timeline                |
-
-## Persistence (PostgreSQL)
-
-All scheduler data is stored in PostgreSQL. The four core tables:
-
-- **workflows** - Workflow definitions (id, name, description, definition JSONB)
-- **schedules** - Schedule configurations (target_workflow_id, schedule_description, next_run_at, recurrence_seconds)
-- **executions** - Execution history (workflow_id, status, inputs/outputs JSONB, duration_ms)
-- **node_executions** - Node-level execution traces (execution_id, node_id, node_type, status, inputs/outputs JSONB)
+On SIGINT or SIGTERM the worker stops polling (letting a poll in progress finish), cancels the scheduled runs
+still in flight and waits for each to record its execution as `failed` / `cancelled`, then closes the database
+pool. Each wait is bounded to 10 seconds.
 
 ## Configuration
 
-### Environment Variables
+| Variable                                 | Default | Meaning                                                                                                      |
+| ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `KNIK_SCHEDULER_CHECK_INTERVAL`          | `60`    | Seconds between schedule polls                                                                               |
+| `KNIK_SCHEDULER_MAX_CONCURRENT`          | `10`    | Scheduled runs one worker executes at once                                                                   |
+| `KNIK_SCHEDULER_STALE_EXECUTION_SECONDS` | `3600`  | Age after which a `running` execution is failed at worker startup                                            |
+| `KNIK_SCHEDULER_WORKERS`                 | `4`     | Not used                                                                                                     |
+| `KNIK_DB_*`                              |         | The Postgres connection ([Environment Variables](../reference/environment-variables.md#database-postgresql)) |
+
+Apply the schema with `scripts/migrate.sh` before the first run.
+
+## Web API
+
+Workflows are under `/api/workflows`, schedules under `/api/cron` (with `KNIK_WEB_REQUIRE_API_KEY=true`, add an
+`X-API-Key` header). The examples assume the backend on `localhost:8010`.
+
+| Method | Path                                                  | Does                                                                           |
+| ------ | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| GET    | `/api/workflows/`                                     | List workflows (id, name, description)                                         |
+| POST   | `/api/workflows/`                                     | Create a workflow: `name`, `definition`, `description`                         |
+| GET    | `/api/workflows/{id}`                                 | The workflow's definition                                                      |
+| PATCH  | `/api/workflows/{id}`                                 | Change `name`, `definition` or `description`; a field left out keeps its value |
+| DELETE | `/api/workflows/{id}`                                 | Delete the workflow and its schedules                                          |
+| POST   | `/api/workflows/{id}/execute`                         | Run it now with `{"inputs": {...}}`; returns the output of every node that ran |
+| GET    | `/api/workflows/{id}/history`                         | Its executions                                                                 |
+| GET    | `/api/workflows/{id}/executions/{execution_id}/nodes` | The node steps of one execution                                                |
+| GET    | `/api/cron/`                                          | List schedules, enabled and disabled                                           |
+| POST   | `/api/cron/`                                          | Create a schedule                                                              |
+| PATCH  | `/api/cron/{id}/toggle`                               | Enable or disable it: `{"enabled": false}`                                     |
+| DELETE | `/api/cron/{id}`                                      | Delete it                                                                      |
+
+Create and update answer with the definition as stored (its canonical form). An invalid definition answers 400 with
+`detail` (the message) and, when the validator can point at the problem, `details` (for example `node_id` and
+`available_functions`). Running an unknown workflow answers 404; running one whose stored definition the engine rejects
+answers 400; a node that fails answers 500 (`Node(s) failed: <ids>`).
+
+Execution analytics are under `/api/analytics` (`dashboard`, `metrics`, `top-workflows`, `executions`,
+`workflows/list`, `activity`).
+
+### Example
+
+Create a workflow that upper-cases its input text and, when the result is long, asks the model to summarise
+the text:
 
 ```bash
-KNIK_SCHEDULER_CHECK_INTERVAL=60    # Seconds between poll checks
-KNIK_SCHEDULER_WORKERS=4            # Worker pool size
-KNIK_SCHEDULER_MAX_CONCURRENT=10    # Max concurrent workflows
-
-KNIK_DB_HOST=localhost
-KNIK_DB_PORT=5432
-KNIK_DB_USER=postgres
-KNIK_DB_PASS=password
-KNIK_DB_NAME=knik
+curl -X POST http://localhost:8010/api/workflows/ -H 'Content-Type: application/json' -d '{
+  "name": "Shout and summarise",
+  "description": "Upper-cases the input text, then asks the model about it when it is long",
+  "definition": {
+    "nodes": {
+      "start": {"type": "StartNode", "label": "Start"},
+      "shout": {
+        "type": "FunctionExecutionNode",
+        "function_name": "string_to_upper",
+        "params": {"text": "{input.text}"}
+      },
+      "is_long": {"type": "ConditionalBranchNode", "condition": "len('"'"'{shout.output}'"'"') > 20"},
+      "summarise": {
+        "type": "AIExecutionNode",
+        "prompt": "Summarise in one sentence: {input.text}",
+        "use_tools": false
+      },
+      "end": {"type": "EndNode", "label": "End"}
+    },
+    "connections": [
+      {"from_id": "start", "to_id": "shout"},
+      {"from_id": "shout", "to_id": "is_long"},
+      {"from_id": "is_long", "to_id": "summarise", "condition": "true"},
+      {"from_id": "is_long", "to_id": "end", "condition": "false"},
+      {"from_id": "summarise", "to_id": "end"}
+    ]
+  }
+}'
+# {"success": true, ..., "workflow_id": "workflow_f9161600272c", "name": "Shout and summarise", ...}
 ```
 
-## MCP Tools for Scheduling
+`summarise` uses `{input.text}` rather than `{shout.output}` because `shout` is not its direct predecessor.
 
-The AI can manage schedules and workflows through these MCP tools:
+Run it:
 
-- `list_cron_schedules` - List all cron schedules
-- `add_cron_schedule` - Add a new cron schedule
-- `remove_cron_schedule` - Remove a cron schedule
-- `create_workflow` - Create a new workflow
-- `remove_workflow` - Remove a workflow
-- `list_workflows` - List all workflows
-- `get_workflow_templates` - Get available workflow templates
+```bash
+curl -X POST http://localhost:8010/api/workflows/workflow_f9161600272c/execute \
+  -H 'Content-Type: application/json' -d '{"inputs": {"text": "workflows run on a schedule"}}'
+# {"success": true, "result": {
+#   "start": {},
+#   "shout": {"status": "success", "output": "WORKFLOWS RUN ON A SCHEDULE"},
+#   "is_long": {"result": true},
+#   "summarise": {"status": "success", "output": "...", "tokens": {"input_tokens": 10, "output_tokens": 15, "total_tokens": 25, "estimated": false}},
+#   "end": {}}}
 
-## Frontend Integration
+curl http://localhost:8010/api/workflows/workflow_f9161600272c/history
+# {"success": true, "history": [{"id": 1, "status": "success", "started_at": "...", "duration_ms": 10, "error_message": null}], "total": 1}
 
-The web frontend provides a visual interface for workflow management:
+curl http://localhost:8010/api/workflows/workflow_f9161600272c/executions/1/nodes   # 1: an id from the history
+# {"success": true, "node_executions": [{"node_id": "start", "node_type": "StartNode", "status": "success", ...}, ...], "total": 5}
+```
 
-- **Workflows page** (`lib/pages/Workflows.tsx`) - List and manage workflows
-- **Workflow Builder** (`lib/pages/WorkflowBuilder.tsx`) - Visual node graph editor with canvas, controls, and properties panels
-- **Execution Detail** (`lib/pages/ExecutionDetail.tsx`) - View execution results and node traces
-- **All Executions** (`lib/pages/AllExecutions.tsx`) - Browse all execution history
-- **Schedule Manager** (`lib/sections/workflows/ScheduleManager/`) - Create and manage schedules with natural language input
+With `{"inputs": {"text": "short"}}` the branch is false: `summarise` is skipped and `end` runs after `is_long`.
 
-## Best Practices
+Schedule it, then pause and remove the schedule:
 
-1. **Keep workflows simple** - Break complex workflows into smaller, reusable units
-2. **Use meaningful node IDs** - Helps debugging and template variable resolution
-3. **Handle errors gracefully** - Design workflows with error paths
-4. **Test workflows manually** - Execute via API before scheduling
-5. **Monitor execution history** - Check for patterns in failures
-6. **Use appropriate models** - Flash for speed, Pro for complex tasks
-7. **Set timeouts** - Prevent workflows from running indefinitely
+```bash
+curl -X POST http://localhost:8010/api/cron/ -H 'Content-Type: application/json' \
+  -d '{"target_workflow_id": "workflow_f9161600272c", "schedule_description": "daily at 9am", "timezone": "America/New_York"}'
+# {"success": true, "schedule_id": 4, "next_run_at": "2026-10-14T09:00:00-04:00", "recurrence_seconds": 86400,
+#  "message": "Schedule created successfully. Next run at 2026-10-14 09:00:00 EDT"}
 
-## Related Documentation
+curl http://localhost:8010/api/cron/
+curl -X PATCH http://localhost:8010/api/cron/4/toggle -H 'Content-Type: application/json' -d '{"enabled": false}'
+curl -X DELETE http://localhost:8010/api/cron/4
+```
 
-- [MCP Tools](mcp.md) - MCP tools used in FunctionExecutionNode
-- [Console Guide](console.md) - Console app `/workflow` command
-- [Web App Guide](web-app.md) - Web app integration
-- [API Reference](../reference/api.md) - Core API reference
-- [Environment Variables](../reference/environment-variables.md) - Scheduler configuration
+A description or timezone the parser does not accept gets `400` with `{"detail": {"error": "...", "hint": "..."}}`
+(the hint only for a description).
+
+## Persistence
+
+| Table             | Holds                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `workflows`       | `id`, `name`, `description`, `definition` (JSONB; written in canonical form)                                                   |
+| `schedules`       | `target_workflow_id`, `enabled`, `timezone`, `schedule_description`, `next_run_at`, `recurrence_seconds`, `last_executed_at`   |
+| `executions`      | One row per run: `workflow_id`, `status` (`running`, `success`, `failed`), `inputs`, `outputs`, `error_message`, `duration_ms` |
+| `node_executions` | One row per node step: `execution_id`, `node_id`, `node_type`, `status`, `inputs`, `outputs`, `error_message`, `duration_ms`   |
+
+## Related documentation
+
+- [Tools](mcp.md) - the AI tools, including the workflow and cron tools
+- [Console Guide](console.md) - the `/workflow` command
+- [Environment Variables](../reference/environment-variables.md) - scheduler and database settings

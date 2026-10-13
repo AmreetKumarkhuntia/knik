@@ -26,7 +26,7 @@ Apps never import each other. `npm run lint:imports` checks these rules.
 ## Async TTS Workflow
 
 ```python
-processor = TTSAsyncProcessor(sample_rate=24000, voice_model='af_sarah')
+processor = TTSAsyncProcessor(sample_rate=24000)  # voice_model is accepted but not applied yet
 processor.start_async_processing()  # Start background threads first
 processor.play_async("Text to speak")  # Non-blocking
 while not processor.is_processing_complete():  # Wait before exiting

@@ -5,7 +5,7 @@
 - Python 3.12+
 - Node.js (for npm scripts)
 - espeak-ng (for TTS)
-- PostgreSQL (for scheduler/workflows, optional)
+- PostgreSQL (optional: conversations, web settings, API keys and workflows live there; the apps start without it)
 
 ## Installation
 
@@ -31,6 +31,10 @@ cd src/apps/web/frontend && npm install && cd -
 # 6. Configure environment
 cp .env.example .env
 # Edit .env with your settings (see docs/reference/environment-variables.md)
+
+# 7. Create the database and its schema (needs the psql client; reads KNIK_DB_* from the environment, then .env)
+createdb knik
+scripts/migrate.sh
 ```
 
 ## Configuration
@@ -63,11 +67,11 @@ npm run start:console
 npm run start:web:backend     # Backend on :8010
 npm run start:web:frontend    # Frontend on :8020
 
-# Cron scheduler
-npm run start:cron
+# Workflow scheduler (start:cron is an alias)
+npm run start:worker
 
-# Messaging bot daemon (requires KNIK_TELEGRAM_BOT_TOKEN)
-python src/main.py --mode bot
+# Telegram bot (requires KNIK_TELEGRAM_BOT_TOKEN)
+npm run start:bot
 
 # Electron desktop app
 npm run start:electron

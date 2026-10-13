@@ -1,5 +1,7 @@
 # Plan 02: Fix Browser/Create Workflow Page
 
+> **Backend part done:** `POST /api/workflows/` and `PATCH /api/workflows/{id}` exist (`src/backend/routes/workflow.py`). Paths below that start with `src/apps/web/backend` refer to the old layout, now `src/backend`.
+
 **Status:** Planning
 **Last Updated:** April 2026
 

@@ -1,6 +1,7 @@
-# Knik Assets
+# Electron Assets
 
-This directory contains assets for building the Electron desktop application.
+The files `electron-builder.yml` expects in the repository's `assets/` directory. Only `entitlements.mac.plist`
+is checked in; add the others before building an installer.
 
 ## Required Files
 
@@ -44,4 +45,4 @@ Just use a 512x512 PNG file.
 - [ ] Create app icon (Knik logo)
 - [ ] Generate platform-specific icon formats
 - [ ] Create DMG background image
-- [ ] Add macOS entitlements file
+- [x] Add macOS entitlements file

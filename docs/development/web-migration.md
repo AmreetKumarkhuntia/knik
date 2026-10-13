@@ -1,6 +1,6 @@
 # Electron Migration Plan - Knik Web UI
 
-> **Note:** This is a historical planning document from December 6, 2025. The migration has been completed. The actual implementation differs from this plan in several ways -- see [web-architecture.md](../components/web-architecture.md) for the current architecture. Key differences: routes are `chat`, `chat_stream`, `admin`, `history`, `workflow`, `cron`, `analytics` (not `tts`, `tools`, `settings`); API methods are `chat()` / `chat_stream()` (not `query()` / `query_stream()`); frontend dev server runs on port 8020 (not 5173).
+> **Note:** This is a historical planning document from December 6, 2025. The migration has been completed. The actual implementation differs from this plan in several ways -- see [web-architecture.md](../components/web-architecture.md) for the current architecture. Key differences: the backend lives in `src/backend` and runs on port 8010; its routes are `chat`, `chat_stream`, `admin`, `conversations`, `workflow`, `cron`, `analytics` (not `tts`, `tools`, `settings`, `history`); API methods are `chat()` / `chat_stream()` (not `query()` / `query_stream()`); the frontend dev server runs on port 8020 (not 5173). Code and ports below are the plan's, except that the backend port has been updated to 8010.
 
 **Date:** December 6, 2025
 **Goal:** Migrate from CustomTkinter to Electron + React + Tailwind CSS for smooth animations and modern UI
@@ -475,7 +475,7 @@ app.on("window-all-closed", () => {
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:electron\"",
-    "dev:backend": "cd src/apps/web && uvicorn main:app --reload --port 8000",
+    "dev:backend": "cd src/apps/web && uvicorn main:app --reload --port 8010",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:electron": "wait-on http://localhost:8020 && electron .",
     "build": "npm run build:frontend && electron-builder",

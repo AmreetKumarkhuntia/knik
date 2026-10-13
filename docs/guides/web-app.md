@@ -1,16 +1,14 @@
 # Knik Web App
 
-Modern web interface with React + FastAPI for AI chat, workflow management, and scheduling.
+A React frontend and a FastAPI backend, run as two separate processes.
 
 ## Architecture
 
-### Three-Layer Stack
-
 ```mermaid
 flowchart TD
-    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 8020]
-    B -->|REST API| C[FastAPI Backend AI TTS MCP Tools Port 8000]
-    C -->|Direct imports| D[Python Services AIClient TTSProcessor MCP Tools]
+    A[Electron window, optional] --> B[React + TypeScript + Tailwind UI, Vite dev server on port 8020]
+    C[FastAPI backend on port 8010] -->|imports.py| D[lib: AIClient, tools, TTS, workflows, Postgres]
+    E[API clients: curl, scripts] -->|HTTP /api| C
 
     style A fill:#e1f5ff
     style B fill:#f3e5f5
@@ -18,93 +16,91 @@ flowchart TD
     style D fill:#e8f5e9
 ```
 
+The frontend currently runs on an in-memory demo session (`src/lib/stores/demo/`) and does not call the
+backend. The backend serves the HTTP API described below.
+
 ## Frontend (React)
 
 ### Tech Stack
 
 - **React 19** - UI framework
 - **TypeScript** - Type safety
-- **Vite** - Build tool with lightning-fast HMR
+- **Vite** (rolldown-vite) - Build tool and dev server
 - **Tailwind CSS** - Utility-first styling
+- **Zustand** - Domain stores
 
 ### Project Structure
 
 ```
 src/apps/web/frontend/src/
-  App.tsx                  # Main layout orchestrator
+  App.tsx                  # Routes and layout
   main.tsx                 # Entry point
   types/                   # TypeScript type definitions
   lib/
-    pages/                 # Route-level pages
-      Settings.tsx
-      WorkflowBuilder.tsx
-      ExecutionDetail.tsx
+    pages/                 # Route-level pages (Settings, WorkflowBuilder, ExecutionDetail) and the lazy route table
     widgets/               # Bind store state and actions to components
-    stores/                # Provider-scoped Zustand domain stores
+    stores/                # Provider-scoped Zustand domain stores, including the demo session
     components/            # Presentational UI, grouped by family
-      buttons, chat, display, forms, graph, navigation, surfaces, etc.
+      buttons, chat, display, forms, graph, navigation, surfaces, ...
     hooks/                 # useKeyboardShortcuts, useViewport
     constants/
     data-structures/
     utils/
 ```
 
+See [Web Architecture](../components/web-architecture.md) for the stores and widgets.
+
 ## Backend (FastAPI)
 
-### API Endpoints (32 total)
+**Base URL:** `http://localhost:8010`. `/` and `/health` answer without an API key; every route under `/api`
+checks `X-API-Key` when `KNIK_WEB_REQUIRE_API_KEY=true`.
 
-**Base URL:** `http://localhost:8010`
+| Route file         | Prefix               | Endpoints                                                                                                                                              |
+| ------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `chat.py`          | `/api/chat`          | POST `/` (reply text and its speech)                                                                                                                   |
+| `chat_stream.py`   | `/api/chat/stream`   | POST `/` (Server-Sent Events, see [Streaming](../development/streaming.md))                                                                            |
+| `admin.py`         | `/api/admin`         | GET/POST `/settings`, GET `/providers`, `/models`, `/voices`, GET `/mcp-tools`, PUT `/mcp-tools/{name}`, GET/POST `/api-keys`, DELETE `/api-keys/{id}` |
+| `conversations.py` | `/api/conversations` | GET `/`, POST `/`, GET/PATCH/DELETE `/{conversation_id}`, GET `/{conversation_id}/messages`                                                            |
+| `workflow.py`      | `/api/workflows`     | GET `/`, POST `/`, GET/PATCH/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes`                             |
+| `cron.py`          | `/api/cron`          | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle`                                                                                                |
+| `analytics.py`     | `/api/analytics`     | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity`                                                          |
 
-| Route File         | Prefix               | Endpoints                                                                                                                               |
-| ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `chat.py`          | `/api/chat`          | POST `/`                                                                                                                                |
-| `chat_stream.py`   | `/api/chat/stream`   | POST `/`                                                                                                                                |
-| `admin.py`         | `/api/admin`         | GET/POST `/settings`, GET `/providers`, `/models`, `/voices`                                                                            |
-| `history.py`       | `/api/history`       | GET `/`, POST `/add`, POST `/clear`                                                                                                     |
-| `workflow.py`      | `/api/workflows`     | GET `/`, GET/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes`                              |
-| `cron.py`          | `/api/cron`          | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle`                                                                                 |
-| `analytics.py`     | `/api/analytics`     | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity`                                           |
-| `conversations.py` | `/api/conversations` | GET `/`, POST `/`, GET `/{conversation_id}`, DELETE `/{conversation_id}`, PATCH `/{conversation_id}`, GET `/{conversation_id}/messages` |
-
-See [API Reference](../reference/api.md) for detailed endpoint documentation.
+FastAPI serves the interactive OpenAPI docs at `http://localhost:8010/docs`. See [API Reference](../reference/api.md),
+[Tools](mcp.md) (tool consent and the tool-group switches) and [Workflow Scheduler](scheduler.md).
 
 ### Backend Structure
 
 ```
-src/apps/web/backend/
-  main.py           # FastAPI app entry point with CORS, lifespan handlers
-  config.py         # WebBackendConfig (reads from .env)
-    routes/
-    chat.py         # Chat endpoint (text + audio response)
-    chat_stream.py  # SSE streaming chat endpoint
-    admin.py        # Settings and provider management
-    history.py      # Conversation history CRUD
-    workflow.py     # Workflow CRUD and execution
-    conversations.py  # Conversation management with messages
-    cron.py         # Schedule management (natural language)
-    analytics.py    # Dashboard, metrics, activity
+src/backend/
+  main.py              # FastAPI app: CORS, the /api router with the API key check, lifespan, 503 for database errors
+  config.py            # WebBackendConfig (KNIK_WEB_* and the shared Config)
+  state.py             # AppState: settings, one AI client per conversation, TTS, the Scheduler
+  deps.py              # get_state, require_api_key
+  consent.py           # WebConsentGate (KNIK_WEB_TOOL_CONSENT)
+  settings_service.py  # env, persisted and admin settings; tool-group switches
+  analytics.py         # dashboard formatting
+  routes/              # chat, chat_stream, admin, conversations, workflow, cron, analytics
+  models/              # Pydantic request models per domain
 ```
+
+When Postgres is down the backend still starts; routes that need the database answer `503` until it is back.
 
 ### Configuration
 
-Backend reads from environment variables (via `WebBackendConfig`):
+The backend reads the shared settings (provider, model, voice, database) plus its own:
 
 ```bash
-KNIK_AI_PROVIDER=vertex          # AI provider
-KNIK_AI_MODEL=gemini-2.5-flash   # Model name
-GOOGLE_CLOUD_PROJECT=your-project # GCP project ID
-KNIK_AI_LOCATION=us-central1     # Vertex AI region
-KNIK_TEMPERATURE=0.7             # AI temperature
-KNIK_MAX_TOKENS=25565            # Max output tokens
-KNIK_VOICE=af_heart              # Voice name
-KNIK_LANGUAGE=a                  # Language code
 KNIK_WEB_HOST=0.0.0.0           # Server host
-KNIK_WEB_PORT=8000              # Server port
-KNIK_WEB_RELOAD=true            # Auto-reload
-KNIK_HISTORY_CONTEXT_SIZE=5     # Context messages for AI
+KNIK_WEB_PORT=8010              # Server port
+KNIK_WEB_RELOAD=true            # Auto-reload on code changes
+KNIK_WEB_CORS_ORIGINS=http://localhost:8020,http://127.0.0.1:8020
+KNIK_WEB_TOOL_CONSENT=deny      # deny or allow tools that need consent in web chats
+KNIK_WEB_REQUIRE_API_KEY=false  # require X-API-Key on /api routes
 ```
 
-See [Environment Variables](../reference/environment-variables.md) for all options.
+Provider, model, voice, temperature and max tokens saved through `POST /api/admin/settings` override the
+environment, from each chat's next message on. See [Environment Variables](../reference/environment-variables.md#web-backend) for all
+options and how to create the first API key.
 
 ## Development
 
@@ -112,24 +108,26 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 
 ```bash
 # Start backend and frontend separately (two terminals)
-npm run start:web:backend    # Backend on :8000
-npm run start:web:frontend   # Frontend on :8020 (Vite dev port)
+npm run start:web:backend    # Backend on :8010
+npm run start:web:frontend   # Frontend on :8020
 
-# Or use shell scripts
+# Or use the scripts
 ./scripts/start_web_backend.sh
 ./scripts/start_web_frontend.sh
+
+# Or, from src/
+python -m backend.main
 ```
 
-There is no combined `npm run start:web` script — you must start backend and frontend separately.
+There is no combined `npm run start:web` script. The backend does not run workflow schedules; start the worker
+for that (`npm run start:worker`).
 
 ### Hot Reload
 
-- **Backend:** Uvicorn auto-reload watches `src/` directory
-- **Frontend:** Vite HMR updates instantly on file save
+- **Backend:** Uvicorn reloads on code changes while `KNIK_WEB_RELOAD=true`
+- **Frontend:** Vite HMR updates on file save
 
 ### Electron Desktop App
-
-The web app can be wrapped in Electron for desktop distribution:
 
 ```bash
 npm run start:electron    # Development mode
@@ -146,7 +144,7 @@ See [Electron Guide](electron.md) for details.
 ```bash
 cat .env                  # Check if .env file exists
 which python              # Should show .venv/bin/python
-lsof -i :8000            # Check if port is available
+lsof -i :8010             # Check if port is available
 ```
 
 ### Frontend Build Issues
@@ -163,7 +161,7 @@ The backend allows `http://localhost:8020` and `http://127.0.0.1:8020` by defaul
 
 ## Related Documentation
 
-- [MCP Tools](mcp.md) - AI-callable tools system
+- [Tools](mcp.md) - AI-callable tools, consent and tool-group switches
 - [Console App](console.md) - Terminal-based interface
 - [Scheduler](scheduler.md) - Workflow scheduling system
 - [API Reference](../reference/api.md) - Detailed API docs

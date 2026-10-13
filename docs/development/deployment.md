@@ -7,7 +7,7 @@ This guide covers deploying Knik applications for production use.
 - [Environment Setup](#environment-setup)
 - [Web App Deployment](#web-app-deployment)
 - [Electron Desktop App](#electron-desktop-app)
-- [Console/GUI Apps](#consolegui-apps)
+- [Console](#console)
 - [Production Checklist](#production-checklist)
 - [Troubleshooting](#troubleshooting)
 
@@ -24,9 +24,9 @@ export KNIK_AI_MODEL="gemini-2.0-flash-exp"
 
 # Provider-specific credentials
 export GOOGLE_CLOUD_PROJECT="your-project-id"  # vertex provider
-# or: export GOOGLE_API_KEY="your-key"         # gemini provider
-# or: export ZHIPUAI_API_KEY="your-key"        # glm provider
-# or: export ZAI_API_KEY="your-key"            # zai provider
+# or: export GEMINI_API_KEY="your-key"         # gemini provider
+# or: export ZHIPUAI_API_KEY="your-key"        # zhipuai provider
+# or: export ZAI_API_KEY="your-key"            # zai provider (zai_coding: ZAI_CODING_API_KEY)
 # or: export KNIK_CUSTOM_API_BASE="http://..."  # custom provider (any OpenAI-compatible API)
 
 # Voice Configuration (9 voices available)
@@ -36,12 +36,20 @@ export KNIK_VOICE="af_heart"
 
 # Web App Configuration
 export KNIK_WEB_HOST="0.0.0.0"
-export KNIK_WEB_PORT="8000"
+export KNIK_WEB_PORT="8010"
+export KNIK_WEB_RELOAD="false"
 export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com"
+export KNIK_WEB_REQUIRE_API_KEY="true"   # once the first key exists (see API keys in environment-variables.md)
+
+# Database (conversations, settings, API keys, workflows)
+export KNIK_DB_HOST="localhost"
+export KNIK_DB_NAME="knik"
 
 # Optional
 export KNIK_HISTORY_CONTEXT_SIZE="5"
 ```
+
+Apply the database schema once, and after each upgrade, with `scripts/migrate.sh`.
 
 See [environment-variables.md](../reference/environment-variables.md) for the complete reference.
 
@@ -84,25 +92,28 @@ pip install -r requirements.txt
 
 ```bash
 export KNIK_WEB_HOST="0.0.0.0"
-export KNIK_WEB_PORT="8000"
+export KNIK_WEB_PORT="8010"
+export KNIK_WEB_RELOAD="false"
 export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 ```
 
-**3. Run with production ASGI server:**
+**3. Run the server:**
 
 ```bash
-# Using Uvicorn (included)
-uvicorn apps.web.backend.main:app --host 0.0.0.0 --port 8000 --workers 4
+# From the repository root: reads KNIK_WEB_HOST, KNIK_WEB_PORT and KNIK_WEB_RELOAD
+python src/main.py --mode backend
 
-# Or using Gunicorn + Uvicorn workers
-gunicorn apps.web.backend.main:app \
-  --workers 4 \
-  --worker-class uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:8000 \
-  --timeout 120
+# Or call Uvicorn directly
+uvicorn --app-dir src backend.main:app --host 0.0.0.0 --port 8010
 ```
 
-**4. Set up as systemd service (Linux):**
+Run one process. Settings changes, tool-group switches and the per-conversation AI clients are held in the
+process, so several workers would drift apart.
+
+**4. Run the worker** if you use scheduled workflows: `python src/main.py --mode worker` (the backend never runs
+schedules).
+
+**5. Set up as systemd service (Linux):**
 
 Create `/etc/systemd/system/knik-backend.service`:
 
@@ -118,7 +129,8 @@ WorkingDirectory=/path/to/knik
 Environment="KNIK_AI_PROVIDER=vertex"
 Environment="GOOGLE_CLOUD_PROJECT=your-project"
 Environment="KNIK_VOICE=af_heart"
-ExecStart=/path/to/.venv/bin/uvicorn apps.web.backend.main:app --host 0.0.0.0 --port 8000
+Environment="KNIK_WEB_RELOAD=false"
+ExecStart=/path/to/knik/.venv/bin/python src/main.py --mode backend
 Restart=always
 
 [Install]
@@ -141,7 +153,8 @@ sudo systemctl status knik-backend
 cd src/apps/web/frontend && npm run build
 ```
 
-This creates optimized static files in `src/apps/web/frontend/dist/`.
+This creates optimized static files in `src/apps/web/frontend/dist/`. The frontend currently runs on an in-memory
+demo session and does not call the backend.
 
 **2. Serve with Nginx:**
 
@@ -210,8 +223,6 @@ cd src/apps/web/frontend
 vercel --prod
 ```
 
-Configure `VITE_API_URL` in Vercel dashboard to point to your backend URL.
-
 #### Other Platforms (Railway / Render / Fly.io)
 
 Platform-specific deployment configs are planned for future releases.
@@ -230,7 +241,8 @@ npm install
 
 **2. Build configuration:**
 
-Knik uses `electron-builder.yml` at the project root:
+Knik uses `electron-builder.yml` at the project root (its icons are not in the repository; see
+[Electron Assets](../components/electron-assets.md)):
 
 - **App ID:** `com.knik.app`
 - **Product Name:** `Knik`
@@ -298,36 +310,12 @@ This uses `concurrently` to run all three processes, with `wait-on` to delay Ele
 
 ---
 
-## Console/GUI Apps
-
-### Running Directly
+## Console
 
 ```bash
-# Console mode
 npm run start:console
-```
-
-### Standalone Python Distribution
-
-**Option 1: PyInstaller**
-
-```bash
-pip install pyinstaller
-
-# Console app
-pyinstaller --onefile src/main.py --name knik-console
-
-# GUI app
-pyinstaller --onefile --windowed src/main.py --name knik-gui
-```
-
-**Option 2: Briefcase (Recommended for GUI)**
-
-```bash
-pip install briefcase
-briefcase new
-briefcase build
-briefcase package
+# or
+python src/main.py --mode console
 ```
 
 ---
@@ -341,8 +329,10 @@ briefcase package
 - [ ] Keep `KNIK_WEB_TOOL_CONSENT=deny` unless the deployment serves one trusted user
 - [ ] Use HTTPS for web deployments
 - [ ] Set up monitoring and logging
-- [ ] Configure firewall rules (ports 80/443 for web, 8000 for API)
-- [ ] Test all 31 MCP tools in production environment
+- [ ] Configure firewall rules (ports 80/443 for web, 8010 for API)
+- [ ] Apply migrations with `scripts/migrate.sh`
+- [ ] Run the worker if you use scheduled workflows
+- [ ] Switch off the tool groups web chats should not use (`PUT /api/admin/mcp-tools/{group}`)
 - [ ] Verify TTS voice models work on production server
 - [ ] Install `espeak-ng` on the server
 

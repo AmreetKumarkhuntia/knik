@@ -14,24 +14,33 @@ npm run start:console:split
 python src/main.py --mode console
 ```
 
-## Commands (14)
+## Commands
 
-| Command                  | Description                          |
-| ------------------------ | ------------------------------------ |
-| `/help`                  | Show commands                        |
-| `/exit`                  | Quit                                 |
-| `/quit`                  | Alias for exit                       |
-| `/clear`                 | Clear screen                         |
-| `/history`               | Show conversation history            |
-| `/voice <name>`          | Change voice                         |
-| `/info`                  | Show system configuration            |
-| `/toggle-voice`          | Enable/disable voice output          |
-| `/tools`                 | Show available MCP tools             |
-| `/agent`                 | Agent mode settings                  |
-| `/provider [name]`       | Switch AI provider or list available |
-| `/model [name]`          | Switch AI model or show current      |
-| `/debug [on/off/toggle]` | Toggle debug mode                    |
-| `/workflow`              | Workflow management                  |
+Shared with the Telegram bot (`src/lib/commands/handlers.py`):
+
+| Command                 | Description                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `/new`                  | Start a fresh conversation                                                        |
+| `/resume [id\|#number]` | Resume a previous conversation                                                    |
+| `/sessions [page]`      | List recent conversations (the web app's and older ones, never a Telegram user's) |
+| `/model [name]`         | Show or switch the AI model                                                       |
+| `/provider [name]`      | Show or switch the AI provider                                                    |
+| `/status`               | Show the current configuration                                                    |
+| `/help`                 | Show the commands                                                                 |
+
+Console only (`src/console/tools/`):
+
+| Command                                  | Description                                                                      |
+| ---------------------------------------- | -------------------------------------------------------------------------------- |
+| `/exit`, `/quit`                         | Quit                                                                             |
+| `/clear`                                 | Clear the in-memory conversation history                                         |
+| `/history`                               | Show the conversation history                                                    |
+| `/voice [name]`                          | Show the voice setting; changing it fails for now (TTS cannot switch voices yet) |
+| `/toggle-voice`                          | Enable/disable voice output                                                      |
+| `/tools`                                 | List the built-in tool definitions                                               |
+| `/agent <query>`                         | Ask once without streaming                                                       |
+| `/debug [on\|off\|toggle]`               | Show or change debug mode                                                        |
+| `/workflow list\|run <id> [inputs_json]` | List workflows, or run one now                                                   |
 
 ## Usage
 
@@ -43,13 +52,6 @@ AI: Artificial intelligence refers to...
 [audio plays]
 ```
 
-**Change voice:**
-
-```text
-You: /voice am_adam
-AI: Voice changed to: am_adam
-```
-
 **Switch provider:**
 
 ```text
@@ -57,19 +59,25 @@ You: /provider
 AI: Current provider: vertex
 
 Available providers:
-  vertex, gemini, zhipuai, zai, zai_coding, custom, mock
+    custom
+    gemini
+    mock
+ -> vertex
+    zai_coding
+    zai
+    zhipuai
 
 Usage: /provider <name>
 
 You: /provider custom
-AI: Provider changed to: custom
+AI: Provider switched to custom
 ```
 
 **Change AI model:**
 
 ```text
 You: /model gemini-1.5-flash
-AI: Model changed to: gemini-1.5-flash
+AI: Model switched to gemini-1.5-flash
 ```
 
 **Workflow management:**
@@ -86,13 +94,13 @@ AI: [Executes workflow]
 
 ```text
 You: /debug on
-AI: Debug mode enabled
+AI: ✓ Debug mode enabled 🐛
 
 You: What is 2+2?
-[DEBUG] Processing input: What is 2+2?...
-[DEBUG] Querying AI with provider: vertex
+🐛 [DEBUG] Processing input: What is 2+2?...
+🐛 [DEBUG] Querying AI with provider: vertex
 AI: The answer is 4
-[DEBUG] Response stats: 4 words, 16 chars
+🐛 [DEBUG] Response stats: 4 words, 16 chars
 ```
 
 ## Configuration
@@ -102,8 +110,8 @@ Environment variables:
 ```bash
 export KNIK_AI_PROVIDER=vertex    # AI provider
 export KNIK_AI_MODEL=gemini-1.5-flash
-export KNIK_VOICE=af_sarah        # Voice name
 export KNIK_VOICE_OUTPUT=true     # Enable/disable TTS
+export KNIK_HISTORY_CONTEXT_SIZE=5  # Earlier turns sent with each message
 ```
 
 See [Environment Variables](../reference/environment-variables.md) for all options.
@@ -112,8 +120,8 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 
 - 7 AI providers (vertex, gemini, zhipuai, zai, zai_coding, custom, mock)
 - Agent-powered streaming responses
-- Real-time voice output with 9 voices
-- 31 MCP tools across 7 categories (utils, text, shell, file, browser, cron, workflow)
+- Voice output with Kokoro (the `af_heart` voice for now)
+- 30 tools across 7 groups (utils, text, shell, file, browser, cron, workflow); the console asks before running one that needs consent
 - Conversation history with configurable context
 - Workflow management via `/workflow` command
 
@@ -121,8 +129,9 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 
 - **app.py** - Main ConsoleApp class
 - **history.py** - ConversationHistory for context management
-- **tools/** - Command handlers with registry pattern
+- **commands/** - `/help` and the dispatcher for the shared commands
+- **tools/** - Console-only command handlers
   - **index.py** - Command registry (`get_command_registry()`, `register_commands()`)
-  - Individual command files (`*_cmd.py`)
+  - Individual command files (`*_cmd.py`) and `consent_gate.py`
 
-See [MCP Tools](mcp.md) for tool details and [API Reference](../reference/api.md) for AIClient documentation.
+See [Tools](mcp.md) for tool details and [API Reference](../reference/api.md) for AIClient documentation.
