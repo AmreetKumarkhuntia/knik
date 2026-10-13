@@ -9,8 +9,8 @@ from lib.services.ai_client.client import AIClient
 from lib.services.ai_client.compaction import ConversationCompactor
 from lib.services.ai_client.factory import build_client
 from lib.services.ai_client.settings import ClientSettings
-from lib.services.ai_client.stream_events import StreamDone
-from lib.services.db import ConversationDB, DatabaseUnavailable, UserDB
+from lib.services.ai_client.stream_events import ConversationReady, StreamDone
+from lib.services.db import ConversationDB, DatabaseUnavailable, PostgresDB, UserDB
 from tests.db_support import requires_db
 
 
@@ -148,3 +148,78 @@ async def test_achat_and_achat_stream_record_the_owner_and_source_of_a_new_conve
         chatted: (user.id, "telegram"),
         streamed: (None, "web"),
     }
+
+
+async def _conversation_ids() -> set[str]:
+    return {row["id"] for row in await PostgresDB.fetch_all("SELECT id FROM conversations")}
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_a_failed_reply_leaves_no_conversation_its_caller_never_got(db):
+    client = _failing_client()
+
+    # A new conversation, and the one an unknown id starts in its place.
+    for conversation_id in (None, "gone"):
+        with pytest.raises(RuntimeError, match="quota exceeded"):
+            await client.achat("hello", conversation_id=conversation_id, source="web")
+
+    assert await _conversation_ids() == set()
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_a_failed_reply_keeps_the_conversation_given_and_a_retry_still_titles_it(db):
+    conversation_id = await ConversationDB.create_conversation(source="web")
+
+    with pytest.raises(RuntimeError, match="quota exceeded"):
+        await _failing_client().achat("hello", conversation_id=conversation_id)
+    _, continued, _ = await build_client(ClientSettings(provider="mock")).achat(
+        "hello", conversation_id=conversation_id
+    )
+    await asyncio.gather(*AIClient._background_tasks)
+
+    conversation = await ConversationDB.get_conversation(conversation_id)
+    assert continued == conversation_id
+    assert [m.role for m in conversation.messages] == ["user", "user", "assistant"]
+    assert conversation.title
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_a_failed_streamed_reply_is_saved_in_the_conversation_whose_id_it_sent(db):
+    client = build_client(ClientSettings(provider="mock"))
+
+    def chat_stream(**kwargs):
+        raise RuntimeError("quota exceeded")
+        yield
+
+    client._provider.chat_stream = chat_stream
+
+    events = [event async for event in client.achat_stream("hello", source="web")]
+
+    ready, done = events[0], events[-1]
+    assert isinstance(ready, ConversationReady) and isinstance(done, StreamDone)
+    assert done.conversation_id == ready.conversation_id
+    assert await _conversation_ids() == {ready.conversation_id}
+    messages = await ConversationDB.get_messages(ready.conversation_id)
+    assert [(m.role, m.content) for m in messages] == [
+        ("user", "hello"),
+        ("assistant", "Chat streaming error: quota exceeded"),
+    ]
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_without_persistence_a_chat_answers_and_neither_reads_nor_writes_a_conversation(db):
+    conversation_id = await ConversationDB.create_conversation(source="web")
+    client = build_client(ClientSettings(provider="mock"))
+
+    text, chatted, _ = await client.achat("hello", conversation_id=conversation_id, persist=False)
+    events = [event async for event in client.achat_stream("hello", conversation_id=conversation_id, persist=False)]
+
+    assert text and chatted is None
+    assert not [event for event in events if isinstance(event, ConversationReady)]
+    assert events[-1].conversation_id is None and events[-1].full_response
+    assert await _conversation_ids() == {conversation_id}
+    assert await ConversationDB.get_message_count(conversation_id) == 0

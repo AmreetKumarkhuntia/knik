@@ -51,9 +51,13 @@ AI: If you multiply 4 by 3, you get 12.
 5. Save the reply with its token usage and tool calls in the message metadata, and add the turn's
    `total_tokens` to the conversation's running total.
 6. Compact the conversation if this turn crossed the threshold (below).
-7. After the first exchange, generate a title in the background.
+7. After the conversation's first reply, generate a title in the background.
 
 When Postgres is unreachable each step is skipped with a warning and the chat still answers, without history.
+
+If the model call fails, `achat()` raises with the user message saved and no reply; a conversation it created for that
+turn is deleted again, since the caller never got its id. `achat_stream()` saves the error text as the reply instead.
+Both take `persist=False` to answer without loading, creating or saving a conversation.
 
 ### Compaction
 

@@ -4,7 +4,11 @@ import json
 
 import psycopg
 import pytest
+from fastapi import HTTPException
+from psycopg_pool import PoolTimeout
 
+from backend.routes.conversations import chat_conversation_id
+from lib.services.db import ConversationDB, PostgresDB, UserDB
 from tests.db_support import requires_db
 
 
@@ -143,3 +147,63 @@ def test_without_a_database_a_chat_with_a_conversation_id_still_answers(offline_
     assert streamed.status_code == 200
     assert "conversation_id" not in _events(streamed.text)
     assert _events(streamed.text)["done"]
+
+
+@requires_db
+def test_a_chat_whose_conversation_cannot_be_checked_answers_and_saves_nothing(
+    client, seeded, database_url, monkeypatch
+):
+    """The check's query fails once, as a pool timeout under load does, while the queries after it would succeed."""
+    failures: list[Exception] = []
+    require_pool = PostgresDB._require_pool
+
+    async def flaky_require_pool():
+        if failures:
+            raise failures.pop()
+        return await require_pool()
+
+    monkeypatch.setattr(PostgresDB, "_require_pool", flaky_require_pool)
+
+    failures.append(PoolTimeout("couldn't get a connection after 5.00 sec"))
+    chatted = client.post("/api/chat/", json={"message": "hello", "conversation_id": seeded["web"]})
+    failures.append(PoolTimeout("couldn't get a connection after 5.00 sec"))
+    streamed = client.post("/api/chat/stream/", json={"message": "hello", "conversation_id": seeded["web"]})
+
+    assert failures == []
+    assert (chatted.status_code, chatted.json()["conversation_id"]) == (200, None)
+    assert chatted.json()["text"]
+    assert streamed.status_code == 200
+    assert "conversation_id" not in _events(streamed.text)
+    assert _events(streamed.text)["done"]
+    # Neither turn went into a new conversation, nor into the one that could not be checked.
+    with psycopg.connect(database_url) as conn:
+        assert {cid for (cid,) in conn.execute("SELECT id FROM conversations")} == set(seeded.values())
+    assert _row(database_url, seeded["web"])["messages"] == 0
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_the_chat_check_reads_no_message_history(db, monkeypatch):
+    user = await UserDB.get_or_create("telegram", "42")
+    web = await ConversationDB.create_conversation(source="web")
+    telegram = await ConversationDB.create_conversation(user_id=user.id, source="telegram")
+    await ConversationDB.append_message(web, "user", "hello")
+    queries: list[str] = []
+    fetch_one = PostgresDB.fetch_one
+
+    async def recording_fetch_one(query, params=None):
+        queries.append(query)
+        return await fetch_one(query, params)
+
+    monkeypatch.setattr(PostgresDB, "fetch_one", recording_fetch_one)
+
+    continued = await chat_conversation_id(web)
+    unknown = await chat_conversation_id("gone")
+    with pytest.raises(HTTPException) as refused:
+        await chat_conversation_id(telegram)
+
+    # One query per check, and none of them reads the messages.
+    assert len(queries) == 3
+    assert [q for q in queries if "*" in q or "messages" in q] == []
+    assert (continued, unknown, refused.value.status_code) == ((web, True), ("gone", True), 404)
+    assert await chat_conversation_id(None) == (None, True)

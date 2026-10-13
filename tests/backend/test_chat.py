@@ -4,6 +4,8 @@ import numpy as np
 
 from backend.main import app
 from backend.routes import chat_stream
+from lib.services.ai_client.providers.mock_provider import MockAIProvider
+from tests.db_support import requires_db
 
 
 USAGE = {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}
@@ -60,3 +62,16 @@ def test_an_invalid_body_reports_each_error_once(offline_client):
     for path in ("/api/chat/", "/api/chat/stream/"):
         detail = offline_client.post(path, json={"conversation_id": "c1"}).json()["detail"]
         assert [(error["loc"], error["type"]) for error in detail] == [(["body", "message"], "missing")]
+
+
+@requires_db
+def test_a_failed_reply_answers_500_and_leaves_no_conversation_behind(client, monkeypatch):
+    def chat(self, prompt, history=None, **kwargs):
+        raise RuntimeError("quota exceeded")
+
+    monkeypatch.setattr(MockAIProvider, "chat", chat)
+
+    response = client.post("/api/chat/", json={"message": "hello"})
+
+    assert (response.status_code, response.json()) == (500, {"detail": "quota exceeded"})
+    assert client.get("/api/conversations/").json()["count"] == 0

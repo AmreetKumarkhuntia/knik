@@ -97,6 +97,23 @@ async def test_an_empty_scope_sees_nothing_and_no_scope_opens_anything(db):
     assert all([await ConversationDB.get_conversation(made[name]) for name in ("alice", "bob", "web", "legacy")])
 
 
+async def test_in_scope_tells_an_unknown_id_from_one_outside_the_scope(db):
+    made = await _one_of_each()
+    # An owner without a source makes the scope condition NULL rather than false; it still answers False.
+    await PostgresDB.execute("INSERT INTO conversations (id, user_id) VALUES ('no-source', %s)", (made["alice_id"],))
+    local = ConversationScope.local()
+
+    assert {name: await ConversationDB.in_scope(made[name], local) for name in ("alice", "bob", "web", "legacy")} == {
+        "alice": False,
+        "bob": False,
+        "web": True,
+        "legacy": True,
+    }
+    assert await ConversationDB.in_scope("no-source", local) is False
+    assert await ConversationDB.in_scope("missing", local) is None
+    assert await ConversationDB.in_scope(made["alice"], ConversationScope.owned_by(made["alice_id"])) is True
+
+
 async def test_a_deleted_users_conversations_lose_their_owner_and_stay_out_of_the_local_scope(db):
     made = await _one_of_each()
 
@@ -154,7 +171,10 @@ async def test_messages(db):
     await ConversationDB.append_message(conversation_id, "assistant", "m6", {"at": datetime(2026, 1, 1, tzinfo=UTC)})
 
     assert await ConversationDB.get_message_count(conversation_id) == 7
+    assert await ConversationDB.get_message_count(conversation_id, role="assistant") == 1
+    assert await ConversationDB.get_message_count(conversation_id, role="system") == 0
     assert await ConversationDB.get_message_count("missing") == 0
+    assert await ConversationDB.get_message_count("missing", role="assistant") == 0
 
     messages = await ConversationDB.get_messages(conversation_id)
     assert [m.content for m in messages] == [f"m{i}" for i in range(7)]
