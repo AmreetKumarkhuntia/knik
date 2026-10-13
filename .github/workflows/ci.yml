@@ -106,7 +106,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: src/apps/web/frontend
+        working-directory: src/frontend
 
     steps:
       - name: Checkout

@@ -129,7 +129,7 @@ WAV:
 
 ### Frontend
 
-The React frontend (`src/apps/web/frontend`) currently runs on an in-memory demo session and does not call these
+The React frontend (`src/frontend`) currently runs on an in-memory demo session and does not call these
 endpoints.
 
 ## Telegram bot

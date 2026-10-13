@@ -11,7 +11,7 @@
 | A new web API route                                  | `src/backend/routes/`, with its Pydantic models in `src/backend/models/`; include it on `api_router` in `src/backend/main.py`, which applies the optional API key check                                                |
 | State shared by backend routes                       | An attribute on `AppState` in `src/backend/state.py`, reached through `Depends(get_state)`; settings logic goes in `src/backend/settings_service.py`                  |
 | A new bot feature                                    | `src/bot/`                                                                                                                                                           |
-| A new React page/widget                              | Under `src/apps/web/frontend/src/lib/`: pages in `pages/`, widgets in `widgets/`, components in `components/`                                                        |
+| A new React page/widget                              | Under `src/frontend/src/lib/`: pages in `pages/`, widgets in `widgets/`, components in `components/`                                                        |
 | A new integration (external system, DB, device)      | `src/lib/services/<name>/`                                                                                                                                           |
 | A new stateless helper                               | `src/lib/utils/`                                                                                                                                                     |
 | Workflow engine or scheduler logic                   | `src/lib/workflows/`                                                                                                                                                 |
@@ -28,6 +28,6 @@ Know these when debugging startup or tracing execution flow:
 - `src/bot/app.py` - Telegram bot
 - `src/worker/app.py` - Workflow scheduler process
 - `src/console/app.py` - Console app
-- `src/apps/web/frontend/src/main.tsx` - React frontend
+- `src/frontend/src/main.tsx` - React frontend
 - `src/lib/tools/index.py` - Tool registration (`register_all_tools`)
 - `src/lib/workflows/scheduler.py` - Scheduler facade: `run(workflow_id)`, `start()`/`stop()` (`loop.py` holds the poll loop)

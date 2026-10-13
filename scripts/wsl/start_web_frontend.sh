@@ -11,7 +11,7 @@ echo "🎨 Starting Knik Frontend..."
 echo "📁 Project root: $PROJECT_ROOT"
 
 # Change to frontend directory
-cd "$PROJECT_ROOT/src/apps/web/frontend"
+cd "$PROJECT_ROOT/src/frontend"
 
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then

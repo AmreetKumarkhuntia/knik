@@ -12,7 +12,7 @@ The full design system is in `docs/design/`. Key files:
 
 ### Quick reference
 
-Current values from `docs/design/colors_and_type.css`, which mirrors `src/apps/web/frontend/src/styles/tokens.css`:
+Current values from `docs/design/colors_and_type.css`, which mirrors `src/frontend/src/styles/tokens.css`:
 
 | Token           | Value                                             |
 | --------------- | ------------------------------------------------- |

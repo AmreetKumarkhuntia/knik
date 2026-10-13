@@ -98,7 +98,7 @@ Canonical Button, Table/TableParts, form controls, Modal and Popover retain thei
 | `/schedules`            | Schedule management                                      |
 | `/settings`             | Profile, appearance, providers/tools, voice and API keys |
 
-From `src/apps/web/frontend`:
+From `src/frontend`:
 
 ```bash
 npm run dev

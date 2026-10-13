@@ -44,7 +44,7 @@ export default defineConfig([
   {
     files: ['**/*.tsx'],
     // Anchored with **/ so the excludes match whether ESLint is invoked from the
-    // frontend dir (src/...) or the repo root (src/apps/web/frontend/src/...),
+    // frontend dir (src/...) or the repo root (src/frontend/src/...),
     // e.g. via the pre-commit frontend-lint hook which passes full paths.
     ignores: ['**/src/types/**', '**/src/lib/constants/**', '**/src/tests/**'],
     rules: {

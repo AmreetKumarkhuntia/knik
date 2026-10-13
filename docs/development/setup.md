@@ -26,7 +26,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # 5. Install frontend dependencies (for web app)
-cd src/apps/web/frontend && npm install && cd -
+cd src/frontend && npm install && cd -
 
 # 6. Configure environment
 cp .env.example .env

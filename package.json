@@ -36,7 +36,7 @@
     "format:frontend": "./scripts/format_frontend.sh",
     "format:all": "npm run format && npm run format:frontend",
     "typecheck": "./scripts/typecheck_backend.sh",
-    "typecheck:frontend": "cd src/apps/web/frontend && tsc -b --noEmit",
+    "typecheck:frontend": "cd src/frontend && tsc -b --noEmit",
     "test": ".venv/bin/python -m pytest",
     "prepare": "husky"
   },
@@ -49,7 +49,7 @@
     "files": [
       "electron-main.js",
       "electron-preload.js",
-      "src/apps/web/frontend/dist/**/*"
+      "src/frontend/dist/**/*"
     ],
     "mac": {
       "category": "public.app-category.productivity",

@@ -43,8 +43,8 @@ python src/main.py --mode backend  # Any process without npm: backend | bot | wo
 
 ### Architecture Plans
 
-Proposals written before or during the backend reorganisation; paths that start with `src/apps/web/backend` refer
-to the old layout (now `src/backend`).
+Proposals written before or during the backend reorganisation; paths that start with `src/apps/web/backend` or
+`src/apps/web/frontend` refer to the old layout (now `src/backend` and `src/frontend`).
 
 - [Frontend Component Consolidation](plan/07-frontend-component-consolidation.md) - Centralized domain stores, canonical controls and visual migration plan
 - [Web Backend Refactor](plan/04-web-backend-refactor.md) - Backend state management refactor (superseded)
@@ -74,7 +74,7 @@ src/
   bot/                 Telegram bot
   worker/              workflow scheduler process
   console/             interactive terminal chat
-  apps/web/frontend/   React frontend
+  frontend/            React frontend
   lib/                 shared library, layered top to bottom:
     tools/               the AI-callable tools (ToolRegistry, catalog, consent)
     workflows/           workflow engine and scheduler       commands/   shared console/bot commands

@@ -150,10 +150,10 @@ sudo systemctl status knik-backend
 **1. Build for production:**
 
 ```bash
-cd src/apps/web/frontend && npm run build
+cd src/frontend && npm run build
 ```
 
-This creates optimized static files in `src/apps/web/frontend/dist/`. The frontend currently runs on an in-memory
+This creates optimized static files in `src/frontend/dist/`. The frontend currently runs on an in-memory
 demo session and does not call the backend.
 
 **2. Serve with Nginx:**
@@ -176,7 +176,7 @@ server {
 
     # Frontend static files
     location / {
-        root /path/to/knik/src/apps/web/frontend/dist;
+        root /path/to/knik/src/frontend/dist;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
@@ -208,10 +208,10 @@ sudo systemctl reload nginx
 
 ```bash
 # Using Python
-python -m http.server 3000 --directory src/apps/web/frontend/dist
+python -m http.server 3000 --directory src/frontend/dist
 
 # Using Node
-npx serve -s src/apps/web/frontend/dist -l 3000
+npx serve -s src/frontend/dist -l 3000
 ```
 
 ### Option 2: Platform as a Service
@@ -219,7 +219,7 @@ npx serve -s src/apps/web/frontend/dist -l 3000
 #### Vercel (Frontend Only)
 
 ```bash
-cd src/apps/web/frontend
+cd src/frontend
 vercel --prod
 ```
 
@@ -370,7 +370,7 @@ gcloud config set project your-project-id
 **`Module not found: Can't resolve 'react'`**
 
 ```bash
-cd src/apps/web/frontend && npm install
+cd src/frontend && npm install
 ```
 
 ### Electron App Won't Build

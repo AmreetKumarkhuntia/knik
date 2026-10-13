@@ -12,7 +12,7 @@ src/
   bot/                 # Telegram bot
   worker/              # workflow scheduler process
   console/             # interactive terminal chat
-  apps/web/frontend/   # React frontend (moves to src/frontend in a later change)
+  frontend/            # React frontend
   lib/                 # shared library: core, utils, commands, tools, workflows, services
 ```
 
@@ -37,7 +37,7 @@ These rules are enforced by import-linter contracts in `pyproject.toml`. Run the
 | `bot/`               | Telegram bot                                | `app.py` + `config.py` + `transport.py` (`MessagingTransport` protocol) + `message_handler.py` + `streaming.py` + `user_identity.py` (sender to `users` row via `UserDB`, cached; a temporary in-memory id while Postgres is down) + `user_client_manager.py` (one client per user) + `consent.py` (`ConsentBroker`, keyed by chat and user) + `commands/` (bot-only commands and aliases) |
 | `worker/`            | Workflow scheduler process                  | `app.py` (`WorkerApp`)                                                                                                                                        |
 | `console/`           | Interactive terminal chat                   | `app.py` + `config.py` + `processor.py` (input loop and command dispatch) + `history.py` + `identity.py` + `commands/` (console `/help` and dispatcher) + `tools/` (console-only commands) |
-| `apps/web/frontend/` | React + TypeScript + Vite (dev server 8020) | `src/main.tsx` + `src/lib/` (pages, widgets, components, stores). Stays at this path until it moves to `src/frontend`                                         |
+| `frontend/`          | React + TypeScript + Vite (dev server 8020) | `src/main.tsx` + `src/lib/` (pages, widgets, components, stores)                                                                                              |
 
 When adding a new app:
 

@@ -9,7 +9,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-FRONTEND_DIR="$ROOT_DIR/src/apps/web/frontend"
+FRONTEND_DIR="$ROOT_DIR/src/frontend"
 
 # Run prettier from root
 PRETTIER_BIN="$FRONTEND_DIR/node_modules/.bin/prettier"

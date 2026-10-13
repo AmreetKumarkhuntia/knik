@@ -32,7 +32,7 @@ src/
 │   ├── tools/               # *_tool.py groups, catalog.py (ALL_TOOL_CLASSES), index.py (register_all_tools)
 │   ├── workflows/           # schema.py (definitions), engine, nodes, validation, schedule parser, loop.py
 │   └── services/            # Integrations: db, ai_client, tts, telegram, browser, shell
-└── apps/web/frontend/       # React + Vite + Tailwind (port 8020)
+└── frontend/               # React + Vite + Tailwind (port 8020)
 ```
 
 ---
