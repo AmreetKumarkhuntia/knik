@@ -9,6 +9,14 @@ from typing import Any
 from lib.services.ai_client.client import AIClient
 from lib.services.ai_client.factory import ClientSettings, build_client
 from lib.utils import printer as logger
+from lib.workflows.schema import (
+    NODE_TYPES,
+    AINodeSpec,
+    ConditionalNodeSpec,
+    FunctionNodeSpec,
+    MergeNodeSpec,
+    parse_node,
+)
 
 
 # Builds the client for an AI node; the bool is the node's use_tools. Workflows sit below the tools, so the
@@ -85,10 +93,12 @@ class FunctionExecutionNode(BaseNode):
             try:
                 result = await func(**resolved_params)
 
-                if isinstance(result, dict) and "error" in result:
-                    raise RuntimeError(result["error"])
-
-                return {"status": "success", **result}
+                if isinstance(result, dict):
+                    if "error" in result:
+                        raise RuntimeError(result["error"])
+                    return {"status": "success", **result}
+                # A plain value (a string, a list, a number) goes under "output", where inline code puts its result.
+                return {"status": "success", "output": result}
             except Exception as e:
                 logger.error(f"[{self.node_id}] Function {self.function_name} execution failed: {e}")
                 raise RuntimeError(f"Function {self.function_name} execution failed: {e}") from e
@@ -144,7 +154,11 @@ class ConditionalBranchNode(BaseNode):
 
 
 class FlowMergeNode(BaseNode):
-    """Node that merges outputs from multiple incoming parallel nodes."""
+    """Node that merges outputs from multiple incoming parallel nodes.
+
+    'concat' and 'overwrite' flatten the dict outputs into one dict, a later key replacing an earlier one;
+    any other strategy ('merge') keeps every input under its node id in ``merged_inputs``.
+    """
 
     def __init__(self, node_id: str, merge_strategy: str = "concat"):
         super().__init__(node_id)
@@ -154,7 +168,7 @@ class FlowMergeNode(BaseNode):
         """Merge outputs from multiple incoming parallel nodes."""
         logger.info(f"[{self.node_id}] Merging inputs with strategy {self.merge_strategy}")
 
-        if self.merge_strategy == "concat":
+        if self.merge_strategy in ("concat", "overwrite"):
             merged = {}
             for k, v in inputs.items():
                 if isinstance(v, dict):
@@ -167,24 +181,28 @@ class FlowMergeNode(BaseNode):
 
 
 class AIExecutionNode(BaseNode):
-    """Node that defers execution to the AI Client natively."""
+    """Node that defers execution to the AI Client natively.
+
+    A setting left as None takes its default, and so does an empty model or provider: the builder sends an
+    empty model until one is picked.
+    """
 
     def __init__(
         self,
         node_id: str,
         prompt: str,
-        model: str = "gemini-1.5-flash",
-        provider: str = "vertex",
-        temperature: float = 0.7,
-        use_tools: bool = True,
+        model: str | None = None,
+        provider: str | None = None,
+        temperature: float | None = None,
+        use_tools: bool | None = None,
         ai_client_factory: AIClientFactory | None = None,
     ):
         super().__init__(node_id)
         self.prompt = prompt
-        self.model = model
-        self.provider = provider
-        self.temperature = temperature
-        self.use_tools = use_tools
+        self.model = model or "gemini-3.0-flash"
+        self.provider = provider or "vertex"
+        self.temperature = 0.7 if temperature is None else temperature
+        self.use_tools = True if use_tools is None else use_tools
         self.ai_client_factory = ai_client_factory
 
     async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
@@ -271,3 +289,50 @@ class AIExecutionNode(BaseNode):
             return f"{resolved}\n\n{context_xml}"
 
         return resolved
+
+
+class _MarkerNode(BaseNode):
+    """A builder's StartNode or EndNode. It runs like any node, so an execution has a step for every node the
+    builder drew, but does nothing: its output is empty, which an AI node leaves out of its prompt context."""
+
+    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        return {}
+
+
+class StartNode(_MarkerNode):
+    """Marks where the builder's flow begins."""
+
+
+class EndNode(_MarkerNode):
+    """Marks where the builder's flow ends."""
+
+
+def build_node(node_id: str, data: dict[str, Any], ai_client_factory: AIClientFactory | None = None) -> BaseNode:
+    """The node for one entry of a definition's ``nodes``, written in its canonical or an older spelling.
+
+    Raises:
+        ValueError: the node's type is unknown or its fields are invalid.
+    """
+    if data.get("type") not in NODE_TYPES:
+        raise ValueError(f"Unknown node type '{data.get('type')}' for node {node_id}")
+
+    spec = parse_node(data)
+    match spec:
+        case FunctionNodeSpec():
+            return FunctionExecutionNode(node_id, spec.function_name or "", spec.params, spec.code)
+        case AINodeSpec():
+            return AIExecutionNode(
+                node_id,
+                prompt=spec.prompt,
+                model=spec.model,
+                provider=spec.provider,
+                temperature=spec.temperature,
+                use_tools=spec.use_tools,
+                ai_client_factory=ai_client_factory,
+            )
+        case ConditionalNodeSpec():
+            return ConditionalBranchNode(node_id, spec.condition)
+        case MergeNodeSpec():
+            return FlowMergeNode(node_id, spec.merge_strategy)
+        case _:
+            return StartNode(node_id) if spec.type == "StartNode" else EndNode(node_id)

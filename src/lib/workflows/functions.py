@@ -2,7 +2,8 @@
 Workflow function implementations for FunctionExecutionNode.
 
 These functions are called by workflow engine and are NOT exposed as MCP tools.
-All functions are async and return dict results.
+All functions are async. A node calls one with its params as keyword arguments; it adds the keys of a
+dict result to its output and puts any other result under "output".
 
 Functions that overlap with the AI tools are imported instead of duplicated: shell
 from lib.services.shell, text/time/encoding from the lib.utils *_ops helpers. HTTP and
@@ -203,8 +204,8 @@ async def dict_get_path(data: dict[str, Any], path: str, default: Any = None) ->
     return current
 
 
-async def dict_merge(*dicts: dict[str, Any]) -> dict[str, Any]:
-    """Merge multiple dictionaries (later values override earlier ones)."""
+async def dict_merge(dicts: list[dict[str, Any]]) -> dict[str, Any]:
+    """Merge a list of dictionaries (later values override earlier ones)."""
     merged = {}
     for d in dicts:
         if isinstance(d, dict):
@@ -247,6 +248,17 @@ async def uuid_generate() -> str:
     return str(uuid.uuid4())
 
 
+# A node passes its params by name, so the variadic string helpers are registered taking a list.
+async def concat_strings(strings: list[str]) -> str:
+    """Concatenate a list of strings."""
+    return await string_concat(*strings)
+
+
+async def join_strings(separator: str, strings: list[str]) -> str:
+    """Join a list of strings with a separator."""
+    return await string_join(separator, *strings)
+
+
 WORKFLOW_FUNCTIONS = {
     "http_get": http_get,
     "http_post": http_post,
@@ -259,8 +271,8 @@ WORKFLOW_FUNCTIONS = {
     "dict_set_path": dict_set_path,
     "string_format": string_format,
     "string_replace": string_replace,
-    "string_concat": string_concat,
-    "string_join": string_join,
+    "string_concat": concat_strings,
+    "string_join": join_strings,
     "string_split": string_split,
     "string_to_lower": string_to_lower,
     "string_to_upper": string_to_upper,
