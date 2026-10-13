@@ -1,6 +1,6 @@
 """Tests for messaging client models."""
 
-from src.lib.services.messaging_client.models import IncomingMessage, MessageResult
+from lib.services.messaging_client.models import IncomingMessage, MessageResult
 
 
 def test_incoming_message_with_provider_name():

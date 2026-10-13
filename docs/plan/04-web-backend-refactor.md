@@ -1,6 +1,8 @@
 # Plan 04: Web Backend Refactor
 
-**Status:** Mostly Complete
+> **Superseded** by the backend reorganisation plan (flat layout + single service layer). Its Phase 0 moved the backend to `src/backend`, removed the remaining `sys.path` hacks and deleted `routes/history.py` (and with it the cross-app `apps.console.history` import), `models/history.py` and the `websocket/` stub. Pydantic models already live in `backend/models/`; the remaining work (`deps.py` dependency injection and the rest of the backend cleanup) is tracked in that plan. Paths in this document refer to the old `src/apps/web/backend` layout.
+
+**Status:** Superseded
 **Last Updated:** April 2026
 
 ---

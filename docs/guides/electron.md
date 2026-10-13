@@ -17,7 +17,7 @@ Knik can run as a standalone desktop application on macOS, Windows, and Linux. T
 ```mermaid
 flowchart TD
     A[Electron Main Process electron-main.js] --> B[Branch]
-    B -->|HTTP Requests| C[Renderer React Port 12414]    B -->|Direct Process| D[Python Backend FastAPI Port 8000]
+    B -->|HTTP Requests| C[Renderer React Port 8020]    B -->|Direct Process| D[Python Backend FastAPI Port 8000]
 
     style A fill:#4a90e2
     style B fill:#f5a623
@@ -71,7 +71,7 @@ This script:
 1. Loads `.env` file
 2. Activates Python virtual environment
 3. Starts FastAPI backend (port 8000)
-4. Starts Vite dev server (port 12414)
+4. Starts Vite dev server (port 8020)
 5. Launches Electron window
 
 **Option 2: Manual steps**
@@ -261,10 +261,10 @@ npm install
 
 ### Frontend not loading
 
-1. Check if port 12414 is available:
+1. Check if port 8020 is available:
 
    ```bash
-   lsof -ti:12414 | xargs kill -9  # Kill process on port 12414
+   lsof -ti:8020 | xargs kill -9  # Kill process on port 8020
    ```
 
 2. Rebuild frontend:
@@ -278,8 +278,8 @@ npm install
 
 1. Open DevTools in development mode (auto-opens)
 2. Check console for errors
-3. Verify backend is running: `curl http://localhost:8000/health`
-4. Verify frontend is running: `curl http://localhost:12414`
+3. Verify backend is running: `curl http://localhost:8010/health`
+4. Verify frontend is running: `curl http://localhost:8020`
 
 ### Build fails
 

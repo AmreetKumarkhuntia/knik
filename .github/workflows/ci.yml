@@ -49,10 +49,19 @@ jobs:
           source .venv/bin/activate
           pyright
 
+      - name: Import contracts
+        run: |
+          source .venv/bin/activate
+          cd src && lint-imports --config ../pyproject.toml
+
+      - name: No sys.path hacks in src
+        run: |
+          ! grep -rn "sys.path.insert" src --include='*.py'
+
       - name: Run tests
         run: |
           source .venv/bin/activate
-          PYTHONPATH=src pytest tests/ -v
+          pytest -v
 
   frontend:
     name: Frontend - Lint, Format, Typecheck & Build (${{ matrix.os }})

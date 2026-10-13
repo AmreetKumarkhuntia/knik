@@ -22,7 +22,7 @@ Knik's Workflow Scheduler is a poll-based system with node-based workflow execut
 
 ```mermaid
 mindmap
-  root((src/lib/cron))
+  root((src/lib/workflows))
     models.py
       Workflow
       Schedule
@@ -36,7 +36,7 @@ mindmap
       FlowMergeNode
     engine.py
     scheduler.py
-    cron_scheduler.py
+    loop.py
     schedule_parser.py
     schedule_service.py
     workflow_service.py
@@ -104,7 +104,7 @@ class Schedule:
 
 ```bash
 # POST /api/cron/
-curl -X POST http://localhost:8000/api/cron/ \
+curl -X POST http://localhost:8010/api/cron/ \
   -H "Content-Type: application/json" \
   -d '{
     "target_workflow_id": "daily_summary",

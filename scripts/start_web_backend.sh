@@ -42,4 +42,4 @@ cd "$PROJECT_ROOT/src"
 
 # Run backend module
 echo "✨ Starting FastAPI server on http://localhost:8010"
-python -m apps.web.backend.main
+python -m backend.main

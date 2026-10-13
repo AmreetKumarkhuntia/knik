@@ -14,8 +14,6 @@ langchain-community>=0.3.0    # Community integrations (ChatZhipuAI for GLM)
 langchain-openai>=0.0.5       # For OpenAI-compatible APIs (Z.AI, OpenAI, etc.)
 httpx_sse>=0.4.0            # Server-sent events support for streaming (Z.AI, etc.)
 zhipuai>=2.1.0                # ZhipuAI Python SDK (required by ChatZhipuAI)
-customtkinter>=5.2.0  # Modern GUI framework
-Pillow>=10.0.0  # Image processing for GUI
 
 # FastAPI backend for web app
 fastapi>=0.115.0  # Web framework (compatible with pydantic 2.9+)
@@ -28,6 +26,7 @@ pre-commit>=3.8.0
 pyright>=1.1.380
 pytest>=8.0.0  # Testing framework
 pytest-asyncio>=0.24.0  # Async test support
+import-linter>=2.1  # Enforces the import rules declared in pyproject.toml
 
 # Scheduler packages
 croniter>=6.0.0

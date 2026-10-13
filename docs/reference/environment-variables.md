@@ -119,7 +119,6 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 | Variable                    | Default | Description                                        |
 | --------------------------- | ------- | -------------------------------------------------- |
 | `KNIK_HISTORY_CONTEXT_SIZE` | `5`     | Number of conversation turns sent as context to AI |
-| `KNIK_MAX_HISTORY_SIZE`     | `50`    | Maximum messages stored in history                 |
 
 ## Web Backend
 
@@ -200,6 +199,5 @@ export GOOGLE_CLOUD_PROJECT=your-project-id
 
 # Run any app
 npm run start:console
-npm run start:gui
 npm run start:web:backend
 ```

@@ -8,7 +8,7 @@ Modern web interface with React + FastAPI for AI chat, workflow management, and 
 
 ```mermaid
 flowchart TD
-    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 12414]
+    A[Electron Desktop Window Management] --> B[React TypeScript Tailwind UI Port 8020]
     B -->|REST API| C[FastAPI Backend AI TTS MCP Tools Port 8000]
     C -->|Direct imports| D[Python Services AIClient TTSProcessor MCP Tools]
 
@@ -53,7 +53,7 @@ src/apps/web/frontend/src/
 
 ### API Endpoints (32 total)
 
-**Base URL:** `http://localhost:8000`
+**Base URL:** `http://localhost:8010`
 
 | Route File         | Prefix               | Endpoints                                                                                                                               |
 | ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -113,7 +113,7 @@ See [Environment Variables](../reference/environment-variables.md) for all optio
 ```bash
 # Start backend and frontend separately (two terminals)
 npm run start:web:backend    # Backend on :8000
-npm run start:web:frontend   # Frontend on :12414 (Vite dev port)
+npm run start:web:frontend   # Frontend on :8020 (Vite dev port)
 
 # Or use shell scripts
 ./scripts/start_web_backend.sh
@@ -159,7 +159,7 @@ npm install
 
 ### CORS Errors
 
-Backend allows `http://localhost:12414` by default. If using a different port, update `main.py`:
+Backend allows `http://localhost:8020` by default. If using a different port, update `main.py`:
 
 ```python
 allow_origins=["http://localhost:YOUR_PORT"]
@@ -169,7 +169,6 @@ allow_origins=["http://localhost:YOUR_PORT"]
 
 - [MCP Tools](mcp.md) - AI-callable tools system
 - [Console App](console.md) - Terminal-based interface
-- [GUI App](gui.md) - CustomTkinter desktop app
 - [Scheduler](scheduler.md) - Workflow scheduling system
 - [API Reference](../reference/api.md) - Detailed API docs
 - [Environment Variables](../reference/environment-variables.md) - Configuration guide

@@ -29,7 +29,6 @@ Set via environment variables (or `.env` file):
 
 ```bash
 KNIK_HISTORY_CONTEXT_SIZE=5  # Number of conversation turns to include (default: 5)
-KNIK_MAX_HISTORY_SIZE=50     # Maximum stored entries (default: 50)
 ```
 
 ## Benefits
