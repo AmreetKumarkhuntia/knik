@@ -61,7 +61,10 @@ FUNCTION_CASES = {
     "uuid_generate": ({}, _is_uuid4),
     "base64_encode": ({"data": "knik"}, {"status": "success", "output": "a25paw=="}),
     "base64_decode": ({"data": "a25paw=="}, {"status": "success", "output": "knik"}),
-    "run_shell_command": ({"command": "echo hi"}, lambda out: (out["result"], out["return_code"]) == ("hi", 0)),
+    "run_shell_command": (
+        {"command": "echo hi", "timeout": 5},
+        lambda out: (out["result"], out["return_code"]) == ("hi", 0),
+    ),
 }
 
 
@@ -100,6 +103,17 @@ async def test_a_none_result_is_an_output_too_and_an_error_dict_still_fails_the_
     broken = FunctionExecutionNode("step", "json_parse", {"data": "{not json"})
     with pytest.raises(RuntimeError, match="JSON parse failed"):
         await broken.execute({})
+
+
+@pytest.mark.asyncio
+async def test_a_shell_node_runs_under_the_blocklist_and_cannot_switch_it_off():
+    blocked = FunctionExecutionNode("step", "run_shell_command", {"command": "echo fork"})
+    with pytest.raises(RuntimeError, match="Command blocked for safety reasons"):
+        await blocked.execute({})
+
+    unblocking = FunctionExecutionNode("step", "run_shell_command", {"command": "echo fork", "blocked_commands": []})
+    with pytest.raises(RuntimeError, match="unexpected keyword argument 'blocked_commands'"):
+        await unblocking.execute({})
 
 
 INPUTS = {"input": {"topic": "tides"}, "a": {"status": "success", "output": "A"}, "b": {"status": "ok", "extra": 1}}

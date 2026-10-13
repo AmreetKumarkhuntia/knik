@@ -220,7 +220,8 @@ class AIExecutionNode(BaseNode):
                 # Without a factory there is no way to reach the tools, so the node runs without them.
                 ai_client = factory(settings, self.use_tools) if factory else build_client(settings)
                 try:
-                    chat_response = ai_client.chat(prompt=resolved_prompt)
+                    # chat() sends its own default temperature with the call, which outranks the client's setting.
+                    chat_response = ai_client.chat(prompt=resolved_prompt, temperature=self.temperature)
                 finally:
                     if ai_client.tool_registry is not None:
                         ai_client.tool_registry.cleanup_tools()

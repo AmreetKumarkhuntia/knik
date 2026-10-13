@@ -40,7 +40,8 @@ except ImportError:
             aiohttp = None
             requests = None
 
-from lib.services.shell import run_shell_command
+from lib.services.shell import BLOCKED_COMMANDS
+from lib.services.shell import run_shell_command as _run_shell_command
 from lib.utils.encoding_ops import base64_decode, base64_encode
 from lib.utils.text_ops import (
     string_concat,
@@ -257,6 +258,12 @@ async def concat_strings(strings: list[str]) -> str:
 async def join_strings(separator: str, strings: list[str]) -> str:
     """Join a list of strings with a separator."""
     return await string_join(separator, *strings)
+
+
+# Registered without the shell service's blocklist override, so a node's params cannot switch the blocklist off.
+async def run_shell_command(command: str, timeout: int = 30) -> dict[str, Any]:
+    """Run a shell command (at most 30 s) under the shell tool's blocklist."""
+    return await _run_shell_command(command, timeout=timeout, blocked_commands=BLOCKED_COMMANDS)
 
 
 WORKFLOW_FUNCTIONS = {

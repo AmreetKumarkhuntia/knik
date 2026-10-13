@@ -55,7 +55,7 @@ async def test_ai_node_builds_its_client_with_the_injected_factory():
     [(settings, use_tools)] = factory.calls
     assert settings == ClientSettings(provider="zai", model="glm-5", temperature=0.7)
     assert use_tools is True
-    factory.client.chat.assert_called_once_with(prompt="Summarise tides")
+    factory.client.chat.assert_called_once_with(prompt="Summarise tides", temperature=0.7)
     assert outputs["ai"]["output"] == "summary"
     assert outputs["ai"]["tokens"]["total_tokens"] == 5
 
