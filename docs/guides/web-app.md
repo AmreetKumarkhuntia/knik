@@ -159,11 +159,7 @@ npm install
 
 ### CORS Errors
 
-Backend allows `http://localhost:8020` by default. If using a different port, update `main.py`:
-
-```python
-allow_origins=["http://localhost:YOUR_PORT"]
-```
+The backend allows `http://localhost:8020` and `http://127.0.0.1:8020` by default. For another origin, set `KNIK_WEB_CORS_ORIGINS` (comma-separated), e.g. `export KNIK_WEB_CORS_ORIGINS=http://localhost:YOUR_PORT`.
 
 ## Related Documentation
 

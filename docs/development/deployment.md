@@ -337,6 +337,8 @@ briefcase package
 - [ ] Set `KNIK_AI_PROVIDER` to a real provider (not `mock`)
 - [ ] Configure provider credentials (API keys, project IDs)
 - [ ] Set `KNIK_WEB_CORS_ORIGINS` to your domain(s)
+- [ ] Turn on `KNIK_WEB_REQUIRE_API_KEY` (create the first key while it is off; see [API keys](../reference/environment-variables.md#api-keys))
+- [ ] Keep `KNIK_WEB_TOOL_CONSENT=deny` unless the deployment serves one trusted user
 - [ ] Use HTTPS for web deployments
 - [ ] Set up monitoring and logging
 - [ ] Configure firewall rules (ports 80/443 for web, 8000 for API)

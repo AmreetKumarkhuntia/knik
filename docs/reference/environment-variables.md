@@ -122,11 +122,50 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Web Backend
 
-| Variable          | Default   | Description                           |
-| ----------------- | --------- | ------------------------------------- |
-| `KNIK_WEB_HOST`   | `0.0.0.0` | Web backend host                      |
-| `KNIK_WEB_PORT`   | `8000`    | Web backend port                      |
-| `KNIK_WEB_RELOAD` | `true`    | Enable auto-reload during development |
+| Variable                   | Default                                       | Description                                                                                |
+| -------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `KNIK_WEB_HOST`            | `0.0.0.0`                                     | Web backend host                                                                           |
+| `KNIK_WEB_PORT`            | `8010`                                        | Web backend port                                                                           |
+| `KNIK_WEB_RELOAD`          | `true`                                        | Enable auto-reload during development                                                      |
+| `KNIK_WEB_CORS_ORIGINS`    | `http://localhost:8020,http://127.0.0.1:8020` | Origins whose pages may call the API from a browser, comma-separated (see [CORS](#cors))   |
+| `KNIK_WEB_TOOL_CONSENT`    | `deny`                                        | `deny` or `allow` tools that need consent in web chats (see [Tool consent](#tool-consent)) |
+| `KNIK_WEB_REQUIRE_API_KEY` | `false`                                       | Require a stored API key in `X-API-Key` on every `/api` route (see [API keys](#api-keys))  |
+
+### CORS
+
+`KNIK_WEB_CORS_ORIGINS` lists exact origins (`scheme://host[:port]`), e.g.
+`https://yourdomain.com,https://www.yourdomain.com`. Requests from these origins may carry credentials. An
+empty value lets no other origin in. `*` lets any origin in, and then never with credentials.
+
+### Tool consent
+
+Some tools need the user's approval before they run: shell commands, file access, the browser, and the
+schedule and workflow tools. The Telegram bot and the console ask for it; web chats cannot ask yet.
+With `KNIK_WEB_TOOL_CONSENT=deny` (the default) such a tool is not run, and the model gets
+`Permission denied for <tool>` as its result. With `allow` they run without asking anyone, which the backend
+warns about at startup: use it only for a trusted single-user setup. Any other value means `deny`.
+Workflows run from the web app (`POST /api/workflows/{id}/execute`) are not covered by this setting.
+
+### API keys
+
+With `KNIK_WEB_REQUIRE_API_KEY=true`, every `/api` route needs a stored key in the `X-API-Key` header. A
+request without one, or with an unknown one, gets `401`; while the database is down it gets `503`. `/` and
+`/health` stay open. Each key's `last_used_at` is updated when it opens a request.
+
+Keys are created, listed and deleted under `/api/admin/api-keys`. Only a hash of each key is stored, so the
+full key is shown once, when it is created. Create the first key while the check is still off, then restart
+with it on:
+
+```bash
+curl -X POST http://localhost:8010/api/admin/api-keys \
+  -H 'Content-Type: application/json' -d '{"label": "me"}'
+# {"id": "...", "label": "me", "key_prefix": "knik_live_...", "scopes": [], "key": "knik_live_..."}  <- keep "key"
+
+export KNIK_WEB_REQUIRE_API_KEY=true   # then restart the backend
+curl http://localhost:8010/api/admin/api-keys -H 'X-API-Key: knik_live_...'
+```
+
+Scopes are stored with each key but not enforced: any stored key opens every `/api` route.
 
 ## Database (PostgreSQL)
 

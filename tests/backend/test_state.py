@@ -11,6 +11,7 @@ from backend.models.admin import SettingsUpdate
 from backend.settings_service import SettingsService
 from backend.state import AppState
 from lib.services.ai_client.factory import ClientSettings
+from lib.services.db import DatabaseUnavailable
 from lib.tools.registry import ToolRegistry
 from lib.workflows.scheduler import Scheduler
 
@@ -186,7 +187,7 @@ def fake_builds(app_state, monkeypatch) -> list[FakeClient]:
 
 async def _settle(state: AppState) -> None:
     """Waits for the tool cleanups AppState runs in worker threads."""
-    await asyncio.gather(*state._cleanups)
+    await asyncio.gather(*state._background)
 
 
 def test_removing_a_client_cleans_up_its_tools(app_state):
@@ -269,3 +270,37 @@ async def test_close_cleans_up_every_client(app_state, fake_builds, monkeypatch)
 
     assert cached.cleaned_up
     assert cleaned_registries == ["all"]
+
+
+@pytest.mark.asyncio
+async def test_an_api_key_stamp_runs_off_the_request_and_close_waits_for_it(app_state, monkeypatch):
+    written: list[str] = []
+
+    async def mark_used(key_id):
+        await asyncio.sleep(0.05)
+        written.append(key_id)
+
+    monkeypatch.setattr("backend.state.ApiKeyDB.mark_used", mark_used)
+    monkeypatch.setattr(state_module, "cleanup_all_tools", lambda: None)
+
+    app_state.record_api_key_use("k1")
+    assert written == []
+
+    await app_state.close()
+    assert written == ["k1"]
+
+
+@pytest.mark.asyncio
+async def test_an_api_key_stamp_that_cannot_be_written_is_only_logged(app_state, monkeypatch):
+    async def mark_used(key_id):
+        raise DatabaseUnavailable("PostgreSQL is not reachable")
+
+    warnings: list[str] = []
+    monkeypatch.setattr("backend.state.ApiKeyDB.mark_used", mark_used)
+    monkeypatch.setattr(state_module.printer, "warning", warnings.append)
+    monkeypatch.setattr(state_module, "cleanup_all_tools", lambda: None)
+
+    app_state.record_api_key_use("k1")
+    await app_state.close()
+
+    assert warnings == ["Could not record the use of API key k1: PostgreSQL is not reachable"]

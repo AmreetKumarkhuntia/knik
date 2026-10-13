@@ -1,6 +1,7 @@
 """Web-app settings: the single settings row, API keys and tool-group overrides."""
 
 import hashlib
+import hmac
 import secrets
 import uuid
 from typing import Any
@@ -11,6 +12,9 @@ from .base import json_param, to_model, to_models
 
 
 _SETTINGS_ID = "singleton"
+
+# How many leading characters of a key are stored in the clear, to list it by and to look it up by.
+_KEY_PREFIX_LENGTH = 16
 
 # The only columns upsert may write; it builds its SQL from the field names, so this also guards it.
 SETTINGS_COLUMNS = frozenset(
@@ -78,16 +82,36 @@ class ApiKeyDB:
             (
                 str(uuid.uuid4()),
                 label,
-                full_key[:16],
-                hashlib.sha256(full_key.encode()).hexdigest(),
+                full_key[:_KEY_PREFIX_LENGTH],
+                _hash_key(full_key),
                 json_param(scopes or []),
             ),
         )
         return CreatedApiKey(api_key=ApiKey.from_row(row), key=full_key)
 
     @staticmethod
+    async def find_id(key: str) -> str | None:
+        """The id of the stored key with this secret, or None. Hashes are compared in constant time."""
+        key_hash = _hash_key(key)
+        rows = await PostgresDB.fetch_all(
+            "SELECT id, key_hash FROM api_keys WHERE key_prefix = %s", (key[:_KEY_PREFIX_LENGTH],)
+        )
+        for row in rows:
+            if hmac.compare_digest(row["key_hash"], key_hash):
+                return row["id"]
+        return None
+
+    @staticmethod
+    async def mark_used(key_id: str) -> None:
+        await PostgresDB.execute("UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s", (key_id,))
+
+    @staticmethod
     async def delete(key_id: str) -> bool:
         return await PostgresDB.execute("DELETE FROM api_keys WHERE id = %s", (key_id,)) > 0
+
+
+def _hash_key(key: str) -> str:
+    return hashlib.sha256(key.encode()).hexdigest()
 
 
 class McpToolsDB:
