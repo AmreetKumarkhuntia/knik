@@ -14,7 +14,8 @@ from bot.user_client_manager import UserClientManager
 from bot.user_identity import UserIdentityManager
 from lib.commands.models import CommandResult
 from lib.commands.service import CommandService
-from lib.services.telegram.models import IncomingMessage
+from lib.services.ai_client.stream_events import StreamDone, TextDelta, ToolCallFinished, ToolCallStarted
+from lib.services.telegram.models import IncomingMessage, MessageResult
 from lib.tools.consent import ConsentRequest
 from tests.lib.commands import fakes
 
@@ -340,6 +341,36 @@ class TestBotMessageHandler:
             (handler._config.error_message, {"reply_to_message_id": "m3"})
         ]
         handler._user_identity.set_conversation_id.assert_called_once_with("user_abc", "conv_9")
+
+    async def test_a_complete_reply_gets_no_error_reply_when_only_a_tool_notice_failed(
+        self, handler, transport, mock_user_clients
+    ):
+        async def achat_stream(**kwargs):
+            for event in (
+                TextDelta("\n\n"),
+                ToolCallStarted("read_file", "call_read_file", {"path": "a"}),
+                ToolCallFinished("read_file", "call_read_file", "x"),
+                TextDelta("Here is the file summary."),
+                StreamDone(conversation_id="conv_1", usage={}, full_response="\n\nHere is the file summary."),
+            ):
+                yield event
+
+        mock_user_clients.get_or_create.return_value.achat_stream = achat_stream
+        handler._streaming = StreamingResponseManager(transport, handler._config)
+        send_message = transport.send_message
+
+        async def rate_limit_tool_calls(chat_id, text, **kwargs):
+            if text.startswith("\U0001f527"):
+                return MessageResult(success=False, error="Too Many Requests: retry after 5")
+            return await send_message(chat_id, text, **kwargs)
+
+        transport.send_message = rate_limit_tool_calls
+
+        await handler.handle(_make_msg("chat_1", "summarise a", message_id="m4"))
+        await asyncio.sleep(0.05)
+
+        assert [m.text for m in transport.messages] == ["\u2713 read_file completed"]
+        assert [s.text for s in transport.streams] == ["Here is the file summary."]
 
     async def test_replies_beyond_the_concurrency_limit_wait_for_a_slot(
         self, transport, mock_streaming, mock_config, mock_user_identity, mock_user_clients, broker

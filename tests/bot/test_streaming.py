@@ -1,6 +1,6 @@
 """Tests for StreamingResponseManager."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -155,22 +155,25 @@ class TestStreamingResponseManager:
         assert (result.error, result.conversation_id, result.response_text) == (None, "c1", "hi")
 
     @pytest.mark.asyncio
-    async def test_a_tool_notice_the_transport_failed_to_send_is_recorded(self, manager, transport):
+    async def test_a_tool_notice_that_failed_to_send_is_logged_but_the_reply_is_delivered(self, manager, transport):
+        # The tools have run by then, so reporting the reply as lost would have the user run them again.
         transport.send_failure = "Too Many Requests: retry after 5"
 
-        result = await _deliver(
-            manager,
-            [
-                ToolCallStarted("tool_a", "call_tool_a", {}),
-                ToolCallFinished("tool_a", "call_tool_a", "ok"),
-                TextDelta("done"),
-                StreamDone(conversation_id="c1", usage={}, full_response="done"),
-            ],
-        )
+        with patch("bot.streaming.printer") as printer:
+            result = await _deliver(
+                manager,
+                [
+                    ToolCallStarted("tool_a", "call_tool_a", {}),
+                    ToolCallFinished("tool_a", "call_tool_a", "ok"),
+                    TextDelta("done"),
+                    StreamDone(conversation_id="c1", usage={}, full_response="done"),
+                ],
+            )
 
-        assert result.send_errors == ["Too Many Requests: retry after 5"] * 2
         assert result.message_ids == ["stream_1"]
-        assert not result.delivered
+        assert (result.send_errors, result.delivered) == ([], True)
+        assert printer.warning.call_count == 2
+        assert "Too Many Requests: retry after 5" in printer.warning.call_args.args[0]
 
     @pytest.mark.asyncio
     async def test_a_fully_sent_reply_is_delivered(self, manager):
@@ -265,6 +268,28 @@ class TestSegmentedDelivery:
 
         assert result.error is None
         assert [s.text for s in transport.streams] == ["Only segment."]
+
+    @pytest.mark.asyncio
+    async def test_whitespace_around_tool_calls_opens_no_segment(self, manager, transport):
+        result = await _deliver(
+            manager,
+            [
+                TextDelta("\n\n"),
+                ToolCallStarted("read_file", "call_read_file", {"path": "a"}),
+                ToolCallFinished("read_file", "call_read_file", "x"),
+                TextDelta(" "),
+                TextDelta("\n"),
+                ToolCallStarted("read_file", "call_read_file", {"path": "b"}),
+                ToolCallFinished("read_file", "call_read_file", "y"),
+                TextDelta("\n"),
+                TextDelta("Here is the file summary."),
+                StreamDone(conversation_id="c1", usage={}, full_response="\n\n \n\nHere is the file summary."),
+            ],
+        )
+
+        assert [s.text for s in transport.streams] == ["Here is the file summary."]
+        assert result.message_ids == ["msg_1", "msg_2", "msg_3", "msg_4", "stream_1"]
+        assert result.delivered
 
     @pytest.mark.asyncio
     async def test_no_text_after_last_tool_call_no_empty_segment(self, manager, transport):

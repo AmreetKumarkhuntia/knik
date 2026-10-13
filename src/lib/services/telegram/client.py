@@ -132,7 +132,8 @@ class TelegramClient:
                         printer.warning(f"Telegram draft update failed for chat {chat_id}: {e}")
                         draft_warned = True
 
-            if not accumulated:
+            # Telegram refuses a message with no visible text, so whitespace alone is nothing to send.
+            if not accumulated.strip():
                 return MessageResult(success=True)
 
             message_id = await self._send_chunks(bot, chat_id_int, accumulated, **kwargs)

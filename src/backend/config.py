@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-from imports import Config
+from imports import Config, printer
 
 
 ToolConsent = Literal["deny", "allow"]
@@ -24,6 +24,17 @@ def _tool_consent() -> ToolConsent:
     return "allow" if Config.from_env("KNIK_WEB_TOOL_CONSENT", "deny").strip().lower() == "allow" else "deny"
 
 
+def _require_api_key() -> bool:
+    value = Config.from_env("KNIK_WEB_REQUIRE_API_KEY", "")
+    normalized = value.strip().lower()
+    if normalized in ("", "false", "0", "no", "off"):
+        return False
+    # Anything but a recognised "off" checks keys, so a typo never opens the API.
+    if normalized not in ("true", "1", "yes", "on"):
+        printer.warning(f"KNIK_WEB_REQUIRE_API_KEY={value!r} is not true or false; checking API keys")
+    return True
+
+
 @dataclass
 class WebBackendConfig(Config):
     """Configuration for Web Backend application - extends Config."""
@@ -37,4 +48,4 @@ class WebBackendConfig(Config):
     # refuses them and "allow" runs them unasked.
     tool_consent: ToolConsent = field(default_factory=_tool_consent)
     # Whether every /api route needs a stored API key in the X-API-Key header.
-    require_api_key: bool = field(default_factory=lambda: Config.from_env("KNIK_WEB_REQUIRE_API_KEY", False, bool))
+    require_api_key: bool = field(default_factory=_require_api_key)
