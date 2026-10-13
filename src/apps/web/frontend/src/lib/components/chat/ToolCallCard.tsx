@@ -11,7 +11,9 @@ import type { ToolCallCardProps } from '$types/components/chat'
 
 function StatusIcon({ status }: { status: ToolCallStatus }) {
   if (status === 'running')
-    return <span aria-hidden="true" className="knik-spinner w-3 h-3 text-[var(--primary)]" />
+    return (
+      <span aria-hidden="true" className="knik-spinner knik-spinner--xs text-[var(--primary)]" />
+    )
   return status === 'success' ? (
     <MS name="check" size={15} className="text-[var(--success)]" />
   ) : (
@@ -65,7 +67,7 @@ export default function ToolCallCard({ call }: ToolCallCardProps) {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8, transition: { duration: MOTION_DURATION.fast } }}
-                transition={{ duration: 0.3, ease: MOTION_EASE_SPRING }}
+                transition={{ duration: MOTION_DURATION.fold, ease: MOTION_EASE_SPRING }}
               >
                 <StatusIcon status={status} />
               </motion.span>
@@ -74,7 +76,7 @@ export default function ToolCallCard({ call }: ToolCallCardProps) {
             <motion.span
               aria-hidden="true"
               animate={{ rotate: expanded ? 180 : 0 }}
-              transition={{ duration: 0.35, ease: MOTION_EASE_SPRING }}
+              transition={{ duration: MOTION_DURATION.turn, ease: MOTION_EASE_SPRING }}
               className="inline-flex text-fg-4"
             >
               <MS name="expand_more" size={16} />
@@ -91,7 +93,7 @@ export default function ToolCallCard({ call }: ToolCallCardProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ ease: MOTION_EASE_OUT, duration: 0.3 }}
+            transition={{ ease: MOTION_EASE_OUT, duration: MOTION_DURATION.fold }}
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-2 px-2 pt-1 pb-2.5">

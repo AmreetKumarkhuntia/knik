@@ -4,7 +4,7 @@ import MS from '../display/MS'
 import ToolCallCard from './ToolCallCard'
 import Button from '../buttons/Button'
 import { TOOL_CALL_KINDS } from '$lib/constants/componentMaps'
-import { MOTION_EASE_OUT, MOTION_EASE_SPRING } from '$lib/constants/motion'
+import { MOTION_DURATION, MOTION_EASE_OUT, MOTION_EASE_SPRING } from '$lib/constants/motion'
 import type { ToolCallKind } from '$types/conversation'
 import type { ToolCallListProps } from '$types/components/chat'
 
@@ -18,7 +18,12 @@ function summarizeCalls(calls: ToolCallListProps['calls']) {
 }
 
 function LiveSpinner() {
-  return <span aria-hidden="true" className="knik-spinner w-3 h-3 shrink-0 text-[var(--primary)]" />
+  return (
+    <span
+      aria-hidden="true"
+      className="knik-spinner knik-spinner--xs shrink-0 text-[var(--primary)]"
+    />
+  )
 }
 
 /** A reply's tool calls behind one line: "Thinking…" until it answers, then a summary that expands. */
@@ -60,7 +65,7 @@ export default function ToolCallList({ calls, isThinking, className = '' }: Tool
         <motion.span
           aria-hidden="true"
           animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.35, ease: MOTION_EASE_SPRING }}
+          transition={{ duration: MOTION_DURATION.turn, ease: MOTION_EASE_SPRING }}
           className="inline-flex"
         >
           <MS name="expand_more" size={16} />
@@ -74,7 +79,7 @@ export default function ToolCallList({ calls, isThinking, className = '' }: Tool
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ ease: MOTION_EASE_OUT, duration: 0.25 }}
+            transition={{ ease: MOTION_EASE_OUT, duration: MOTION_DURATION.fold }}
             className="overflow-hidden"
           >
             <ol className="mt-1 ml-1.5 pl-3 list-none border-l border-border-2 flex flex-col gap-0.5">

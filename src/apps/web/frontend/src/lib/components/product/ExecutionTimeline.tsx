@@ -24,7 +24,7 @@ export default function ExecutionTimeline({ timeline, onCopy }: ExecutionTimelin
           <div
             key={`${step.node_id}-${index}`}
             className="relative pl-[34px] knik-enter-rise"
-            style={{ animationDelay: `${index * 0.06}s` }}
+            style={{ animationDelay: `${Math.min(index, 8) * 0.06}s` }}
           >
             {index < timeline.length - 1 && (
               <div className="absolute left-[11px] top-[34px] -bottom-3 w-0.5 bg-border-2" />
@@ -71,10 +71,15 @@ export default function ExecutionTimeline({ timeline, onCopy }: ExecutionTimelin
                 </div>
               )}
 
-              <details className="mt-2.5">
+              <details className="group mt-2.5">
                 <summary className="knik-focus rounded-xs inline-flex items-center gap-1 cursor-pointer list-none text-caption text-fg-3 hover:text-[var(--acc-text)] transition-colors duration-base [&::-webkit-details-marker]:hidden">
                   <MS name="data_object" size={15} />
                   View inputs/outputs
+                  <MS
+                    name="expand_more"
+                    size={15}
+                    className="transition-transform duration-slow ease-spring group-open:rotate-180"
+                  />
                 </summary>
                 <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2">
                   <div className="min-w-0">

@@ -60,7 +60,7 @@ export default function NodePropertiesPanel({
         <Button
           variant="ghost"
           size="sm"
-          className="knik-btn--icon rounded-[9px]"
+          className="knik-btn--icon"
           onClick={onClose}
           aria-label="Close node properties"
         >

@@ -108,11 +108,7 @@ export default function ExecutionFlowGraph({
   }
 
   return (
-    <div
-      ref={container}
-      data-flow-direction={direction}
-      className={`${className} overflow-hidden workflow-grid`}
-    >
+    <div ref={container} data-flow-direction={direction} className={`${className} overflow-hidden`}>
       {/* Rotating the layout remounts the canvas so xyflow re-measures every rotated handle. */}
       <FlowCanvas
         key={direction}

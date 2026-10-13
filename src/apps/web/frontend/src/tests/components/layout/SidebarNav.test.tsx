@@ -45,6 +45,6 @@ describe('SidebarAccount', () => {
     )
     const account = screen.getByRole('link', { name: /Ada/ })
     expect(account).toHaveAttribute('aria-current', 'page')
-    expect(account).toHaveClass('bg-[var(--acc-soft)]')
+    expect(account).toHaveClass('bg-[var(--acc-soft)]', 'px-2', 'text-fg-2')
   })
 })

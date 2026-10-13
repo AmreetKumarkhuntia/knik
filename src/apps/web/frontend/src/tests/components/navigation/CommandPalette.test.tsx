@@ -54,6 +54,8 @@ describe('CommandPalette', () => {
     expect(options[1]).toHaveAttribute('aria-selected', 'true')
     expect(options[0]).toHaveAttribute('aria-selected', 'false')
     expect(options[1]).toHaveClass('bg-[var(--acc-soft)]')
+    // Virtual focus never lands on the option, so its solid outline is the only 3:1 cue for Enter.
+    expect(options[1]).toHaveClass('border-[var(--primary)]')
     expect(options[0]).not.toHaveClass('bg-[var(--acc-soft)]')
 
     await user.keyboard('{ArrowUp}{ArrowUp}')

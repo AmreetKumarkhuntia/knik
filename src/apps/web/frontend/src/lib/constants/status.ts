@@ -10,7 +10,7 @@ export const executionStatusConfig: Record<
 > = {
   pending: {
     bg: 'bg-panel-2',
-    text: 'text-fg-3',
+    text: 'text-fg-2',
     label: 'Pending',
   },
   running: {

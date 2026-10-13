@@ -10,7 +10,7 @@ export default function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcuts
         {shortcuts.map(shortcut => (
           <div
             key={shortcut.key}
-            className="flex items-center justify-between gap-3 py-2.5 border-t border-border-1 first:border-t-0"
+            className="flex items-center justify-between gap-3 py-2.5 border-t border-border-1"
           >
             <span className="text-body text-fg-2">{shortcut.description}</span>
             {/* Kbd sets its own colour, padding and radius; utility order would otherwise decide. */}

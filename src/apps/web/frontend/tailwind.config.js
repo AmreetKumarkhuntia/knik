@@ -43,9 +43,6 @@ export default {
           2: 'var(--panel-2)',
           3: 'var(--panel-3)',
         },
-        aurora: {
-          300: 'var(--aurora-300)',
-        },
         surface: {
           DEFAULT: 'var(--bg-surface)',
           2: 'var(--bg-surface-2)',
@@ -88,6 +85,7 @@ export default {
         'knik-3': 'var(--shadow-3)',
         'knik-glow': 'var(--shadow-glow)',
         'knik-focus': 'var(--shadow-focus)',
+        'knik-float': 'var(--shadow-float)',
       },
 
       /* ---- Transition timing from motion tokens ---- */

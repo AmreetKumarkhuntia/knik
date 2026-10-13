@@ -10,7 +10,7 @@ export default function SidebarBrand({ collapsed, onToggle }: SidebarBrandProps)
           <Button
             variant="ghost"
             size="sm"
-            className="knik-btn--icon rounded-[9px]"
+            className="knik-btn--icon"
             onClick={onToggle}
             aria-label="Expand sidebar"
             title="Expand sidebar"
@@ -32,7 +32,7 @@ export default function SidebarBrand({ collapsed, onToggle }: SidebarBrandProps)
         <Button
           variant="ghost"
           size="sm"
-          className="knik-btn--icon rounded-[9px]"
+          className="knik-btn--icon"
           onClick={onToggle}
           aria-label="Collapse sidebar"
           title="Collapse sidebar"

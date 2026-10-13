@@ -35,7 +35,7 @@ export default function ChatBubble({
               size="xs"
               onClick={onCopy}
               aria-label="Copy message"
-              className="knik-btn--icon knik-btn--compact w-[30px] h-[30px] rounded-[9px] text-fg-4"
+              className="knik-btn--icon knik-btn--compact w-[30px] h-[30px] text-fg-4"
             >
               <MS name="content_copy" size={15} />
             </Button>

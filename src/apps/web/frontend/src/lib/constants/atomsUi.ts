@@ -3,7 +3,7 @@ import type { RadioProps } from '$types/components/forms'
 
 const SEGMENTED_BOX = 'inline-flex gap-0.5 p-[3px] rounded-[11px] bg-panel border border-border-1'
 const SEGMENTED_SELECTED =
-  'bg-panel-3 text-fg-1 shadow-[0_1px_2px_rgba(0,0,0,.3),inset_0_0_0_1px_var(--border-2)]'
+  'bg-panel-3 text-fg-1 shadow-[0_1px_2px_rgba(0,0,0,.3),inset_0_0_0_1px_var(--border-3)]'
 // Compact heights apply to a mouse on desktop widths; touch and narrow screens keep the 44px target from primitives.css.
 const SEGMENTED_HEIGHT = '[@media(pointer:fine)_and_(min-width:768px)]:min-h-[28px]'
 

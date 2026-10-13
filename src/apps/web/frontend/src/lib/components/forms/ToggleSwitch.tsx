@@ -31,8 +31,8 @@ export default function ToggleSwitch({
           peer-checked:bg-[var(--primary)]
           after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:h-4 after:w-4
           after:rounded-full after:bg-white after:shadow-[0_1px_3px_rgba(0,0,0,.4)]
-          after:transition-transform after:duration-slow after:ease-spring
-          peer-checked:after:translate-x-4
+          after:[transition:transform_var(--dur-slow)_var(--ease-spring),background-color_var(--dur-base)_var(--ease-out)]
+          peer-checked:after:translate-x-4 peer-checked:after:bg-[var(--on-primary)]
           peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--border-focus)] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[var(--bg-base)]
           peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
       />

@@ -15,6 +15,10 @@ export interface ModalProps {
    * a slim frame because the content brings its own chrome (e.g. the command palette search row).
    */
   titleHidden?: boolean
+  /** Drawn above the title inside the header, e.g. a confirm dialog's warning tile. */
+  leading?: ReactNode
+  /** Omits the header close button for dialogs whose own actions already include Cancel. */
+  hideClose?: boolean
   className?: string
   size?: ModalSize
   placement?: 'center' | 'left' | 'right'
@@ -42,6 +46,8 @@ export interface PopoverProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   className?: string
+  /** Extra classes for the floating panel, appended after its own. */
+  panelClassName?: string
 }
 
 export interface BannerProps {

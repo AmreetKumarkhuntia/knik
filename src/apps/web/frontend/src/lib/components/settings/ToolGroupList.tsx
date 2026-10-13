@@ -27,7 +27,7 @@ export default function ToolGroupList({ groups, onToggle, variant = 'rows' }: To
             htmlFor={`${id}-${index}`}
             className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
           >
-            <span className="knik-tile h-8 w-8 rounded-[9px]">
+            <span className="knik-tile h-8 w-8 rounded-[9px] border-0">
               <MS
                 name={
                   Object.hasOwn(TOOL_GROUP_ICONS, group.name)

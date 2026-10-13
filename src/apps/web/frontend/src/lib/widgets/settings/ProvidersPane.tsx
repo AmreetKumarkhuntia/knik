@@ -25,7 +25,7 @@ export default function ProvidersPane() {
             presentation="card"
             value={provider}
             onChange={next => updateSettings({ provider: next })}
-            options={providers.map(option => ({ ...option, monoLabel: option.value }))}
+            options={providers}
           />
         ) : (
           <p className="px-3 py-2.5 text-body-sm text-fg-4">No providers available.</p>

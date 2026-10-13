@@ -101,7 +101,7 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
             <Button
               variant="ghost"
               size="sm"
-              className="hidden sm:inline-flex knik-btn--icon knik-btn--compact w-8 h-8 rounded-[9px] text-fg-4"
+              className="hidden sm:inline-flex knik-btn--icon knik-btn--compact w-8 h-8 text-fg-4"
               disabled
               aria-label="Attach file"
               title="Attachments are unavailable in this frontend session"
@@ -111,7 +111,7 @@ const ChatComposer = forwardRef<InputPanelRef, InputPanelProps>(
             <Button
               variant="ghost"
               size="sm"
-              className="hidden sm:inline-flex knik-btn--icon knik-btn--compact w-8 h-8 rounded-[9px] text-fg-4"
+              className="hidden sm:inline-flex knik-btn--icon knik-btn--compact w-8 h-8 text-fg-4"
               disabled
               aria-label="Voice input"
               title="Voice input is unavailable in this frontend session"

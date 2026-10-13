@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { CommandPaletteProps } from '$types'
 import Modal from '../surfaces/Modal'
 import Input from '../forms/Input'
@@ -15,8 +15,23 @@ function CommandList({
 }: Omit<CommandPaletteProps, 'open'>) {
   const [active, setActive] = useState(0)
   const listboxId = useId()
+  const listbox = useRef<HTMLDivElement>(null)
   const items = commands.flatMap(group => group.items)
   const optionId = (index: number) => `${listboxId}-option-${index}`
+  // Focus stays in the combobox (aria-activedescendant), so the browser never scrolls the active
+  // option into view by itself. A group's first option brings its header along.
+  const reveal = (index: number) => {
+    const list = listbox.current
+    const option = document.getElementById(optionId(index))
+    if (!list || !option) return
+    const above = option.previousElementSibling
+    const head = above?.getAttribute('aria-hidden') === 'true' ? above : option
+    const { top } = head.getBoundingClientRect()
+    const { bottom } = option.getBoundingClientRect()
+    const view = list.getBoundingClientRect()
+    if (top < view.top) list.scrollTop -= view.top - top
+    else if (bottom > view.bottom) list.scrollTop += bottom - view.bottom
+  }
   const choose = (id: string) => {
     onSelect(id)
     onClose()
@@ -44,10 +59,10 @@ function CommandList({
             if (!items.length) return
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
               event.preventDefault()
-              setActive(
-                index =>
-                  (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
-              )
+              const next =
+                (active + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+              setActive(next)
+              reveal(next)
             }
             if (event.key === 'Enter') {
               event.preventDefault()
@@ -58,6 +73,7 @@ function CommandList({
         <Kbd className="bg-transparent text-fg-4">esc</Kbd>
       </div>
       <div
+        ref={listbox}
         id={listboxId}
         role="listbox"
         aria-label="Commands"
@@ -84,13 +100,17 @@ function CommandList({
                 role="option"
                 aria-selected={selected}
                 variant="ghost"
-                className={`w-full justify-start gap-2.5 min-h-11 md:min-h-[38px] px-3 rounded-[10px] text-body font-medium ${selected ? 'bg-[var(--acc-soft)] text-[var(--acc-text)] hover:!bg-[var(--acc-soft)] hover:!text-[var(--acc-text)]' : 'text-fg-2'}`}
+                className={`w-full justify-start gap-2.5 [@media(pointer:fine)_and_(min-width:768px)]:min-h-[38px] px-3 rounded-[10px] text-body font-medium ${selected ? 'border-[var(--primary)] bg-[var(--acc-soft)] text-[var(--acc-text)] hover:!bg-[var(--acc-soft)] hover:!text-[var(--acc-text)]' : 'text-fg-2'}`}
                 onClick={() => choose(item.id)}
                 icon={item.icon && <MS name={item.icon} size={18} />}
               >
                 <span className="flex-1 min-w-0 truncate text-left">{item.label}</span>
                 {item.shortcut && (
-                  <span className="font-mono text-micro text-fg-4">{item.shortcut}</span>
+                  <span
+                    className={`font-mono text-micro ${selected ? 'text-[var(--acc-meta)]' : 'text-fg-4'}`}
+                  >
+                    {item.shortcut}
+                  </span>
                 )}
               </Button>
             )

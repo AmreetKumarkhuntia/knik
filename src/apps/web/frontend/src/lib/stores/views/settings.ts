@@ -27,12 +27,8 @@ export function useProvidersView() {
     provider,
     providers: useMemo(
       () =>
-        providers.map(option => ({
-          value: option.id,
-          label: option.name,
-          monoLabel: option.id === provider ? 'Selected' : 'Available',
-        })),
-      [providers, provider]
+        providers.map(option => ({ value: option.id, label: option.name, monoLabel: option.id })),
+      [providers]
     ),
     tools: useMemo(
       () => tools.map(tool => ({ ...tool, enabled: enabled[tool.name] ?? false })),

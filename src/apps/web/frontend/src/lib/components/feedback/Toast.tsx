@@ -18,7 +18,7 @@ export default function Toast({ message, type, onClose }: ToastProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="knik-btn--icon rounded-[9px]"
+        className="knik-btn--icon pointer-events-auto"
         onClick={onClose}
         aria-label="Dismiss notification"
       >

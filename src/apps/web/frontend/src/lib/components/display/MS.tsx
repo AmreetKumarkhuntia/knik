@@ -1,7 +1,7 @@
 import type { MSProps } from '$types'
 
 /**
- * Material Symbols (Outlined) glyph helper. The font is loaded globally in
+ * Material Symbols (Rounded) glyph helper. The font is loaded globally in
  * tokens.css; this wraps the `.material-symbols-outlined` span and exposes the
  * variable-font axes (fill / weight / optical size) used across the redesign.
  */

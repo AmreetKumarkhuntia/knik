@@ -53,7 +53,10 @@ export default function Radio({
               )}
               <span className={look.label}>{option.label}</span>
               {option.monoLabel && (
-                <span className={`shrink-0 font-mono text-fg-4 ${look.mono}`}>
+                <span
+                  aria-hidden="true"
+                  className={`shrink-0 font-mono ${selected ? 'text-[var(--acc-meta)]' : 'text-fg-4'} ${look.mono}`}
+                >
                   {option.monoLabel}
                 </span>
               )}

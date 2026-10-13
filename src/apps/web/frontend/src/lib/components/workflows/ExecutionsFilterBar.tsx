@@ -2,6 +2,8 @@ import { Select } from '$components'
 import Button from '$components/buttons/Button'
 import type { ExecutionsFilterBarProps } from '$types/sections/execution-history'
 
+const FILTER_SELECT_CLASS = 'min-h-[34px] rounded-[9px] text-label'
+
 export default function ExecutionsFilterBar({
   workflows,
   selectedWorkflow,
@@ -25,7 +27,8 @@ export default function ExecutionsFilterBar({
             presentation="native"
             value={selectedWorkflow}
             onChange={onWorkflowChange}
-            className="min-h-[34px] !px-2.5 !py-1.5 rounded-[9px] text-label"
+            size="sm"
+            className={FILTER_SELECT_CLASS}
             options={[
               { value: '', label: 'All Workflows' },
               ...workflows.map(workflow => ({ value: workflow.id, label: workflow.name })),
@@ -41,7 +44,8 @@ export default function ExecutionsFilterBar({
             presentation="native"
             value={selectedStatus}
             onChange={onStatusChange}
-            className="min-h-[34px] !px-2.5 !py-1.5 rounded-[9px] text-label"
+            size="sm"
+            className={FILTER_SELECT_CLASS}
             options={[
               { value: 'all', label: 'All Status' },
               { value: 'running', label: 'Running' },

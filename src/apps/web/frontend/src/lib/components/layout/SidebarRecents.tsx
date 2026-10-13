@@ -48,14 +48,18 @@ export default function SidebarRecents({
                     variant="ghost"
                     aria-current={current ? 'true' : undefined}
                     onClick={() => onSelect(conv.id)}
-                    className="w-full justify-start gap-1.5 rounded-[10px] text-left py-2 pl-2 pr-[100px] sm:pr-2 sm:group-hover:pr-20 sm:group-focus-within:pr-20 [@media(pointer:coarse)]:pr-[100px] hover:!bg-transparent"
+                    className="w-full justify-start gap-1.5 rounded-[10px] text-left py-[7px] pl-2 pr-[100px] sm:pr-2 sm:group-hover:pr-16 sm:group-focus-within:pr-16 [@media(pointer:coarse)]:pr-[100px] hover:!bg-transparent"
                   >
                     <span
                       className={`truncate flex-1 min-w-0 text-body-sm ${current ? 'font-medium text-[var(--acc-text)]' : 'font-normal text-fg-2'}`}
                     >
                       {label}
                     </span>
-                    <span className="hidden sm:block shrink-0 font-mono text-micro font-normal text-fg-4 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
+                    {/* Only the 30px desktop actions leave room for the title once the date is gone; on touch
+                        the faded date is what keeps the title clear of the 44px actions. */}
+                    <span
+                      className={`hidden sm:block shrink-0 font-mono text-micro font-normal transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(min-width:768px)_and_(pointer:fine)]:group-hover:hidden [@media(min-width:768px)_and_(pointer:fine)]:group-focus-within:hidden ${current ? 'text-[var(--acc-meta)]' : 'text-fg-4'}`}
+                    >
                       {formatRelativeDay(conv.updated_at)}
                     </span>
                   </Button>
@@ -63,7 +67,7 @@ export default function SidebarRecents({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="knik-btn--icon rounded-[8px] hover:!bg-panel-3"
+                      className="knik-btn--icon knik-btn--compact rounded-[8px] hover:!bg-panel-3"
                       icon={<MS name="edit" size={14} />}
                       title="Rename"
                       aria-label={`Rename conversation ${label}`}
@@ -72,7 +76,7 @@ export default function SidebarRecents({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="knik-btn--icon knik-btn--destructive rounded-[8px]"
+                      className="knik-btn--icon knik-btn--compact knik-btn--destructive rounded-[8px]"
                       icon={<MS name="delete" size={14} />}
                       title="Delete"
                       aria-label={`Delete conversation ${label}`}

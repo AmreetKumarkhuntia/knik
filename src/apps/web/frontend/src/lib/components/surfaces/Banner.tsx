@@ -11,7 +11,7 @@ export default function Banner({ variant = 'info', icon, children, className = '
       initial={{ opacity: 0, y: -10, height: 0 }}
       animate={{ opacity: 1, y: 0, height: 'auto' }}
       transition={{ duration: MOTION_DURATION.base, ease: MOTION_EASE_OUT }}
-      className={`flex items-center gap-2.5 w-full rounded-[12px] border px-3.5 py-2.5 text-body text-fg-1 ${className}`}
+      className={`flex items-center gap-2.5 w-full rounded-[12px] border px-3.5 py-2.5 text-body-sm text-fg-1 ${className}`}
       style={{
         borderColor: `color-mix(in srgb, ${color} 42%, transparent)`,
         background: `color-mix(in srgb, ${color} 14%, transparent)`,

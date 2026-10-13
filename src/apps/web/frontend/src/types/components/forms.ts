@@ -73,10 +73,16 @@ export interface SelectProps extends Omit<
   presentation?: 'native' | 'rich'
   placement?: PopoverProps['placement']
   renderOption?: (option: SelectOption) => ReactNode
+  /** Rich trigger content for the selected option; falls back to renderOption. */
+  renderValue?: (option: SelectOption) => ReactNode
   placeholder?: string
   disabled?: boolean
   size?: 'sm' | 'md'
   className?: string
+  /** Rich presentation only: extra classes for the trigger, listbox and each option. */
+  triggerClassName?: string
+  listClassName?: string
+  optionClassName?: string
 }
 
 export interface SliderProps {

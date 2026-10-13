@@ -82,50 +82,11 @@ body,
   display: none;
 }
 
-.workflow-grid {
-  background-color: transparent;
-}
-
-/* =================================================================
-   Semantic utility classes
-   Defined outside @layer to bypass Tailwind purge.
-   Opacity variants use color-mix() since CSS variables can't use
-   Tailwind's opacity modifier syntax.
-   ================================================================= */
-
-/* -- text color -- */
-.text-foreground {
-  color: var(--fg-1);
-}
-.text-secondary {
-  color: var(--fg-3);
-}
-.text-subtle {
-  color: var(--fg-2);
-}
-.text-textSecondary {
-  color: var(--fg-3);
-}
-.text-success {
-  color: var(--success);
-}
-.text-error {
-  color: var(--danger);
-}
-.text-info {
-  color: var(--info);
-}
-.hover\:text-text:hover {
-  color: var(--fg-1);
-}
-
-/* -- background -- */
-.bg-background {
-  background-color: var(--bg-base);
-}
+/* -----------------------------------------------------------------
+   Code surface
+   Hand-written because Tailwind has no `code` colour; outside @layer
+   so it is always emitted.
+   ----------------------------------------------------------------- */
 .bg-code {
   background-color: var(--bg-code);
-}
-.bg-primary {
-  background-color: var(--primary);
 }

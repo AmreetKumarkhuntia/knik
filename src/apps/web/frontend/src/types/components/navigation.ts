@@ -21,6 +21,8 @@ export interface NavLinkProps {
   onClick?: () => void
   /** Shared framer-motion layoutId so the active highlight slides between sibling links. */
   highlightId?: string
+  /** `account` is the sidebar footer link: tighter padding, taller row, neutral text. */
+  variant?: 'nav' | 'account'
 }
 
 /** A single tab item. */
@@ -69,7 +71,6 @@ export interface SegmentedProps {
   onChange: (value: string) => void
   /** Accessible name for the option group; not drawn on screen. */
   label?: string
-  size?: 'sm' | 'md'
   className?: string
 }
 

@@ -35,7 +35,7 @@ export default function ApiKeyRow({ apiKey, last, onDelete }: ApiKeyRowProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="knik-btn--destructive rounded-[9px]"
+          className="knik-btn--destructive ml-auto rounded-[9px]"
           aria-label={`Remove ${apiKey.label}`}
           title="Remove key"
           onClick={onDelete}

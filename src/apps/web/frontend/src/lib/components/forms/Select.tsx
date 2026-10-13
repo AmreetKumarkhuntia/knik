@@ -13,10 +13,14 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
     presentation = 'native',
     placement = 'bottom-start',
     renderOption,
+    renderValue,
     placeholder = 'Select option…',
     disabled,
     size = 'md',
     className = '',
+    triggerClassName = '',
+    listClassName = '',
+    optionClassName = '',
     id,
     ...props
   },
@@ -46,7 +50,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
         value={value}
         disabled={disabled}
         onChange={event => change(event.target.value)}
-        className={`knik-input px-3 py-2 ${className}`}
+        className={`knik-input ${size === 'sm' ? 'px-2.5 py-1.5' : 'px-3 py-2'} ${className}`}
       >
         {!selected && <option value={value}>{value || placeholder}</option>}
         {options.map(option => (
@@ -79,6 +83,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           )
       }}
       className={className}
+      panelClassName={listClassName}
       renderTrigger={triggerProps => (
         <Button
           {...triggerProps}
@@ -91,6 +96,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           variant="secondary"
           disabled={disabled || !options.length}
           size={size}
+          className={triggerClassName}
           aria-labelledby={labelledBy && `${labelledBy} ${valueId}`}
           aria-describedby={props['aria-describedby']}
           onKeyDown={event => {
@@ -112,9 +118,11 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
             </span>
           )}
           <span id={valueId} className="min-w-0">
-            {selected ? (renderOption?.(selected) ?? selected.label) : value || placeholder}
+            {selected
+              ? (renderValue?.(selected) ?? renderOption?.(selected) ?? selected.label)
+              : value || placeholder}
           </span>
-          <MS name="expand_more" size={18} />
+          <MS name="expand_more" size={18} className="text-fg-4" />
         </Button>
       )}
       content={
@@ -145,7 +153,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
               tabIndex={index === active ? 0 : -1}
               onClick={() => choose(option.value)}
               variant="ghost"
-              className="w-full justify-start gap-2.5 rounded-[9px] px-2.5 py-2 text-left text-fg-2 aria-selected:bg-[var(--acc-soft)] aria-selected:text-fg-1 aria-selected:hover:!bg-[var(--acc-soft)]"
+              className={`w-full justify-start gap-2.5 rounded-[9px] px-2.5 py-2 text-left text-fg-2 aria-selected:bg-[var(--acc-soft)] aria-selected:text-fg-1 aria-selected:hover:!bg-[var(--acc-soft)] ${optionClassName}`}
               size={size}
             >
               {renderOption?.(option) ?? option.label}

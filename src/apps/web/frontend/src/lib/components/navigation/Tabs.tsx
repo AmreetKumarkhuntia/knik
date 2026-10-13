@@ -58,7 +58,7 @@ export default function Tabs<T extends string>({
                 layoutId={`${prefix}-pill`}
                 aria-hidden="true"
                 className="absolute inset-0 -z-10 rounded-[11px] bg-[var(--acc-soft)] shadow-[inset_0_0_0_1px_var(--acc-border)]"
-                transition={{ duration: MOTION_DURATION.slow, ease: MOTION_EASE_SPRING }}
+                transition={{ duration: MOTION_DURATION.pill, ease: MOTION_EASE_SPRING }}
               />
             )}
             {tab.icon && (

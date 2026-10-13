@@ -58,7 +58,7 @@ describe('ToastWidget', () => {
     ).toHaveLength(0)
   })
 
-  it('pauses auto-dismiss while the toast is hovered or focused', async () => {
+  it('pauses auto-dismiss while the toast is mouse-hovered or focused, never on touch', async () => {
     vi.useFakeTimers()
     const region = renderToasts()
     fireEvent.click(screen.getByRole('button', { name: 'Notify Saved' }))
@@ -68,17 +68,19 @@ describe('ToastWidget', () => {
     act(() => {
       vi.advanceTimersByTime(2000)
     })
-    fireEvent.mouseEnter(toast)
+    fireEvent.pointerEnter(toast, { pointerType: 'mouse' })
     act(() => {
       vi.advanceTimersByTime(10_000)
     })
     expect(region).toHaveTextContent('Saved')
-    fireEvent.mouseLeave(toast)
+    fireEvent.pointerLeave(toast, { pointerType: 'mouse' })
     act(() => {
       vi.advanceTimersByTime(2999)
     })
     expect(region).toHaveTextContent('Saved')
 
+    // A touch fires no matching leave, so it must not start a pause that nothing would end.
+    fireEvent.pointerEnter(toast, { pointerType: 'touch' })
     act(() => screen.getByRole('button', { name: 'Dismiss notification' }).focus())
     act(() => {
       vi.advanceTimersByTime(10_000)

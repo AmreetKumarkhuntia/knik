@@ -57,7 +57,13 @@
 
 .knik-btn--primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  transform: translateY(-1px);
+}
+
+/* Lifts only where hover is real, so a tap does not leave the control raised. */
+@media (hover: hover) {
+  .knik-btn--primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
 }
 
 .knik-btn--secondary {
@@ -118,6 +124,7 @@
 .knik-btn--icon {
   padding: 0;
   min-width: 36px;
+  border-radius: 9px;
 }
 
 /* Dense rows (tool calls, composer tools, copy actions) use the prototype's
@@ -130,7 +137,6 @@
   min-width: 30px;
 }
 
-/* Hover tint for destructive icon actions (delete, remove). */
 .knik-btn--ghost.knik-btn--destructive:hover:not(:disabled) {
   background: var(--danger-bg);
   color: var(--danger);
@@ -145,13 +151,9 @@
   gap: 6px;
   font-family: var(--font-sans);
   font-weight: 500;
+  line-height: 1;
   border-radius: var(--radius-pill);
   white-space: nowrap;
-}
-
-.knik-badge--sm {
-  padding: 2px var(--space-2);
-  font-size: var(--fs-micro);
 }
 
 .knik-badge--md {
@@ -159,9 +161,10 @@
   font-size: var(--fs-caption);
 }
 
+/* --fg-3 drops under 4.5:1 on this fill inside a glass card, so neutral pills use --fg-2. */
 .knik-badge--default {
   background: var(--panel-3);
-  color: var(--fg-3);
+  color: var(--fg-2);
 }
 
 .knik-badge--success {
@@ -206,9 +209,12 @@
   color: var(--fg-4);
 }
 
+/* The soft halo alone changes the field by under 3:1, so a solid 1px ring doubles the border. */
 .knik-input:focus {
   border-color: var(--primary);
-  box-shadow: var(--shadow-focus);
+  box-shadow:
+    0 0 0 1px var(--primary),
+    0 0 0 4px var(--acc-soft);
 }
 
 .knik-input:disabled {
@@ -220,12 +226,6 @@
    Glass surfaces
    Blur sits on containers only; rows inside them use plain panel fills.
    ----------------------------------------------------------------- */
-.knik-glass {
-  background: var(--panel);
-  -webkit-backdrop-filter: blur(var(--blur-glass));
-  backdrop-filter: blur(var(--blur-glass));
-}
-
 .knik-card {
   background: var(--panel);
   -webkit-backdrop-filter: blur(var(--blur-glass));
@@ -234,7 +234,6 @@
   border-radius: var(--radius-xl);
 }
 
-/* Square icon well used in rows, cards and node headers. */
 .knik-tile {
   display: inline-flex;
   flex-shrink: 0;
@@ -279,8 +278,13 @@
 .knik-suggestion:hover:not(:disabled) {
   background: var(--panel-2);
   border-color: var(--acc-border);
-  transform: translateY(-3px);
-  box-shadow: 0 18px 40px -24px var(--acc-glow);
+}
+
+@media (hover: hover) {
+  .knik-suggestion:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px -24px var(--acc-glow);
+  }
 }
 
 .knik-suggestion:active:not(:disabled) {
@@ -344,6 +348,10 @@
   animation: knik-spin 0.6s linear infinite;
 }
 
+.knik-spinner--xs {
+  width: 12px;
+  height: 12px;
+}
 .knik-spinner--sm {
   width: 16px;
   height: 16px;
@@ -380,7 +388,6 @@
   }
 }
 
-/* Streaming caret at the end of a reply. */
 .knik-caret {
   display: inline-block;
   width: 8px;
