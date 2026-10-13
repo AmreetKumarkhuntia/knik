@@ -1,7 +1,9 @@
 # KNIK Design System
 
 > **Multi-interface AI assistant with voice, workflows, and tooling.**
-> Dark, fast, teal-on-graphite.
+> Dark, fast, periwinkle-on-warm-graphite.
+
+> **Update (2026-10-13):** the web app now follows the Claude Design "Knik Redesign" prototype. It uses warm graphite surfaces, a periwinkle accent (`#9FB8FF` dark, `#4A63C9` light), Figtree + DM Mono and Material Symbols **Rounded**. Panels are translucent glass with backdrop blur, primary actions carry a soft accent glow, and the shell sits on two radial accent washes. Entrances use spring easing scaled by a `--m` motion token. This supersedes the "teal, Inter, no glass, no glow, no gradients" rules in the sections below. `colors_and_type.css` and `src/apps/web/frontend/src/styles/tokens.css` hold the current values, and the older sections and preview cards stay as historical reference until they are rewritten.
 
 KNIK is a multi-modal AI assistant. The product surfaces a chat thread, a DAG-based workflow builder, scheduled jobs, and a Kokoro-82M TTS engine across four interfaces — GUI (Tk), Console, Web (React + FastAPI), and Electron — backed by 7 AI providers and 31 MCP tools. This design system captures the visual + interaction language of the **Web/Electron** surface (the canonical product UI) and packages it so designers can spin up KNIK-branded mocks, prototypes, slides, and production code.
 

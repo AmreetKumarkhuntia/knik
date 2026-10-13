@@ -1,101 +1,109 @@
 /* =================================================================
    KNIK — Colors & Type
-   Fixed teal palette with dark and light modes, solid surfaces and
-   Linear-style type. Mirrors src/apps/web/frontend/src/styles/tokens.css
-   (approved in docs/plan/07-frontend-component-consolidation.md).
+   Warm graphite surfaces, a periwinkle accent, translucent glass
+   panels and Figtree + DM Mono type, in dark and light modes.
+   Mirrors src/apps/web/frontend/src/styles/tokens.css. The identity
+   comes from the Claude Design "Knik Redesign" prototype (2026-10-13)
+   and supersedes the teal/Inter palette in docs/plan/07.
    ================================================================= */
 
-@import url("https://rsms.me/inter/inter.css");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap");
 
 /* -----------------------------------------------------------------
    Tokens
    ----------------------------------------------------------------- */
 :root {
   /* ---- Surfaces (dark / default) ------------------------------- */
-  --bg-base: #18191b; /* outermost canvas, neutral graphite */
-  --bg-surface: #202225; /* page surface */
-  --bg-surface-2: #282b2f; /* raised: cards, table rows */
-  --bg-surface-3: #303439; /* hover / pressed surface */
-  --bg-glass: var(--bg-surface); /* sidebar, sticky bars (solid) */
+  --bg-base: #151311; /* outermost canvas, warm graphite */
+  --bg-surface: #1a1815; /* sidebar, modals, popovers, inspector */
+  --bg-surface-2: #292623; /* raised (opaque equivalent of panel-2) */
+  --bg-surface-3: #33302c; /* hover / pressed (opaque panel-3) */
+  --bg-glass: var(--panel); /* glass cards over the shell gradient */
   --bg-canvas: var(--bg-base); /* workflow / chat canvas */
-  --bg-code: #1b1d20; /* code blocks */
+  --bg-code: #100f0d; /* code blocks */
+
+  /* ---- Glass panels -------------------------------------------- */
+  --panel: rgba(255, 241, 224, 0.045);
+  --panel-2: rgba(255, 241, 224, 0.085);
+  --panel-3: rgba(255, 241, 224, 0.13);
 
   /* ---- Text ---------------------------------------------------- */
-  --fg-1: #f1f2f3; /* primary heading, hi-emphasis */
-  --fg-2: #d7dade; /* body text */
-  --fg-3: #a5abb3; /* secondary */
-  --fg-4: #a5abb3; /* muted, helper text */
-  --fg-5: #929aa4; /* placeholder, disabled */
-  --fg-inverse: #18191b; /* on bright accents */
+  --fg-1: #f4efe7; /* primary heading, hi-emphasis */
+  --fg-2: #d4cec4; /* body text */
+  --fg-3: #9b948a; /* secondary */
+  --fg-4: #948c81; /* muted, helper text (>= 4.5:1 on surface-2) */
+  --fg-5: #6e685f; /* decoration only, never text */
+  --fg-inverse: #151311; /* on bright accents */
 
-  /* ---- Brand: KNIK teal / aurora ------------------------------- */
+  /* ---- Brand: KNIK periwinkle ---------------------------------- */
   /* 300/400 follow the active theme's primary; one hue throughout. */
-  --aurora-50: #edf8f7;
-  --aurora-100: #d3eeeb;
-  --aurora-200: #a8dcd6;
+  --aurora-50: #f0f4ff;
+  --aurora-100: #dfe7ff;
+  --aurora-200: #c6d4ff;
   --aurora-300: var(--primary-hover);
-  --aurora-400: var(--primary); /* primary accent — KNIK teal */
-  --aurora-500: #348f85;
-  --aurora-600: #276d65;
-  --aurora-700: #1c544e;
-  --aurora-800: #123b36;
-  --aurora-900: #0b2825;
+  --aurora-400: var(--primary); /* primary accent — KNIK periwinkle */
+  --aurora-500: #7f97e6;
+  --aurora-600: #6178d0;
+  --aurora-700: #4a63c9;
+  --aurora-800: #34479a;
+  --aurora-900: #1f2b5e;
 
-  /* ---- Brand: deep-teal (workflow / secondary) ----------------- */
-  --teal-300: #5eead4;
-  --teal-400: #55b8ac;
-  --teal-500: #348f85;
-  --teal-600: #0d9488;
-  --teal-700: #0f766e;
+  /* ---- Secondary hues (model dots, legacy accents) ------------- */
+  --teal-300: #a3e2cf;
+  --teal-400: #7fd1b9;
+  --teal-500: #5bb89c;
+  --teal-600: #3f9a80;
+  --teal-700: #2c7963;
 
-  /* ---- Brand: violet (kept as legacy accent) ------------------- */
-  --violet-400: #a78bfa;
-  --violet-500: #8b5cf6;
-  --violet-600: #7c3aed;
+  --violet-400: #c9a0ff;
+  --violet-500: #b07ff5;
+  --violet-600: #955fe0;
 
   /* ---- Semantic ------------------------------------------------ */
   /* Text tones keep >= 4.5:1 on surface/surface-2, also over the tint. */
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.12);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.12);
-  --danger: #f87171;
-  --danger-bg: rgba(239, 68, 68, 0.12);
-  --info: #60a5fa;
-  --info-bg: rgba(59, 130, 246, 0.12);
+  --success: #8fd4a6;
+  --success-bg: color-mix(in srgb, var(--success) 12%, transparent);
+  --warning: #e6c072;
+  --warning-bg: color-mix(in srgb, var(--warning) 12%, transparent);
+  --danger: #f09a8e;
+  --danger-bg: color-mix(in srgb, var(--danger) 12%, transparent);
+  --info: var(--primary);
+  --info-bg: color-mix(in srgb, var(--info) 12%, transparent);
 
   /* ---- Borders / dividers -------------------------------------- */
-  --border-1: #2d3136; /* hairline */
-  --border-2: #363a40; /* default */
-  --border-3: #707881; /* emphasized + control outlines, >= 3:1 on surfaces */
+  --border-1: rgba(255, 241, 224, 0.08); /* hairline */
+  --border-2: rgba(255, 241, 224, 0.14); /* default */
+  --border-3: #7d766c; /* control outlines, >= 3:1 on surfaces */
+  --border-strong: rgba(255, 241, 224, 0.28); /* hover outline, idle edge */
   --border-focus: var(--primary);
 
   /* ---- Primary semantic aliases -------------------------------- */
-  --primary: #55b8ac;
-  --primary-hover: #6dc7bc;
-  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
-  --primary-soft-2: color-mix(in srgb, var(--primary) 18%, transparent);
-  --on-primary: #101c1a;
+  --primary: #9fb8ff;
+  --primary-hover: #b7c7ff;
+  --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+  --primary-soft-2: color-mix(in srgb, var(--primary) 22%, transparent);
+  --on-primary: #0f1424;
+  --acc-text: var(--primary);
+  --acc-border: color-mix(in srgb, var(--primary) 42%, transparent);
+  --acc-glow: color-mix(in srgb, var(--primary) 22%, transparent);
 
   /* ---- Shadows / elevation ------------------------------------- */
   --shadow-1: none;
-  --shadow-2:
-    0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
-  --shadow-3:
-    0 20px 50px -12px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  --glow-primary: none; /* ambient glow is retired */
-  --glow-teal: none;
+  --shadow-2: 0 10px 30px -24px rgba(0, 0, 0, 0.6); /* resting cards, composer */
+  --shadow-3: 0 24px 60px -24px rgba(0, 0, 0, 0.75); /* overlays */
+  --shadow-glow: 0 18px 40px -24px var(--acc-glow); /* primary actions */
+  --shadow-focus: 0 0 0 3px var(--primary-soft);
+  --glow-primary: var(--shadow-glow);
+  --glow-teal: 0 18px 40px -24px color-mix(in srgb, var(--teal-400) 22%, transparent);
 
   /* ---- Radii --------------------------------------------------- */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 6px; /* controls */
-  --radius-lg: 10px; /* panels, cards */
-  --radius-xl: 12px; /* composer, modals */
-  --radius-2xl: 12px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px; /* controls */
+  --radius-lg: 14px; /* popovers, code blocks */
+  --radius-xl: 18px; /* cards, tables */
+  --radius-2xl: 20px; /* composer, modals */
   --radius-pill: 999px;
 
   /* ---- Spacing scale (4px base) -------------------------------- */
@@ -112,21 +120,17 @@
   --space-20: 80px;
 
   /* ---- Type families ------------------------------------------ */
-  --font-sans:
-    "Inter var", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    system-ui, sans-serif;
-  --font-display:
-    "Inter var", "Inter", -apple-system, BlinkMacSystemFont, system-ui,
-    sans-serif;
-  --font-mono:
-    "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
+  --font-sans: "Figtree", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Figtree", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   /* ---- Type scale ------------------------------------------- */
   /* Mirrors src/apps/web/frontend/src/styles/tokens.css exactly.  */
   --fs-display-2xl: clamp(56px, 7vw, 88px);
   --fs-display-xl: clamp(40px, 5vw, 64px);
-  --fs-display-lg: 2.5rem; /* 40 */
-  --fs-h1: 1.5rem; /* 24 / 32 page titles */
+  --fs-display-lg: 2.125rem; /* 34, welcome hero */
+  --fs-display: 2.125rem; /* 34 / 39 welcome hero */
+  --fs-h1: 1.625rem; /* 26 / 32 page titles */
   --fs-h2: 1.25rem; /* 20 / 28 section titles */
   --fs-h3: 1rem; /* 16 / 24 panel + dialog titles */
   --fs-h4: 0.875rem; /* 14 / 20 card + group titles */
@@ -146,55 +150,66 @@
 
   --tracking-tightest: -0.04em;
   --tracking-tighter: -0.025em;
-  --tracking-tight: -0.012em;
+  --tracking-tight: -0.02em;
   --tracking-normal: 0;
   --tracking-wide: 0.02em;
-  --tracking-mono: -0.01em;
+  --tracking-mono: 0;
 
   /* ---- Motion -------------------------------------------------- */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* Linear-style snap */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1); /* pills, drawers, toasts */
   --dur-fast: 120ms;
   --dur-base: 200ms;
-  --dur-slow: 400ms;
+  --dur-slow: 450ms;
   --dur-slower: 700ms;
+  --m: 1; /* motion scale; reduced motion sets 0.01 */
 
   /* ---- Effects ------------------------------------------------- */
-  --blur-glass: none; /* surfaces are solid; no backdrop blur */
-  --grid-line: rgba(255, 255, 255, 0.05);
-  --grid-line-strong: rgba(255, 255, 255, 0.08);
+  --blur-glass: 14px;
+  --grid-line: rgba(255, 241, 224, 0.14);
+  --grid-line-strong: rgba(255, 241, 224, 0.28);
 }
 
-/* Light mode — same structure, retuned for contrast on white */
+/* Light mode — same structure, retuned for contrast on warm paper */
 [data-theme="light"] {
-  --bg-base: #f7f8f8;
-  --bg-surface: #ffffff;
-  --bg-surface-2: #f0f2f3;
-  --bg-surface-3: #e7ebee;
-  --bg-glass: var(--bg-surface);
+  --bg-base: #f3efe9;
+  --bg-surface: #ece7df;
+  --bg-surface-2: #e4e0da;
+  --bg-surface-3: #dcd7d1;
   --bg-canvas: var(--bg-base);
-  --bg-code: #f1f3f5;
+  --bg-code: #fbf9f5;
 
-  --fg-1: #1c2024;
-  --fg-2: #30373e;
-  --fg-3: #59636e;
-  --fg-4: #59636e;
-  --fg-5: #68737d;
+  --panel: rgba(30, 24, 16, 0.04);
+  --panel-2: rgba(30, 24, 16, 0.07);
+  --panel-3: rgba(30, 24, 16, 0.11);
+
+  --fg-1: #1d1a16;
+  --fg-2: #3b362f;
+  --fg-3: #615b52;
+  --fg-4: #655f56;
+  --fg-5: #8f887e;
   --fg-inverse: #ffffff;
 
-  --border-1: #e6e9ec;
-  --border-2: #dce1e5;
-  --border-3: #7c8791;
+  --border-1: rgba(30, 24, 16, 0.08);
+  --border-2: rgba(30, 24, 16, 0.14);
+  --border-3: #7a736a;
+  --border-strong: rgba(30, 24, 16, 0.3);
 
-  --primary: #147d73;
-  --primary-hover: #10665e;
-  --primary-soft: color-mix(in srgb, var(--primary) 9%, transparent);
+  --primary: #4a63c9;
+  --primary-hover: #3b53b8;
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --acc-text: #3549ab; /* light primary is under 4.5:1 as text */
   --on-primary: #ffffff;
-  --success: #167348;
-  --warning: #895600;
-  --danger: #b42f2f;
-  --info: #285eaf;
+  --success: #15603b;
+  --warning: #784d00;
+  --danger: #9c3025;
+  --info: #3549ab;
+
+  --shadow-2: 0 10px 30px -24px rgba(0, 0, 0, 0.25);
+  --shadow-3: 0 24px 60px -24px rgba(0, 0, 0, 0.25);
+  --grid-line: rgba(30, 24, 16, 0.14);
+  --grid-line-strong: rgba(30, 24, 16, 0.3);
 }
 
 /* -----------------------------------------------------------------
@@ -207,7 +222,6 @@ body {
   font-family: var(--font-sans);
   font-size: var(--fs-body);
   line-height: var(--lh-base);
-  font-feature-settings: "ss01", "cv11", "calt";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -313,20 +327,25 @@ code,
    ----------------------------------------------------------------- */
 .glass {
   background: var(--bg-glass);
-  backdrop-filter: var(--blur-glass);
-  -webkit-backdrop-filter: var(--blur-glass);
-  border: 1px solid var(--border-2);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--border-1);
 }
 
 .card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-lg);
+  background: var(--panel);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-xl);
 }
 
-/* Retired: decorative mesh gradients. Kept as a solid base for old mocks. */
+/* Shell backdrop: two soft accent washes behind the glass panels. */
 .mesh-bg {
-  background-color: var(--bg-base);
+  background:
+    radial-gradient(900px 520px at 85% -10%, var(--primary-soft), transparent 60%),
+    radial-gradient(700px 400px at -10% 110%, var(--primary-soft), transparent 60%),
+    var(--bg-base);
 }
 
 .dot-grid {
@@ -350,7 +369,7 @@ code,
   background: var(--primary);
 }
 
-/* Retired: glow rings resolve to none; use the 2px focus ring instead. */
+/* Soft accent glow under primary actions. */
 .glow-ring {
   box-shadow: var(--glow-primary);
 }
