@@ -5,18 +5,18 @@ Multi-interface AI assistant with async TTS processing, workflow scheduling, mes
 ## Quick Start
 
 ```bash
-npm run start:gui                # GUI application
-npm run start:console            # Terminal console
-npm run start:web:backend        # Web backend (port 8000)
-npm run start:web:frontend       # Web frontend (port 5173)
-python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_BOT_TOKEN)
+npm run start:web:backend          # Web backend (port 8010)
+npm run start:web:frontend         # Web frontend (port 8020)
+npm run start:bot                  # Telegram bot daemon (requires KNIK_TELEGRAM_BOT_TOKEN)
+npm run start:worker               # Workflow scheduler (alias: start:cron)
+npm run start:console              # Terminal console
+python src/main.py --mode backend  # Any process without npm: backend | bot | worker | console
 ```
 
 ## Documentation Index
 
 ### Guides
 
-- [GUI Application](guides/gui.md) - Desktop GUI application
 - [Console Application](guides/console.md) - Interactive AI chat with voice
 - [Web Application](guides/web-app.md) - React + FastAPI web app
 - [Electron Desktop](guides/electron.md) - Electron desktop packaging
@@ -69,36 +69,36 @@ python src/main.py --mode bot    # Messaging bot daemon (requires KNIK_TELEGRAM_
 
 ```mermaid
 flowchart LR
-    src((src)) --> apps
+    src((src)) --> backend
+    src --> bot
+    src --> worker
+    src --> console
+    src --> frontend["apps/web/frontend"]
     src --> lib
     src --> imports
     src --> main
-    apps --> console
-    apps --> gui
-    apps --> web
-    apps --> cron_job
-    apps --> bot
     lib --> core
-    lib --> services
-    lib --> mcp
-    lib --> cron
     lib --> utils
+    lib --> commands
+    lib --> tools
+    lib --> workflows
+    lib --> services
 
     style src fill:#4a90e2
     style imports fill:#f5a623
     style main fill:#f5a623
-    style apps fill:#7ed321
     style lib fill:#7ed321
+    style backend fill:#50c878
+    style worker fill:#50c878
     style console fill:#50c878
-    style gui fill:#50c878
-    style web fill:#50c878
-    style cron_job fill:#50c878
+    style frontend fill:#50c878
     style bot fill:#e88d3c
     style core fill:#90caf9
-    style services fill:#90caf9
-    style mcp fill:#90caf9
-    style cron fill:#90caf9
     style utils fill:#90caf9
+    style commands fill:#90caf9
+    style tools fill:#90caf9
+    style workflows fill:#90caf9
+    style services fill:#90caf9
 ```
 
 ## Quick Links
@@ -106,7 +106,6 @@ flowchart LR
 **User Documentation:**
 
 - [Setup Instructions](development/setup.md)
-- [GUI Quick Start](guides/gui.md)
 - [Web App Guide](guides/web-app.md)
 
 **Developer Documentation:**

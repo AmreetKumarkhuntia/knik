@@ -1,5 +1,5 @@
-# Backend linting via pre-commit hooks
-.venv/bin/pre-commit run --hook-stage pre-commit
+# Backend checks via pre-commit hooks; activating the venv puts its tools on PATH
+. .venv/bin/activate && pre-commit run --hook-stage pre-commit
 
 # Frontend linting - run from frontend directory
 (cd src/apps/web/frontend && npx lint-staged)

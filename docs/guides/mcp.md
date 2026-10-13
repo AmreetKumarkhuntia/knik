@@ -1,32 +1,24 @@
 # MCP Tools System
 
-Model Context Protocol (MCP) tools extend AI capabilities with executable functions.
+Tools in `src/lib/tools` extend AI capabilities with executable functions. Despite the historical "MCP" name, they are an in-process LangChain tool registry, not Model Context Protocol.
 
 ## Architecture
 
 ```mermaid
 mindmap
-  root((src/lib/mcp))
-    definitions
-      utils_defs.py
-      text_defs.py
-      shell_defs.py
-      file_defs.py
-      browser_defs.py
-      cron_defs.py
-      workflow_defs.py
-    implementations
-      utils_impl.py
-      text_impl.py
-      shell_impl.py
-      file_impl.py
-      browser_impl.py
-      cron_impl.py
-      workflow_impl.py
+  root((src/lib/tools))
+    utils_tool.py
+    text_tool.py
+    shell_tool.py
+    file_tool.py
+    browser_tool.py
+    cron_tool.py
+    workflow_tool.py
+    catalog.py
     index.py
 ```
 
-Clean separation: definitions (JSON schemas) vs implementations (Python functions).
+Each `*_tool.py` is one tool group: a `BaseTool` subclass holding its definitions (JSON schemas) and implementations (Python functions). `catalog.py` lists the tool classes in `ALL_TOOL_CLASSES`; `index.py` registers them.
 
 ## Built-in Tools (31)
 
@@ -98,11 +90,13 @@ You: /tools  # View all available tools
 
 ## Creating Custom Tools
 
-### Step 1: Create Definition
+### Step 1: Create the Tool Group
 
-Create `src/lib/mcp/definitions/my_tools_defs.py`:
+Create `src/lib/tools/my_tools_tool.py` with the definitions and a `BaseTool` subclass that maps each tool name to its implementation:
 
 ```python
+from lib.services.ai_client.base_tool import BaseTool
+
 MY_TOOLS_DEFINITIONS = [
     {
         "name": "tool_name",
@@ -124,51 +118,33 @@ MY_TOOLS_DEFINITIONS = [
         }
     }
 ]
+
+
+class MyTools(BaseTool):
+    @property
+    def name(self) -> str:
+        return "my_tools"
+
+    def get_definitions(self):
+        return MY_TOOLS_DEFINITIONS
+
+    def get_implementations(self):
+        return {"tool_name": self._tool_name}
+
+    @staticmethod
+    def _tool_name(param1: str, param2: int = 10) -> str:
+        result = f"{param1} processed with {param2}"
+        return result
 ```
 
-### Step 2: Create Implementation
+### Step 2: Register
 
-Create `src/lib/mcp/implementations/my_tools_impl.py`:
-
-```python
-def tool_name(param1: str, param2: int = 10) -> str:
-    result = f"{param1} processed with {param2}"
-    return result
-
-MY_TOOLS_IMPLEMENTATIONS = {
-    "tool_name": tool_name,
-}
-```
-
-### Step 3: Register
-
-Update `definitions/__init__.py`:
+Add the class to `ALL_TOOL_CLASSES` in `src/lib/tools/catalog.py`:
 
 ```python
-from .my_tools_defs import MY_TOOLS_DEFINITIONS
+from lib.tools.my_tools_tool import MyTools
 
-ALL_DEFINITIONS = (
-    UTILS_DEFINITIONS + TEXT_DEFINITIONS + SHELL_DEFINITIONS
-    + FILE_DEFINITIONS + CRON_DEFINITIONS + BROWSER_DEFINITIONS
-    + WORKFLOW_DEFINITIONS + MY_TOOLS_DEFINITIONS
-)
-```
-
-Update `implementations/__init__.py`:
-
-```python
-from .my_tools_impl import MY_TOOLS_IMPLEMENTATIONS
-
-ALL_IMPLEMENTATIONS = {
-    **UTILS_IMPLEMENTATIONS,
-    **TEXT_IMPLEMENTATIONS,
-    **SHELL_IMPLEMENTATIONS,
-    **FILE_IMPLEMENTATIONS,
-    **CRON_IMPLEMENTATIONS,
-    **BROWSER_IMPLEMENTATIONS,
-    **WORKFLOW_IMPLEMENTATIONS,
-    **MY_TOOLS_IMPLEMENTATIONS,
-}
+ALL_TOOL_CLASSES = [FileTool, ShellTool, TextTool, UtilsTool, CronTool, WorkflowTool, BrowserTool, MyTools]
 ```
 
 Tools auto-register on startup.
@@ -223,8 +199,9 @@ export KNIK_SHOW_LOGS=true
 **Test manually:**
 
 ```python
-from lib.mcp.implementations.utils_impl import calculate
+from lib.tools.utils_tool import UtilsTool
 
+calculate = UtilsTool().get_implementations()["calculate"]
 result = calculate("2 + 2")
 print(result)  # "4"
 ```

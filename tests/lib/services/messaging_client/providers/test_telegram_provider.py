@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.lib.services.messaging_client.providers.base_provider import BaseMessagingProvider
-from src.lib.services.messaging_client.providers.telegram_provider import TelegramProvider
+from lib.services.messaging_client.providers.base_provider import BaseMessagingProvider
+from lib.services.messaging_client.providers.telegram_provider import TelegramProvider
 
 
 class TestChunkText:

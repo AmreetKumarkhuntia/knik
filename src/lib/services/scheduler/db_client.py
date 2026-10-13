@@ -1,9 +1,9 @@
 import json
 from datetime import datetime
 
-from lib.cron.models import ExecutionRecord, NodeExecutionRecord, Schedule, Workflow
 from lib.services.postgres.db import PostgresDB
 from lib.utils import printer
+from lib.workflows.models import ExecutionRecord, NodeExecutionRecord, Schedule, Workflow
 
 
 is_initialized = False

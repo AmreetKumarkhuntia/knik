@@ -6,8 +6,8 @@ from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
-from imports import printer as logger
 from lib.core.config import Config
+from lib.utils import printer as logger
 
 
 class PostgresDB:

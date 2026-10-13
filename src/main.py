@@ -1,119 +1,80 @@
-"""
-Knik - Text-to-Speech Application
-Main entry point for the application.
-"""
+"""Knik launcher. Run from the repo root: ``python src/main.py --mode backend|bot|worker|console``."""
 
 import argparse
+import asyncio
 import sys
+from collections.abc import Callable
 
-from lib import printer
-
-
-def run_console_app():
-    """Run the interactive console application."""
-    try:
-        from apps.console import ConsoleApp, ConsoleConfig
-
-        config = ConsoleConfig()
-        app = ConsoleApp(config)
-        app.run()
-    except ImportError as e:
-        printer.error(f"Failed to import console app: {e}")
-        printer.error("Make sure you're running from the src/ directory")
-        sys.exit(1)
-    except Exception as e:
-        printer.error(f"Failed to start console app: {e}")
-        sys.exit(1)
+from imports import printer
 
 
-def run_gui_app():
-    """Run the GUI application."""
-    try:
-        from apps.gui import GUIApp, GUIConfig
+def run_backend() -> None:
+    import uvicorn
 
-        config = GUIConfig()
-        app = GUIApp(config)
-        app.run()
-    except ImportError as e:
-        printer.error(f"Failed to import GUI app: {e}")
-        printer.error("Make sure you have customtkinter installed: pip install customtkinter>=5.2.0")
-        sys.exit(1)
-    except Exception as e:
-        printer.error(f"Failed to start GUI app: {e}")
-        sys.exit(1)
+    from backend.config import WebBackendConfig
+
+    config = WebBackendConfig()
+    uvicorn.run("backend.main:app", host=config.host, port=config.port, reload=config.reload, log_level="info")
 
 
-def run_cron_app():
-    """Run the background CRON scheduler app."""
-    try:
-        import asyncio
+def run_bot() -> None:
+    from bot import BotApp, BotConfig
 
-        from apps.cron_job.app import CronJobApp
-
-        app = CronJobApp()
-        asyncio.run(app.run())
-    except ImportError as e:
-        printer.error(f"Failed to import cron app: {e}")
-        sys.exit(1)
-    except Exception as e:
-        printer.error(f"Failed to start cron app: {e}")
-        sys.exit(1)
+    asyncio.run(BotApp(BotConfig()).run())
 
 
-def run_bot_app():
-    """Run the Bot daemon application."""
-    try:
-        import asyncio
+def run_worker() -> None:
+    from worker.app import main as worker_main
 
-        from apps.bot import BotApp, BotConfig
-
-        config = BotConfig()
-        app = BotApp(config)
-        asyncio.run(app.run())
-    except ImportError as e:
-        printer.error(f"Failed to import bot app: {e}")
-        sys.exit(1)
-    except Exception as e:
-        printer.error(f"Failed to start bot app: {e}")
-        sys.exit(1)
+    worker_main()
 
 
-def main():
-    """Main application function with mode selection."""
+def run_console() -> None:
+    from console import ConsoleApp, ConsoleConfig
+
+    ConsoleApp(ConsoleConfig()).run()
+
+
+RUNNERS: dict[str, Callable[[], None]] = {
+    "backend": run_backend,
+    "bot": run_bot,
+    "worker": run_worker,
+    "console": run_console,
+}
+
+# "cron" is the historical name of the worker mode.
+ALIASES = {"cron": "worker"}
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Knik - AI Console Application with Voice",
+        description="Knik - AI assistant with voice, workflows and a messaging bot",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python main.py                   # Run GUI application (default)
-  python main.py --mode gui        # Run GUI application
-  python main.py --mode console    # Run terminal console
-  python main.py --mode cron       # Run background scheduler
-  python main.py --mode bot        # Run messaging bot daemon
-
-For TTS demos, use: python demo/tts/demo.py
+  python src/main.py --mode backend    # FastAPI web backend
+  python src/main.py --mode bot        # Telegram bot daemon
+  python src/main.py --mode worker     # Workflow scheduler (alias: cron)
+  python src/main.py --mode console    # Interactive terminal chat
         """,
     )
-
     parser.add_argument(
         "--mode",
-        choices=["console", "gui", "cron", "bot"],
-        default="gui",
-        help="Application mode: console, gui, cron (background scheduler), or bot (messaging)",
+        choices=[*RUNNERS, *ALIASES],
+        default="backend",
+        help="Process to run: backend, bot, worker (alias: cron) or console",
     )
-
     args = parser.parse_args()
+    mode = ALIASES.get(args.mode, args.mode)
 
-    if args.mode == "console":
-        run_console_app()
-    elif args.mode == "gui":
-        run_gui_app()
-    elif args.mode == "cron":
-        run_cron_app()
-    elif args.mode == "bot":
-        run_bot_app()
-    else:
-        printer.error(f"Unknown mode: {args.mode}")
+    try:
+        RUNNERS[mode]()
+    except ImportError as e:
+        printer.error(f"Failed to import the {mode} app: {e}")
+        printer.error("Run from the repo root with dependencies from requirements.txt installed")
+        sys.exit(1)
+    except Exception as e:
+        printer.error(f"The {mode} app stopped with an error: {e}")
         sys.exit(1)
 
 

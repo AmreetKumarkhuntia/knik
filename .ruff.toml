@@ -37,7 +37,7 @@ select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM"]
 # Ignore specific rules that might be too strict for this project
 ignore = [
     "E501",   # Line too long (handled by formatter)
-    "E402",   # Module level import not at top (needed for sys.path manipulation)
+    "E402",   # Module level import not at top (tool tests stub sys.modules before importing)
     "B008",   # Do not perform function calls in argument defaults
     "C901",   # Function is too complex
     "N802",   # Function name should be lowercase (conflicts with naming conventions)
@@ -51,12 +51,10 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 [lint.per-file-ignores]
 # Don't enforce import rules in __init__ files
 "__init__.py" = ["F401", "F403"]
-# Demo files can have more relaxed rules
-"demo/**/*.py" = ["E402", "F841"]
 
 [lint.isort]
 # Configure import sorting
-known-first-party = ["lib", "apps", "imports"]
+known-first-party = ["lib", "backend", "bot", "worker", "console", "imports"]
 force-single-line = false
 lines-after-imports = 2
 

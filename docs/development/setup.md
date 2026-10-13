@@ -56,15 +56,12 @@ export KNIK_AI_MODEL=llama3.1
 ## Running
 
 ```bash
-# GUI (default)
-npm run start:gui
-
 # Console
 npm run start:console
 
 # Web app (two terminals)
-npm run start:web:backend     # Backend on :8000
-npm run start:web:frontend    # Frontend on :12414
+npm run start:web:backend     # Backend on :8010
+npm run start:web:frontend    # Frontend on :8020
 
 # Cron scheduler
 npm run start:cron

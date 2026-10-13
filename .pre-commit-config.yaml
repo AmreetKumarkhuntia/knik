@@ -39,7 +39,14 @@ repos:
 
       - id: pytest
         name: pytest
-        entry: bash -c 'PYTHONPATH=src arch -arm64 .venv/bin/python -m pytest tests/ -v'
+        entry: bash -c '.venv/bin/python -m pytest -q'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: import-contracts
+        name: import-contracts
+        entry: bash -c '. .venv/bin/activate && cd src && lint-imports --config ../pyproject.toml'
         language: system
         types: [python]
         pass_filenames: false

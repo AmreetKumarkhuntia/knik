@@ -170,7 +170,7 @@ server {
 
     # Backend API proxy
     location /api/ {
-        proxy_pass http://localhost:8000;
+        proxy_pass http://localhost:8010;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -305,9 +305,6 @@ This uses `concurrently` to run all three processes, with `wait-on` to delay Ele
 ```bash
 # Console mode
 npm run start:console
-
-# GUI mode (CustomTkinter)
-npm run start:gui
 ```
 
 ### Standalone Python Distribution
@@ -417,7 +414,7 @@ sudo apt-get install espeak-ng
 Update `KNIK_WEB_CORS_ORIGINS`:
 
 ```bash
-export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com,http://localhost:12414"
+export KNIK_WEB_CORS_ORIGINS="https://yourdomain.com,http://localhost:8020"
 ```
 
 ---

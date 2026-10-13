@@ -149,7 +149,7 @@ const controller = await streamChat("Hello!", {
 controller.abort();
 ```
 
-Uses `VITE_API_URL` env var or falls back to `http://localhost:8000`.
+Uses `VITE_API_URL` env var or falls back to `http://localhost:8010`.
 
 ### 3. Audio Service Layer
 
@@ -291,7 +291,7 @@ The streaming endpoint maintains a global `ConversationHistory(max_size=50)` ins
 npm run start:web:backend
 
 # Test with curl (SSE stream)
-curl -N -X POST http://localhost:8000/api/chat/stream/ \
+curl -N -X POST http://localhost:8010/api/chat/stream/ \
   -H "Content-Type: application/json" \
   -d '{"message": "Tell me a short joke"}'
 ```
@@ -302,7 +302,7 @@ curl -N -X POST http://localhost:8000/api/chat/stream/ \
 # Start frontend
 npm run start:web:frontend
 
-# Open http://localhost:12414 and use the chat interface
+# Open http://localhost:8020 and use the chat interface
 ```
 
 ## Stream vs Non-Stream Comparison

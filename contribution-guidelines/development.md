@@ -3,8 +3,15 @@
 ## Running the App
 
 ```bash
-# GUI mode
-npm run start:gui
+# Web app (two separate terminals)
+npm run start:web:backend    # FastAPI on http://localhost:8010
+npm run start:web:frontend   # Vite dev server on http://localhost:8020
+
+# Telegram bot (needs KNIK_TELEGRAM_BOT_TOKEN)
+npm run start:bot
+
+# Workflow scheduler (start:cron is an alias)
+npm run start:worker
 
 # Console mode
 npm run start:console
@@ -12,20 +19,14 @@ npm run start:console
 # Split pane with logs
 npm run start:console:split
 
-# Web app (two separate terminals)
-npm run start:web:backend
-npm run start:web:frontend
-
-# Cron scheduler
-npm run start:cron
-
 # Electron desktop app
 npm run start:electron
 
-# Direct Python
-python src/main.py --mode gui
+# Direct Python, from the repo root (default mode is backend)
+python src/main.py --mode backend
+python src/main.py --mode bot
+python src/main.py --mode worker    # --mode cron still works
 python src/main.py --mode console
-python src/main.py --mode cron
 ```
 
 ## Code Quality
@@ -33,6 +34,7 @@ python src/main.py --mode cron
 ```bash
 npm run lint          # Lint backend
 npm run lint:fix      # Auto-fix backend lint
+npm run lint:imports  # Check import-linter contracts (pyproject.toml)
 npm run lint:frontend # Lint frontend
 npm run lint:all      # Lint everything
 
@@ -43,6 +45,8 @@ npm run format:all
 
 npm run typecheck          # Backend type checking
 npm run typecheck:frontend # Frontend type checking (tsc --noEmit)
+
+npm run test          # Backend tests (pytest; src/ is on the path via pyproject.toml)
 ```
 
 ## Environment Setup

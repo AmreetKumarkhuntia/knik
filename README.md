@@ -1,6 +1,6 @@
 # Knik - Multi-Interface AI Assistant with TTS
 
-High-quality text-to-speech powered by Kokoro-82M, with AI assistant interfaces (GUI, Console, Web), 7 AI providers, 31 MCP tools, workflow scheduling, and conversation history.
+High-quality text-to-speech powered by Kokoro-82M, with AI assistant interfaces (Web, Telegram bot, Console), 7 AI providers, 31 MCP tools, workflow scheduling, and conversation history.
 
 ## Quick Start
 
@@ -10,12 +10,14 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env                   # Configure your settings
 
-npm run start:gui                      # GUI application
+npm run start:web:backend              # Web backend (port 8010)
+npm run start:web:frontend             # Web frontend (port 8020)
+npm run start:bot                      # Telegram bot (requires KNIK_TELEGRAM_BOT_TOKEN)
+npm run start:worker                   # Workflow scheduler (alias: start:cron)
 npm run start:console                  # Terminal console
-npm run start:web:backend              # Web backend (port 8000)
-npm run start:web:frontend             # Web frontend (port 12414)
 npm run start:electron                 # Electron desktop app
-npm run start:cron                     # Workflow scheduler
+
+python src/main.py --mode backend      # Without npm: backend | bot | worker | console
 ```
 
 ## Documentation
@@ -29,7 +31,7 @@ All documentation is in the `docs/` folder:
 - **TTS**: Kokoro-82M (82M parameters) with 9 voices (5 female, 4 male) and 10 languages
 - **AI Providers**: Vertex AI, Gemini, ZhipuAI, Z.AI, Z.AI Coding, Custom (OpenAI-compatible), Mock
 - **MCP Tools**: 31 tools across 7 categories (utils, text, shell, file, browser, cron, workflow)
-- **Interfaces**: GUI (CustomTkinter), Console, Web (React + FastAPI), Electron
+- **Interfaces**: Web (React + FastAPI), Telegram bot, Console, Electron
 - **Workflows**: DAG-based workflow engine with natural language scheduling
 - **History**: Conversation context management with configurable depth
 

@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.lib.services.messaging_client.models import MessageResult
-from src.lib.services.messaging_client.providers.base_provider import BaseMessagingProvider
+from lib.services.messaging_client.models import MessageResult
+from lib.services.messaging_client.providers.base_provider import BaseMessagingProvider
 
 
 class MockProvider(BaseMessagingProvider):

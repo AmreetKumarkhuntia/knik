@@ -3,9 +3,9 @@
 ## What Knik Is
 
 - AI assistant with voice (TTS) and chat capabilities
-- Four interfaces: Console (terminal), GUI (CustomTkinter), Web (React + FastAPI), Electron (desktop)
+- Processes: web backend (FastAPI), web frontend (React), Telegram bot, workflow worker, terminal console; Electron wraps the frontend
 - 6 AI providers: `vertex`, `gemini`, `glm`, `zai`, `custom` (any OpenAI-compatible API), `mock`
-- 31 built-in MCP tools across 7 categories
+- 30 built-in tools across 7 groups (an in-process LangChain tool registry, not Model Context Protocol)
 - 9 TTS voices (5 female, 4 male) via Kokoro
 - Workflow engine with scheduled execution (cron)
 - Conversation history for context-aware responses
@@ -16,46 +16,23 @@
 
 ```
 src/
-├── main.py                  # App launcher (--mode console|gui|web)
-├── imports.py               # Central import hub
-├── lib/                     # Reusable library
-│   ├── core/                # Config, TTS async processor
-│   ├── services/            # AI client (6 providers), voice, audio
-│   │   └── ai_client/
-│   │       ├── client.py    # AIClient (chat, chat_stream)
-│   │       ├── providers/   # vertex, gemini, zhipuai, zai, custom, mock
-│   │       └── registry/    # Provider + MCP registry
-│   ├── mcp/                 # 31 MCP tools (7 categories)
-│   │   ├── definitions/     # Tool schemas
-│   │   └── implementations/ # Tool logic
-│   └── cron/                # Scheduler engine, models, nodes
-└── apps/
-    ├── console/             # Terminal chat app (14 commands)
-    │   ├── app.py
-    │   ├── history.py
-    │   └── tools/           # /commands
-    ├── gui/                 # Desktop GUI (CustomTkinter)
-    │   ├── app.py
-    │   ├── theme.py
-    │   └── components/
-    └── web/
-        ├── backend/         # FastAPI (7 route files, 22 endpoints)
-        │   ├── main.py
-        │   ├── config.py
-        │   └── routes/      # admin, analytics, chat, chat_stream,
-        │                    # cron, history, workflow
-        └── frontend/        # React + Vite + Tailwind
-            └── src/
-                ├── lib/
-                │   ├── components/  # 29 reusable UI components
-                │   ├── sections/    # App-specific sections
-                │   ├── pages/       # 5 pages (Home, Workflows, etc.)
-                │   ├── hooks/       # useChat, useAudio, useTheme, etc.
-                │   ├── constants/
-                │   ├── utils/
-                │   └── data-structures/  # Graph visualization
-                ├── services/    # API clients, streaming, audio
-                └── types/       # TypeScript type definitions
+├── main.py                  # Launcher: --mode backend|bot|worker|console (cron = worker alias)
+├── imports.py               # Lazy import hub, used by the apps only
+├── backend/                 # FastAPI app (port 8010)
+│   ├── main.py  config.py  state.py
+│   ├── models/              # Pydantic request/response models per domain
+│   └── routes/              # admin, analytics, chat, chat_stream, conversations, cron, workflow
+├── bot/                     # Telegram bot daemon
+├── worker/                  # Workflow scheduler process
+├── console/                 # Terminal chat app (commands/, tools/)
+├── lib/                     # Shared library; never imports an app or imports.py
+│   ├── core/                # Config
+│   ├── utils/               # printer, async helpers, graph helpers
+│   ├── commands/            # CommandService shared by bot and console
+│   ├── tools/               # *_tool.py groups, catalog.py (ALL_TOOL_CLASSES), index.py (register_all_tools)
+│   ├── workflows/           # Engine, nodes, validation, schedule parser, loop.py (scheduler loop)
+│   └── services/            # Integrations: ai_client, tts, postgres, conversation, scheduler, settings, messaging_client, shell, ...
+└── apps/web/frontend/       # React + Vite + Tailwind (port 8020)
 ```
 
 ---
@@ -63,15 +40,14 @@ src/
 ## Running
 
 ```bash
-# Console mode
-npm run start:console
-
-# GUI mode
-npm run start:gui
-
 # Web app (two terminals)
-npm run start:web:backend     # FastAPI on :8000
-npm run start:web:frontend    # Vite on :12414
+npm run start:web:backend     # FastAPI on :8010
+npm run start:web:frontend    # Vite on :8020
+
+# Other processes
+npm run start:bot             # Telegram bot
+npm run start:worker          # Workflow scheduler (start:cron still works)
+npm run start:console         # Terminal chat
 
 # Electron (all-in-one)
 npm run electron:dev
@@ -80,6 +56,8 @@ npm run electron:dev
 npm run lint          # Check
 npm run lint:fix      # Auto-fix
 npm run format        # Format all code
+npm run lint:imports  # Check the import rules in pyproject.toml
+npm test              # Backend tests
 ```
 
 ---
@@ -99,7 +77,7 @@ Set provider: `export KNIK_AI_PROVIDER="vertex"`
 
 ---
 
-## MCP Tools (31 total)
+## Tools
 
 | Category | Count | Tools                                                                                                    |
 | -------- | ----- | -------------------------------------------------------------------------------------------------------- |
@@ -138,11 +116,10 @@ Set provider: `export KNIK_AI_PROVIDER="vertex"`
 - `.github/copilot-instructions.md` -- Main AI assistant reference
 - `docs/reference/environment-variables.md` -- All env vars
 - `docs/reference/api.md` -- AIClient + Web API reference
-- `docs/guides/mcp.md` -- MCP tools reference
+- `docs/guides/mcp.md` -- Tool registry reference
 - `docs/guides/scheduler.md` -- Workflow scheduler guide
 - `docs/guides/web-app.md` -- Web app guide
 - `docs/guides/console.md` -- Console app guide
-- `docs/guides/gui.md` -- GUI app guide
 - `docs/components/web-architecture.md` -- Frontend/backend file structure
 - `docs/components/react-common-components.md` -- 29 React components reference
 - `docs/development/setup.md` -- Development setup

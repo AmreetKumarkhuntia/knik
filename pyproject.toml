@@ -13,3 +13,25 @@ dependencies = [
 ]
 
 # Note: Ruff configuration is in .ruff.toml
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+# Dependency rules, checked by `lint-imports` (run with PYTHONPATH=src).
+# Apps sit on top and never import each other; lib never imports an app or the app-only hub.
+[tool.importlinter]
+root_packages = ["backend", "bot", "console", "worker", "lib"]
+# `imports` is a single module, so it is checked as an external module rather than a root package.
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Apps are independent of each other"
+type = "independence"
+modules = ["backend", "bot", "console", "worker"]
+
+[[tool.importlinter.contracts]]
+name = "Library code never imports apps or the app import hub"
+type = "forbidden"
+source_modules = ["lib"]
+forbidden_modules = ["backend", "bot", "console", "worker", "imports"]
