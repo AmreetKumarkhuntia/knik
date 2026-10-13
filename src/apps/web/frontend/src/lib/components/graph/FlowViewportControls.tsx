@@ -10,12 +10,12 @@ export default function FlowViewportControls({ onFit }: FlowViewportControlsProp
     <div
       role="group"
       aria-label="Graph view controls"
-      className="absolute bottom-4 left-4 z-10 flex flex-col gap-0.5 p-1 rounded-[12px] bg-surface border border-border-2 shadow-[0_10px_30px_-20px_rgba(0,0,0,.8)] nodrag nopan"
+      className="absolute bottom-4 left-4 z-10 flex flex-col gap-0.5 p-1 rounded-[12px] bg-surface border border-border-2 shadow-knik-float nodrag nopan"
     >
       <Button
         variant="ghost"
         size="sm"
-        className="knik-btn--icon rounded-[9px]"
+        className="knik-btn--icon"
         aria-label="Zoom In"
         onClick={() => void zoomIn()}
       >
@@ -24,7 +24,7 @@ export default function FlowViewportControls({ onFit }: FlowViewportControlsProp
       <Button
         variant="ghost"
         size="sm"
-        className="knik-btn--icon rounded-[9px]"
+        className="knik-btn--icon"
         aria-label="Zoom Out"
         onClick={() => void zoomOut()}
       >
@@ -33,7 +33,7 @@ export default function FlowViewportControls({ onFit }: FlowViewportControlsProp
       <Button
         variant="ghost"
         size="sm"
-        className="knik-btn--icon rounded-[9px]"
+        className="knik-btn--icon"
         aria-label="Fit View"
         onClick={onFit}
       >

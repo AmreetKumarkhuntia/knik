@@ -32,7 +32,7 @@ export default function Table<T>({
               {data.map((row, index) => (
                 <TableRow
                   key={getRowKey(row)}
-                  className="knik-enter-rise border-b border-border-1 last:border-0 transition-colors duration-base ease-out hover:bg-panel-2"
+                  className="knik-enter-rise border-b border-border-1 last:border-0 transition-colors duration-base ease-out hover:bg-[var(--row-hover)]"
                   // Capped so long lists never hold rows back for seconds; --m drops the delay under reduced motion.
                   style={{ animationDelay: `calc(${Math.min(index, 8) * 0.05}s * var(--m))` }}
                 >

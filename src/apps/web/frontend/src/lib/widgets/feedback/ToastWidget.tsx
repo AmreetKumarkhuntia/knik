@@ -25,7 +25,9 @@ function SessionToast({ id, message, type }: DemoToast) {
   return (
     <motion.div
       layout
-      className="pointer-events-auto"
+      // Touch taps fall through to the controls underneath (e.g. the composer); only the dismiss
+      // button stays tappable there.
+      className="pointer-events-none [@media(hover:hover)]:pointer-events-auto"
       initial={{ opacity: 0, y: 16, scale: 0.96 }}
       animate={{
         opacity: 1,
@@ -34,8 +36,13 @@ function SessionToast({ id, message, type }: DemoToast) {
         transition: { duration: MOTION_DURATION.slow, ease: MOTION_EASE_SPRING },
       }}
       exit={{ opacity: 0, transition: { duration: MOTION_DURATION.fast, ease: 'easeIn' } }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      // Only a mouse pauses on hover: touch fires no leave event, so it would pin the toast.
+      onPointerEnter={event => {
+        if (event.pointerType === 'mouse') setHovered(true)
+      }}
+      onPointerLeave={event => {
+        if (event.pointerType === 'mouse') setHovered(false)
+      }}
       onFocus={() => setFocused(true)}
       onBlur={event => {
         if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)

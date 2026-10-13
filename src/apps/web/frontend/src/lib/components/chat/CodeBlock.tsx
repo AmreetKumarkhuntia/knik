@@ -59,7 +59,7 @@ export default memo(function CodeBlock({
             size="xs"
             onClick={() => onCopy(code)}
             aria-label={copied ? 'Copied code' : 'Copy code'}
-            className="knik-btn--icon knik-btn--compact ml-auto w-7 h-7 rounded-[9px]"
+            className="knik-btn--icon knik-btn--compact ml-auto w-7 h-7"
           >
             <MS name={copied ? 'check' : 'content_copy'} size={15} />
           </Button>

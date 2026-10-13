@@ -31,7 +31,8 @@
   padding: 12px;
 }
 
-/* Builder start/end steps are compact pills; execution keeps a card for the status row. */
+/* Start/end steps are pills in both modes. The builder pill is taller because it keeps the type
+   line; the execution pill shows only the title and carries its status in the border tint. */
 .graph-node--terminal.graph-node--editable {
   min-height: 52px;
   padding: 0 16px;
@@ -46,7 +47,10 @@
 }
 
 .graph-node--execution.graph-node--terminal {
-  gap: 4px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  justify-content: center;
 }
 
 .graph-node--selected,
@@ -74,17 +78,10 @@
   border-radius: 9px;
 }
 
-.graph-node--terminal .graph-node__icon {
+.graph-node--terminal.graph-node--editable .graph-node__icon {
   flex-basis: 28px;
   width: 28px;
   height: 28px;
-}
-
-.graph-node--execution.graph-node--terminal .graph-node__icon {
-  flex-basis: 24px;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
 }
 
 .graph-node__heading {
@@ -144,21 +141,12 @@
   line-height: 16px;
 }
 
-.graph-node--terminal .graph-node__execution {
-  padding-top: 0;
-  border-top: 0;
-}
-
 .graph-node__status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   text-transform: capitalize;
   color: var(--fg-3);
-}
-
-.graph-node__status .material-symbols-outlined {
-  font-size: 15px;
 }
 
 .graph-node__status--success {
@@ -260,4 +248,21 @@
 .graph-edge--running {
   stroke-dasharray: 6 6;
   animation: knik-flow 0.6s linear infinite;
+}
+
+/* xyflow's attribution ships a light-theme badge; it stays, restyled into the canvas tones. Line
+   height 1 keeps it inside the 16px gap under the minimap. */
+.knik-flow {
+  --xy-attribution-background-color: transparent;
+}
+
+.knik-flow .react-flow__attribution {
+  padding: 0 8px 4px;
+  line-height: 1;
+}
+
+.knik-flow .react-flow__attribution a {
+  color: var(--fg-4);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
 }

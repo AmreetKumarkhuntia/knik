@@ -23,6 +23,8 @@ export default function Modal({
   children,
   title,
   titleHidden = false,
+  leading,
+  hideClose = false,
   className = '',
   size = 'md',
   placement = 'center',
@@ -111,19 +113,24 @@ export default function Modal({
             className={`relative flex flex-col min-h-0 bg-surface border-border-2 shadow-knik-3 outline-none ${placement === 'center' ? `w-full ${MODAL_SIZE_CLASSES[size]} mx-4 max-h-[90dvh] rounded-2xl border` : `h-dvh w-[min(380px,100%)] ${placement === 'left' ? 'border-r' : 'border-l'}`} ${className}`}
           >
             {header && (
-              <div className="flex items-center justify-between gap-3 shrink-0 pl-5 pr-3.5 pt-3.5 pb-2">
-                <h2 id={labelId} className="text-h3 text-fg-1 min-w-0">
-                  {title}
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="knik-btn--icon rounded-[9px]"
-                  aria-label={`Close ${title}`}
-                  onClick={onClose}
-                >
-                  <MS name="close" size={18} />
-                </Button>
+              <div className={`shrink-0 ${leading ? 'px-5 pt-5' : 'pl-5 pr-3.5 pt-3.5 pb-2'}`}>
+                {leading}
+                <div className="flex items-center justify-between gap-3">
+                  <h2 id={labelId} className="text-h3 text-fg-1 min-w-0">
+                    {title}
+                  </h2>
+                  {!hideClose && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="knik-btn--icon"
+                      aria-label={`Close ${title}`}
+                      onClick={onClose}
+                    >
+                      <MS name="close" size={18} />
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
             {title && titleHidden && (

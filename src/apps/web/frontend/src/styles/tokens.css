@@ -75,9 +75,9 @@
 
   /* -----------------------------------------------------------------
      Borders / dividers — three depths only
-     --border-3 also outlines form controls, so it keeps >= 3:1 against
-     the surfaces they sit on (WCAG 1.4.11) and stays opaque.
-     --border-strong is the translucent hover outline and idle graph edge.
+     --border-3 outlines form controls and draws idle graph edges, so it
+     keeps >= 3:1 against the surfaces they sit on (WCAG 1.4.11) and
+     stays opaque. --border-strong is the translucent hover outline.
      ----------------------------------------------------------------- */
   --border-1: rgba(255, 241, 224, 0.08);
   --border-2: rgba(255, 241, 224, 0.14);
@@ -98,6 +98,10 @@
   --acc-soft: var(--primary-soft);
   --acc-border: color-mix(in srgb, var(--primary) 42%, transparent);
   --acc-glow: color-mix(in srgb, var(--primary) 22%, transparent);
+  /* Secondary text on a selected (--acc-soft) row, where --fg-4 drops
+     under 4.5:1. A 60/40 blend of --acc-text and --fg-4, written as hex
+     so tests/styles can check it. */
+  --acc-meta: #9ba6cd;
   --r-btn: 10px;
 
   /* -----------------------------------------------------------------
@@ -105,6 +109,7 @@
      ----------------------------------------------------------------- */
   --shadow-2: 0 10px 30px -24px rgba(0, 0, 0, 0.6);
   --shadow-3: 0 24px 60px -24px rgba(0, 0, 0, 0.75);
+  --shadow-float: 0 10px 30px -20px rgba(0, 0, 0, 0.8);
   --shadow-glow: 0 18px 40px -24px var(--acc-glow);
   --shadow-focus: 0 0 0 3px var(--acc-soft);
 
@@ -178,6 +183,9 @@
   /* -----------------------------------------------------------------
      Effects
      ----------------------------------------------------------------- */
+  /* Table row hover: a lighter wash than --panel-2 so --fg-3 cells and
+     status pills keep 4.5:1 on a hovered row inside a glass card. */
+  --row-hover: color-mix(in srgb, var(--fg-1) 4%, transparent);
   --graph-grid: var(--border-2);
   --graph-minimap-node: var(--fg-4);
   --graph-minimap-mask: rgba(21, 19, 17, 0.8);
@@ -214,6 +222,7 @@
   --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
   /* Selected rows set --acc-text on --acc-soft, where light --primary stays under 4.5:1. */
   --acc-text: #3549ab;
+  --acc-meta: #485289;
   --on-primary: #ffffff;
   --success: #15603b;
   --warning: #784d00;
@@ -222,6 +231,7 @@
 
   --shadow-2: 0 10px 30px -24px rgba(0, 0, 0, 0.25);
   --shadow-3: 0 24px 60px -24px rgba(0, 0, 0, 0.25);
+  --shadow-float: 0 10px 30px -20px rgba(0, 0, 0, 0.3);
 
   --graph-minimap-mask: rgba(243, 239, 233, 0.8);
 }

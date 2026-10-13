@@ -55,7 +55,7 @@ export default function ScheduleForm({
             required
           />
           <p id={hintId} className="mt-1.5 text-caption text-fg-4">
-            Natural language — the scheduler parses it.
+            Free text, stored as written. Nothing runs in this session.
           </p>
         </div>
         <div>

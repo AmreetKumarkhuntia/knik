@@ -50,7 +50,7 @@ export default function Canvas({
       />
       {notice && <div className="shrink-0">{notice}</div>}
       <div className="flex flex-1 overflow-hidden relative">
-        <div className="flex-1 min-w-0 relative flex flex-col workflow-grid overflow-hidden">
+        <div className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
           {/* In flow rather than overlaid, so the canvas and its Add Node trigger sit below it. */}
           {error && (
             // Focusable so keyboard users can scroll a long error list; the banner has no controls.

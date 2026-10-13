@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Button from '$components/buttons/Button'
+import ConfirmDialog from '$components/surfaces/ConfirmDialog'
 import Modal from '$components/surfaces/Modal'
 import Popover from '$components/surfaces/Popover'
 function DialogExample({ placement = 'center' }: { placement?: 'center' | 'left' | 'right' }) {
@@ -45,6 +46,24 @@ describe('overlay ownership', () => {
     expect(screen.getByRole('heading', { name: 'Commands' })).toHaveClass('sr-only')
     expect(screen.queryByRole('button', { name: 'Close Commands' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Inner' })).toHaveFocus()
+  })
+  it('confirm dialog leads with its warning tile and relies on Cancel instead of a close button', () => {
+    render(
+      <ConfirmDialog
+        isOpen
+        title="Delete conversation"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Delete conversation' })
+    const tile = within(dialog).getByText('warning')
+    const heading = within(dialog).getByRole('heading', { name: 'Delete conversation' })
+    expect(tile.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(within(dialog).queryByRole('button', { name: /^Close/ })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus()
   })
   it('draws the drawer close control with a hidden Material Symbols icon', async () => {
     const user = userEvent.setup()

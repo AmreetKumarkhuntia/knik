@@ -27,7 +27,7 @@ function varColorNames() {
 const COLOR_UTILITY =
   /^(?:[\w-]+:)*!?(?:bg|text|border(?:-[xytrbl])?|ring(?:-offset)?|divide|outline|fill|stroke|from|via|to|decoration|accent|caret|shadow|placeholder)-([a-z][\w-]*)\/(?:\d+|\[[^\]]+\])$/
 
-// index.css hand-writes plain classes for these names, which Tailwind does not know.
+// Colour names Tailwind does not know, so a `/NN` modifier on them emits nothing.
 const semanticColors = [
   ...['foreground', 'text', 'secondary', 'subtle', 'textSecondary', 'primary'],
   ...['background', 'code', 'success', 'error', 'info'],
@@ -43,18 +43,16 @@ function violations(source: string) {
 
 describe('Tailwind opacity modifiers', () => {
   it('derives the var-based theme colors from tailwind.config.js', () => {
-    expect([...varColorNames()]).toEqual(
-      expect.arrayContaining(['aurora-300', 'border', 'surface-2'])
-    )
+    expect([...varColorNames()]).toEqual(expect.arrayContaining(['panel-2', 'border', 'surface-2']))
   })
 
   it('flags dropped modifiers and allows hex palette colors', () => {
     expect(
       violations(
-        "'bg-aurora-300/10 border-border/50 focus-visible:ring-primary/50 hover:bg-current/20 bg-emerald-500/15 bg-teal-200/10 bg-surface/50 bg-error/20 bg-black/50'"
+        "'bg-panel-2/10 border-border/50 focus-visible:ring-primary/50 hover:bg-current/20 bg-emerald-500/15 bg-teal-200/10 bg-surface/50 bg-error/20 bg-black/50'"
       )
     ).toEqual([
-      'bg-aurora-300/10',
+      'bg-panel-2/10',
       'border-border/50',
       'focus-visible:ring-primary/50',
       'hover:bg-current/20',

@@ -100,7 +100,7 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
     >
       <div className="graph-node__header">
         <span className={`graph-node__icon ${metadata.colors.iconBg} ${metadata.colors.iconText}`}>
-          <MS name={metadata.icon} size={terminal && isExecution ? 15 : 17} />
+          <MS name={metadata.icon} size={17} />
         </span>
         <div className="graph-node__heading">
           <h3 className="graph-node__title" title={label}>
@@ -116,7 +116,7 @@ export default memo(function BaseNode({ data, type, selected }: NodeProps) {
         </div>
       )}
 
-      {isExecution && (status || duration !== undefined) && (
+      {isExecution && !terminal && (status || duration !== undefined) && (
         <div className="graph-node__execution">
           {status && (
             <span className={`graph-node__status graph-node__status--${status}`}>

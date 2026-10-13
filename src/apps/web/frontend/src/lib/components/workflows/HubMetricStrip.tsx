@@ -20,7 +20,9 @@ export default function HubMetricStrip({ metrics }: HubMetricStripProps) {
           style={{ animationDelay: `${index * 0.06}s` }}
         >
           <dt className="text-body text-fg-3">{item.label}</dt>
-          <dd className="text-body-lg font-semibold text-fg-1 tabular-nums">{item.value}</dd>
+          <dd className="text-body-lg leading-none font-semibold text-fg-1 tabular-nums">
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>

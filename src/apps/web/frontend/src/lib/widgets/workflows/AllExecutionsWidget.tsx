@@ -25,6 +25,7 @@ export default function AllExecutionsWidget() {
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 pt-6 pb-8">
         <SectionHeader
+          className="mb-2"
           title="Executions"
           subtitle="Workflow run history"
           actions={

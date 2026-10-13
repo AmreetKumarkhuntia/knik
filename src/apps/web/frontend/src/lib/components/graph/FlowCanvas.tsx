@@ -56,6 +56,13 @@ function withEdgeName(edge: Edge, nodesById: Map<string, Node>): Edge {
   return labelled
 }
 
+// Module scope keeps the reference stable, so xyflow's memoised minimap nodes skip re-rendering.
+function minimapNodeColor(node: Node) {
+  return node.selected
+    ? CANVAS_OVERLAY_COLORS.minimapNodeSelected
+    : CANVAS_OVERLAY_COLORS.minimapNode
+}
+
 /** Inner ReactFlow canvas with background and optional mini-map. */
 function FlowCanvasContent({
   nodes,
@@ -151,7 +158,7 @@ function FlowCanvasContent({
       <Background
         variant={BackgroundVariant.Dots}
         gap={22}
-        size={1}
+        size={2}
         color={CANVAS_OVERLAY_COLORS.dotGrid}
       />
       {showMiniMap && (
@@ -159,7 +166,7 @@ function FlowCanvasContent({
           position="bottom-right"
           style={{ width: 180, height: 110, margin: 16 }}
           className="!bg-[color-mix(in_srgb,var(--bg-surface)_80%,transparent)] !border !border-border-2 !rounded-[12px] backdrop-blur-[10px] overflow-hidden !shadow-none knik-enter-fade"
-          nodeColor={CANVAS_OVERLAY_COLORS.minimapNode}
+          nodeColor={minimapNodeColor}
           maskColor={CANVAS_OVERLAY_COLORS.minimapMask}
           nodeBorderRadius={3}
           pannable

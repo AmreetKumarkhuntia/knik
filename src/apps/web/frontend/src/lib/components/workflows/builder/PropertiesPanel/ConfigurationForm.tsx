@@ -84,7 +84,7 @@ function NodeField({ field, value, onChange, draft, onDraftChange }: NodeFieldPr
             variant="ghost"
             size="sm"
             // Negative margin keeps the full touch target without stretching the label row.
-            className="knik-btn--icon rounded-[9px] -my-2"
+            className="knik-btn--icon -my-2"
             onClick={() => setExpanded(current => !current)}
             aria-label={`${expanded ? 'Collapse' : 'Expand'} ${field.label}`}
             aria-expanded={expanded}

@@ -31,7 +31,7 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
             {...props}
             variant="secondary"
             size="sm"
-            className="!bg-surface hover:!bg-panel-3 border-border-2 text-fg-1 rounded-[11px] shadow-[0_10px_30px_-20px_rgba(0,0,0,.8)]"
+            className="bg-surface border-border-2 text-fg-1 rounded-[11px] shadow-knik-float"
             icon={
               <MS
                 name="add"
@@ -51,7 +51,7 @@ export default memo(function FloatingControls({ onAddNode }: FloatingControlsPro
                 key={node.type}
                 variant="ghost"
                 onClick={() => handleAdd(node.type)}
-                className="w-full !justify-start gap-3 px-2.5 !py-2 rounded-[10px] text-left"
+                className="w-full justify-start gap-3 px-2.5 py-2 rounded-[10px] text-left"
               >
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] ${node.colors.iconBg} ${node.colors.iconText}`}

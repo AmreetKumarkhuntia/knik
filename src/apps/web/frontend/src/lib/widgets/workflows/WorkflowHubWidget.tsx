@@ -31,6 +31,7 @@ export default function WorkflowHubWidget() {
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 pt-6 pb-8">
         <SectionHeader
+          className="mb-2"
           title="Workflows"
           subtitle={`${rows.length} of ${count} shown`}
           actions={
@@ -56,11 +57,10 @@ export default function WorkflowHubWidget() {
               value={query}
               onChange={event => setQuery(event.target.value)}
               placeholder="Search workflows…"
-              className="!pl-9 rounded-[11px]"
+              className="pl-9 rounded-[11px]"
             />
           </div>
           <Segmented
-            size="sm"
             label="Filter workflows"
             value={filter}
             onChange={setFilter}
@@ -79,7 +79,7 @@ export default function WorkflowHubWidget() {
         <HubWorkflowsTable rows={rows} isEmpty={count === 0} onRun={handleRun} canRun={canRun} />
         <SectionHeader
           level="section"
-          className="mb-3 !items-center"
+          className="mb-3 items-center"
           title="Recent executions"
           actions={
             <Link

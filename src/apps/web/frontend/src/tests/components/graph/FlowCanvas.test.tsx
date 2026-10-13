@@ -101,6 +101,23 @@ describe('flow canvas accessibility', () => {
     expect(edges.every(edge => edge.ariaLabel === undefined)).toBe(true)
   })
 
+  it('marks the selected step in the minimap with the accent', () => {
+    const nodes: Node[] = [
+      { id: 'start', type: 'StartNode', position: { x: 0, y: 0 }, selected: true, data: {} },
+      { id: 'ai', type: 'AIExecutionNode', position: { x: 300, y: 0 }, data: {} },
+    ].map(node => ({ ...node, width: 200, height: 80 }))
+    const { container } = render(
+      <div style={{ width: 900, height: 500 }}>
+        <FlowCanvas nodes={nodes} edges={[]} nodeTypes={nodeTypes} fitView={false} showMiniMap />
+      </div>
+    )
+    const fills = Array.from(
+      container.querySelectorAll<SVGRectElement>('.react-flow__minimap-node'),
+      rect => rect.style.fill
+    )
+    expect(fills).toEqual(['var(--primary)', 'var(--graph-minimap-node)'])
+  })
+
   it('exposes the zoom readout as a named status', () => {
     render(<FlowCanvas nodes={[]} edges={[]} nodeTypes={nodeTypes} />)
     expect(screen.getByRole('status', { name: 'Zoom level' })).toHaveTextContent('100%')

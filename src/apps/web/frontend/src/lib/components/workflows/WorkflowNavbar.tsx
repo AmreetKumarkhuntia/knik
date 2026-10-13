@@ -18,7 +18,7 @@ export default function WorkflowNavbar({
         <Button
           variant="ghost"
           size="sm"
-          className="knik-btn--icon"
+          className="knik-btn--icon rounded-[10px]"
           onClick={onBack}
           aria-label="Back to workflows"
         >
@@ -31,7 +31,7 @@ export default function WorkflowNavbar({
             aria-label="Workflow name"
             value={workflowName ?? ''}
             onChange={event => onNameChange(event.target.value)}
-            className="!w-56 max-w-full min-h-[34px] !px-2.5 !py-0 rounded-[9px] !bg-transparent !border-transparent hover:!bg-panel hover:!border-border-2 focus:!bg-panel focus:!border-[var(--primary)] text-h4 text-fg-1"
+            className="w-56 max-w-full min-h-[34px] !px-2.5 !py-0 rounded-[9px] bg-transparent border-transparent hover:bg-panel hover:border-border-2 focus:bg-panel focus:border-[var(--primary)] text-h4 text-fg-1"
           />
         ) : (
           <span className="min-w-0 px-2.5 text-h4 text-fg-1 truncate">

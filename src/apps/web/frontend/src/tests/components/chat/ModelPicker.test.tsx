@@ -10,6 +10,22 @@ describe('ModelPicker', () => {
     expect(screen.getByText('No models available')).toBeInTheDocument()
   })
 
+  it('skins the trigger, list and options, and keeps a compact trigger to the label', async () => {
+    const user = userEvent.setup()
+    const models = [{ id: 'first', label: 'First', vendor: 'Vendor', tag: 'fast' }]
+    const { rerender } = render(<ModelPicker model="first" models={models} onChange={() => {}} />)
+    const trigger = screen.getByRole('button', { name: /^Chat model/ })
+    expect(trigger).toHaveClass('rounded-[9px]', 'bg-panel', 'border-border-1')
+    expect(trigger).toHaveTextContent('Vendor')
+    await user.click(trigger)
+    expect(screen.getByRole('listbox', { name: 'Chat model' })).toHaveClass('w-[300px]')
+    expect(screen.getByRole('option', { name: /First/ })).toHaveClass('!py-1.5', '!text-fg-1')
+    await user.keyboard('{Escape}')
+    rerender(<ModelPicker model="first" models={models} onChange={() => {}} compact />)
+    expect(trigger).not.toHaveTextContent('Vendor')
+    expect(trigger).not.toHaveTextContent('fast')
+  })
+
   it('supports keyboard selection and restores focus to its trigger', async () => {
     const user = userEvent.setup()
     const change = vi.fn()

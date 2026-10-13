@@ -47,7 +47,7 @@ export default function HistoryTable({
             aria-label={`View execution #${row.id}`}
             variant="ghost"
             size="sm"
-            className="rounded-[9px] hover:!bg-panel-3"
+            className="knik-btn--compact rounded-[9px] hover:!bg-panel-3"
             onClick={() => onViewDetail(row)}
           />
         </div>

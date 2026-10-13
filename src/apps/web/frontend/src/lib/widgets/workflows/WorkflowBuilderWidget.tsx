@@ -53,10 +53,7 @@ export default function WorkflowBuilderWidget({ workflowId }: WorkflowBuilderWid
       <Canvas
         notice={
           view.canRun ? undefined : (
-            <Banner
-              variant="info"
-              className="rounded-none border-x-0 border-t-0 px-4 py-2.5 text-body-sm"
-            >
+            <Banner variant="info" className="rounded-none border-x-0 border-t-0 px-4 py-2.5">
               Run is unavailable until a matching demo scenario is supplied. Editing and JSON export
               are available.
             </Banner>

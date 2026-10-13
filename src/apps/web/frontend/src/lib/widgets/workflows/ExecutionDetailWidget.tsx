@@ -98,7 +98,7 @@ export default function ExecutionDetailWidget({ executionId }: ExecutionDetailWi
           <Button
             variant="ghost"
             size="sm"
-            className="knik-btn--icon rounded-[9px]"
+            className="knik-btn--icon"
             onClick={togglePanel}
             aria-label={collapsed ? 'Expand execution details' : 'Collapse execution details'}
             aria-expanded={!collapsed}

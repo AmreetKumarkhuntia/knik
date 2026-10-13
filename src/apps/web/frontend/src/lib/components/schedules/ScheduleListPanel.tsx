@@ -35,7 +35,7 @@ export default function ScheduleListPanel({
       key: 'schedule_description',
       label: 'Schedule',
       render: (_, schedule) => (
-        <span className="inline-flex items-center gap-2 text-body text-fg-2">
+        <span className="flex items-center gap-2 text-body text-fg-2">
           <MS name="schedule" size={16} className="shrink-0 text-fg-4" />
           <span className="min-w-0">{schedule.schedule_description ?? 'Recurring'}</span>
         </span>
@@ -79,7 +79,7 @@ export default function ScheduleListPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="knik-btn--icon knik-btn--destructive rounded-[9px]"
+            className="knik-btn--icon knik-btn--destructive"
             icon={<MS name="delete" size={17} />}
             aria-label={`Delete schedule for ${workflowName(schedule)}`}
             onClick={() => onDelete(schedule)}

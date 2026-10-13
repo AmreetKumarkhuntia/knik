@@ -11,9 +11,10 @@ export default function SidebarAccount({
   active = false,
 }: SidebarAccountProps) {
   return (
-    <div className="mt-2.5 pt-3 border-t border-border-1 md:[&>a]:min-h-10 [&>a]:px-2 [&>a]:text-fg-2 [&>a:hover]:text-fg-1">
+    <div className="mt-2.5 pt-3 border-t border-border-1">
       <NavLink
         href={ROUTES.settings}
+        variant="account"
         icon={<Avatar initials={initials} size={30} color="accent" />}
         label={name || 'Session account'}
         active={active}

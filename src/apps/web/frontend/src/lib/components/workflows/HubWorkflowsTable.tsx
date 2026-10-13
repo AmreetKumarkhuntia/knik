@@ -67,7 +67,7 @@ export default function HubWorkflowsTable({
           <Link
             to={ROUTE_PATHS.workflowEdit(row.id)}
             aria-label={`Edit ${row.name}`}
-            className="knik-btn knik-btn--ghost knik-btn--sm knik-btn--icon knik-focus rounded-[9px] hover:!bg-panel-3"
+            className="knik-btn knik-btn--ghost knik-btn--sm knik-btn--icon knik-focus hover:!bg-panel-3"
           >
             <MS name="edit" size={17} />
           </Link>
@@ -78,7 +78,7 @@ export default function HubWorkflowsTable({
             title={canRun(row.id) ? 'Run supplied demo scenario' : 'No demo run scenario supplied'}
             disabled={!canRun(row.id)}
             onClick={() => onRun(row.id)}
-            className="knik-btn--icon rounded-[9px] enabled:hover:!bg-[var(--acc-soft)] enabled:hover:!text-[var(--acc-text)]"
+            className="knik-btn--icon enabled:hover:!bg-[var(--acc-soft)] enabled:hover:!text-[var(--acc-text)]"
           >
             <MS name="play_arrow" size={18} fill={1} />
           </Button>

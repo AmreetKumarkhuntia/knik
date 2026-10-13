@@ -103,6 +103,21 @@ describe('graph node responsive ports', () => {
     expect(container.querySelector('.graph-node')).not.toHaveClass('graph-node--failed')
   })
 
+  it('keeps execution start and end pills to their title, with the outcome in the outline', () => {
+    const { container } = render(
+      <BaseNode
+        {...nodeProps}
+        id="start"
+        type="StartNode"
+        data={{ mode: 'execution', status: 'success', duration: 0 }}
+      />
+    )
+    const node = container.querySelector('.graph-node')
+    expect(node).toHaveClass('graph-node--terminal', 'graph-node--success')
+    expect(container.querySelector('.graph-node__execution')).toBeNull()
+    expect(screen.queryByText('success')).toBeNull()
+  })
+
   it('fades editable nodes in without a scale, which would skew measured handle positions', () => {
     const { container } = render(<BaseNode {...nodeProps} data={{ mode: 'edit' }} />)
     const node = container.querySelector('.graph-node')
