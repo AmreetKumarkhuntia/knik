@@ -222,10 +222,10 @@ Scopes are stored with each key but not enforced: any stored key opens every `/a
 
 ## Bot App
 
-| Variable                    | Default | Description                                 |
-| --------------------------- | ------- | ------------------------------------------- |
-| `KNIK_BOT_ENABLED`          | `true`  | Enable/disable the bot daemon               |
-| `KNIK_BOT_CONCURRENT_LIMIT` | `10`    | Maximum concurrent message processing tasks |
+| Variable                    | Default | Description                                                               |
+| --------------------------- | ------- | ------------------------------------------------------------------------- |
+| `KNIK_BOT_ENABLED`          | `true`  | When false, `--mode bot` logs a warning and exits without starting        |
+| `KNIK_BOT_CONCURRENT_LIMIT` | `10`    | Maximum replies generated at once across all chats; further messages wait |
 
 ## Usage
 

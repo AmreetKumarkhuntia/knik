@@ -4,6 +4,9 @@ import pytest
 
 from console.app import ConsoleApp
 from console.config import ConsoleConfig
+from console.tools.agent_cmd import agent_command
+from lib.services.ai_client.factory import build_client
+from lib.services.ai_client.settings import ClientSettings
 from tests.lib.commands import fakes
 
 
@@ -37,3 +40,15 @@ def test_without_a_client_a_command_reports_the_error(app, capsys):
     app._handle_user_input("/status")
 
     assert capsys.readouterr().out == "AI: Error executing command: AI client is not initialized\n\n"
+
+
+def test_agent_shows_the_error_of_a_failed_call(app):
+    client = build_client(ClientSettings(provider="mock"))
+
+    def chat(**kwargs):
+        raise RuntimeError("quota exceeded")
+
+    client._provider.chat = chat
+    app.ai_client = client
+
+    assert agent_command(app, "hi") == "Chat error: quota exceeded"

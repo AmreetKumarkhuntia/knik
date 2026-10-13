@@ -96,9 +96,13 @@ class BotConsentGate:
         send_coro = self._transport.send_message(chat_id=chat_id, text=text)
         send_fut = asyncio.run_coroutine_threadsafe(send_coro, self._loop)
         try:
-            send_fut.result(timeout=20.0)
-        except Exception:
-            printer.error(f"Failed to send consent prompt for {req.tool_name}")
+            sent = send_fut.result(timeout=20.0)
+        except Exception as e:
+            printer.error(f"Failed to send consent prompt for {req.tool_name} to chat {chat_id}: {e}")
+            return "no"
+        if not sent.success:
+            # Nobody saw the prompt, so waiting would only take the user's next message as an answer to it.
+            printer.warning(f"Consent prompt for {req.tool_name} not delivered to chat {chat_id}: {sent.error}")
             return "no"
 
         consent_future = self._broker.add(chat_id, self._user_id)

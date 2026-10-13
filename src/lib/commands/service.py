@@ -78,19 +78,18 @@ class CommandService:
 
     @staticmethod
     async def _list_sessions(limit: int, offset: int) -> list[SessionInfo]:
+        # The listing leaves out message bodies, so the count comes from message_count, not from messages.
         conversations = await ConversationDB.list_conversations(limit=limit, offset=offset)
-        sessions: list[SessionInfo] = []
-        for conv in conversations:
-            sessions.append(
-                SessionInfo(
-                    conversation_id=conv.id,
-                    title=conv.title,
-                    created_at=conv.created_at,
-                    updated_at=conv.updated_at,
-                    message_count=len(conv.messages),
-                )
+        return [
+            SessionInfo(
+                conversation_id=conv.id,
+                title=conv.title,
+                created_at=conv.created_at,
+                updated_at=conv.updated_at,
+                message_count=conv.message_count,
             )
-        return sessions
+            for conv in conversations
+        ]
 
     async def switch_model(self, user_id: str, model_name: str) -> CommandResult:
         client = await self._client_for(user_id)

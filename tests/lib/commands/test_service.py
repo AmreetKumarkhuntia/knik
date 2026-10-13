@@ -1,8 +1,14 @@
 """Tests for CommandService: it works on the caller's AI client, found through the app's client resolver."""
 
+import asyncio
+
 import pytest
 
+from lib.commands.handlers import format_status
 from lib.commands.service import CommandService
+from lib.services.ai_client.client import AIClient
+from lib.services.ai_client.factory import build_client
+from lib.services.ai_client.settings import ClientSettings
 from lib.services.db.repositories.conversations import ConversationDB
 from tests.db_support import requires_db
 
@@ -117,4 +123,28 @@ async def test_resume_finds_conversations_in_postgres(db, service):
     assert by_prefix.message == "Resumed: Newer (2 messages)"
     assert service._user_identity.get_conversation_id("alice") == newer
     assert (missing.success, missing.message) == (False, "Could not find conversation: ffffffff")
-    assert [s.title for s in await service.list_sessions()] == ["Newer", "Older"]
+    sessions = await service.list_sessions()
+    assert [(s.title, s.message_count) for s in sessions] == [("Newer", 2), ("Older", 0)]
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_status_totals_the_tokens_of_every_turn(db):
+    client = build_client(ClientSettings(provider="mock"))
+
+    async def resolve(user_id):
+        return client
+
+    identity = _Identity()
+    service = CommandService(client_resolver=resolve, user_identity=identity)
+
+    _, conversation_id, first = await client.achat("hello")
+    _, _, second = await client.achat("and again", conversation_id=conversation_id)
+    await asyncio.gather(*AIClient._background_tasks)
+    identity.set_conversation_id("alice", conversation_id)
+
+    status = await service.get_status("alice")
+
+    assert first["total_tokens"] == second["total_tokens"] == 25
+    assert status.total_tokens == 50
+    assert "  Tokens:   20 in / 30 out / 50 total\n" in format_status(status).message

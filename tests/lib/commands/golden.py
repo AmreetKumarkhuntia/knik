@@ -125,7 +125,7 @@ STATUS_FULL = """Status:
   Provider: mock
   Model:    gemini-2.5-flash
   Session:  11111111-aaaa
-  Tokens:   10,000 in / 2,345 out (estimated) / 12,345 total (since last compaction), estimated
+  Tokens:   10,000 in / 2,345 out (estimated) / 12,345 total (estimated)
   Context:  85,000 / 100,000 (85.0%)  ⚠ approaching limit
   History:  ~4,321 ctx tokens
   Cost:     ~$0.014690"""

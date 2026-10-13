@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -34,7 +34,8 @@ def _make_msg(chat_id, text, sender_id="user_1", sender_name="User", message_id=
 def mock_config():
     config = MagicMock()
     config.error_message = "Sorry, I encountered an error."
-    config.busy_message = "I'm still thinking about your previous message."
+    config.busy_message = "Still busy, send it again."
+    config.bot_concurrent_limit = 10
     return config
 
 
@@ -107,7 +108,7 @@ class TestBotMessageHandler:
         assert handler.get_active_count() == 1
         await handler.cancel_all(timeout=1.0)
 
-    async def test_busy_hint_for_concurrent_messages(self, handler, transport, incoming_message):
+    async def test_a_message_while_busy_gets_the_busy_reply_and_not_the_ai(self, handler, transport, incoming_message):
         async def delay(**kw):
             await asyncio.sleep(1)
 
@@ -116,12 +117,25 @@ class TestBotMessageHandler:
         await handler.handle(incoming_message)
         assert handler.get_active_count() == 1
 
-        await handler.handle(incoming_message)
-        await asyncio.sleep(0.1)
+        await handler.handle(_make_msg("chat_456", "and another thing", message_id="msg_124"))
+        await asyncio.sleep(0.05)
 
-        assert transport.messages[-1].text == handler._config.busy_message
-        assert transport.messages[-1].kwargs == {"reply_to_message_id": "msg_123"}
+        assert [(m.text, m.kwargs) for m in transport.messages] == [
+            ("Still busy, send it again.", {"reply_to_message_id": "msg_124"})
+        ]
+        assert [c.kwargs["prompt"] for c in handler._streaming.deliver.await_args_list] == ["Hello, bot!"]
         await handler.cancel_all(timeout=1.0)
+
+    async def test_a_chat_is_free_again_as_soon_as_its_reply_is_done(self, handler, transport):
+        await handler.handle(_make_msg("chat_1", "first"))
+        task = next(iter(handler._active_tasks.values()))
+        await task
+
+        await handler.handle(_make_msg("chat_1", "second"))
+        await asyncio.sleep(0.05)
+
+        assert transport.messages == []
+        assert handler._streaming.deliver.await_count == 2
 
     async def test_different_chats_process_concurrently(self, handler):
         processed = []
@@ -245,6 +259,132 @@ class TestBotMessageHandler:
         assert [(m.chat_id, m.text) for m in transport.messages] == [("chat_1", "Status: ok")]
         handler._streaming.deliver.assert_not_called()
 
+    async def test_a_failing_command_gets_the_error_and_never_reaches_the_ai(self, handler, transport):
+        dispatcher = MagicMock()
+        dispatcher.try_dispatch = AsyncMock(side_effect=RuntimeError("identity store broke"))
+        handler._command_dispatcher = dispatcher
+
+        await handler.handle(_make_msg("chat_1", "/status", message_id="m7"))
+        await asyncio.sleep(0.05)
+
+        assert [(m.text, m.kwargs) for m in transport.messages] == [
+            (handler._config.error_message, {"reply_to_message_id": "m7"})
+        ]
+        handler._streaming.deliver.assert_not_called()
+
+    async def test_a_command_runs_while_a_reply_is_streaming(self, handler, transport):
+        release = asyncio.Event()
+
+        async def deliver(**kw):
+            await release.wait()
+            return DeliveryResult(response_text="The end.")
+
+        handler._streaming.deliver = AsyncMock(side_effect=deliver)
+        dispatcher = MagicMock()
+        dispatcher.try_dispatch = AsyncMock(return_value=CommandResult(success=True, message="Status: ok"))
+        handler._command_dispatcher = dispatcher
+
+        await handler.handle(_make_msg("chat_1", "tell me a story"))
+        await handler.handle(_make_msg("chat_1", "/status"))
+
+        assert [m.text for m in transport.messages] == ["Status: ok"]
+        assert handler.get_active_count() == 1
+        release.set()
+        await handler.cancel_all(timeout=1.0)
+
+    async def test_new_during_a_reply_is_not_undone_when_the_reply_lands(
+        self, transport, mock_streaming, mock_config, mock_user_clients, broker
+    ):
+        identity = UserIdentityManager()
+        service = CommandService(client_resolver=mock_user_clients.get_or_create, user_identity=identity)
+        _, dispatcher = create_command_system(service, mock_user_clients)
+        handler = BotMessageHandler(
+            transport=transport,
+            user_identity=identity,
+            streaming_manager=mock_streaming,
+            config=mock_config,
+            user_client_manager=mock_user_clients,
+            consent_broker=broker,
+            command_dispatcher=dispatcher,
+        )
+        release = asyncio.Event()
+
+        async def deliver(**kw):
+            await release.wait()
+            return DeliveryResult(response_text="Once upon a time", conversation_id="conv_story")
+
+        mock_streaming.deliver = AsyncMock(side_effect=deliver)
+
+        await handler.handle(_make_msg("chat_1", "tell me a story"))
+        await asyncio.sleep(0)
+        await handler.handle(_make_msg("chat_1", "/new", message_id="m2"))
+        release.set()
+        await asyncio.sleep(0.05)
+
+        user_id = identity.get_user_id_for_sender("user_1")
+        assert transport.messages[0].text.startswith("New session started.")
+        assert identity.get_conversation_id(user_id) is None
+
+    async def test_an_undelivered_reply_is_reported_and_its_conversation_kept(self, handler, transport):
+        handler._streaming.deliver = AsyncMock(
+            return_value=DeliveryResult(
+                response_text="Hello!", conversation_id="conv_9", send_errors=["Bad Request: message is too long"]
+            )
+        )
+
+        await handler.handle(_make_msg("chat_1", "hi", message_id="m3"))
+        await asyncio.sleep(0.05)
+
+        assert [(m.text, m.kwargs) for m in transport.messages] == [
+            (handler._config.error_message, {"reply_to_message_id": "m3"})
+        ]
+        handler._user_identity.set_conversation_id.assert_called_once_with("user_abc", "conv_9")
+
+    async def test_replies_beyond_the_concurrency_limit_wait_for_a_slot(
+        self, transport, mock_streaming, mock_config, mock_user_identity, mock_user_clients, broker
+    ):
+        mock_config.bot_concurrent_limit = 1
+        handler = BotMessageHandler(
+            transport=transport,
+            user_identity=mock_user_identity,
+            streaming_manager=mock_streaming,
+            config=mock_config,
+            user_client_manager=mock_user_clients,
+            consent_broker=broker,
+        )
+        release = asyncio.Event()
+        started: list[str] = []
+
+        async def deliver(**kw):
+            started.append(kw["chat_id"])
+            await release.wait()
+            return DeliveryResult(response_text="ok")
+
+        mock_streaming.deliver = AsyncMock(side_effect=deliver)
+
+        await handler.handle(_make_msg("chat_1", "one"))
+        await handler.handle(_make_msg("chat_2", "two"))
+        await asyncio.sleep(0.05)
+        assert (started, handler.get_active_count()) == (["chat_1"], 2)
+
+        release.set()
+        await asyncio.sleep(0.05)
+        assert started == ["chat_1", "chat_2"]
+        assert handler.get_active_count() == 0
+
+    async def test_a_reply_the_transport_could_not_send_is_logged(self, handler, transport):
+        transport.send_failure = "Forbidden: bot was blocked by the user"
+        dispatcher = MagicMock()
+        dispatcher.try_dispatch = AsyncMock(return_value=CommandResult(success=True, message="Status: ok"))
+        handler._command_dispatcher = dispatcher
+
+        with patch("bot.message_handler.printer") as printer:
+            await handler.handle(_make_msg("chat_1", "/status"))
+
+        warning = printer.warning.call_args.args[0]
+        assert "chat_1" in warning
+        assert "Forbidden: bot was blocked by the user" in warning
+
     async def test_command_results_are_only_sent(self, handler, transport, mock_user_clients):
         # The old side channels: the handler used to patch the user's client from these keys.
         data = {"new_model": "m", "new_provider": "p", "revoke_consent": True}
@@ -273,6 +413,24 @@ class TestConsentReplies:
         assert transport.messages[-1].text == confirmation
         assert transport.messages[-1].kwargs == {"reply_to_message_id": "m9"}
         handler._streaming.deliver.assert_not_called()
+
+    async def test_an_answer_while_the_reply_waits_for_it_is_taken_not_dropped(self, handler, transport, broker):
+        release = asyncio.Event()
+
+        async def deliver(**kw):
+            await release.wait()
+            return DeliveryResult(response_text="Deleted.")
+
+        handler._streaming.deliver = AsyncMock(side_effect=deliver)
+        await handler.handle(_make_msg("chat_1", "delete the logs"))
+        future = broker.add("chat_1", "usr_user_1")
+
+        await handler.handle(_make_msg("chat_1", "y", message_id="m9"))
+
+        assert future.result(timeout=1) == "yes"
+        assert [m.text for m in transport.messages] == ["Approved."]
+        release.set()
+        await handler.cancel_all(timeout=1.0)
 
     async def test_another_users_message_in_the_chat_is_not_an_answer(self, handler, broker):
         future = broker.add("group", "usr_user_1")

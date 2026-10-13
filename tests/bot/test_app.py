@@ -93,6 +93,31 @@ async def test_incoming_message_is_handed_to_the_message_handler(app, transport)
 
 
 @pytest.mark.asyncio
+async def test_a_message_handler_failure_is_logged(app, transport):
+    task = await _start(app, transport)
+    app._message_handler.handle = AsyncMock(side_effect=RuntimeError("boom"))
+
+    with patch("bot.app.logger") as logger:
+        await transport.on_message(IncomingMessage(chat_id="1", text="hi", sender_id="42", message_id="m1"))
+        await asyncio.sleep(0.01)
+
+    assert "boom" in logger.error.call_args.args[0]
+    assert "m1" in logger.error.call_args.args[0]
+    await _stop(app, task)
+
+
+@pytest.mark.asyncio
+async def test_a_disabled_bot_does_not_start(db, transport):
+    config = BotConfig()
+    config.bot_enabled = False
+
+    await asyncio.wait_for(BotApp(config, transport=transport).run(), timeout=5)
+
+    assert transport.on_message is None
+    db.initialize.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_shutdown_cleans_up_every_tool_registry(app, transport):
     with patch("bot.app.cleanup_all_tools") as cleanup:
         task = await _start(app, transport)

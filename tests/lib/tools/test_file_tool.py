@@ -1,7 +1,9 @@
 """Tests for FileTool: file reading, writing, searching, listing, and info operations."""
 
+import os
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -308,6 +310,24 @@ class TestListDirectory:
 class TestSearchInFiles:
     """Tests for FileTool._search_in_files."""
 
+    @pytest.mark.skipif(os.geteuid() == 0, reason="root reads files whatever their mode")
+    def test_unreadable_file_is_skipped_with_a_warning(self, file_tool, tmp_path):
+        (tmp_path / "open.txt").write_text("hello\n")
+        locked = tmp_path / "locked.txt"
+        locked.write_text("hello\n")
+        locked.chmod(0)
+
+        try:
+            with patch("lib.tools.file_tool.printer") as printer:
+                result = file_tool._search_in_files(str(tmp_path), "hello")
+        finally:
+            locked.chmod(0o644)
+
+        assert [m["file"] for m in result["matches"]] == ["open.txt"]
+        warning = printer.warning.call_args.args[0]
+        assert str(locked) in warning
+        assert "Permission denied" in warning
+
     def test_plain_text_search(self, file_tool, tmp_path):
         """Finds plain text matches across multiple files."""
         (tmp_path / "a.txt").write_text("hello world\nfoo bar\n")
@@ -439,6 +459,18 @@ class TestFileInfo:
         # so the except branch runs and 'lines' is not added.
         # However, some systems may be lenient. We just verify no crash.
         assert result["name"] == "binary.bin"
+
+    def test_lines_that_cannot_be_counted_are_left_out_with_a_warning(self, file_tool, tmp_path):
+        f = tmp_path / "binary.bin"
+        f.write_bytes(b"\x80\x81\x82\xff\xfe")
+
+        with patch("lib.tools.file_tool.printer") as printer:
+            result = file_tool._file_info(str(f))
+
+        assert "lines" not in result
+        warning = printer.warning.call_args.args[0]
+        assert str(f) in warning
+        assert "can't decode" in warning
 
 
 # ===========================================================================

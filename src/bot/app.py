@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
+from functools import partial
 from typing import TYPE_CHECKING
 
 from imports import (
@@ -43,8 +44,14 @@ class BotApp:
         self._command_service: CommandService | None = None
 
         self._stop_event: asyncio.Event | None = None
+        # Strong references, so a message being handled is not garbage-collected mid-reply.
+        self._handling: set[asyncio.Task] = set()
 
     async def run(self) -> None:
+        if not self.config.bot_enabled:
+            logger.warning("Bot is disabled (KNIK_BOT_ENABLED is false); not starting")
+            return
+
         logger.info("Starting Bot Application...")
 
         try:
@@ -141,7 +148,16 @@ class BotApp:
             logger.warning("Message received but handler not initialized")
             return
 
-        asyncio.create_task(self._message_handler.handle(incoming))
+        task = asyncio.create_task(self._message_handler.handle(incoming))
+        self._handling.add(task)
+        task.add_done_callback(partial(self._handled, incoming))
+
+    def _handled(self, incoming: IncomingMessage, task: asyncio.Task) -> None:
+        self._handling.discard(task)
+        if not task.cancelled() and task.exception() is not None:
+            logger.error(
+                f"Handling message {incoming.message_id} from chat {incoming.chat_id} failed: {task.exception()}"
+            )
 
     async def _shutdown(self) -> None:
         logger.info("Shutting down Bot Application...")

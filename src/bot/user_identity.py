@@ -20,6 +20,7 @@ class UserIdentityManager:
         self._identity_map: dict[str, str] = {}
         self._user_conversations: dict[str, str | None] = {}
         self._user_metadata: dict[str, dict[str, Any]] = {}
+        self._session_versions: dict[str, int] = {}
 
     def resolve(self, incoming: IncomingMessage) -> UserIdentity:
         sender_id = incoming.sender_id
@@ -50,9 +51,18 @@ class UserIdentityManager:
 
     def set_conversation_id(self, user_id: str, conversation_id: str) -> None:
         self._user_conversations[user_id] = conversation_id
+        self._bump_session_version(user_id)
 
     def clear_conversation_id(self, user_id: str) -> None:
         self._user_conversations[user_id] = None
+        self._bump_session_version(user_id)
+
+    def session_version(self, user_id: str) -> int:
+        """Changes whenever the user's conversation is set or cleared, even to the value it already had.
+
+        A reply compares it before and after to tell whether a /new or /resume came in while it ran.
+        """
+        return self._session_versions.get(user_id, 0)
 
     def get_user_metadata(self, user_id: str) -> dict[str, Any]:
         return self._user_metadata.get(user_id, {})
@@ -67,6 +77,9 @@ class UserIdentityManager:
         if user_id is None:
             return None
         return self._user_conversations.get(user_id)
+
+    def _bump_session_version(self, user_id: str) -> None:
+        self._session_versions[user_id] = self._session_versions.get(user_id, 0) + 1
 
     def _generate_user_id(self) -> str:
         return f"usr_{uuid.uuid4().hex[:12]}"

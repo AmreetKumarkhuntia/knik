@@ -84,3 +84,17 @@ class TestUserIdentityManager:
         metadata = manager.get_user_metadata(identity.user_id)
 
         assert metadata == {"first_seen_at": message.timestamp, "sender_name": "Telegram User"}
+
+
+def test_session_version_changes_on_every_set_and_clear():
+    manager = UserIdentityManager()
+    user_id = manager.resolve(IncomingMessage(chat_id="c", text="hi", sender_id="s")).user_id
+    before = manager.session_version(user_id)
+
+    manager.clear_conversation_id(user_id)
+    after_clear = manager.session_version(user_id)
+    manager.set_conversation_id(user_id, "conv_1")
+
+    # Clearing an already empty session still counts: a /new is a choice a finishing reply must not undo.
+    assert before < after_clear < manager.session_version(user_id)
+    assert manager.session_version("someone_else") == 0

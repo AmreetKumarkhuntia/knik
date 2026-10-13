@@ -137,6 +137,50 @@ class TestStreamingResponseManager:
         assert result.message_ids == []
 
     @pytest.mark.asyncio
+    async def test_a_reply_the_transport_failed_to_send_is_not_reported_as_delivered(self, manager, transport):
+        transport.stream_failure = "Forbidden: bot was blocked by the user"
+
+        result = await _deliver(
+            manager,
+            [
+                ConversationReady("c1"),
+                TextDelta("hi"),
+                StreamDone(conversation_id="c1", usage={"total_tokens": 3}, full_response="hi"),
+            ],
+        )
+
+        assert result.send_errors == ["Forbidden: bot was blocked by the user"]
+        assert not result.delivered
+        assert result.message_ids == []
+        assert (result.error, result.conversation_id, result.response_text) == (None, "c1", "hi")
+
+    @pytest.mark.asyncio
+    async def test_a_tool_notice_the_transport_failed_to_send_is_recorded(self, manager, transport):
+        transport.send_failure = "Too Many Requests: retry after 5"
+
+        result = await _deliver(
+            manager,
+            [
+                ToolCallStarted("tool_a", "call_tool_a", {}),
+                ToolCallFinished("tool_a", "call_tool_a", "ok"),
+                TextDelta("done"),
+                StreamDone(conversation_id="c1", usage={}, full_response="done"),
+            ],
+        )
+
+        assert result.send_errors == ["Too Many Requests: retry after 5"] * 2
+        assert result.message_ids == ["stream_1"]
+        assert not result.delivered
+
+    @pytest.mark.asyncio
+    async def test_a_fully_sent_reply_is_delivered(self, manager):
+        result = await _deliver(
+            manager, [TextDelta("hi"), StreamDone(conversation_id="c1", usage={}, full_response="hi")]
+        )
+
+        assert (result.send_errors, result.delivered) == ([], True)
+
+    @pytest.mark.asyncio
     async def test_stream_error_is_sent_as_reply_text(self, manager, transport):
         result = await _deliver(
             manager,

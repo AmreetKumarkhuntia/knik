@@ -163,6 +163,17 @@ class TestBotConsentGate:
         assert gate.request_sync(REQ, timeout=0.2) == "no"
         assert not broker.has_pending("chat_1", "alice")
 
+    def test_a_prompt_the_transport_reports_unsent_is_denied_without_waiting(self, transport, loop, broker):
+        transport.send_failure = "Forbidden: bot was blocked by the user"
+        gate = _gate(transport, loop, broker, {"alice": "chat_1"})
+        added = []
+        add = broker.add
+        broker.add = lambda chat_id, user_id: added.append(chat_id) or add(chat_id, user_id)
+
+        assert gate.request_sync(REQ, timeout=0.2) == "no"
+        # Nobody saw the prompt, so the user's next message must not be taken as an answer to it.
+        assert added == []
+
     def test_an_answer_racing_the_timeout_wins(self, transport, loop, broker, monkeypatch):
         withdraw = broker.withdraw
 

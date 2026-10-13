@@ -78,9 +78,8 @@ def format_status(status: StatusInfo) -> CommandResult:
     else:
         breakdown_note = ""
 
-    total_note = " (since last compaction)" if status.had_summarization else ""
-    if status.has_estimates or status.has_partial_data:
-        total_note += ", estimated" if status.had_summarization else " (estimated)"
+    # The total covers the whole conversation, compacted turns included.
+    total_note = " (estimated)" if status.has_estimates or status.has_partial_data else ""
 
     message += (
         f"\n  Tokens:   {status.input_tokens:,} in / {status.output_tokens:,} out{breakdown_note}"
