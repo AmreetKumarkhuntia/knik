@@ -4,6 +4,8 @@ The approved design moves all application state into independent Zustand stores 
 
 ## Approved compact workspace redesign (2026-10-09)
 
+> **Superseded visuals (2026-10-13):** the palette, fonts and surface rules below are replaced by the Claude Design "Knik Redesign" identity. It uses warm graphite surfaces, a periwinkle accent, Figtree + DM Mono and Material Symbols Rounded, with glass panels, accent glow, a radial gradient shell and spring motion. Layout, store ownership, routes, behaviour and accessibility requirements in this section still apply, and the redesign was applied as a skin over the same widgets. Current values live in `src/apps/web/frontend/src/styles/tokens.css`.
+
 Use a fixed visual system with light/dark mode. Remove accent, density and radius preferences from settings, contracts and normalized appearance state. Keep all records, routes, demo response selection, save/cancel behavior and store ownership unchanged. Any nonblank chat message still sends locally regardless of reply availability.
 
 | Foundation     | Dark      | Light     |
