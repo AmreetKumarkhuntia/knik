@@ -187,7 +187,9 @@ Every `KNIK_SCHEDULER_CHECK_INTERVAL` seconds (60 by default) the worker's `Cron
    timezone, so `daily at 9am` stays at 9:00 local time across daylight-saving changes. A one-shot schedule is
    disabled by its claim.
 4. Starts the workflow in the background. At most `KNIK_SCHEDULER_MAX_CONCURRENT` scheduled runs (10 by
-   default) execute at once per worker; further due runs wait for a free slot.
+   default) execute at once per worker, and a worker claims an occurrence only when it has a free slot. While
+   all its slots are busy it leaves due schedules unclaimed, for another worker with a free slot or for its own
+   next poll after a run ends; occurrences that pass meanwhile are skipped as in step 3.
 
 A schedule re-enabled after its `next_run_at` has passed runs on the next poll, once, and then steps forward
 from there. While Postgres is unreachable the schedules pause (logged once) and resume when it is back.

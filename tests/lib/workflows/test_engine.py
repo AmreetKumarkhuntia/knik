@@ -1,4 +1,4 @@
-"""The workflow engine: how it builds AI clients (through an injected factory, or without tools) and records a cancelled run."""
+"""The workflow engine: how it builds AI clients (through an injected factory, or without tools) and records a cancelled or failed run."""
 
 import asyncio
 from types import SimpleNamespace
@@ -148,7 +148,8 @@ async def test_a_cancelled_run_is_recorded_as_failed_and_the_cancellation_propag
     assert no_database.complete_execution.await_args.kwargs["error_message"] == "cancelled"
 
 
-async def test_cancelling_again_does_not_lose_the_failure_record(no_database):
+def _slow_write(no_database) -> tuple[asyncio.Event, asyncio.Event, list]:
+    """complete_execution sets the first event and records its call once the second is set."""
     writing, finish_write = asyncio.Event(), asyncio.Event()
     recorded = []
 
@@ -158,14 +159,60 @@ async def test_cancelling_again_does_not_lose_the_failure_record(no_database):
         recorded.append((execution_id, fields["status"], fields["error_message"]))
 
     no_database.complete_execution.side_effect = complete_execution
+    return writing, finish_write, recorded
+
+
+async def test_cancelling_again_still_waits_for_the_failure_record(no_database):
+    writing, finish_write, recorded = _slow_write(no_database)
     run = await _cancel_while_running(no_database)
     await asyncio.wait_for(writing.wait(), timeout=5)
 
     run.cancel()
+    await asyncio.sleep(0.05)
+    assert not run.done()
+    finish_write.set()
     with pytest.raises(asyncio.CancelledError):
-        await run
+        await asyncio.wait_for(run, timeout=5)
+
+    assert recorded == [("exec-1", "failed", "cancelled")]
+
+
+async def test_a_further_cancellation_stops_waiting_and_the_record_still_lands(no_database):
+    writing, finish_write, recorded = _slow_write(no_database)
+    run = await _cancel_while_running(no_database)
+    await asyncio.wait_for(writing.wait(), timeout=5)
+
+    run.cancel()
+    await asyncio.sleep(0.01)
+    run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.wait_for(run, timeout=5)
     finish_write.set()
     for _ in range(10):
         await asyncio.sleep(0)
 
     assert recorded == [("exec-1", "failed", "cancelled")]
+
+
+FAILING_WORKFLOW = SimpleNamespace(
+    id="w1",
+    definition={
+        "nodes": {"boom": {"type": "FunctionExecutionNode", "code": "raise ValueError('boom')"}},
+        "connections": [],
+    },
+)
+
+
+async def test_a_run_cancelled_while_recording_a_node_failure_waits_for_the_record(no_database):
+    writing, finish_write, recorded = _slow_write(no_database)
+    run = asyncio.create_task(WorkflowEngine().execute_workflow(FAILING_WORKFLOW))
+    await asyncio.wait_for(writing.wait(), timeout=5)
+
+    run.cancel()  # what CronScheduler.stop() does, and then it waits for the run
+    await asyncio.sleep(0.05)
+    assert not run.done()
+    finish_write.set()
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.wait_for(run, timeout=5)
+
+    assert recorded == [("exec-1", "failed", "Node(s) failed: boom")]

@@ -194,26 +194,35 @@ class WorkflowEngine:
 
         except asyncio.CancelledError:
             try:
-                # Shielded: a second cancellation (the event loop shutting down) must not leave the run 'running'.
-                await asyncio.shield(
-                    ExecutionDB.complete_execution(
-                        execution_id,
-                        status="failed",
-                        error_message="cancelled",
-                        duration_ms=int((time.perf_counter() - workflow_start) * 1000),
-                    )
-                )
+                await self._record_failure(execution_id, "cancelled", workflow_start)
             except Exception as e:
                 logger.error(f"Could not record cancelled execution {execution_id}: {e}")
             raise
 
         except Exception as e:
-            await ExecutionDB.complete_execution(
+            await self._record_failure(execution_id, str(e), workflow_start)
+            raise
+
+    @staticmethod
+    async def _record_failure(execution_id: int, error_message: str, workflow_start: float) -> None:
+        """Complete the execution as failed, even when the run is cancelled during the write."""
+        write = asyncio.ensure_future(
+            ExecutionDB.complete_execution(
                 execution_id,
                 status="failed",
-                error_message=str(e),
+                error_message=error_message,
                 duration_ms=int((time.perf_counter() - workflow_start) * 1000),
             )
+        )
+        try:
+            await asyncio.shield(write)
+        except asyncio.CancelledError:
+            # CronScheduler.stop() cancels a run and then waits for it, before the worker closes the pool: the run ends
+            # only once its record is written. A further cancellation ends the wait, and the write carries on.
+            try:
+                await asyncio.shield(write)
+            except Exception as e:
+                logger.error(f"Could not record failed execution {execution_id}: {e}")
             raise
 
     @staticmethod

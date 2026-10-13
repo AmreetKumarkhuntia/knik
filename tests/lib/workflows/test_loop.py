@@ -1,6 +1,7 @@
 """The scheduler loop: polling through a database outage, recovering abandoned runs, and bounding its own runs."""
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -8,7 +9,7 @@ import psycopg
 import psycopg_pool
 import pytest
 
-from lib.services.db import DatabaseUnavailable
+from lib.services.db import DatabaseUnavailable, Schedule
 from lib.workflows import loop
 
 
@@ -111,20 +112,62 @@ class GatedEngine:
         self.finished += 1
 
 
+def _due_schedules(count: int) -> list[Schedule]:
+    due = datetime.now(UTC) - timedelta(seconds=1)
+    return [Schedule(id=i, target_workflow_id="w", next_run_at=due, recurrence_seconds=60) for i in range(1, count + 1)]
+
+
 @pytest.mark.asyncio
-async def test_scheduled_runs_wait_for_a_free_slot(monkeypatch):
+async def test_a_poll_claims_only_as_many_due_occurrences_as_there_are_free_slots(monkeypatch):
     monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "2")
     engine = GatedEngine()
     scheduler = loop.CronScheduler(engine)  # type: ignore[arg-type]
     monkeypatch.setattr(loop.WorkflowDB, "get_workflow", AsyncMock(return_value=SimpleNamespace(name="w")))
+    claim = AsyncMock(return_value=True)
+    monkeypatch.setattr(loop.ScheduleDB, "claim_due_run", claim)
+    schedules = _due_schedules(5)
 
-    runs = [asyncio.create_task(scheduler._trigger_workflow("w")) for _ in range(5)]
+    await scheduler._check_schedules(schedules)
     await asyncio.sleep(0.05)
+    assert [call.args[0] for call in claim.await_args_list] == [1, 2]
     assert engine.running == 2
 
+    # Both slots busy: the rest stay due, for this worker once a run ends or for a worker with a free slot.
+    await scheduler._check_schedules(schedules[2:])
+    assert claim.await_count == 2
+
     engine.release.set()
-    await asyncio.wait_for(asyncio.gather(*runs), timeout=5)
-    assert (engine.most_running, engine.finished) == (2, 5)
+    await asyncio.wait_for(asyncio.gather(*scheduler._runs), timeout=5)
+    await scheduler._check_schedules(schedules[2:])
+    await asyncio.wait_for(asyncio.gather(*scheduler._runs), timeout=5)
+    assert [call.args[0] for call in claim.await_args_list] == [1, 2, 3, 4]
+    assert (engine.most_running, engine.finished) == (2, 4)
+
+
+@pytest.mark.asyncio
+async def test_a_slot_is_freed_by_a_lost_or_failed_claim_and_by_a_run_cancelled_before_it_starts(monkeypatch):
+    monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "1")
+    engine = GatedEngine()
+    scheduler = loop.CronScheduler(engine)  # type: ignore[arg-type]
+    monkeypatch.setattr(loop.WorkflowDB, "get_workflow", AsyncMock(return_value=SimpleNamespace(name="w")))
+    claim = AsyncMock(side_effect=[None, RuntimeError("claim failed"), True, True])
+    monkeypatch.setattr(loop.ScheduleDB, "claim_due_run", claim)
+
+    with patch.object(loop, "logger", MagicMock()):
+        await scheduler._check_schedules(_due_schedules(3))
+    [run] = scheduler._runs
+    assert claim.await_count == 3
+
+    run.cancel()  # before its first step, as stop() does to a run started by the poll it waited for
+    await asyncio.gather(run, return_exceptions=True)
+    assert not scheduler._runs
+    assert engine.running == 0
+
+    await scheduler._check_schedules(_due_schedules(1))
+    assert claim.await_count == 4
+    [run] = scheduler._runs
+    run.cancel()
+    await asyncio.gather(run, return_exceptions=True)
 
 
 @pytest.mark.asyncio
