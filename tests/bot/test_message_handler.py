@@ -1,17 +1,22 @@
 """Tests for BotMessageHandler."""
 
 import asyncio
-from concurrent.futures import Future
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bot.consent import PendingConsents
+from bot.commands import create_command_system
+from bot.consent import BotConsentGate, ConsentBroker
 from bot.message_handler import BotMessageHandler
 from bot.streaming import DeliveryResult, StreamingResponseManager
+from bot.user_client_manager import UserClientManager
+from bot.user_identity import UserIdentityManager
 from lib.commands.models import CommandResult
+from lib.commands.service import CommandService
 from lib.services.telegram.models import IncomingMessage
+from lib.tools.consent import ConsentRequest
+from tests.lib.commands import fakes
 
 
 def _make_msg(chat_id, text, sender_id="user_1", sender_name="User", message_id="msg_1"):
@@ -34,10 +39,10 @@ def mock_config():
 
 
 @pytest.fixture
-def mock_command_service():
-    service = MagicMock()
-    service.ai_client = MagicMock()
-    return service
+def mock_user_clients():
+    manager = MagicMock()
+    manager.get_or_create = AsyncMock(return_value=MagicMock(name="user_client"))
+    return manager
 
 
 @pytest.fixture
@@ -45,7 +50,13 @@ def mock_user_identity():
     manager = MagicMock()
     manager.resolve = MagicMock(return_value=MagicMock(user_id="user_abc", is_new=False, conversation_id=None))
     manager.set_conversation_id = MagicMock()
+    manager.get_user_id_for_sender = MagicMock(side_effect=lambda sender: f"usr_{sender}" if sender else None)
     return manager
+
+
+@pytest.fixture
+def broker():
+    return ConsentBroker()
 
 
 @pytest.fixture
@@ -63,13 +74,14 @@ def mock_streaming():
 
 
 @pytest.fixture
-def handler(mock_command_service, transport, mock_user_identity, mock_streaming, mock_config):
+def handler(transport, mock_user_identity, mock_streaming, mock_config, mock_user_clients, broker):
     return BotMessageHandler(
-        command_service=mock_command_service,
         transport=transport,
         user_identity=mock_user_identity,
         streaming_manager=mock_streaming,
         config=mock_config,
+        user_client_manager=mock_user_clients,
+        consent_broker=broker,
     )
 
 
@@ -208,23 +220,20 @@ class TestBotMessageHandler:
         handler._user_identity.resolve.assert_called_once_with(incoming)
         handler._streaming.deliver.assert_called_once_with(
             chat_id="chat_456",
-            ai_client=handler._command_service.ai_client,
+            ai_client=handler._user_client_manager.get_or_create.return_value,
             prompt="What is AI?",
             conversation_id=None,
         )
         handler._user_identity.set_conversation_id.assert_called_once_with("user_abc", "conv_789")
         assert handler.get_active_count() == 0
 
-    async def test_user_client_manager_gets_chat_context(self, handler, incoming_message):
-        manager = MagicMock()
-        manager.get_or_create = AsyncMock(return_value=MagicMock())
-        handler._user_client_manager = manager
-
+    async def test_user_client_manager_gets_chat_context(self, handler, incoming_message, mock_user_clients):
         await handler.handle(incoming_message)
         await asyncio.sleep(0.1)
 
-        manager.set_chat_context.assert_called_once_with("user_abc", "chat_456")
-        assert handler._streaming.deliver.call_args.kwargs["ai_client"] is manager.get_or_create.return_value
+        mock_user_clients.set_chat_context.assert_called_once_with("user_abc", "chat_456")
+        mock_user_clients.get_or_create.assert_awaited_once_with("user_abc")
+        assert handler._streaming.deliver.call_args.kwargs["ai_client"] is mock_user_clients.get_or_create.return_value
 
     async def test_command_reply_is_sent_without_reaching_the_ai(self, handler, transport):
         dispatcher = MagicMock()
@@ -236,22 +245,27 @@ class TestBotMessageHandler:
         assert [(m.chat_id, m.text) for m in transport.messages] == [("chat_1", "Status: ok")]
         handler._streaming.deliver.assert_not_called()
 
+    async def test_command_results_are_only_sent(self, handler, transport, mock_user_clients):
+        # The old side channels: the handler used to patch the user's client from these keys.
+        data = {"new_model": "m", "new_provider": "p", "revoke_consent": True}
+        dispatcher = MagicMock()
+        dispatcher.try_dispatch = AsyncMock(return_value=CommandResult(success=True, message="ok", data=data))
+        handler._command_dispatcher = dispatcher
+
+        await handler.handle(_make_msg("chat_1", "/new"))
+
+        assert mock_user_clients.method_calls == []
+        assert [m.text for m in transport.messages] == ["ok"]
+
 
 @pytest.mark.asyncio
 class TestConsentReplies:
-    @pytest.fixture(autouse=True)
-    def _clear_pending(self):
-        PendingConsents._pending.clear()
-        yield
-        PendingConsents._pending.clear()
-
     @pytest.mark.parametrize(
         ("reply", "expected", "confirmation"),
         [("ya", "yes_all", "Approved all."), ("Y", "yes", "Approved."), ("nope", "no", "Denied.")],
     )
-    async def test_reply_resolves_pending_consent(self, handler, transport, reply, expected, confirmation):
-        future: Future[str] = Future()
-        PendingConsents.add("chat_1", future)
+    async def test_reply_resolves_pending_consent(self, handler, transport, broker, reply, expected, confirmation):
+        future = broker.add("chat_1", "usr_user_1")
 
         await handler.handle(_make_msg("chat_1", reply, message_id="m9"))
 
@@ -259,3 +273,82 @@ class TestConsentReplies:
         assert transport.messages[-1].text == confirmation
         assert transport.messages[-1].kwargs == {"reply_to_message_id": "m9"}
         handler._streaming.deliver.assert_not_called()
+
+    async def test_another_users_message_in_the_chat_is_not_an_answer(self, handler, broker):
+        future = broker.add("group", "usr_user_1")
+
+        await handler.handle(_make_msg("group", "yes", sender_id="user_2"))
+        await asyncio.sleep(0.1)
+
+        assert not future.done()
+        assert broker.has_pending("group", "usr_user_1")
+        handler._streaming.deliver.assert_awaited_once()
+
+    async def test_the_users_message_in_another_chat_is_not_an_answer(self, handler, broker):
+        future = broker.add("dm", "usr_user_1")
+
+        await handler.handle(_make_msg("group", "yes"))
+        await asyncio.sleep(0.1)
+
+        assert not future.done()
+        handler._streaming.deliver.assert_awaited_once()
+
+    async def test_after_a_timed_out_prompt_the_next_message_reaches_the_ai(self, handler, transport, broker):
+        gate = BotConsentGate(
+            user_id="usr_user_1",
+            current_chat=lambda: "chat_1",
+            transport=transport,
+            loop=asyncio.get_running_loop(),
+            broker=broker,
+        )
+        request = ConsentRequest(tool_name="shell", kwargs={"command": "ls"})
+
+        assert await asyncio.to_thread(gate.request_sync, request, 0.1) == "no"
+        await handler.handle(_make_msg("chat_1", "what about now?"))
+        await asyncio.sleep(0.1)
+
+        assert [m.text for m in transport.messages] == ["Allow shell(command='ls')? Reply yes (y) / yes all (ya) / no"]
+        assert handler._streaming.deliver.call_args.kwargs["prompt"] == "what about now?"
+
+
+@pytest.mark.asyncio
+async def test_model_and_provider_commands_change_the_senders_own_client(
+    transport, mock_streaming, mock_config, broker, monkeypatch
+):
+    """End to end from Telegram text to the client the sender's next message is answered with."""
+    built: list[fakes.FakeClient] = []
+
+    def build_client(settings, tool_registry=None):
+        built.append(fakes.FakeClient())
+        return built[-1]
+
+    monkeypatch.setattr("bot.user_client_manager.build_client", build_client)
+    monkeypatch.setattr("bot.user_client_manager.create_tool_registry", lambda consent_gate=None: None)
+    monkeypatch.setattr("lib.commands.service.ProviderRegistry", fakes.FakeProviderRegistry)
+
+    identity = UserIdentityManager()
+    user_clients = UserClientManager(ai_provider="mock", transport=transport, loop=asyncio.get_running_loop())
+    service = CommandService(client_resolver=user_clients.get_or_create, user_identity=identity)
+    _, dispatcher = create_command_system(service, user_clients)
+    handler = BotMessageHandler(
+        transport=transport,
+        user_identity=identity,
+        streaming_manager=mock_streaming,
+        config=mock_config,
+        user_client_manager=user_clients,
+        consent_broker=broker,
+        command_dispatcher=dispatcher,
+    )
+
+    await handler.handle(_make_msg("chat_1", "/model gemini-2.5-pro", sender_id="alice"))
+    await handler.handle(_make_msg("chat_1", "/provider vertex", sender_id="alice"))
+    await handler.handle(_make_msg("chat_2", "hello", sender_id="alice"))
+    await handler.handle(_make_msg("chat_3", "hello", sender_id="bob"))
+    await asyncio.sleep(0.1)
+
+    assert [m.text for m in transport.messages] == ["Model switched to gemini-2.5-pro", "Provider switched to vertex"]
+    alice, bob = built
+    assert (alice.model, alice.provider_name) == ("gemini-2.5-pro", "vertex")
+    assert (bob.model, bob.provider_name) == ("gemini-2.5-flash", "mock")
+    clients_used = {c.kwargs["chat_id"]: c.kwargs["ai_client"] for c in mock_streaming.deliver.call_args_list}
+    assert clients_used == {"chat_2": alice, "chat_3": bob}

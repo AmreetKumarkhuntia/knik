@@ -62,16 +62,17 @@ async def _list_workflows() -> str:
 
 async def _run_workflow(app, workflow_id: str, inputs: dict) -> str:
     """Execute a workflow by ID with optional inputs."""
-    from imports import Scheduler
+    from imports import Scheduler, build_workflow_client
 
     try:
-        scheduler = Scheduler()
+        scheduler = Scheduler(ai_client_factory=build_workflow_client)
         logger.info(f"Running workflow manually: {workflow_id} with inputs: {inputs}")
 
-        result = await scheduler.execute_workflow(workflow_id, inputs)
+        result = await scheduler.run(workflow_id, inputs)
 
         return f"Workflow {workflow_id} completed successfully.\nResult: {json.dumps(result, indent=2)}"
     except ValueError as e:
+        # NotFoundError for an unknown id, or the engine rejecting the definition.
         return f"Workflow error: {e}"
     except Exception as e:
         logger.error(f"Error running workflow: {e}")

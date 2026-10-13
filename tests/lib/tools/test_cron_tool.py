@@ -5,9 +5,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lib.services.ai_client.base_tool import BaseTool
 from lib.tools import cron_tool as _cron_tool_mod
 from lib.tools.cron_tool import CronTool
+from lib.workflows import schedule_service
+from lib.workflows.errors import ValidationError
 
 
 # ---------------------------------------------------------------------------
@@ -32,12 +33,6 @@ def _make_schedule(
     s.recurrence_seconds = recurrence_seconds
     s.enabled = enabled
     return s
-
-
-@pytest.fixture(autouse=True)
-def _clear_base_tool_instances(monkeypatch):
-    """Reset BaseTool._instances for each test so tests don't leak."""
-    monkeypatch.setattr(BaseTool, "_instances", [])
 
 
 @pytest.fixture(autouse=True)
@@ -215,6 +210,38 @@ class TestAddCronSchedule:
         assert "invalid schedule description" in result["error"]
         assert "details" in result
         assert result["details"] == "An unexpected error occurred"
+
+    @patch("lib.tools.cron_tool.run_async")
+    def test_rejected_input_returns_the_services_error_dict(self, mock_run_async, cron_tool):
+        """A ValidationError reaches the model as its own dict, not wrapped as an unexpected failure."""
+        mock_run_async.side_effect = ValidationError("Invalid schedule description: nope", hint="Try 'hourly'")
+
+        result = cron_tool._add_cron_schedule("wf-1", "nope")
+
+        assert result == {"error": "Invalid schedule description: nope", "hint": "Try 'hourly'"}
+
+    @pytest.mark.parametrize(
+        ("args", "expected"),
+        [
+            (("", "daily at 9am"), {"error": "target_workflow_id is required"}),
+            (("wf-1", ""), {"error": "schedule_description is required"}),
+        ],
+    )
+    def test_with_the_real_service_bad_input_gives_the_same_dict_as_before(
+        self, monkeypatch, cron_tool, args, expected
+    ):
+        """End to end through schedule_service (these checks need no database)."""
+        monkeypatch.setattr(_cron_tool_mod, "schedule_service", schedule_service)
+
+        assert cron_tool._add_cron_schedule(*args) == expected
+
+    def test_with_the_real_service_an_unparseable_description_keeps_its_hint(self, monkeypatch, cron_tool):
+        monkeypatch.setattr(_cron_tool_mod, "schedule_service", schedule_service)
+
+        result = cron_tool._add_cron_schedule("wf-1", "whenever you like")
+
+        assert list(result) == ["error", "hint"]
+        assert result["error"].startswith("Invalid schedule description")
 
 
 # ===========================================================================

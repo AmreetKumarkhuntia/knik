@@ -13,7 +13,7 @@
 4. **`src/` is the import root:** `python src/main.py` puts it on `sys.path`; run `python -m backend.main` from inside `src/`; pytest gets it from `pythonpath` in `pyproject.toml`. Never add `sys.path.insert` (CI rejects it)
 5. **Config classes:** Each app has a Config class reading from env vars with defaults
 6. **Import hub is for apps only:** apps import through `imports.py`; `lib/` code imports `lib.*` directly and never imports `imports.py` or an app
-7. **Dynamic switching:** `/provider` and `/model` commands recreate AIClient to apply changes while preserving registered tools and system instructions
+7. **Dynamic switching:** `/provider` and `/model` swap the provider inside the caller's own `AIClient` (`set_provider`/`set_model`), keeping its registered tools and system instruction
 8. **AI methods:** Use `chat()` and `chat_stream()` (not `query()` / `query_stream()`)
 
 ## Common Pitfalls
@@ -22,7 +22,7 @@
 - **Mock provider confusion:** AIClient auto-switches to mock if real provider unconfigured (check logs)
 - **Import errors:** Launch with `python src/main.py --mode ...` from the repo root, or `cd src` before `python -m backend.main`
 - **Blocking on TTS:** Always check `is_processing_complete()` or you'll exit before audio plays
-- **Tool registration:** Create an `MCPServerRegistry`, call `register_all_tools(registry)`, and pass it to `AIClient(mcp_registry=...)` before AI can use tools
+- **Tool registration:** Build the registry with `create_tool_registry()` and pass it to `build_client(settings, tool_registry=...)` before AI can use tools
 - **Web app startup:** Use `start:web:backend` + `start:web:frontend` separately (no combined `start:web` script)
 - **Ports:** Backend runs on 8010 (`KNIK_WEB_PORT`), the frontend dev server on 8020 (not Vite's default 5173)
 - **Schedules need the worker:** Schedules only fire while `npm run start:worker` (or `--mode worker`) is running

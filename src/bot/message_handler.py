@@ -5,40 +5,42 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from imports import printer
-
-from .consent import PendingConsents
+from imports import parse_consent_reply, printer
 
 
 if TYPE_CHECKING:
-    from imports import CommandService, IncomingMessage
+    from imports import IncomingMessage
 
     from .commands.registry import BotCommandDispatcher
     from .config import BotConfig
+    from .consent import ConsentBroker
     from .streaming import StreamingResponseManager
     from .transport import MessagingTransport
     from .user_client_manager import UserClientManager
     from .user_identity import UserIdentityManager
 
 
+CONSENT_CONFIRMATIONS = {"yes": "Approved.", "yes_all": "Approved all.", "no": "Denied."}
+
+
 class BotMessageHandler:
     def __init__(
         self,
-        command_service: CommandService,
         transport: MessagingTransport,
         user_identity: UserIdentityManager,
         streaming_manager: StreamingResponseManager,
         config: BotConfig,
+        user_client_manager: UserClientManager,
+        consent_broker: ConsentBroker,
         command_dispatcher: BotCommandDispatcher | None = None,
-        user_client_manager: UserClientManager | None = None,
     ) -> None:
-        self._command_service = command_service
         self._transport = transport
         self._user_identity = user_identity
         self._streaming = streaming_manager
         self._config = config
-        self._command_dispatcher = command_dispatcher
         self._user_client_manager = user_client_manager
+        self._consent = consent_broker
+        self._command_dispatcher = command_dispatcher
 
         # One in-flight reply per chat, keyed by chat id.
         self._active_tasks: dict[str, asyncio.Task] = {}
@@ -47,25 +49,7 @@ class BotMessageHandler:
     async def handle(self, incoming: IncomingMessage) -> None:
         chat_id = incoming.chat_id
 
-        if PendingConsents.has_pending(chat_id):
-            text = (incoming.text or "").strip().lower()
-            if text in ("yes all", "ya"):
-                response = "yes_all"
-            elif text in ("yes", "y"):
-                response = "yes"
-            else:
-                response = "no"
-            printer.info(f"Consent reply from {chat_id}: {text!r} -> {response}")
-            PendingConsents.resolve(chat_id, response)
-            confirm = {"yes": "Approved.", "yes_all": "Approved all.", "no": "Denied."}
-            try:
-                await self._transport.send_message(
-                    chat_id=chat_id,
-                    text=confirm.get(response, "Denied."),
-                    reply_to_message_id=incoming.message_id,
-                )
-            except Exception:
-                printer.warning(f"Failed to send consent confirmation to {chat_id}")
+        if await self._answer_consent(incoming):
             return
 
         printer.info(f"Received message: {incoming.text}")
@@ -74,19 +58,6 @@ class BotMessageHandler:
             try:
                 result = await self._command_dispatcher.try_dispatch(incoming, self._user_identity)
                 if result is not None:
-                    identity = self._user_identity.resolve(incoming)
-                    if self._user_client_manager is not None:
-                        user_client = self._user_client_manager.get(identity.user_id)
-                        if user_client:
-                            if "new_model" in result.data:
-                                user_client.set_model(result.data["new_model"])
-                            if "new_provider" in result.data:
-                                user_client.set_provider(result.data["new_provider"])
-                    _cmd = incoming.text.split()[0].lstrip("/").split("@")[0].lower()
-                    if _cmd in ("new", "start") and self._user_client_manager is not None:
-                        self._user_client_manager.cleanup_tools(identity.user_id)
-                    if result.data.get("revoke_consent") and self._user_client_manager is not None:
-                        self._user_client_manager.revoke_tool_consent(identity.user_id)
                     await self._transport.send_message(chat_id=chat_id, text=result.message)
                     return
             except Exception as e:
@@ -140,11 +111,8 @@ class BotMessageHandler:
         try:
             identity = self._user_identity.resolve(incoming)
 
-            if self._user_client_manager is not None:
-                self._user_client_manager.set_chat_context(identity.user_id, chat_id)
-                ai_client = await self._user_client_manager.get_or_create(identity.user_id)
-            else:
-                ai_client = self._command_service.ai_client
+            self._user_client_manager.set_chat_context(identity.user_id, chat_id)
+            ai_client = await self._user_client_manager.get_or_create(identity.user_id)
 
             result = await self._streaming.deliver(
                 chat_id=chat_id,
@@ -174,6 +142,33 @@ class BotMessageHandler:
                 await self._send_error_message(incoming, str(e))
             except Exception as inner_e:
                 printer.error(f"Failed to send error message to chat {chat_id}: {inner_e}")
+
+    async def _answer_consent(self, incoming: IncomingMessage) -> bool:
+        """True when the message answered a consent prompt its sender has open in this chat, which uses it up.
+
+        Anything that is not a yes or yes-all counts as a denial.
+        """
+        chat_id = incoming.chat_id
+        user_id = self._user_identity.get_user_id_for_sender(incoming.sender_id)
+        if user_id is None or not self._consent.has_pending(chat_id, user_id):
+            return False
+
+        text = (incoming.text or "").strip().lower()
+        response = parse_consent_reply(text) or "no"
+        printer.info(f"Consent reply from {chat_id}: {text!r} -> {response}")
+        if not self._consent.resolve(chat_id, user_id, response):
+            # The prompt timed out just now, so this is an ordinary message after all.
+            return False
+
+        try:
+            await self._transport.send_message(
+                chat_id=chat_id,
+                text=CONSENT_CONFIRMATIONS[response],
+                reply_to_message_id=incoming.message_id,
+            )
+        except Exception:
+            printer.warning(f"Failed to send consent confirmation to {chat_id}")
+        return True
 
     def _cleanup_callback(self, chat_id: str, task: asyncio.Task) -> None:
         if task.cancelled():

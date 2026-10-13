@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lib.services.ai_client.base_tool import BaseTool
 from lib.tools import utils_tool as _utils_tool_mod
 from lib.tools.utils_tool import UtilsTool
 
@@ -13,12 +12,6 @@ from lib.tools.utils_tool import UtilsTool
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(autouse=True)
-def _clear_base_tool_instances(monkeypatch):
-    """Reset BaseTool._instances for each test so tests don't leak."""
-    monkeypatch.setattr(BaseTool, "_instances", [])
 
 
 @pytest.fixture

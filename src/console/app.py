@@ -18,7 +18,7 @@ except ImportError:
     from console.identity import ConsoleIdentity
     from console.processor import ConsoleProcessor
 
-from imports import BaseTool, CommandService, MCPServerRegistry, register_all_tools
+from imports import ClientSettings, CommandService, build_client, cleanup_all_tools, create_tool_registry
 
 
 try:
@@ -60,32 +60,33 @@ class ConsoleApp:
     def _initialize_ai_client(self):
         from console.tools.consent_gate import ConsoleConsentGate
 
-        self.mcp_registry = MCPServerRegistry()
-        tools_registered = register_all_tools(self.mcp_registry)
+        self.tool_registry = create_tool_registry(consent_gate=ConsoleConsentGate())
+        tools_registered = len(self.tool_registry.get_tools())
         if tools_registered > 0:
             printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
-        self.mcp_registry.set_consent_gate(ConsoleConsentGate())
-
-        self.ai_client = AIClient(
+        settings = ClientSettings(
             provider=self.config.ai_provider,
-            mcp_registry=self.mcp_registry,
+            model=self.config.ai_model,
             system_instruction=self.config.system_instruction,
             project_id=self.config.ai_project_id,
             location=self.config.ai_location,
-            model_name=self.config.ai_model,
         )
+        self.ai_client = build_client(settings, tool_registry=self.tool_registry)
 
     def _initialize_command_service(self):
         self._console_identity = ConsoleIdentity()
         self.command_service = CommandService(
-            ai_client=self.ai_client,
-            user_identity=self._console_identity,
-            mcp_registry=self.mcp_registry,
-            system_instruction=self.config.system_instruction,
+            client_resolver=self._resolve_client, user_identity=self._console_identity
         )
         _registry, self._command_dispatcher = create_command_system(self.command_service)
         printer.info(f"✓ Registered {len(_registry.list_commands())} shared commands")
+
+    async def _resolve_client(self, user_id: str) -> AIClient:
+        # The console has one user and one client; looked up per command so a replaced client is followed.
+        if self.ai_client is None:
+            raise RuntimeError("AI client is not initialized")
+        return self.ai_client
 
     def _initialize_tts_processor(self):
         self.tts_processor = TTSAsyncProcessor(
@@ -148,8 +149,6 @@ class ConsoleApp:
             # Try shared command dispatcher first (model, provider, sessions, etc.)
             result = self._command_dispatcher.try_dispatch(user_input)
             if result is not None:
-                if result.data.get("revoke_consent"):
-                    self.mcp_registry.revoke_allowed_tools()
                 print(f"{self.config.assistant_symbol}{result.message}\n")
                 return
 
@@ -275,7 +274,7 @@ class ConsoleApp:
 
     def _shutdown(self):
         printer.info("Shutting down console application...")
-        BaseTool.cleanup_all()
+        cleanup_all_tools()
         printer.success("Thanks for using Knik Console! 👋")
 
 

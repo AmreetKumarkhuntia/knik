@@ -1,13 +1,15 @@
 """Tests for WorkflowTool: workflow creation, listing, removal, and templates."""
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from lib.services.ai_client.base_tool import BaseTool
 from lib.tools import workflow_tool as _workflow_tool_mod
 from lib.tools.workflow_tool import WorkflowTool
+from lib.workflows import workflow_service
+from lib.workflows.errors import NotFoundError, ValidationError
 
 
 # ---------------------------------------------------------------------------
@@ -28,12 +30,6 @@ def _make_workflow(id="wf-1", name="Test Workflow", description="desc", created_
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(autouse=True)
-def _clear_base_tool_instances(monkeypatch):
-    """Reset BaseTool._instances for each test so tests don't leak."""
-    monkeypatch.setattr(BaseTool, "_instances", [])
 
 
 @pytest.fixture(autouse=True)
@@ -132,6 +128,28 @@ class TestCreateWorkflow:
         assert result["success"] is True
         call_args = _workflow_tool_mod.workflow_service.create_workflow.call_args
         assert call_args[0][1] == definition
+
+    @patch("lib.tools.workflow_tool.run_async")
+    def test_invalid_definition_returns_the_services_error_dict(self, mock_run_async, workflow_tool):
+        """A ValidationError reaches the model as its own dict, not wrapped as an unexpected failure."""
+        mock_run_async.side_effect = ValidationError("Invalid workflow definition: no", details={"node_id": "a"})
+
+        result = workflow_tool._create_workflow("Bad", {"nodes": {}, "connections": []})
+
+        assert result == {"error": "Invalid workflow definition: no", "details": {"node_id": "a"}}
+
+    def test_with_the_real_service_an_invalid_definition_gives_the_same_dict_as_before(
+        self, monkeypatch, workflow_tool
+    ):
+        """End to end through workflow_service (validation needs no database)."""
+        monkeypatch.setattr(_workflow_tool_mod, "workflow_service", workflow_service)
+
+        result = workflow_tool._create_workflow("Bad", {"nodes": {}})
+
+        assert result == {
+            "error": "Invalid workflow definition: Definition must contain 'connections' key",
+            "details": None,
+        }
 
 
 # ===========================================================================
@@ -255,6 +273,23 @@ class TestRemoveWorkflow:
         _workflow_tool_mod.workflow_service.delete_workflow.assert_called_once_with(
             "workflow_abc123def456", cascade=True
         )
+
+    @patch("lib.tools.workflow_tool.run_async")
+    def test_unknown_workflow_returns_the_services_error_dict(self, mock_run_async, workflow_tool):
+        """A NotFoundError reaches the model as its own dict, not wrapped as an unexpected failure."""
+        mock_run_async.side_effect = NotFoundError("Workflow wf-gone not found", workflow_id="wf-gone")
+
+        result = workflow_tool._remove_workflow("wf-gone")
+
+        assert result == {"error": "Workflow wf-gone not found", "workflow_id": "wf-gone"}
+
+    def test_with_the_real_service_an_unknown_workflow_gives_the_same_dict_as_before(self, monkeypatch, workflow_tool):
+        monkeypatch.setattr(_workflow_tool_mod, "workflow_service", workflow_service)
+        monkeypatch.setattr(workflow_service, "WorkflowDB", SimpleNamespace(get_workflow=AsyncMock(return_value=None)))
+
+        result = workflow_tool._remove_workflow("wf-gone")
+
+        assert result == {"error": "Workflow wf-gone not found", "workflow_id": "wf-gone"}
 
 
 # ===========================================================================

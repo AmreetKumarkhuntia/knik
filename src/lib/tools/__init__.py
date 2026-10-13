@@ -1,4 +1,5 @@
-from .index import get_all_tools, get_tool_info, register_all_tools
+"""Tools the AI can call: tool groups, the registry that binds them for one client, and consent.
 
-
-__all__ = ["register_all_tools", "get_all_tools", "get_tool_info"]
+Import submodules directly (``from lib.tools.index import create_tool_registry``). The package
+does not re-export them, so importing the registry never loads every tool group.
+"""

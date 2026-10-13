@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING, Any
 
 from ....utils import printer
 from ..registry import ProviderRegistry
+from ..stream_events import TextDelta
 from .base_provider import BaseAIProvider, ChatResult
 
 
 if TYPE_CHECKING:
-    from ..registry import MCPServerRegistry
+    from ..tool_provider import ToolProvider
 
 
 class MockAIProvider(BaseAIProvider):
@@ -18,9 +19,9 @@ class MockAIProvider(BaseAIProvider):
     def get_provider_name(cls) -> str:
         return "mock"
 
-    def __init__(self, mcp_registry: "MCPServerRegistry" = None, system_instruction: str | None = None):
+    def __init__(self, tool_registry: "ToolProvider | None" = None, system_instruction: str | None = None):
         """Initialize the mock provider with canned responses."""
-        self.mcp_registry = mcp_registry
+        self.tool_registry = tool_registry
         self.system_instruction = system_instruction
         self.last_usage: dict[str, int] | None = None
         self._responses = [
@@ -38,7 +39,7 @@ class MockAIProvider(BaseAIProvider):
         self.last_usage = {"input_tokens": 10, "output_tokens": 15, "total_tokens": 25}
         return ChatResult(content=response, usage=self.last_usage)
 
-    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
+    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[TextDelta, None, None]:
         response = self._responses[self._index % len(self._responses)]
         self._index += 1
         printer.debug(f"[MOCK] Streaming Chat: {prompt[:60]}...")
@@ -46,7 +47,7 @@ class MockAIProvider(BaseAIProvider):
         words = response.split()
         for word in words:
             time.sleep(0.05)
-            yield word + " "
+            yield TextDelta(word + " ")
 
         self.last_usage = {"input_tokens": 10, "output_tokens": len(words), "total_tokens": 10 + len(words)}
         printer.debug("[MOCK] Streaming complete")

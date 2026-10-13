@@ -7,6 +7,8 @@ import contextlib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from imports import ConversationReady, StreamDone, StreamError, TextDelta, ToolCallFinished, ToolCallStarted
+
 
 if TYPE_CHECKING:
     from imports import AIClient
@@ -78,35 +80,32 @@ class StreamingResponseManager:
             return [result.message_id] if result.message_id else []
 
         try:
-            async for chunk in ai_client.achat_stream(prompt=prompt, conversation_id=conversation_id):
-                if isinstance(chunk, dict):
-                    if "__conversation_id__" in chunk:
-                        captured_conv_id = chunk["__conversation_id__"]
-                    elif chunk.get("__done__"):
-                        captured_conv_id = chunk.get("conversation_id", captured_conv_id)
-                        captured_usage = chunk.get("usage")
-                        captured_text = chunk.get("full_response", "")
-                    elif chunk.get("__tool_call_start__"):
+            async for event in ai_client.achat_stream(prompt=prompt, conversation_id=conversation_id):
+                match event:
+                    case ConversationReady(conversation_id=conv_id):
+                        captured_conv_id = conv_id
+                    case StreamDone():
+                        captured_conv_id = event.conversation_id
+                        captured_usage = event.usage
+                        captured_text = event.full_response
+                    case ToolCallStarted(tool_name=tool_name, tool_args=args):
                         all_message_ids.extend(await _finish_segment())
-                        tool_name = chunk.get("tool_name", "tool")
-                        args = chunk.get("tool_args", {})
                         args_preview = ", ".join(f"{k}={repr(v)[:40]}" for k, v in args.items())
                         all_message_ids.extend(
                             await _send_notification(f"\U0001f527 Calling {tool_name}({args_preview})...")
                         )
-                    elif chunk.get("__tool_call_end__"):
-                        tool_name = chunk.get("tool_name", "tool")
-                        result_preview = chunk.get("tool_result_preview", "")
+                    case ToolCallFinished(tool_name=tool_name, result_preview=result_preview):
                         if result_preview:
                             all_message_ids.extend(await _send_notification(f"\u2713 {tool_name} completed"))
                         else:
                             all_message_ids.extend(
                                 await _send_notification(f"\u2713 {tool_name} completed (no output)")
                             )
-                else:
-                    if segment_queue is None:
-                        await _start_segment()
-                    await segment_queue.put(chunk)
+                    # A provider failure reads as reply text ("Chat streaming error: ..."), as it always has.
+                    case TextDelta(text=text) | StreamError(message=text):
+                        if segment_queue is None:
+                            await _start_segment()
+                        await segment_queue.put(text)
 
             all_message_ids.extend(await _finish_segment())
 

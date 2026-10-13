@@ -1,7 +1,8 @@
 from typing import Any
 
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 from lib.workflows import schedule_service
+from lib.workflows.errors import WorkflowError
 
 
 CRON_DEFINITIONS = [
@@ -106,6 +107,8 @@ class CronTool(BaseTool):
         try:
             result = run_async(schedule_service.create_schedule(target_workflow_id, schedule_description, timezone))
             return result
+        except WorkflowError as e:
+            return e.to_dict()
         except Exception as e:
             printer.error(f"Error adding cron schedule: {e}")
             return {"error": f"Failed to add schedule: {str(e)}", "details": "An unexpected error occurred"}

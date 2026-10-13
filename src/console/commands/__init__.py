@@ -1,34 +1,23 @@
-"""Console command system - registry, dispatcher, and handler registration."""
+"""Console command system: the shared commands plus the console's /help."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .handlers import (
-    handle_help,
-    handle_model,
-    handle_new,
-    handle_provider,
-    handle_resume,
-    handle_sessions,
-    handle_status,
-)
-from .registry import ConsoleCommandDispatcher, ConsoleCommandRegistry
+from imports import CommandRegistry, register_shared_commands
+
+from .handlers import handle_help
+from .registry import ConsoleCommandDispatcher
 
 
 if TYPE_CHECKING:
     from imports import CommandService
 
 
-def create_command_system(command_service: CommandService) -> tuple[ConsoleCommandRegistry, ConsoleCommandDispatcher]:
-    registry = ConsoleCommandRegistry()
+def create_command_system(command_service: CommandService) -> tuple[CommandRegistry, ConsoleCommandDispatcher]:
+    registry = CommandRegistry()
 
-    registry.register("new", "Start a fresh conversation", handle_new)
-    registry.register("resume", "Resume a previous conversation", handle_resume)
-    registry.register("sessions", "List recent conversations", handle_sessions)
-    registry.register("model", "Show or switch AI model", handle_model)
-    registry.register("provider", "Show or switch AI provider", handle_provider)
-    registry.register("status", "Show current configuration", handle_status)
+    register_shared_commands(registry)
     registry.register("help", "Show available commands", handle_help)
 
     dispatcher = ConsoleCommandDispatcher(registry, command_service)
@@ -37,6 +26,5 @@ def create_command_system(command_service: CommandService) -> tuple[ConsoleComma
 
 __all__ = [
     "ConsoleCommandDispatcher",
-    "ConsoleCommandRegistry",
     "create_command_system",
 ]

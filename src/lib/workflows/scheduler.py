@@ -1,94 +1,44 @@
-"""In-memory workflow scheduler with cron-based schedule management."""
+"""Workflow scheduler facade: runs workflows on demand and, while started, from their schedules.
+
+Creating, changing and deleting workflows and schedules goes through ``workflow_service`` and
+``schedule_service``; this class only runs them.
+"""
 
 from typing import Any
 
-from lib.services.db import ScheduleDB, WorkflowDB
-from lib.services.db.models import Schedule
 from lib.utils import printer as logger
 from lib.workflows import workflow_service
 from lib.workflows.engine import WorkflowEngine
+from lib.workflows.errors import NotFoundError
 from lib.workflows.loop import CronScheduler
+from lib.workflows.nodes import AIClientFactory
 
 
 class Scheduler:
-    """Main orchestrator for the Workflow Scheduler system."""
+    """One engine, shared by manual runs and the schedule polling loop."""
 
-    def __init__(self):
-        """Initialize the scheduler with engine and cron components."""
-        self.workflow_engine = WorkflowEngine()
-        self.cron_scheduler = CronScheduler()
-        self._running = False
+    def __init__(self, ai_client_factory: AIClientFactory | None = None):
+        """``ai_client_factory`` builds the client for AI nodes; without one they run without tools."""
+        self.workflow_engine = WorkflowEngine(ai_client_factory)
+        self.cron_scheduler = CronScheduler(self.workflow_engine)
 
-    async def register_workflow(self, workflow: "Any") -> bool:
-        """Register a workflow for execution.
+    async def run(self, workflow_id: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute a workflow now and return its node outputs.
 
-        Delegates to workflow_service.create_workflow for new workflows,
-        or directly to WorkflowDB for pre-built Workflow objects.
+        Raises:
+            NotFoundError: no workflow has this id.
         """
-        try:
-            await WorkflowDB.create_workflow(workflow)
-            logger.info(f"Registered workflow: {workflow.id}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to register workflow {workflow.id}: {e}")
-            return False
-
-    async def get_workflow(self, workflow_id: str):
-        """Retrieve a workflow by ID."""
-        return await workflow_service.get_workflow(workflow_id)
-
-    async def unregister_workflow(self, workflow_id: str) -> bool:
-        """Unregister a workflow and delete its schedules."""
-        try:
-            result = await workflow_service.delete_workflow(workflow_id, cascade=True)
-            if "error" in result:
-                logger.error(f"Failed to unregister workflow {workflow_id}: {result['error']}")
-                return False
-            logger.info(f"Unregistered workflow: {workflow_id}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to unregister workflow {workflow_id}: {e}")
-            return False
-
-    async def add_schedule(self, schedule: Schedule) -> int | None:
-        """Create a new schedule in the database."""
-        schedule_id = await ScheduleDB.create_schedule(schedule)
-        if schedule_id:
-            logger.info(f"Added schedule ID {schedule_id} with target workflow {schedule.target_workflow_id}")
-        return schedule_id
-
-    async def remove_schedule(self, schedule_id: int) -> bool:
-        """Delete a schedule by ID."""
-        try:
-            await ScheduleDB.delete_schedule(schedule_id)
-            logger.info(f"Removed schedule ID {schedule_id}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to remove schedule {schedule_id}: {e}")
-            return False
-
-    async def execute_workflow(self, workflow_id: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Manually trigger a workflow execution by ID."""
         logger.info(f"Manual execution triggered for workflow: {workflow_id}")
-        workflow = await self.get_workflow(workflow_id)
+        workflow = await workflow_service.get_workflow(workflow_id)
         if not workflow:
-            raise ValueError(f"Workflow {workflow_id} not found.")
+            raise NotFoundError(f"Workflow {workflow_id} not found.", workflow_id=workflow_id)
 
-        result = await self.workflow_engine.execute_workflow(workflow, inputs)
-        return result
+        return await self.workflow_engine.execute_workflow(workflow, inputs)
 
     def start(self) -> None:
-        """Start the cron scheduler background loop."""
-        if not self._running:
-            self.cron_scheduler.start()
-            self._running = True
+        """Start polling for due schedules; a no-op while already started."""
+        self.cron_scheduler.start()
 
     def stop(self) -> None:
-        """Stop the cron scheduler background loop."""
-        if self._running:
-            self.cron_scheduler.stop()
-            self._running = False
-
-    def is_running(self) -> bool:
-        """Return whether the scheduler is currently running."""
-        return self._running
+        """Stop polling for due schedules; a no-op while stopped."""
+        self.cron_scheduler.stop()

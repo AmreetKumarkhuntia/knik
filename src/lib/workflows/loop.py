@@ -12,12 +12,12 @@ from lib.workflows.engine import WorkflowEngine
 class CronScheduler:
     """Background service that polls the DB for Schedules and triggers Workflows."""
 
-    def __init__(self):
-        """Initialize scheduler with engine and config."""
+    def __init__(self, engine: WorkflowEngine | None = None):
+        """Run due workflows on ``engine``; the default one runs AI nodes without tools."""
         self._running = False
         self._task: asyncio.Task | None = None
         self.config = Config()
-        self.engine = WorkflowEngine()
+        self.engine = engine or WorkflowEngine()
 
         self._last_run_map: dict[int, datetime] = {}
         self._poll_count = 0

@@ -5,7 +5,7 @@ import math
 import re
 
 from lib.services import browser as browser_service
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 from lib.utils.printer import printer
 
 

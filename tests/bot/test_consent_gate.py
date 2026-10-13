@@ -1,269 +1,176 @@
-"""Tests for the consent gate: per-invocation approval, FIFO queue, and thread safety."""
+"""Tests for the bot consent gate: the Telegram prompt and the broker of pending replies per (chat, user).
+
+The registry's consent semantics are tested in tests/lib/tools/test_registry.py.
+"""
 
 import asyncio
 import threading
 import time
-from concurrent.futures import Future
 
-from bot.consent import BotConsentGate, PendingConsents
-from lib.services.ai_client.consent import ConsentRequest
-from lib.services.ai_client.registry.mcp_registry import MCPServerRegistry
+import pytest
 
-
-# ---------------------------------------------------------------------------
-# helpers
-# ---------------------------------------------------------------------------
+from bot.consent import BotConsentGate, ConsentBroker
+from lib.tools.consent import ConsentRequest
 
 
-class StubConsentGate:
-    """Gate that returns a fixed response sequence."""
-
-    def __init__(self, responses: list[str]) -> None:
-        self._responses = list(responses)
-        self._call_count = 0
-
-    def request_sync(self, req: ConsentRequest, timeout: float = 30.0) -> str:
-        resp = self._responses[self._call_count] if self._call_count < len(self._responses) else "no"
-        self._call_count += 1
-        return resp
-
-    @property
-    def call_count(self) -> int:
-        return self._call_count
+REQ = ConsentRequest(tool_name="shell", kwargs={"command": "ls"})
+PROMPT = "Allow shell(command='ls')? Reply yes (y) / yes all (ya) / no"
 
 
-def _registry_with_tools(*tool_names: str) -> MCPServerRegistry:
-    reg = MCPServerRegistry()
-    for name in tool_names:
-        reg.register_tool(
-            {"name": name, "description": f"Tool {name}"},
-            implementation=lambda **kw: {"ok": True, **kw},
-        )
-    return reg
+class TestConsentBroker:
+    def test_single_prompt(self):
+        broker = ConsentBroker()
+        future = broker.add("chat_1", "alice")
 
+        assert broker.has_pending("chat_1", "alice")
+        assert broker.resolve("chat_1", "alice", "yes")
+        assert future.result() == "yes"
+        assert not broker.has_pending("chat_1", "alice")
 
-# ---------------------------------------------------------------------------
-# MCPServerRegistry.execute_tool – consent semantics
-# ---------------------------------------------------------------------------
+    def test_prompts_of_one_user_resolve_in_fifo_order(self):
+        broker = ConsentBroker()
+        f1, f2, f3 = (broker.add("chat_1", "alice") for _ in range(3))
 
-
-class TestExecuteToolConsent:
-    def test_yes_approves_single_invocation_only(self):
-        """Saying 'yes' should NOT auto-approve the next call to the same tool."""
-        reg = _registry_with_tools("shell")
-        gate = StubConsentGate(["yes", "yes"])
-        reg.set_consent_gate(gate)
-
-        reg.execute_tool("shell", command="ls")
-        reg.execute_tool("shell", command="rm -rf /")
-
-        # Both calls must hit the gate — no auto-approval after first 'yes'
-        assert gate.call_count == 2
-
-    def test_yes_all_auto_approves_same_tool_name(self):
-        """Saying 'yes_all' should auto-approve all future calls to that tool name."""
-        reg = _registry_with_tools("shell")
-        gate = StubConsentGate(["yes_all"])
-        reg.set_consent_gate(gate)
-
-        reg.execute_tool("shell", command="ls")
-        reg.execute_tool("shell", command="cat /etc/passwd")
-        reg.execute_tool("shell", command="whoami")
-
-        # Only the first call should go through the gate
-        assert gate.call_count == 1
-
-    def test_yes_all_does_not_approve_other_tools(self):
-        """'yes_all' for tool A should NOT auto-approve tool B."""
-        reg = _registry_with_tools("shell", "file_read")
-        gate = StubConsentGate(["yes_all", "yes"])
-        reg.set_consent_gate(gate)
-
-        reg.execute_tool("shell", command="ls")
-        reg.execute_tool("file_read", path="/etc/passwd")
-
-        # shell auto-approved after first yes_all, but file_read still needs consent
-        assert gate.call_count == 2
-
-    def test_no_denies_and_does_not_block_next_call(self):
-        """Saying 'no' should deny only that call; next call still gets prompted."""
-        reg = _registry_with_tools("shell")
-        gate = StubConsentGate(["no", "yes"])
-        reg.set_consent_gate(gate)
-
-        result1 = reg.execute_tool("shell", command="rm -rf /")
-        result2 = reg.execute_tool("shell", command="ls")
-
-        assert "error" in result1
-        assert "ok" in result2
-        assert gate.call_count == 2
-
-    def test_no_gate_means_no_consent(self):
-        """Without a gate, tools execute directly."""
-        reg = _registry_with_tools("shell")
-        result = reg.execute_tool("shell", command="ls")
-        assert result == {"ok": True, "command": "ls"}
-
-    def test_revoke_clears_yes_all_approvals(self):
-        """After revoke, previously yes_all'd tools require consent again."""
-        reg = _registry_with_tools("shell")
-        gate = StubConsentGate(["yes_all", "yes"])
-        reg.set_consent_gate(gate)
-
-        reg.execute_tool("shell", command="ls")  # yes_all → auto-approve shell
-        reg.revoke_allowed_tools()
-        reg.execute_tool("shell", command="whoami")  # should prompt again
-
-        assert gate.call_count == 2
-
-
-# ---------------------------------------------------------------------------
-# MCPServerRegistry – thread safety
-# ---------------------------------------------------------------------------
-
-
-class TestRegistryThreadSafety:
-    def test_concurrent_execute_tool_does_not_crash(self):
-        """Multiple threads calling execute_tool should not raise."""
-        reg = _registry_with_tools("shell")
-        # Gate that always approves
-        gate = StubConsentGate(["yes"] * 50)
-        reg.set_consent_gate(gate)
-
-        errors: list[Exception] = []
-
-        def worker(i: int) -> None:
-            try:
-                reg.execute_tool("shell", command=f"echo {i}")
-            except Exception as e:
-                errors.append(e)
-
-        threads = [threading.Thread(target=worker, args=(i,)) for i in range(20)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join(timeout=5)
-
-        assert not errors, f"Errors in threads: {errors}"
-
-
-# ---------------------------------------------------------------------------
-# PendingConsents – FIFO queue behaviour
-# ---------------------------------------------------------------------------
-
-
-class TestPendingConsentsFIFO:
-    def setup_method(self):
-        # Clear class-level state between tests
-        PendingConsents._pending.clear()
-
-    def test_single_future(self):
-        fut: Future[str] = Future()
-        PendingConsents.add("chat_1", fut)
-
-        assert PendingConsents.has_pending("chat_1")
-        PendingConsents.resolve("chat_1", "yes")
-        assert fut.result() == "yes"
-        assert not PendingConsents.has_pending("chat_1")
-
-    def test_fifo_ordering(self):
-        """Multiple futures for the same chat resolve in FIFO order."""
-        f1: Future[str] = Future()
-        f2: Future[str] = Future()
-        f3: Future[str] = Future()
-
-        PendingConsents.add("chat_1", f1)
-        PendingConsents.add("chat_1", f2)
-        PendingConsents.add("chat_1", f3)
-
-        PendingConsents.resolve("chat_1", "yes")
+        broker.resolve("chat_1", "alice", "yes")
         assert f1.result() == "yes"
         assert not f2.done()
         assert not f3.done()
 
-        PendingConsents.resolve("chat_1", "no")
-        assert f2.result() == "no"
+        broker.resolve("chat_1", "alice", "no")
+        broker.resolve("chat_1", "alice", "yes_all")
+        assert (f2.result(), f3.result()) == ("no", "yes_all")
+        assert not broker.has_pending("chat_1", "alice")
 
-        PendingConsents.resolve("chat_1", "yes_all")
-        assert f3.result() == "yes_all"
+    def test_resolve_with_nothing_pending_returns_false(self):
+        assert not ConsentBroker().resolve("chat_1", "alice", "yes")
 
-        assert not PendingConsents.has_pending("chat_1")
+    def test_only_the_requesting_user_can_answer(self):
+        broker = ConsentBroker()
+        future = broker.add("group", "alice")
 
-    def test_resolve_empty_returns_false(self):
-        assert not PendingConsents.resolve("no_such_chat", "yes")
+        assert not broker.has_pending("group", "bob")
+        assert not broker.resolve("group", "bob", "yes")
+        assert not future.done()
+        assert broker.has_pending("group", "alice")
 
-    def test_resolve_done_future_returns_false(self):
-        """If the front Future is already done (e.g. timed out), resolve returns False."""
-        fut: Future[str] = Future()
-        fut.set_result("timed_out")
-        PendingConsents.add("chat_1", fut)
+    def test_chats_are_independent(self):
+        broker = ConsentBroker()
+        in_dm = broker.add("dm", "alice")
+        in_group = broker.add("group", "alice")
 
-        assert not PendingConsents.resolve("chat_1", "yes")
+        broker.resolve("group", "alice", "no")
 
-    def test_different_chats_are_independent(self):
-        fa: Future[str] = Future()
-        fb: Future[str] = Future()
-        PendingConsents.add("chat_a", fa)
-        PendingConsents.add("chat_b", fb)
+        assert in_group.result() == "no"
+        assert not in_dm.done()
+        assert broker.has_pending("dm", "alice")
 
-        PendingConsents.resolve("chat_a", "no")
-        assert fa.result() == "no"
-        assert not fb.done()
-        assert PendingConsents.has_pending("chat_b")
+    def test_withdraw_removes_an_unanswered_prompt(self):
+        broker = ConsentBroker()
+        first = broker.add("chat_1", "alice")
+        second = broker.add("chat_1", "alice")
+
+        assert broker.withdraw("chat_1", "alice", first)
+        assert not broker.withdraw("chat_1", "alice", first)
+        assert broker.resolve("chat_1", "alice", "yes")
+        assert second.result() == "yes"
+        assert not first.done()
+
+    def test_withdraw_after_an_answer_returns_false(self):
+        broker = ConsentBroker()
+        future = broker.add("chat_1", "alice")
+        broker.resolve("chat_1", "alice", "yes")
+
+        assert not broker.withdraw("chat_1", "alice", future)
+        assert future.result() == "yes"
 
 
-# ---------------------------------------------------------------------------
-# BotConsentGate – returns str (not bool)
-# ---------------------------------------------------------------------------
+@pytest.fixture
+def loop():
+    """An event loop on its own thread, standing in for the bot's loop while the gate blocks a tool thread."""
+    loop = asyncio.new_event_loop()
+    thread = threading.Thread(target=loop.run_forever, daemon=True)
+    thread.start()
+    yield loop
+    loop.call_soon_threadsafe(loop.stop)
+    thread.join(timeout=2)
+    loop.close()
 
 
-class TestBotConsentGateReturnType:
-    def test_request_sync_returns_string_on_timeout(self, transport):
-        """BotConsentGate.request_sync must return 'no' (str) when consent times out."""
-        loop = asyncio.new_event_loop()
-        # Run the loop in a background thread so run_coroutine_threadsafe works
-        loop_thread = threading.Thread(target=loop.run_forever, daemon=True)
-        loop_thread.start()
+@pytest.fixture
+def broker():
+    return ConsentBroker()
 
-        gate = BotConsentGate(chat_id="chat_1", transport=transport, loop=loop)
 
-        req = ConsentRequest(tool_name="shell", kwargs={"command": "ls"})
+def _gate(transport, loop, broker, chats: dict[str, str], user_id: str = "alice") -> BotConsentGate:
+    return BotConsentGate(
+        user_id=user_id, current_chat=lambda: chats.get(user_id), transport=transport, loop=loop, broker=broker
+    )
 
-        # No one calls resolve, so the consent future will time out → "no"
-        result = gate.request_sync(req, timeout=0.2)
-        assert isinstance(result, str)
+
+def _answer_when_pending(broker, chat_id, user_id, response) -> threading.Thread:
+    def answer():
+        for _ in range(200):
+            if broker.resolve(chat_id, user_id, response):
+                return
+            time.sleep(0.01)
+
+    thread = threading.Thread(target=answer, daemon=True)
+    thread.start()
+    return thread
+
+
+class TestBotConsentGate:
+    def test_timeout_denies_and_leaves_nothing_pending(self, transport, loop, broker):
+        gate = _gate(transport, loop, broker, {"alice": "chat_1"})
+
+        result = gate.request_sync(REQ, timeout=0.2)
+
         assert result == "no"
-        assert transport.messages[0].chat_id == "chat_1"
-        assert transport.messages[0].text == "Allow shell(command='ls')? Reply yes (y) / yes all (ya) / no"
+        assert [(m.chat_id, m.text) for m in transport.messages] == [("chat_1", PROMPT)]
+        # A timed-out prompt must not swallow the user's next message as an answer.
+        assert not broker.has_pending("chat_1", "alice")
 
-        loop.call_soon_threadsafe(loop.stop)
-        loop_thread.join(timeout=2)
-        loop.close()
+    def test_returns_the_users_answer(self, transport, loop, broker):
+        gate = _gate(transport, loop, broker, {"alice": "chat_2"})
+        answerer = _answer_when_pending(broker, "chat_2", "alice", "yes_all")
 
-    def test_request_sync_returns_resolved_value(self, transport):
-        """BotConsentGate.request_sync returns the value resolved by PendingConsents."""
-        PendingConsents._pending.clear()
+        assert gate.request_sync(REQ, timeout=2.0) == "yes_all"
+        answerer.join(timeout=2)
 
-        loop = asyncio.new_event_loop()
-        loop_thread = threading.Thread(target=loop.run_forever, daemon=True)
-        loop_thread.start()
+    def test_asks_in_the_chat_the_user_wrote_from_last(self, transport, loop, broker):
+        chats = {"alice": "chat_1"}
+        gate = _gate(transport, loop, broker, chats)
+        chats["alice"] = "chat_2"
+        answerer = _answer_when_pending(broker, "chat_2", "alice", "yes")
 
-        gate = BotConsentGate(chat_id="chat_2", transport=transport, loop=loop)
+        assert gate.request_sync(REQ, timeout=2.0) == "yes"
+        assert [m.chat_id for m in transport.messages] == ["chat_2"]
+        answerer.join(timeout=2)
 
-        req = ConsentRequest(tool_name="file_read", kwargs={"path": "/tmp"})
+    def test_without_a_known_chat_it_denies_without_asking(self, transport, loop, broker):
+        gate = _gate(transport, loop, broker, {})
 
-        # Resolve from another thread after a short delay
-        def resolver():
-            time.sleep(0.1)
-            PendingConsents.resolve("chat_2", "yes_all")
+        assert gate.request_sync(REQ, timeout=0.2) == "no"
+        assert transport.messages == []
 
-        t = threading.Thread(target=resolver, daemon=True)
-        t.start()
+    def test_a_prompt_that_cannot_be_sent_is_denied(self, transport, loop, broker):
+        async def fail(**kwargs):
+            raise RuntimeError("telegram down")
 
-        result = gate.request_sync(req, timeout=2.0)
-        assert result == "yes_all"
+        transport.send_message = fail
+        gate = _gate(transport, loop, broker, {"alice": "chat_1"})
 
-        t.join(timeout=2)
-        loop.call_soon_threadsafe(loop.stop)
-        loop_thread.join(timeout=2)
-        loop.close()
+        assert gate.request_sync(REQ, timeout=0.2) == "no"
+        assert not broker.has_pending("chat_1", "alice")
+
+    def test_an_answer_racing_the_timeout_wins(self, transport, loop, broker, monkeypatch):
+        withdraw = broker.withdraw
+
+        def answered_just_before_withdrawal(chat_id, user_id, future):
+            broker.resolve(chat_id, user_id, "yes")
+            return withdraw(chat_id, user_id, future)
+
+        monkeypatch.setattr(broker, "withdraw", answered_just_before_withdrawal)
+        gate = _gate(transport, loop, broker, {"alice": "chat_1"})
+
+        assert gate.request_sync(REQ, timeout=0.05) == "yes"

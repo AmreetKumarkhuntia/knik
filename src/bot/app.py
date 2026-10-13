@@ -9,17 +9,18 @@ from typing import TYPE_CHECKING
 
 from imports import (
     DB_ERRORS,
-    BaseTool,
     CommandService,
     IncomingMessage,
     PostgresDB,
     TelegramClient,
     browser,
+    cleanup_all_tools,
 )
 from imports import printer as logger
 
 from .commands import create_command_system
 from .config import BotConfig
+from .consent import ConsentBroker
 from .message_handler import BotMessageHandler
 from .streaming import StreamingResponseManager
 from .user_client_manager import UserClientManager
@@ -65,55 +66,43 @@ class BotApp:
             # The bot can still chat without Postgres; only conversation history is lost.
             logger.warning(f"PostgresDB unavailable, continuing without it: {e}")
 
-        from imports import AIClient, MCPServerRegistry, register_all_tools
-
         loop = asyncio.get_running_loop()
-
-        # Default client used by CommandService for model/provider/status queries.
-        # Per-user clients are managed by UserClientManager.
-        default_mcp = MCPServerRegistry()
-        register_all_tools(default_mcp)
-        default_client = AIClient(
-            provider=self.config.ai_provider,
-            mcp_registry=default_mcp,
-            system_instruction=self.config.system_instruction,
-        )
-        logger.info(f"Default AI client initialized: {default_client.provider_name}")
 
         if self._transport is None:
             self._transport = TelegramClient()
         transport = self._transport
 
+        consent_broker = ConsentBroker()
         self._user_client_manager = UserClientManager(
             ai_provider=self.config.ai_provider,
             system_instruction=self.config.system_instruction,
             transport=transport,
             loop=loop,
+            consent_broker=consent_broker,
         )
 
         self._user_identity = UserIdentityManager()
         self._streaming = StreamingResponseManager(transport=transport, config=self.config)
 
+        # Commands act on the sender's own client, which UserClientManager builds on first use.
         self._command_service = CommandService(
-            ai_client=default_client,
+            client_resolver=self._user_client_manager.get_or_create,
             user_identity=self._user_identity,
-            mcp_registry=default_mcp,
-            system_instruction=self.config.system_instruction,
         )
 
-        registry, dispatcher = create_command_system(self._command_service)
+        registry, dispatcher = create_command_system(self._command_service, self._user_client_manager)
         logger.info(f"Registered {len(registry.list_commands())} bot commands")
 
         await transport.register_commands(registry.get_bot_commands())
 
         self._message_handler = BotMessageHandler(
-            command_service=self._command_service,
             transport=transport,
             user_identity=self._user_identity,
             streaming_manager=self._streaming,
             config=self.config,
-            command_dispatcher=dispatcher,
             user_client_manager=self._user_client_manager,
+            consent_broker=consent_broker,
+            command_dispatcher=dispatcher,
         )
         logger.info("All components initialized successfully")
 
@@ -188,7 +177,7 @@ class BotApp:
         await PostgresDB.close()
 
     def _shutdown_tool_sessions(self) -> None:
-        BaseTool.cleanup_all()
+        cleanup_all_tools()
 
 
 def main() -> None:

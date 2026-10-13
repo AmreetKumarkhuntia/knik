@@ -8,11 +8,12 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ....core.config import Config
 from ....utils import printer
+from ..stream_events import ProviderEvent, TextDelta, ToolCallFinished, ToolCallStarted
 from ..token_utils import count_message_tokens, count_tokens, get_context_window, register_context_window
 
 
 if TYPE_CHECKING:
-    from ..registry import MCPServerRegistry
+    from ..tool_provider import ToolProvider
 
 
 @dataclass
@@ -55,7 +56,8 @@ class BaseAIProvider(ABC):
         pass
 
     @abstractmethod
-    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str, None, None]:
+    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[ProviderEvent, None, None]:
+        """Stream the reply as ``TextDelta``s, with ``ToolCallStarted``/``ToolCallFinished`` around each tool call."""
         pass
 
     @abstractmethod
@@ -135,7 +137,7 @@ class LangChainProvider(BaseAIProvider):
         llm,
         agent,
         provider_name: str,
-        mcp_registry: Optional["MCPServerRegistry"] = None,
+        tool_registry: Optional["ToolProvider"] = None,
         system_instruction: str | None = None,
         tool_callback=None,
         skip_tool_binding: bool = False,
@@ -152,14 +154,14 @@ class LangChainProvider(BaseAIProvider):
         self.last_context_tokens: int = 0
 
         self.agent = agent
-        self.mcp_registry = mcp_registry
+        self.tool_registry = tool_registry
 
-        # If mcp_registry provided and this provider doesn't manage its own binding,
+        # If tool_registry provided and this provider doesn't manage its own binding,
         # bind tools to the LLM now.  Providers that run their own tool loop
         # (e.g. GLMAIProvider) pass skip_tool_binding=True so the raw LLM is
         # stored untouched and they can bind once inside their own loop.
-        if mcp_registry and not skip_tool_binding:
-            tools = mcp_registry.create_langchain_tools()
+        if tool_registry and not skip_tool_binding:
+            tools = tool_registry.create_langchain_tools()
             if tools:
                 self.llm = llm.bind_tools(tools)
                 if self.agent:
@@ -171,8 +173,8 @@ class LangChainProvider(BaseAIProvider):
                 printer.success(f"✓ {provider_name} initialized (no tools available)")
         else:
             self.llm = llm
-            if mcp_registry and self.agent:
-                tools = mcp_registry.create_langchain_tools()
+            if tool_registry and self.agent:
+                tools = tool_registry.create_langchain_tools()
                 if tools:
                     printer.success(f"✓ {provider_name} initialized with agent and {len(tools)} tools (self-managed)")
                 else:
@@ -398,17 +400,17 @@ class LangChainProvider(BaseAIProvider):
         content = self._extract_text_from_content(output) if output else ""
         return ChatResult(content=content, usage=self.last_usage)
 
-    def _yield_content(self, content):
+    def _yield_content(self, content) -> Generator[TextDelta, None, None]:
         if isinstance(content, str) and content:
-            yield content
+            yield TextDelta(content)
         elif isinstance(content, list):
             for item in content:
                 if isinstance(item, dict) and item.get("type") == "text":
                     text = item.get("text", "")
                     if text:
-                        yield text
+                        yield TextDelta(text)
 
-    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[str | dict, None, None]:
+    def chat_stream(self, prompt: str, history: list = None, **kwargs) -> Generator[ProviderEvent, None, None]:
         self.last_context_tokens = self._count_history_tokens(history)
         agent_messages = self._build_agent_messages(history, prompt)
         self.last_usage = None
@@ -467,12 +469,9 @@ class LangChainProvider(BaseAIProvider):
                         }
                     )
 
-                yield {
-                    "__tool_call_end__": True,
-                    "tool_name": tool_name,
-                    "tool_call_id": tool_call_id,
-                    "tool_result_preview": str(content)[:200],
-                }
+                yield ToolCallFinished(
+                    tool_name=tool_name, tool_call_id=tool_call_id, result_preview=str(content)[:200]
+                )
                 continue
 
             if "AIMessage" in message_class:
@@ -499,12 +498,9 @@ class LangChainProvider(BaseAIProvider):
                             "tool_args": tc.get("args", {}),
                             "arg_tokens": arg_tokens,
                         }
-                        yield {
-                            "__tool_call_start__": True,
-                            "tool_name": tc.get("name", "unknown"),
-                            "tool_call_id": tc_id,
-                            "tool_args": tc.get("args", {}),
-                        }
+                        yield ToolCallStarted(
+                            tool_name=tc.get("name", "unknown"), tool_call_id=tc_id, tool_args=tc.get("args", {})
+                        )
                     continue
 
                 yield from self._yield_content(message.content)

@@ -1,7 +1,8 @@
 """Service layer for Workflow CRUD operations.
 
-Single entry point for all workflow management — used by MCP tools,
-web routes, console commands, and the Scheduler class.
+Single entry point for all workflow management — used by the AI tools, web routes, console commands
+and the Scheduler. An unknown id raises ``NotFoundError`` and an invalid definition ``ValidationError``
+(both from ``lib.workflows.errors``).
 """
 
 import uuid
@@ -10,7 +11,22 @@ from typing import Any
 from lib.services.db import ScheduleDB, WorkflowDB
 from lib.services.db.models import Workflow
 from lib.utils import printer
+from lib.workflows.errors import NotFoundError, ValidationError
 from lib.workflows.validation import validate_workflow_definition
+
+
+def _validate(definition: dict[str, Any]) -> None:
+    """Raise ValidationError, with the validator's 'details', when the definition is not a valid DAG."""
+    validation_result = validate_workflow_definition(definition)
+    if not validation_result["valid"]:
+        raise ValidationError(
+            f"Invalid workflow definition: {validation_result['message']}",
+            details=validation_result.get("details"),
+        )
+
+
+def _not_found(workflow_id: str) -> NotFoundError:
+    return NotFoundError(f"Workflow {workflow_id} not found", workflow_id=workflow_id)
 
 
 async def create_workflow(
@@ -28,15 +44,12 @@ async def create_workflow(
         workflow_id: Optional explicit ID. Auto-generated if not provided.
 
     Returns:
-        Dict with 'success', 'workflow_id', 'name', 'description' on success,
-        or 'error' (and optionally 'details') on failure.
+        Dict with 'success', 'workflow_id', 'name' and 'description'.
+
+    Raises:
+        ValidationError: the definition is invalid.
     """
-    validation_result = validate_workflow_definition(definition)
-    if not validation_result["valid"]:
-        return {
-            "error": f"Invalid workflow definition: {validation_result['message']}",
-            "details": validation_result.get("details"),
-        }
+    _validate(definition)
 
     if not workflow_id:
         workflow_id = f"workflow_{uuid.uuid4().hex[:12]}"
@@ -74,19 +87,17 @@ async def update_workflow(
         description: Optional new description; preserved if None.
 
     Returns:
-        Dict with 'success' and details on success, or 'error' (and optionally
-        'details') if the workflow is missing or the definition is invalid.
+        Dict with 'success', 'workflow_id', 'name' and 'description'.
+
+    Raises:
+        NotFoundError: no workflow has this id (checked before the definition).
+        ValidationError: the definition is invalid.
     """
     existing = await WorkflowDB.get_workflow(workflow_id)
     if not existing:
-        return {"error": f"Workflow {workflow_id} not found", "workflow_id": workflow_id}
+        raise _not_found(workflow_id)
 
-    validation_result = validate_workflow_definition(definition)
-    if not validation_result["valid"]:
-        return {
-            "error": f"Invalid workflow definition: {validation_result['message']}",
-            "details": validation_result.get("details"),
-        }
+    _validate(definition)
 
     workflow = Workflow(
         id=workflow_id,
@@ -125,11 +136,14 @@ async def delete_workflow(workflow_id: str, cascade: bool = True) -> dict[str, A
                  cascade but the MCP tool did.
 
     Returns:
-        Dict with 'success' and deletion details, or 'error' if not found.
+        Dict with 'success', 'workflow_id', 'deleted_schedules' and 'message'.
+
+    Raises:
+        NotFoundError: no workflow has this id.
     """
     workflow = await WorkflowDB.get_workflow(workflow_id)
     if not workflow:
-        return {"error": f"Workflow {workflow_id} not found", "workflow_id": workflow_id}
+        raise _not_found(workflow_id)
 
     deleted_schedules = 0
     if cascade:

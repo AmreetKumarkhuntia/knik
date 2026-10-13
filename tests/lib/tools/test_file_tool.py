@@ -5,19 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from lib.services.ai_client.base_tool import BaseTool
 from lib.tools.file_tool import FileTool
 
 
 # ---------------------------------------------------------------------------
 # helpers / fixtures
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(autouse=True)
-def _clear_base_tool_instances(monkeypatch):
-    """Reset BaseTool._instances for each test so tests don't leak."""
-    monkeypatch.setattr(BaseTool, "_instances", [])
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 
 from backend.models.cron import ScheduleCreateRequest, ScheduleToggleRequest
-from imports import DB_ERRORS, schedule_service
+from imports import DB_ERRORS, ValidationError, schedule_service
 
 
 router = APIRouter()
@@ -26,12 +26,11 @@ async def list_schedules():
 async def add_schedule(req: ScheduleCreateRequest):
     """Add a new cron schedule with natural language description."""
     try:
-        result = await schedule_service.create_schedule(req.target_workflow_id, req.schedule_description, req.timezone)
-        if "error" in result:
-            status_code = 400 if "hint" in result or "required" in result.get("error", "") else 500
-            raise HTTPException(status_code=status_code, detail=result)
-        return result
-    except (HTTPException, *DB_ERRORS):
+        return await schedule_service.create_schedule(req.target_workflow_id, req.schedule_description, req.timezone)
+    except ValidationError as e:
+        # A missing argument, an unknown timezone or a description it cannot parse (with a 'hint').
+        raise HTTPException(status_code=400, detail=e.to_dict()) from e
+    except DB_ERRORS:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

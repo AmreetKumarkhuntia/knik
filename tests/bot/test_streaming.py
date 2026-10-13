@@ -5,6 +5,14 @@ from unittest.mock import MagicMock
 import pytest
 
 from bot.streaming import StreamingResponseManager
+from lib.services.ai_client.stream_events import (
+    ConversationReady,
+    StreamDone,
+    StreamError,
+    TextDelta,
+    ToolCallFinished,
+    ToolCallStarted,
+)
 
 
 @pytest.fixture
@@ -12,21 +20,21 @@ def manager(transport):
     return StreamingResponseManager(transport=transport, config=MagicMock())
 
 
-def _make_ai_client(chunks):
+def _make_ai_client(events):
     client = MagicMock()
 
     async def mock_stream(*args, **kwargs):
-        for chunk in chunks:
-            yield chunk
+        for event in events:
+            yield event
 
     client.achat_stream = mock_stream
     return client
 
 
-async def _deliver(manager, chunks, **kwargs):
+async def _deliver(manager, events, **kwargs):
     return await manager.deliver(
         chat_id="chat_123",
-        ai_client=_make_ai_client(chunks),
+        ai_client=_make_ai_client(events),
         prompt="Hello",
         conversation_id=None,
         **kwargs,
@@ -39,16 +47,11 @@ class TestStreamingResponseManager:
         result = await _deliver(
             manager,
             [
-                {"__conversation_id__": "conv_123"},
-                "Hello",
-                " world",
-                "!",
-                {
-                    "__done__": True,
-                    "conversation_id": "conv_123",
-                    "usage": {"total_tokens": 15},
-                    "full_response": "Hello world!",
-                },
+                ConversationReady("conv_123"),
+                TextDelta("Hello"),
+                TextDelta(" world"),
+                TextDelta("!"),
+                StreamDone(conversation_id="conv_123", usage={"total_tokens": 15}, full_response="Hello world!"),
             ],
         )
 
@@ -63,9 +66,9 @@ class TestStreamingResponseManager:
         await _deliver(
             manager,
             [
-                "text",
-                {"__tool_call_start__": True, "tool_name": "tool_a", "tool_args": {}},
-                {"__done__": True, "conversation_id": "conv_123", "usage": {}, "full_response": "text"},
+                TextDelta("text"),
+                ToolCallStarted("tool_a", "call_tool_a", {}),
+                StreamDone(conversation_id="conv_123", usage={}, full_response="text"),
             ],
             send_options={"parse_mode": "Markdown"},
         )
@@ -74,13 +77,13 @@ class TestStreamingResponseManager:
         assert transport.messages[0].kwargs == {"parse_mode": "Markdown"}
 
     @pytest.mark.asyncio
-    async def test_deliver_captures_conversation_id_from_done_sentinel(self, manager):
+    async def test_deliver_takes_conversation_id_from_stream_done(self, manager):
         result = await _deliver(
             manager,
             [
-                {"__conversation_id__": "conv_early"},
-                "text",
-                {"__done__": True, "conversation_id": "conv_final", "usage": {}, "full_response": "text"},
+                ConversationReady("conv_early"),
+                TextDelta("text"),
+                StreamDone(conversation_id="conv_final", usage={}, full_response="text"),
             ],
         )
 
@@ -92,7 +95,7 @@ class TestStreamingResponseManager:
 
         result = await _deliver(
             manager,
-            ["hello", {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": "hello"}],
+            [TextDelta("hello"), StreamDone(conversation_id="c1", usage={}, full_response="hello")],
         )
 
         assert result.error is not None
@@ -103,8 +106,8 @@ class TestStreamingResponseManager:
         result = await _deliver(
             manager,
             [
-                {"__conversation_id__": "conv_empty"},
-                {"__done__": True, "conversation_id": "conv_empty", "usage": None, "full_response": ""},
+                ConversationReady("conv_empty"),
+                StreamDone(conversation_id="conv_empty", usage=None, full_response=""),
             ],
         )
 
@@ -117,7 +120,7 @@ class TestStreamingResponseManager:
 
         result = await _deliver(
             manager,
-            ["hi", {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": "hi"}],
+            [TextDelta("hi"), StreamDone(conversation_id="c1", usage={}, full_response="hi")],
         )
 
         assert result.message_ids == ["final_msg_999"]
@@ -128,10 +131,25 @@ class TestStreamingResponseManager:
 
         result = await _deliver(
             manager,
-            ["hi", {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": "hi"}],
+            [TextDelta("hi"), StreamDone(conversation_id="c1", usage={}, full_response="hi")],
         )
 
         assert result.message_ids == []
+
+    @pytest.mark.asyncio
+    async def test_stream_error_is_sent_as_reply_text(self, manager, transport):
+        result = await _deliver(
+            manager,
+            [
+                TextDelta("Partial. "),
+                StreamError("Chat streaming error: boom"),
+                StreamDone(conversation_id="c1", usage=None, full_response="Partial. Chat streaming error: boom"),
+            ],
+        )
+
+        assert [s.text for s in transport.streams] == ["Partial. Chat streaming error: boom"]
+        assert result.response_text == "Partial. Chat streaming error: boom"
+        assert result.error is None
 
 
 class TestSegmentedDelivery:
@@ -140,17 +158,12 @@ class TestSegmentedDelivery:
         result = await _deliver(
             manager,
             [
-                {"__conversation_id__": "conv_1"},
-                "Before tool. ",
-                {"__tool_call_start__": True, "tool_name": "shell_execute", "tool_args": {"cmd": "ls"}},
-                {"__tool_call_end__": True, "tool_name": "shell_execute", "tool_result_preview": "file1.txt"},
-                "After tool.",
-                {
-                    "__done__": True,
-                    "conversation_id": "conv_1",
-                    "usage": {},
-                    "full_response": "Before tool. After tool.",
-                },
+                ConversationReady("conv_1"),
+                TextDelta("Before tool. "),
+                ToolCallStarted("shell_execute", "call_shell_execute", {"cmd": "ls"}),
+                ToolCallFinished("shell_execute", "call_shell_execute", "file1.txt"),
+                TextDelta("After tool."),
+                StreamDone(conversation_id="conv_1", usage={}, full_response="Before tool. After tool."),
             ],
         )
 
@@ -166,9 +179,9 @@ class TestSegmentedDelivery:
         await _deliver(
             manager,
             [
-                {"__tool_call_start__": True, "tool_name": "tool_a", "tool_args": {}},
-                {"__tool_call_end__": True, "tool_name": "tool_a", "tool_result_preview": ""},
-                {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": ""},
+                ToolCallStarted("tool_a", "call_tool_a", {}),
+                ToolCallFinished("tool_a", "call_tool_a", ""),
+                StreamDone(conversation_id="c1", usage={}, full_response=""),
             ],
         )
 
@@ -179,14 +192,14 @@ class TestSegmentedDelivery:
         result = await _deliver(
             manager,
             [
-                "Seg 1. ",
-                {"__tool_call_start__": True, "tool_name": "tool_a", "tool_args": {}},
-                {"__tool_call_end__": True, "tool_name": "tool_a", "tool_result_preview": "ok"},
-                "Seg 2. ",
-                {"__tool_call_start__": True, "tool_name": "tool_b", "tool_args": {}},
-                {"__tool_call_end__": True, "tool_name": "tool_b", "tool_result_preview": "done"},
-                "Seg 3.",
-                {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": "Seg 1. Seg 2. Seg 3."},
+                TextDelta("Seg 1. "),
+                ToolCallStarted("tool_a", "call_tool_a", {}),
+                ToolCallFinished("tool_a", "call_tool_a", "ok"),
+                TextDelta("Seg 2. "),
+                ToolCallStarted("tool_b", "call_tool_b", {}),
+                ToolCallFinished("tool_b", "call_tool_b", "done"),
+                TextDelta("Seg 3."),
+                StreamDone(conversation_id="c1", usage={}, full_response="Seg 1. Seg 2. Seg 3."),
             ],
         )
 
@@ -199,10 +212,10 @@ class TestSegmentedDelivery:
         result = await _deliver(
             manager,
             [
-                {"__tool_call_start__": True, "tool_name": "tool_a", "tool_args": {}},
-                {"__tool_call_end__": True, "tool_name": "tool_a", "tool_result_preview": "ok"},
-                "Only segment.",
-                {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": "Only segment."},
+                ToolCallStarted("tool_a", "call_tool_a", {}),
+                ToolCallFinished("tool_a", "call_tool_a", "ok"),
+                TextDelta("Only segment."),
+                StreamDone(conversation_id="c1", usage={}, full_response="Only segment."),
             ],
         )
 
@@ -214,10 +227,10 @@ class TestSegmentedDelivery:
         result = await _deliver(
             manager,
             [
-                "Only segment.",
-                {"__tool_call_start__": True, "tool_name": "tool_a", "tool_args": {}},
-                {"__tool_call_end__": True, "tool_name": "tool_a", "tool_result_preview": "ok"},
-                {"__done__": True, "conversation_id": "c1", "usage": {}, "full_response": "Only segment."},
+                TextDelta("Only segment."),
+                ToolCallStarted("tool_a", "call_tool_a", {}),
+                ToolCallFinished("tool_a", "call_tool_a", "ok"),
+                StreamDone(conversation_id="c1", usage={}, full_response="Only segment."),
             ],
         )
 

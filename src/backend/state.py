@@ -1,157 +1,174 @@
-"""Shared mutable state for the web backend.
+"""What the routes share, built once at startup: the settings, an AI client per conversation, TTS and the scheduler.
 
-Replaces the module-level globals in chat.py and chat_stream.py.
-All route modules import from here instead of owning their own singletons.
+The lifespan in main.py builds the AppState and keeps it on ``app.state``; routes get it through
+``deps.get_state``.
 """
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import weakref
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
-from imports import AIClient, AIClientCache, KokoroVoiceModel, MCPServerRegistry, printer, register_all_tools
-
-
-@dataclass
-class _FactoryConfig:
-    provider: str
-    model: str
-    project_id: str | None
-    location: str | None
-    system_instruction: str | None
-    api_base: str | None = None
-    api_key: str | None = None
-
-
-conversation_clients: AIClientCache = AIClientCache()
-tts_processor: KokoroVoiceModel | None = None
-
-_factory_config: _FactoryConfig | None = None
-_init_lock: asyncio.Lock | None = None
-
-# Persisted settings (provider/model/voice/api_base/api_key) loaded from the DB at
-# startup and applied the first time the factory config / TTS are built.
-_persisted_overrides: dict | None = None
+from backend.config import WebBackendConfig
+from backend.models.admin import SettingsUpdate
+from backend.settings_service import SettingsService
+from imports import (
+    AIClient,
+    AIClientCache,
+    KokoroVoiceModel,
+    Scheduler,
+    build_workflow_client,
+    cleanup_all_tools,
+    cleanup_client_tools,
+    printer,
+)
 
 
-def set_persisted_overrides(overrides: dict | None) -> None:
-    """Record persisted settings to apply on first init (called from startup)."""
-    global _persisted_overrides
-    _persisted_overrides = overrides or None
+class AppState:
+    def __init__(
+        self,
+        config: WebBackendConfig,
+        settings: SettingsService,
+        tts: KokoroVoiceModel,
+        scheduler: Scheduler,
+    ) -> None:
+        self.config = config
+        self.settings = settings
+        self.tts = tts
+        # Runs workflows on request only; the worker process polls the schedules.
+        self.scheduler = scheduler
+        # One client per conversation, so each keeps its own tools (e.g. its browser) between messages.
+        self.clients = AIClientCache(on_release=self._release)
+        # How many requests hold each client (see client()); a client is cleaned up only once none do.
+        self._in_use: dict[AIClient, int] = {}
+        # Bumped by every settings or tool change; a client built under an older one is never cached.
+        self._generation = 0
+        self._built_in: weakref.WeakKeyDictionary[AIClient, int] = weakref.WeakKeyDictionary()
+        self._cleanups: set[asyncio.Task] = set()
+
+    @classmethod
+    async def create(cls, config: WebBackendConfig) -> AppState:
+        """Load the settings and the TTS model. Copes with the database being down (env defaults apply)."""
+        settings = SettingsService(config)
+        await settings.load()
+        tts = await _load_tts(settings.voice)
+        return cls(config, settings, tts, Scheduler(ai_client_factory=build_workflow_client))
+
+    @asynccontextmanager
+    async def client(self, conversation_id: str | None) -> AsyncIterator[AIClient]:
+        """Lend a request the conversation's client for as long as it runs.
+
+        While a request holds a client, its tools are not cleaned up, even if the client leaves the cache
+        (a settings change, a deleted conversation, eviction). A client that is not cached when its last
+        request ends, such as one for a chat that never got a conversation id, is cleaned up then.
+        """
+        client = await self.get_client(conversation_id)
+        self._in_use[client] = self._in_use.get(client, 0) + 1
+        try:
+            yield client
+        finally:
+            remaining = self._in_use.pop(client) - 1
+            if remaining:
+                self._in_use[client] = remaining
+            elif not self.clients.holds(client):
+                self._release(client)
+
+    async def get_client(self, conversation_id: str | None) -> AIClient:
+        """The conversation's cached client, or a new one cached under its id. Requests use client() instead.
+
+        A None conversation_id gets a fresh, uncached client: the chat creates the conversation, and the
+        caller then caches the client under the new id with set_client().
+        """
+        if conversation_id is not None:
+            cached = self.clients.get(conversation_id)
+            if cached is not None:
+                return cached
+
+        generation = self._generation
+        settings = self.settings.client_settings
+        client = await asyncio.to_thread(self.settings.build_client)
+        self._built_in[client] = generation
+        printer.success(f"AIClient ready: {settings.provider}/{settings.model}")
+
+        if conversation_id is not None:
+            # Another request for the same conversation may have cached one while this one was building.
+            cached = self.clients.get(conversation_id)
+            if cached is not None:
+                self._release(client)
+                return cached
+            self.set_client(conversation_id, client)
+        return client
+
+    def set_client(self, conversation_id: str, client: AIClient) -> None:
+        """Cache the client under the conversation id, unless one is already cached there or it is out of date.
+
+        A client left uncached still serves the request holding it and is cleaned up when that request ends.
+        """
+        if self._built_in.get(client) != self._generation or self.clients.get(conversation_id) is not None:
+            return
+        self.clients.set(conversation_id, client)
+
+    def remove_client(self, conversation_id: str) -> None:
+        """Drop the conversation's cached client; its tools are cleaned up once no request holds it."""
+        self.clients.remove(conversation_id)
+
+    async def update_settings(self, update: SettingsUpdate) -> None:
+        """Persist and apply a settings change. Cached clients are dropped if new ones would be built differently."""
+        before = self.settings.client_settings
+        await self.settings.update(update)
+
+        after = self.settings.client_settings
+        if after != before:
+            self._drop_clients()
+            printer.info(f"AI client settings updated: {after.provider}/{after.model}")
+
+        if update.voice:
+            self.tts.set_voice(update.voice)
+            printer.info(f"TTS voice updated: {update.voice}")
+
+    async def set_tool_group_enabled(self, group: str, enabled: bool) -> None:
+        """Persist and apply a tool-group switch; cached clients are dropped so every conversation follows it."""
+        before = self.settings.disabled_tools
+        await self.settings.set_tool_group_enabled(group, enabled)
+        if self.settings.disabled_tools != before:
+            self._drop_clients()
+            printer.info(f"Tool group {group} {'enabled' if enabled else 'disabled'}")
+
+    async def close(self) -> None:
+        """Clean up the tools of every client built here (closing their browsers), for shutdown."""
+        self._drop_clients()
+        await asyncio.gather(*self._cleanups, return_exceptions=True)
+        # Clients still held by a request that has not finished, or built outside client().
+        await asyncio.to_thread(cleanup_all_tools)
+
+    def _drop_clients(self) -> None:
+        self._generation += 1
+        self.clients.clear()
+
+    def _release(self, client: AIClient) -> None:
+        """Clean up a client that left the cache, unless a request still holds it (client() does it then)."""
+        if client in self._in_use or client.tool_registry is None:
+            return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            cleanup_client_tools(client)
+            return
+        # Closing a browser waits for its thread for up to seconds, so keep it off the event loop.
+        task = loop.create_task(asyncio.to_thread(cleanup_client_tools, client))
+        self._cleanups.add(task)
+        task.add_done_callback(self._cleanups.discard)
 
 
-def _get_init_lock() -> asyncio.Lock:
-    global _init_lock
-    if _init_lock is None:
-        _init_lock = asyncio.Lock()
-    return _init_lock
-
-
-def _build_client(cfg: _FactoryConfig) -> tuple[MCPServerRegistry, AIClient]:
-    registry = MCPServerRegistry()
-    register_all_tools(registry)
-    kwargs: dict = {
-        "provider": cfg.provider,
-        "model": cfg.model,
-        "mcp_registry": registry,
-        "system_instruction": cfg.system_instruction,
-    }
-    if cfg.project_id:
-        kwargs["project_id"] = cfg.project_id
-    if cfg.location:
-        kwargs["location"] = cfg.location
-    if cfg.api_base:
-        kwargs["api_base"] = cfg.api_base
-    if cfg.api_key:
-        kwargs["api_key"] = cfg.api_key
-    client = AIClient(**kwargs)
-    return registry, client
-
-
-async def init(cfg_source) -> None:
-    global tts_processor, _factory_config
-
-    overrides = _persisted_overrides or {}
-
-    async with _get_init_lock():
-        if _factory_config is None:
-            _factory_config = _FactoryConfig(
-                provider=overrides.get("provider") or cfg_source.ai_provider,
-                model=overrides.get("model") or cfg_source.ai_model,
-                project_id=cfg_source.ai_project_id,
-                location=cfg_source.ai_location,
-                system_instruction=str(cfg_source.system_instruction) if cfg_source.system_instruction else None,
-                api_base=overrides.get("api_base"),
-                api_key=overrides.get("api_key"),
-            )
-
-        if tts_processor is None:
-            voice = overrides.get("voice") or cfg_source.voice_name
-            tts_processor = await asyncio.to_thread(KokoroVoiceModel, voice=voice)
-            printer.success(f"TTS ready: {voice}")
-
-
-async def get_or_create_ai_client(conversation_id: str | None) -> AIClient:
-    """A None conversation_id still gets a fresh client (the achat lifecycle
-    will create a real conversation_id and the caller should cache-update
-    using set_client() once the id is known.
-    """
-    if conversation_id is not None:
-        cached = conversation_clients.get(conversation_id)
-        if cached is not None:
-            return cached
-
-    cfg = _factory_config
-    if cfg is None:
-        raise RuntimeError("state.init() must be called before get_or_create_ai_client()")
-
-    _registry, client = await asyncio.to_thread(_build_client, cfg)
-    printer.success(f"AIClient ready: {cfg.provider}/{cfg.model}")
-
-    if conversation_id is not None:
-        conversation_clients.set(conversation_id, client)
-
-    return client
-
-
-def set_client(conversation_id: str, client: AIClient) -> None:
-    conversation_clients.set(conversation_id, client)
-
-
-def update_factory_config(
-    *,
-    provider: str | None = None,
-    model: str | None = None,
-    api_base: str | None = None,
-    api_key: str | None = None,
-) -> None:
-    """Clears the entire client cache so subsequent requests get fresh clients
-    built with the new config.  Existing in-flight requests are unaffected.
-    """
-    global _factory_config, conversation_clients
-
-    if _factory_config is None:
-        raise RuntimeError("state.init() must be called before update_factory_config()")
-
-    _factory_config = _FactoryConfig(
-        provider=provider or _factory_config.provider,
-        model=model or _factory_config.model,
-        project_id=_factory_config.project_id,
-        location=_factory_config.location,
-        system_instruction=_factory_config.system_instruction,
-        api_base=api_base if api_base is not None else _factory_config.api_base,
-        api_key=api_key if api_key is not None else _factory_config.api_key,
-    )
-    conversation_clients = AIClientCache()
-
-
-def get_factory_provider() -> str | None:
-    return _factory_config.provider if _factory_config else None
-
-
-def get_factory_model() -> str | None:
-    return _factory_config.model if _factory_config else None
-
-
-def is_initialized() -> bool:
-    return _factory_config is not None
+async def _load_tts(voice: str) -> KokoroVoiceModel:
+    tts = KokoroVoiceModel(voice=voice)
+    try:
+        await asyncio.to_thread(tts.load)
+    except Exception as e:
+        # generate() loads the model when it is missing, so the first speech request tries again.
+        printer.warning(f"TTS model failed to load, will retry on first use: {e}")
+    else:
+        printer.success(f"TTS ready: {voice}")
+    return tts

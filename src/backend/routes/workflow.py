@@ -1,18 +1,18 @@
 """Router for querying, managing, and executing Workflows via Web API."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from backend.deps import get_state
 from backend.models.workflow import (
     WorkflowCreateRequest,
     WorkflowExecuteRequest,
     WorkflowUpdateRequest,
 )
-from imports import DB_ERRORS, ExecutionDB, Scheduler, workflow_service
+from backend.state import AppState
+from imports import DB_ERRORS, ExecutionDB, NotFoundError, ValidationError, workflow_service
 
 
 router = APIRouter()
-
-scheduler = Scheduler()
 
 
 @router.get("/")
@@ -44,10 +44,10 @@ async def create_workflow(request: WorkflowCreateRequest):
             definition=request.definition,
             description=request.description,
         )
-        if "error" in result:
-            raise HTTPException(status_code=400, detail=result["error"])
         return {"success": True, "workflow": request.definition, **result}
-    except (HTTPException, *DB_ERRORS):
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except DB_ERRORS:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -69,19 +69,28 @@ async def get_workflow(workflow_id: str):
 
 @router.patch("/{workflow_id}")
 async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
-    """Update an existing workflow's name, definition, and description."""
+    """Update an existing workflow's name, definition, and description; a field left out keeps its value."""
     try:
+        name, definition = request.name, request.definition
+        if name is None or definition is None:
+            current = await workflow_service.get_workflow(workflow_id)
+            if current is None:
+                raise NotFoundError(f"Workflow {workflow_id} not found", workflow_id=workflow_id)
+            name = current.name if name is None else name
+            definition = current.definition if definition is None else definition
+
         result = await workflow_service.update_workflow(
             workflow_id=workflow_id,
-            name=request.name,
-            definition=request.definition,
+            name=name,
+            definition=definition,
             description=request.description,
         )
-        if "error" in result:
-            status = 404 if "not found" in result["error"] else 400
-            raise HTTPException(status_code=status, detail=result["error"])
-        return {"success": True, "workflow": request.definition, **result}
-    except (HTTPException, *DB_ERRORS):
+        return {"success": True, "workflow": definition, **result}
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except DB_ERRORS:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -91,23 +100,23 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
 async def delete_workflow(workflow_id: str):
     """Delete a workflow and its associated schedules."""
     try:
-        result = await workflow_service.delete_workflow(workflow_id, cascade=True)
-        if "error" in result:
-            raise HTTPException(status_code=404, detail=result["error"])
-        return result
-    except (HTTPException, *DB_ERRORS):
+        return await workflow_service.delete_workflow(workflow_id, cascade=True)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except DB_ERRORS:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{workflow_id}/execute")
-async def execute_workflow(workflow_id: str, request: WorkflowExecuteRequest):
+async def execute_workflow(workflow_id: str, request: WorkflowExecuteRequest, state: AppState = Depends(get_state)):
     """Execute a workflow manually."""
     try:
-        result = await scheduler.execute_workflow(workflow_id, request.inputs)
+        result = await state.scheduler.run(workflow_id, request.inputs)
         return {"success": True, "result": result}
     except ValueError as e:
+        # NotFoundError for an unknown id, or the engine rejecting the workflow (invalid DAG, unknown node type).
         raise HTTPException(status_code=404, detail=str(e)) from e
     except DB_ERRORS:
         raise

@@ -1,6 +1,6 @@
 import math
 
-from lib.services.ai_client.base_tool import BaseTool
+from lib.tools.base_tool import BaseTool
 
 
 UTILS_DEFINITIONS = [

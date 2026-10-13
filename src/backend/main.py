@@ -3,13 +3,14 @@ FastAPI Backend for Knik Web App
 Main application entry point with middleware and route registration
 """
 
+import asyncio
+import contextlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend import state
 from backend.config import WebBackendConfig
 from backend.routes.admin import router as admin_router
 from backend.routes.analytics import router as analytics_router
@@ -18,9 +19,11 @@ from backend.routes.chat_stream import router as chat_stream_router
 from backend.routes.conversations import router as conversations_router
 from backend.routes.cron import router as cron_router
 from backend.routes.workflow import router as workflow_router
-from imports import DB_ERRORS, DatabaseUnavailable, PostgresDB, SettingsDB, printer
+from backend.state import AppState
+from imports import DB_ERRORS, DatabaseUnavailable, PostgresDB, browser, printer
 
 
+# The one config instance: it sizes the server below and the lifespan hands it to the AppState.
 config = WebBackendConfig()
 
 app = FastAPI(title="Knik AI Assistant API", description="Simple voice-enabled AI chat API", version="2.0.0")
@@ -55,6 +58,19 @@ for _error in DB_ERRORS:
     app.add_exception_handler(_error, database_error_handler)
 
 
+# How often idle browser sessions (launched by the browser tools) are looked for and closed.
+BROWSER_CLEANUP_INTERVAL = 300
+
+
+async def _close_idle_browsers() -> None:
+    while True:
+        await asyncio.sleep(BROWSER_CLEANUP_INTERVAL)
+        try:
+            await asyncio.to_thread(browser.cleanup_idle)
+        except Exception as e:
+            printer.warning(f"Browser idle cleanup failed: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan event handler for startup/shutdown"""
@@ -67,19 +83,24 @@ async def lifespan(app: FastAPI):
         # Queries reconnect lazily (at most every 30 s), so the backend recovers once Postgres is up.
         printer.warning(f"PostgreSQL init failed (conversations will not persist): {e}")
 
-    try:
-        persisted = await SettingsDB.get()
-        if persisted:
-            state.set_persisted_overrides(persisted.to_dict())
-            printer.info(f"Loaded persisted settings: {persisted.provider}/{persisted.model}")
-    except DB_ERRORS as e:
-        printer.warning(f"Could not load persisted settings: {e}")
+    # Routes reach it through deps.get_state. Built after the pool, since it reads the persisted settings.
+    state = await AppState.create(config)
+    app.state.knik = state
 
+    client_settings = state.settings.client_settings
     printer.success(f"Backend ready on http://{config.host}:{config.port}")
-    printer.info(f"AI Provider: {config.ai_provider}/{config.ai_model}")
-    printer.info(f"TTS Voice: {config.voice_name}")
+    printer.info(f"AI Provider: {client_settings.provider}/{client_settings.model}")
+    printer.info(f"TTS Voice: {state.settings.voice}")
+    browser_cleaner = asyncio.create_task(_close_idle_browsers(), name="browser-idle-cleaner")
     yield
     printer.info("Shutting down Knik backend...")
+    browser_cleaner.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await browser_cleaner
+    try:
+        await state.close()
+    except Exception as e:
+        printer.warning(f"Tool cleanup failed: {e}")
     try:
         await PostgresDB.close()
         printer.info("PostgreSQL connection pool closed")
