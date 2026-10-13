@@ -5,7 +5,7 @@ node_modules
 async_tts_output
 .env
 
-src/apps/web/frontend/node_modules
+src/frontend/node_modules
 
 .python-version
 
@@ -14,6 +14,6 @@ logs/*
 
 .archify/*
 
-src/apps/web/frontend/test-results/
-src/apps/web/frontend/playwright-report/
-src/apps/web/frontend/dist/
+src/frontend/test-results/
+src/frontend/playwright-report/
+src/frontend/dist/

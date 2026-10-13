@@ -1,6 +1,6 @@
 # Shared frontend components
 
-The frontend has one implementation for each control family under `src/apps/web/frontend/src/lib/components/`. Widgets supply domain data and handle actions; components render props and emit callbacks. Prop interfaces live under `src/types/`, and static design configuration lives under `src/lib/constants/`.
+The frontend has one implementation for each control family under `src/frontend/src/lib/components/`. Widgets supply domain data and handle actions; components render props and emit callbacks. Prop interfaces live under `src/types/`, and static design configuration lives under `src/lib/constants/`.
 
 Use the `$components` barrel or a concrete component path:
 
@@ -105,7 +105,7 @@ ProfileSummary, ToolGroupList, VoiceOption, and ApiKeyRow are pure settings view
 
 The local ESLint architecture plugin resolves configured aliases, relative imports, and re-export barrels. Components cannot import widgets, pages, app hooks, stores, or demo fixtures. Raw button/table rendering is restricted to the canonical modules. Browser I/O belongs to widgets; DOM work needed for focus, layout, and overlays remains valid in components.
 
-Tests are organized under `src/apps/web/frontend/src/tests/`, with shared-control, widget, session, architecture, and browser suites. Run `npm test`, `npm run lint`, `npm run type-check`, and `npm run test:browser` from the frontend directory. See [frontend architecture](web-architecture.md) for session behavior and [the consolidation plan](../plan/07-frontend-component-consolidation.md) for the five Archify views.
+Tests are organized under `src/frontend/src/tests/`, with shared-control, widget, session, architecture, and browser suites. Run `npm test`, `npm run lint`, `npm run type-check`, and `npm run test:browser` from the frontend directory. See [frontend architecture](web-architecture.md) for session behavior and [the consolidation plan](../plan/07-frontend-component-consolidation.md) for the five Archify views.
 
 ## Fixed visual system
 

@@ -27,14 +27,14 @@ repos:
         name: frontend-lint
         entry: ./scripts/lint_frontend.sh --fix
         language: system
-        files: ^src/apps/web/frontend/src/.*\.(ts|tsx)$
+        files: ^src/frontend/src/.*\.(ts|tsx)$
         pass_filenames: true
 
       - id: frontend-format
         name: frontend-format
         entry: ./scripts/format_frontend.sh
         language: system
-        files: ^src/apps/web/frontend/src/.*\.(ts|tsx|css|json)$
+        files: ^src/frontend/src/.*\.(ts|tsx|css|json)$
         pass_filenames: true
 
       - id: pytest

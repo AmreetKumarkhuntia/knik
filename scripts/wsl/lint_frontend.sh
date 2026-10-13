@@ -3,7 +3,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-FRONTEND_DIR="$ROOT_DIR/src/apps/web/frontend"
+FRONTEND_DIR="$ROOT_DIR/src/frontend"
 
 # Run eslint from root, pointing to config and using local binary
 # This handles both relative and absolute paths correctly

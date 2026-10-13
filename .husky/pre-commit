@@ -2,4 +2,4 @@
 . .venv/bin/activate && pre-commit run --hook-stage pre-commit
 
 # Frontend linting - run from frontend directory
-(cd src/apps/web/frontend && npx lint-staged)
+(cd src/frontend && npx lint-staged)

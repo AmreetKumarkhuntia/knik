@@ -32,7 +32,7 @@ backend. The backend serves the HTTP API described below.
 ### Project Structure
 
 ```
-src/apps/web/frontend/src/
+src/frontend/src/
   App.tsx                  # Routes and layout
   main.tsx                 # Entry point
   types/                   # TypeScript type definitions
@@ -150,7 +150,7 @@ lsof -i :8010             # Check if port is available
 ### Frontend Build Issues
 
 ```bash
-cd src/apps/web/frontend
+cd src/frontend
 rm -rf node_modules package-lock.json
 npm install
 ```

@@ -6,7 +6,7 @@ This document explains how to run and build the Knik desktop application using E
 
 Knik's React frontend can run in an Electron window on macOS, Windows, and Linux. In development the window
 loads the Vite dev server (`http://localhost:8020`); a packaged app loads the built frontend
-(`src/apps/web/frontend/dist/index.html`). The packaged app contains only the frontend: it does not bundle or
+(`src/frontend/dist/index.html`). The packaged app contains only the frontend: it does not bundle or
 start the FastAPI backend.
 
 ## Architecture
@@ -144,7 +144,7 @@ Before building, ensure:
 1. **Frontend is built:**
 
    ```bash
-   cd src/apps/web/frontend
+   cd src/frontend
    npm run build
    ```
 
@@ -268,7 +268,7 @@ npm install
 
 2. Rebuild frontend:
    ```bash
-   cd src/apps/web/frontend
+   cd src/frontend
    npm install
    npm run build
    ```
@@ -283,7 +283,7 @@ npm install
 ### Build fails
 
 1. **Missing icons:** Create icons in `assets/` (see [Electron Assets](../components/electron-assets.md))
-2. **Frontend not built:** Run `cd src/apps/web/frontend && npm run build`
+2. **Frontend not built:** Run `cd src/frontend && npm run build`
 3. **Permissions:** Ensure build scripts are executable
 4. **Disk space:** Building requires ~500MB free space
 
