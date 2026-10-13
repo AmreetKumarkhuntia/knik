@@ -5,11 +5,14 @@ import pytest
 from lib.commands.handlers import SHARED_COMMANDS, register_shared_commands
 from lib.commands.registry import CommandDispatcher, CommandRegistry
 from lib.commands.service import CommandService
+from lib.services.db.repositories.conversations import ConversationScope
 
 from . import fakes, golden
 
 
 class _Identity:
+    """A local user's, so the legacy conversations of the golden cases are theirs to list."""
+
     def __init__(self) -> None:
         self.conversations: dict[str, str | None] = {}
 
@@ -21,6 +24,9 @@ class _Identity:
 
     def clear_conversation_id(self, user_id: str) -> None:
         self.conversations[user_id] = None
+
+    def conversation_scope(self, user_id: str) -> ConversationScope:
+        return ConversationScope.local()
 
 
 @pytest.fixture

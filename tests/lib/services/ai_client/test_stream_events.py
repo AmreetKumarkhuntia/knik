@@ -114,7 +114,7 @@ def _stub_database(client: AIClient, conversation_id: str | None) -> list[str]:
     """Stubs achat_stream's database steps on the client; returns the list of reply texts it saves."""
     saved: list[str] = []
 
-    async def ensure(_conversation_id):
+    async def ensure(_conversation_id, **_owner):
         return conversation_id
 
     async def append(*args):

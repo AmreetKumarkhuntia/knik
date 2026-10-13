@@ -74,6 +74,8 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "DatabaseUnavailable": ("lib.services.db.connection", "DatabaseUnavailable"),
     "DB_ERRORS": ("lib.services.db.connection", "DB_ERRORS"),
     "ConversationDB": ("lib.services.db.repositories.conversations", "ConversationDB"),
+    "ConversationScope": ("lib.services.db.repositories.conversations", "ConversationScope"),
+    "UserDB": ("lib.services.db.repositories.users", "UserDB"),
     "WorkflowDB": ("lib.services.db.repositories.workflows", "WorkflowDB"),
     "ScheduleDB": ("lib.services.db.repositories.schedules", "ScheduleDB"),
     "ExecutionDB": ("lib.services.db.repositories.executions", "ExecutionDB"),
@@ -121,11 +123,13 @@ if TYPE_CHECKING:
     from lib.services.db.models import Schedule as Schedule
     from lib.services.db.models import Workflow as Workflow
     from lib.services.db.repositories.conversations import ConversationDB as ConversationDB
+    from lib.services.db.repositories.conversations import ConversationScope as ConversationScope
     from lib.services.db.repositories.executions import ExecutionDB as ExecutionDB
     from lib.services.db.repositories.schedules import ScheduleDB as ScheduleDB
     from lib.services.db.repositories.settings import ApiKeyDB as ApiKeyDB
     from lib.services.db.repositories.settings import McpToolsDB as McpToolsDB
     from lib.services.db.repositories.settings import SettingsDB as SettingsDB
+    from lib.services.db.repositories.users import UserDB as UserDB
     from lib.services.db.repositories.workflows import WorkflowDB as WorkflowDB
     from lib.services.telegram.client import TelegramClient as TelegramClient
     from lib.services.telegram.models import BotCommand as BotCommand

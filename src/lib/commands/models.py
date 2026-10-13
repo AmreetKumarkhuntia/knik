@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from lib.services.ai_client.client import AIClient
+    from lib.services.db import ConversationScope
 
 
 # Returns the AI client of the user a command came from (creating it if the app builds clients lazily).
@@ -67,3 +68,5 @@ class UserIdentityProtocol(Protocol):
     def get_conversation_id(self, user_id: str) -> str | None: ...
     def set_conversation_id(self, user_id: str, conversation_id: str) -> None: ...
     def clear_conversation_id(self, user_id: str) -> None: ...
+    # The conversations the user may list and resume; any other is reported as not found.
+    def conversation_scope(self, user_id: str) -> ConversationScope: ...

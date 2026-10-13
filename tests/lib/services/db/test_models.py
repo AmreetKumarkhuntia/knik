@@ -16,6 +16,7 @@ from lib.services.db.models import (
     McpToolState,
     NodeExecutionRecord,
     Schedule,
+    User,
     Workflow,
     isoformat,
 )
@@ -72,6 +73,8 @@ def test_conversation_from_full_row_derives_preview_and_count():
         "total_tokens": 0,
         "preview": "last",
         "message_count": 2,
+        "user_id": None,
+        "source": None,
     }
 
 
@@ -80,6 +83,27 @@ def test_conversation_from_list_row_keeps_supplied_preview_and_count():
     conversation = Conversation.from_row(row)
     assert (conversation.messages, conversation.message_count, conversation.preview) == ([], 7, "p")
     assert conversation.to_dict()["created_at"] is None
+
+
+def test_conversation_carries_its_owner_and_source():
+    row = {"id": "c1", "title": None, "messages": [], "user_id": "usr_1", "source": "telegram"}
+    conversation = Conversation.from_row(row)
+    assert (conversation.user_id, conversation.source) == ("usr_1", "telegram")
+    assert (conversation.to_dict()["user_id"], conversation.to_dict()["source"]) == ("usr_1", "telegram")
+
+
+def test_user_from_row():
+    row = {
+        "id": "usr_1",
+        "source": "telegram",
+        "external_id": "42",
+        "display_name": None,
+        "created_at": T0,
+        "last_seen_at": T1,
+    }
+    assert User.from_row(row) == User(
+        id="usr_1", source="telegram", external_id="42", display_name=None, created_at=T0, last_seen_at=T1
+    )
 
 
 def test_workflow_has_each_column_once_and_no_phantom_last_executed_at():

@@ -19,6 +19,7 @@ TABLES = (
     "schedules",
     "workflows",
     "conversations",
+    "users",
     "app_settings",
     "api_keys",
     "mcp_tools_state",

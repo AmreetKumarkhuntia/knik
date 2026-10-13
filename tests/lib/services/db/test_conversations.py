@@ -3,9 +3,10 @@
 import asyncio
 from datetime import UTC, datetime
 
+import psycopg
 import pytest
 
-from lib.services.db import ConversationDB, PostgresDB
+from lib.services.db import ConversationDB, ConversationScope, PostgresDB, UserDB
 from tests.db_support import MIGRATIONS_DIR, requires_db
 
 
@@ -24,7 +25,7 @@ async def test_create_get_and_list(db):
     assert [m.role for m in conversation.messages] == ["user", "assistant"]
     assert conversation.message_count == 2
 
-    listed = await ConversationDB.list_conversations()
+    listed = await ConversationDB.list_conversations(ConversationScope.local())
     assert [c.id for c in listed] == [first, second]
     assert listed[0].messages == []
     assert listed[0].message_count == 2
@@ -32,8 +33,106 @@ async def test_create_get_and_list(db):
     assert listed[1].message_count == 0
     assert listed[1].preview is None
 
-    assert [c.id for c in await ConversationDB.list_conversations(limit=1, offset=1)] == [second]
+    assert [c.id for c in await ConversationDB.list_conversations(ConversationScope.local(), limit=1, offset=1)] == [
+        second
+    ]
     assert await ConversationDB.get_conversation("missing") is None
+
+
+async def test_a_conversation_records_its_owner_and_source(db):
+    user = await UserDB.get_or_create("telegram", "42")
+    owned = await ConversationDB.create_conversation("Mine", user_id=user.id, source="telegram")
+    web = await ConversationDB.create_conversation(source="web")
+    legacy = await ConversationDB.create_conversation()
+
+    found = {cid: await ConversationDB.get_conversation(cid) for cid in (owned, web, legacy)}
+    assert {cid: (c.user_id, c.source) for cid, c in found.items()} == {
+        owned: (user.id, "telegram"),
+        web: (None, "web"),
+        legacy: (None, None),
+    }
+    listed = await ConversationDB.list_conversations(ConversationScope.owned_by(user.id))
+    assert [(c.id, c.user_id, c.source) for c in listed] == [(owned, user.id, "telegram")]
+
+
+async def _one_of_each() -> dict[str, str]:
+    alice = (await UserDB.get_or_create("telegram", "alice")).id
+    bob = (await UserDB.get_or_create("telegram", "bob")).id
+    return {
+        "alice_id": alice,
+        "bob_id": bob,
+        "alice": await ConversationDB.create_conversation(user_id=alice, source="telegram"),
+        "bob": await ConversationDB.create_conversation(user_id=bob, source="telegram"),
+        "web": await ConversationDB.create_conversation(source="web"),
+        "legacy": await ConversationDB.create_conversation(),
+    }
+
+
+async def _visible(scope: ConversationScope, made: dict[str, str]) -> tuple[set[str], set[str]]:
+    """The kinds of conversation `scope` lists, and those it opens by id."""
+    names = {cid: name for name, cid in made.items() if not name.endswith("_id")}
+    listed = {names[c.id] for c in await ConversationDB.list_conversations(scope)}
+    opened = {name for cid, name in names.items() if await ConversationDB.get_conversation(cid, scope) is not None}
+    return listed, opened
+
+
+async def test_a_bot_user_sees_only_their_own_conversations(db):
+    made = await _one_of_each()
+
+    assert await _visible(ConversationScope.owned_by(made["alice_id"]), made) == ({"alice"}, {"alice"})
+    assert await _visible(ConversationScope.owned_by(made["bob_id"]), made) == ({"bob"}, {"bob"})
+    assert await _visible(ConversationScope.owned_by("usr_unknown"), made) == (set(), set())
+
+
+async def test_the_local_scope_sees_web_and_legacy_conversations_and_no_bot_users(db):
+    made = await _one_of_each()
+
+    assert await _visible(ConversationScope.local(), made) == ({"web", "legacy"}, {"web", "legacy"})
+
+
+async def test_an_empty_scope_sees_nothing_and_no_scope_opens_anything(db):
+    made = await _one_of_each()
+
+    assert await _visible(ConversationScope(), made) == (set(), set())
+    assert all([await ConversationDB.get_conversation(made[name]) for name in ("alice", "bob", "web", "legacy")])
+
+
+async def test_a_deleted_users_conversations_lose_their_owner_and_stay_out_of_the_local_scope(db):
+    made = await _one_of_each()
+
+    await PostgresDB.execute("DELETE FROM users WHERE id = %s", (made["alice_id"],))
+
+    orphan = await ConversationDB.get_conversation(made["alice"])
+    assert (orphan.user_id, orphan.source) == (None, "telegram")
+    assert await _visible(ConversationScope.local(), made) == ({"web", "legacy"}, {"web", "legacy"})
+
+
+async def test_the_owner_migration_can_run_again_and_keeps_owners_and_legacy_rows(db):
+    made = await _one_of_each()
+    migration = (MIGRATIONS_DIR / "014_add_users_and_conversation_owners.sql").read_bytes()
+
+    for _ in range(2):
+        async with PostgresDB.get_connection() as conn:
+            await conn.execute(migration)
+
+    owners = {name: await ConversationDB.get_conversation(made[name]) for name in ("alice", "web", "legacy")}
+    assert {name: (c.user_id, c.source) for name, c in owners.items()} == {
+        "alice": (made["alice_id"], "telegram"),
+        "web": (None, "web"),
+        "legacy": (None, None),
+    }
+    assert (await UserDB.get(made["alice_id"])).external_id == "alice"
+    indexes = await PostgresDB.fetch_all("SELECT indexname FROM pg_indexes WHERE tablename = 'conversations'")
+    assert {"idx_conversations_user_id_updated_at", "idx_conversations_source_updated_at"} <= {
+        row["indexname"] for row in indexes
+    }
+
+
+async def test_a_conversation_needs_a_known_source_and_owner(db):
+    with pytest.raises(psycopg.errors.CheckViolation):
+        await ConversationDB.create_conversation(source="carrier pigeon")
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        await ConversationDB.create_conversation(user_id="usr_unknown", source="telegram")
 
 
 async def test_update_title_and_delete(db):

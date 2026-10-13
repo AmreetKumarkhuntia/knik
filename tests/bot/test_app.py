@@ -165,7 +165,7 @@ async def test_a_tool_waits_for_its_users_consent_reply(app, transport):
     app.config = config
     task = await _start(app, transport)
 
-    user_id = app._user_identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id="42")).user_id
+    user_id = (await app._user_identity.resolve(IncomingMessage(chat_id="1", text="hi", sender_id="42"))).user_id
     app._user_client_manager.set_chat_context(user_id, "1")
     registry = (await app._user_client_manager.get_or_create(user_id)).tool_registry
     registry._implementations["run_shell_command"] = lambda **kwargs: f"ran {kwargs['command']}"

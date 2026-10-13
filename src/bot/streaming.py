@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 from imports import ConversationReady, StreamDone, StreamError, TextDelta, ToolCallFinished, ToolCallStarted, printer
 
+from .user_identity import SOURCE
+
 
 if TYPE_CHECKING:
     from imports import AIClient, MessageResult
@@ -46,7 +48,9 @@ class StreamingResponseManager:
         prompt: str,
         conversation_id: str | None,
         send_options: dict[str, Any] | None = None,
+        user_id: str | None = None,
     ) -> DeliveryResult:
+        """Stream the reply into the chat. A conversation the reply starts is recorded as `user_id`'s."""
         send_options = send_options or {}
         captured_conv_id: str | None = conversation_id
         captured_usage: dict[str, int] | None = None
@@ -96,7 +100,9 @@ class StreamingResponseManager:
             return _sent(result, "a tool notice")
 
         try:
-            async for event in ai_client.achat_stream(prompt=prompt, conversation_id=conversation_id):
+            async for event in ai_client.achat_stream(
+                prompt=prompt, conversation_id=conversation_id, user_id=user_id, source=SOURCE
+            ):
                 match event:
                     case ConversationReady(conversation_id=conv_id):
                         captured_conv_id = conv_id

@@ -1,13 +1,16 @@
-"""Shared fixtures for the bot tests: an in-memory MessagingTransport instead of Telegram."""
+"""Shared fixtures for the bot tests: an in-memory MessagingTransport instead of Telegram, and users in memory."""
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
 
+from lib.services.db.connection import DatabaseUnavailable
+from lib.services.db.models import User
 from lib.services.telegram.models import BotCommand, IncomingMessage, MessageResult
 
 
@@ -66,3 +69,32 @@ class FakeTransport:
 @pytest.fixture
 def transport() -> FakeTransport:
     return FakeTransport()
+
+
+class FakeUsers:
+    """Stands in for UserDB: users rows that outlive any one UserIdentityManager, as Postgres's do across restarts.
+
+    Set `unavailable` to make lookups fail like a stopped Postgres.
+    """
+
+    def __init__(self) -> None:
+        self.rows: dict[tuple[str, str], User] = {}
+        self.unavailable = False
+        self.lookups = 0
+
+    async def get_or_create(self, source: str, external_id: str, display_name: str | None = None) -> User:
+        self.lookups += 1
+        if self.unavailable:
+            raise DatabaseUnavailable("Postgres unavailable")
+        key = (source, external_id)
+        if key not in self.rows:
+            self.rows[key] = User(f"usr_{uuid.uuid4().hex[:12]}", source, external_id, display_name)
+        return self.rows[key]
+
+
+@pytest.fixture(autouse=True)
+def users(monkeypatch) -> FakeUsers:
+    """Every bot test looks its senders up here; a test that needs Postgres puts the real UserDB back."""
+    store = FakeUsers()
+    monkeypatch.setattr("bot.user_identity.UserDB", store)
+    return store

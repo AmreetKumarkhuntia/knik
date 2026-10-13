@@ -1,4 +1,4 @@
-"""Row models for every table: conversations, workflows, schedules, executions and settings."""
+"""Row models for every table: users, conversations, workflows, schedules, executions and settings."""
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -37,7 +37,32 @@ class ConversationMessage:
 
 
 @dataclass
+class User:
+    """Someone an app tells apart from its other users (a Telegram sender); `external_id` is their id in `source`."""
+
+    id: str
+    source: str
+    external_id: str
+    display_name: str | None = None
+    created_at: datetime | None = None
+    last_seen_at: datetime | None = None
+
+    @classmethod
+    def from_row(cls, row: dict[str, Any]) -> "User":
+        return cls(
+            id=row["id"],
+            source=row["source"],
+            external_id=row["external_id"],
+            display_name=row.get("display_name"),
+            created_at=row.get("created_at"),
+            last_seen_at=row.get("last_seen_at"),
+        )
+
+
+@dataclass
 class Conversation:
+    """`user_id` and `source` say who started it and from which app; rows from before they were recorded have neither."""
+
     id: str
     title: str | None
     messages: list[ConversationMessage]
@@ -48,6 +73,8 @@ class Conversation:
     total_tokens: int = 0
     preview: str | None = None
     message_count: int = 0
+    user_id: str | None = None
+    source: str | None = None
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Conversation":
@@ -75,6 +102,8 @@ class Conversation:
             total_tokens=row.get("total_tokens") or 0,
             preview=preview,
             message_count=message_count,
+            user_id=row.get("user_id"),
+            source=row.get("source"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -89,6 +118,8 @@ class Conversation:
             "total_tokens": self.total_tokens,
             "preview": self.preview,
             "message_count": self.message_count,
+            "user_id": self.user_id,
+            "source": self.source,
         }
 
 

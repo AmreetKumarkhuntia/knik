@@ -10,7 +10,7 @@ from lib.services.ai_client.compaction import ConversationCompactor
 from lib.services.ai_client.factory import build_client
 from lib.services.ai_client.settings import ClientSettings
 from lib.services.ai_client.stream_events import StreamDone
-from lib.services.db import ConversationDB
+from lib.services.db import ConversationDB, DatabaseUnavailable, UserDB
 from tests.db_support import requires_db
 
 
@@ -93,3 +93,58 @@ async def test_streamed_turns_add_up_in_the_conversation_total(db):
     usage = await ConversationDB.get_conversation_token_usage(first.conversation_id)
     assert usage["db_total"] == first.usage["total_tokens"] + second.usage["total_tokens"] > 0
     assert usage["db_total"] == usage["total"]
+
+
+class _Conversations:
+    """Records the conversations _ensure_conversation creates; `unavailable` makes it fail like a stopped Postgres."""
+
+    def __init__(self, existing: tuple[str, ...] = (), unavailable: bool = False) -> None:
+        self.existing = existing
+        self.unavailable = unavailable
+        self.created: list[dict] = []
+
+    async def get_conversation(self, conversation_id):
+        if self.unavailable:
+            raise DatabaseUnavailable("down")
+        return object() if conversation_id in self.existing else None
+
+    async def create_conversation(self, title=None, **owner):
+        if self.unavailable:
+            raise DatabaseUnavailable("down")
+        self.created.append(owner)
+        return f"conv-{len(self.created)}"
+
+
+@pytest.mark.asyncio
+async def test_a_conversation_is_created_with_the_owner_and_source_given(monkeypatch):
+    conversations = _Conversations(existing=("conv-old",))
+    monkeypatch.setattr("lib.services.ai_client.client.ConversationDB", conversations)
+
+    created = await AIClient._ensure_conversation(None, user_id="usr_1", source="telegram")
+    kept = await AIClient._ensure_conversation("conv-old", user_id="usr_1", source="telegram")
+    unowned = await AIClient._ensure_conversation(None)
+
+    assert (created, kept, unowned) == ("conv-1", "conv-old", "conv-2")
+    assert conversations.created == [{"user_id": "usr_1", "source": "telegram"}, {"user_id": None, "source": None}]
+    monkeypatch.setattr(conversations, "unavailable", True)
+    assert await AIClient._ensure_conversation(None, user_id="usr_1", source="telegram") is None
+
+
+@requires_db
+@pytest.mark.asyncio
+async def test_achat_and_achat_stream_record_the_owner_and_source_of_a_new_conversation(db):
+    client = build_client(ClientSettings(provider="mock"))
+    user = await UserDB.get_or_create("telegram", "42")
+
+    _, chatted, _ = await client.achat("hello", user_id=user.id, source="telegram")
+    streamed = [event async for event in client.achat_stream("hello", source="web")][-1].conversation_id
+    # A conversation that exists keeps its owner, whoever continues it.
+    _, continued, _ = await client.achat("again", conversation_id=streamed, user_id=user.id, source="telegram")
+    await asyncio.gather(*AIClient._background_tasks)
+
+    owners = {cid: await ConversationDB.get_conversation(cid) for cid in (chatted, streamed)}
+    assert continued == streamed
+    assert {cid: (c.user_id, c.source) for cid, c in owners.items()} == {
+        chatted: (user.id, "telegram"),
+        streamed: (None, "web"),
+    }

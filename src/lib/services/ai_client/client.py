@@ -306,6 +306,8 @@ class AIClient:
         prompt: str,
         *,
         conversation_id: str | None = None,
+        user_id: str | None = None,
+        source: str | None = None,
         disable_summarization: bool = False,
         max_tokens: int = 1024,
         temperature: float = 0.7,
@@ -336,6 +338,10 @@ class AIClient:
             prompt: The user's message.
             conversation_id: Existing conversation UUID.  ``None`` to
                 create a new one (requires DB).
+            user_id: The owner (a users row) recorded on a conversation
+                this call creates.  An existing conversation keeps its own.
+            source: The app recorded on a conversation this call creates:
+                ``web``, ``telegram`` or ``console``.
             disable_summarization: When ``True``, skip the threshold
                 check and never trigger compaction.
             max_tokens: Maximum tokens in response.
@@ -355,7 +361,7 @@ class AIClient:
         meta = provider_meta or {}
         cfg = Config()
 
-        conversation_id = await self._ensure_conversation(conversation_id)
+        conversation_id = await self._ensure_conversation(conversation_id, user_id=user_id, source=source)
 
         if conversation_id:
             await self._append_message(conversation_id, "user", prompt, meta)
@@ -391,6 +397,8 @@ class AIClient:
         prompt: str,
         *,
         conversation_id: str | None = None,
+        user_id: str | None = None,
+        source: str | None = None,
         disable_summarization: bool = False,
         max_tokens: int = 1024,
         temperature: float = 0.7,
@@ -421,6 +429,8 @@ class AIClient:
         Args:
             prompt: The user's message.
             conversation_id: Existing conversation UUID.
+            user_id: Owner of a conversation this call creates.
+            source: App of a conversation this call creates.
             disable_summarization: Skip summarisation trigger.
             max_tokens: Maximum tokens in response.
             temperature: Response randomness.
@@ -434,7 +444,7 @@ class AIClient:
         meta = provider_meta or {}
         cfg = Config()
 
-        conversation_id = await self._ensure_conversation(conversation_id)
+        conversation_id = await self._ensure_conversation(conversation_id, user_id=user_id, source=source)
 
         # Emit conversation_id early so the caller can forward it
         if conversation_id:
@@ -512,8 +522,10 @@ class AIClient:
         return text, self.last_usage, self.last_tool_interactions
 
     @staticmethod
-    async def _ensure_conversation(conversation_id: str | None) -> str | None:
-        """Create a new conversation or verify an existing one.
+    async def _ensure_conversation(
+        conversation_id: str | None, *, user_id: str | None = None, source: str | None = None
+    ) -> str | None:
+        """Create a new conversation, owned by *user_id* and started from *source*, or verify an existing one.
 
         Returns the valid conversation ID, or ``None`` if the DB is
         unavailable (the chat then runs without persistence).
@@ -521,7 +533,7 @@ class AIClient:
         try:
             if conversation_id and await ConversationDB.get_conversation(conversation_id):
                 return conversation_id
-            return await ConversationDB.create_conversation()
+            return await ConversationDB.create_conversation(user_id=user_id, source=source)
         except DB_ERRORS as e:
             printer.warning(f"Chat not persisted, database unavailable: {e}")
             return None

@@ -110,3 +110,21 @@ def test_a_failing_handler_reports_the_error(dispatcher, monkeypatch):
     result = dispatcher.try_dispatch("/sessions")
 
     assert (result.success, result.message) == (False, "Error executing command: 'NoneType' object is not callable")
+
+
+def test_the_console_sees_the_web_and_legacy_conversations_and_no_bot_users(dispatcher, identity, conversations):
+    bot_users, web, legacy = fakes.CONVERSATIONS[:2], fakes.CONVERSATIONS[2:3], fakes.CONVERSATIONS[3:4]
+    conversations.conversations = [
+        *fakes.owned(bot_users, "usr_1", "telegram"),
+        *fakes.owned(web, None, "web"),
+        *legacy,
+    ]
+
+    listed = dispatcher.try_dispatch("/sessions").message
+
+    assert "33333333-cccc" in listed and "44444444-dddd" in listed
+    assert "11111111-aaaa" not in listed and "22222222-bbbb" not in listed
+    for ref in ("11111111-aaaa", "2222"):
+        assert dispatcher.try_dispatch(f"/resume {ref}").message == f"Could not find conversation: {ref}"
+    assert dispatcher.try_dispatch("/resume 3333").message == "Resumed: Untitled (3 messages)"
+    assert identity.get_conversation_id(identity.user_id) == "33333333-cccc"

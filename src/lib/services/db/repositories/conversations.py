@@ -1,6 +1,7 @@
-"""Conversations and their JSONB message history."""
+"""Conversations and their JSONB message history, and which callers may see which conversations."""
 
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -9,6 +10,46 @@ from lib.utils.printer import printer
 from ..connection import PostgresDB
 from ..models import Conversation, ConversationMessage
 from .base import json_param, to_model, to_models
+
+
+@dataclass(frozen=True)
+class ConversationScope:
+    """The conversations a caller may list and open: those any of the fields admits.
+
+    `user_id` admits that user's own conversations, `sources` those started from these apps, and `legacy` the rows
+    from before conversations recorded an owner, which have neither owner nor source. The default admits nothing.
+    """
+
+    user_id: str | None = None
+    sources: tuple[str, ...] = ()
+    legacy: bool = False
+
+    @classmethod
+    def owned_by(cls, user_id: str) -> "ConversationScope":
+        """A bot user's: only the conversations they started."""
+        return cls(user_id=user_id)
+
+    @classmethod
+    def local(cls) -> "ConversationScope":
+        """The web app's and the console's: what the web started plus the legacy rows, never a bot user's."""
+        return cls(sources=("web",), legacy=True)
+
+
+def _scope_condition(scope: ConversationScope | None) -> tuple[str, list[Any]]:
+    """A WHERE condition on conversations admitting what `scope` admits (everything for None), and its parameters."""
+    if scope is None:
+        return "TRUE", []
+    conditions: list[str] = []
+    params: list[Any] = []
+    if scope.user_id is not None:
+        conditions.append("user_id = %s")
+        params.append(scope.user_id)
+    if scope.sources:
+        conditions.append("source = ANY(%s)")
+        params.append(list(scope.sources))
+    if scope.legacy:
+        conditions.append("(source IS NULL AND user_id IS NULL)")
+    return f"({' OR '.join(conditions) or 'FALSE'})", params
 
 
 def _empty_token_usage() -> dict[str, Any]:
@@ -27,24 +68,33 @@ def _empty_token_usage() -> dict[str, Any]:
 
 class ConversationDB:
     @staticmethod
-    async def create_conversation(title: str | None = None) -> str:
+    async def create_conversation(
+        title: str | None = None, *, user_id: str | None = None, source: str | None = None
+    ) -> str:
+        """`user_id` is the owner (a users row) and `source` the app it is started from: web, telegram or console."""
         conversation_id = str(uuid.uuid4())
         await PostgresDB.execute(
-            "INSERT INTO conversations (id, title, messages) VALUES (%s, %s, '[]'::jsonb)",
-            (conversation_id, title),
+            "INSERT INTO conversations (id, title, messages, user_id, source) VALUES (%s, %s, '[]'::jsonb, %s, %s)",
+            (conversation_id, title, user_id, source),
         )
         printer.info(f"Created conversation: {conversation_id}")
         return conversation_id
 
     @staticmethod
-    async def get_conversation(conversation_id: str) -> Conversation | None:
-        row = await PostgresDB.fetch_one("SELECT * FROM conversations WHERE id = %s", (conversation_id,))
+    async def get_conversation(conversation_id: str, scope: ConversationScope | None = None) -> Conversation | None:
+        """None as well when the conversation is outside `scope`; without a scope, any conversation is found."""
+        condition, params = _scope_condition(scope)
+        row = await PostgresDB.fetch_one(
+            f"SELECT * FROM conversations WHERE id = %s AND {condition}", (conversation_id, *params)
+        )
         return to_model(Conversation.from_row, row)
 
     @staticmethod
-    async def list_conversations(limit: int = 20, offset: int = 0) -> list[Conversation]:
-        """Most recently updated first, without message bodies (only a preview and the count)."""
-        query = """
+    async def list_conversations(scope: ConversationScope, limit: int = 20, offset: int = 0) -> list[Conversation]:
+        """The conversations in `scope`, most recently updated first, without message bodies (only a preview and the
+        count)."""
+        condition, params = _scope_condition(scope)
+        query = f"""
             SELECT
                 id,
                 title,
@@ -52,12 +102,15 @@ class ConversationDB:
                 COALESCE(jsonb_array_length(messages), 0) AS message_count,
                 LEFT(messages -> -1 ->> 'content', 200) AS preview,
                 created_at,
-                updated_at
+                updated_at,
+                user_id,
+                source
             FROM conversations
+            WHERE {condition}
             ORDER BY updated_at DESC
             LIMIT %s OFFSET %s
         """
-        rows = await PostgresDB.fetch_all(query, (limit, offset))
+        rows = await PostgresDB.fetch_all(query, (*params, limit, offset))
         return to_models(Conversation.from_row, rows)
 
     @staticmethod
