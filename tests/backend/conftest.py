@@ -2,7 +2,9 @@
 
 The app opens its own pool inside TestClient's event loop (a pool cannot be shared across loops), so the
 database fixtures only point the KNIK_DB_* settings at the test database and empty it. Every test runs the
-app with the mock AI provider and a stand-in TTS model, whatever the environment configures.
+app with the mock AI provider, a stand-in TTS model, no API key check and consent-required tools refused,
+whatever the environment configures. A test that needs other settings replaces ``main.config`` before it
+starts the app.
 """
 
 import dataclasses
@@ -55,17 +57,24 @@ def stub_tts(monkeypatch) -> None:
 @pytest.fixture(autouse=True)
 def config(monkeypatch) -> WebBackendConfig:
     """The config the app starts with: the env's, but with the mock provider so no test reaches a real AI."""
-    test_config = dataclasses.replace(main.config, ai_provider="mock", ai_model="mock-model")
+    test_config = dataclasses.replace(
+        main.config, ai_provider="mock", ai_model="mock-model", require_api_key=False, tool_consent="deny"
+    )
     monkeypatch.setattr(main, "config", test_config)
     return test_config
 
 
 @pytest.fixture
-def offline_client(fresh_pool_state, monkeypatch) -> Iterator[TestClient]:
-    """The app started while Postgres is unreachable (nothing listens on port 1)."""
+def offline_database(fresh_pool_state, monkeypatch) -> None:
+    """Postgres unreachable for an app started from now on (nothing listens on port 1)."""
     monkeypatch.setenv("KNIK_DB_HOST", "127.0.0.1")
     monkeypatch.setenv("KNIK_DB_PORT", "1")
     monkeypatch.setenv("KNIK_DB_CONNECT_TIMEOUT", "1")
+
+
+@pytest.fixture
+def offline_client(offline_database) -> Iterator[TestClient]:
+    """The app started while Postgres is unreachable."""
     with TestClient(app) as client:
         yield client
 

@@ -8,15 +8,18 @@ from __future__ import annotations
 
 import asyncio
 import weakref
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Coroutine
 from contextlib import asynccontextmanager
+from typing import Any
 
 from backend.config import WebBackendConfig
 from backend.models.admin import SettingsUpdate
 from backend.settings_service import SettingsService
 from imports import (
+    DB_ERRORS,
     AIClient,
     AIClientCache,
+    ApiKeyDB,
     KokoroVoiceModel,
     Scheduler,
     build_workflow_client,
@@ -46,7 +49,8 @@ class AppState:
         # Bumped by every settings or tool change; a client built under an older one is never cached.
         self._generation = 0
         self._built_in: weakref.WeakKeyDictionary[AIClient, int] = weakref.WeakKeyDictionary()
-        self._cleanups: set[asyncio.Task] = set()
+        # Tool cleanups and API-key stamps still running; close() waits for them.
+        self._background: set[asyncio.Task] = set()
 
     @classmethod
     async def create(cls, config: WebBackendConfig) -> AppState:
@@ -136,10 +140,14 @@ class AppState:
             self._drop_clients()
             printer.info(f"Tool group {group} {'enabled' if enabled else 'disabled'}")
 
+    def record_api_key_use(self, key_id: str) -> None:
+        """Stamp the key's last use without making the request wait for the write."""
+        self._spawn(_mark_api_key_used(key_id))
+
     async def close(self) -> None:
         """Clean up the tools of every client built here (closing their browsers), for shutdown."""
         self._drop_clients()
-        await asyncio.gather(*self._cleanups, return_exceptions=True)
+        await asyncio.gather(*self._background, return_exceptions=True)
         # Clients still held by a request that has not finished, or built outside client().
         await asyncio.to_thread(cleanup_all_tools)
 
@@ -152,14 +160,24 @@ class AppState:
         if client in self._in_use or client.tool_registry is None:
             return
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             cleanup_client_tools(client)
             return
         # Closing a browser waits for its thread for up to seconds, so keep it off the event loop.
-        task = loop.create_task(asyncio.to_thread(cleanup_client_tools, client))
-        self._cleanups.add(task)
-        task.add_done_callback(self._cleanups.discard)
+        self._spawn(asyncio.to_thread(cleanup_client_tools, client))
+
+    def _spawn(self, work: Coroutine[Any, Any, Any]) -> None:
+        task = asyncio.get_running_loop().create_task(work)
+        self._background.add(task)
+        task.add_done_callback(self._background.discard)
+
+
+async def _mark_api_key_used(key_id: str) -> None:
+    try:
+        await ApiKeyDB.mark_used(key_id)
+    except DB_ERRORS as e:
+        printer.warning(f"Could not record the use of API key {key_id}: {e}")
 
 
 async def _load_tts(voice: str) -> KokoroVoiceModel:

@@ -101,6 +101,34 @@ async def test_api_keys(db):
     assert [k.id for k in await ApiKeyDB.list_keys()] == [second.api_key.id]
 
 
+async def test_an_api_key_is_found_only_by_its_full_secret(db):
+    created = await ApiKeyDB.create("CI")
+    other = await ApiKeyDB.create("Other")
+    key = created.key
+
+    assert await ApiKeyDB.find_id(key) == created.api_key.id
+    assert await ApiKeyDB.find_id(other.key) == other.api_key.id
+    for wrong in (key[:-1] + ("1" if key.endswith("0") else "0"), key[:16], key + "0", "", "knik_live_"):
+        assert await ApiKeyDB.find_id(wrong) is None
+
+    await ApiKeyDB.delete(created.api_key.id)
+    assert await ApiKeyDB.find_id(key) is None
+
+
+async def test_marking_an_api_key_used_stamps_only_that_key(db):
+    used = await ApiKeyDB.create("Used")
+    idle = await ApiKeyDB.create("Idle")
+
+    await ApiKeyDB.mark_used(used.api_key.id)
+    await ApiKeyDB.mark_used("no-such-key")
+
+    stamps = {key.id: (key.created_at, key.last_used_at) for key in await ApiKeyDB.list_keys()}
+    created_at, last_used_at = stamps[used.api_key.id]
+    assert last_used_at is not None and created_at is not None
+    assert last_used_at >= created_at
+    assert stamps[idle.api_key.id][1] is None
+
+
 async def test_mcp_tool_overrides(db):
     assert await McpToolsDB.get_overrides() == {}
     assert await McpToolsDB.list_states() == []

@@ -2,8 +2,8 @@
 
 New AI clients are built from ``client_settings``: an admin update wins over the persisted row (read once
 at startup), which wins over the env config. Tool groups switched off in the admin panel are left out of
-every new client's tool registry. An update is persisted before it is applied, so a failed write changes
-nothing.
+every new client's tool registry, and every registry gets the web consent gate. An update is persisted before
+it is applied, so a failed write changes nothing.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import functools
 from typing import Any
 
 from backend.config import WebBackendConfig
+from backend.consent import WebConsentGate
 from backend.models.admin import SettingsUpdate
 from imports import (
     ALL_TOOL_CLASSES,
@@ -46,6 +47,7 @@ class SettingsService:
         self.client_settings: ClientSettings = _client_settings(config, AppSettings())
         self.voice: str = config.voice_name
         self.disabled_tool_groups: frozenset[str] = frozenset()
+        self._consent_gate = WebConsentGate(config.tool_consent)
 
     async def load(self) -> None:
         """Apply the persisted settings and tool-group overrides; without a database the env defaults stay."""
@@ -77,8 +79,9 @@ class SettingsService:
         )
 
     def build_client(self) -> AIClient:
-        """A new AI client with the current settings and every enabled tool group."""
-        return build_client(self.client_settings, tool_registry=create_tool_registry(disabled=self.disabled_tools))
+        """A new AI client with the current settings and every enabled tool group, behind the web consent gate."""
+        tool_registry = create_tool_registry(consent_gate=self._consent_gate, disabled=self.disabled_tools)
+        return build_client(self.client_settings, tool_registry=tool_registry)
 
     async def view(self) -> dict[str, Any]:
         """The settings page: persisted preferences over the values in effect over the env defaults."""

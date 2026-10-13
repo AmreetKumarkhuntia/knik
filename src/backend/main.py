@@ -5,13 +5,15 @@ Main application entry point with middleware and route registration
 
 import asyncio
 import contextlib
+from collections.abc import Sequence
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.config import WebBackendConfig
+from backend.deps import require_api_key
 from backend.routes.admin import router as admin_router
 from backend.routes.analytics import router as analytics_router
 from backend.routes.chat import router as chat_router
@@ -28,22 +30,34 @@ config = WebBackendConfig()
 
 app = FastAPI(title="Knik AI Assistant API", description="Simple voice-enabled AI chat API", version="2.0.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
 
-app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
-app.include_router(chat_stream_router, prefix="/api/chat/stream", tags=["chat-streaming"])
-app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
-app.include_router(conversations_router, prefix="/api/conversations", tags=["conversations"])
-app.include_router(cron_router, prefix="/api/cron", tags=["cron"])
-app.include_router(workflow_router, prefix="/api/workflows", tags=["workflows"])
-app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
+def add_cors(app: FastAPI, origins: Sequence[str]) -> None:
+    """Let pages on these origins call the API from a browser; "*" lets any page in, but without credentials."""
+    allow_any = "*" in origins
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"] if allow_any else list(origins),
+        # Under "*" Starlette echoes the caller's origin back to a request with cookies, so with credentials
+        # every site could call the API as the user.
+        allow_credentials=not allow_any,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
+
+add_cors(app, config.cors_origins)
+
+# Every route under /api checks the API key when KNIK_WEB_REQUIRE_API_KEY is on; / and /health stay open.
+api_router = APIRouter(prefix="/api", dependencies=[Depends(require_api_key)])
+api_router.include_router(chat_router, prefix="/chat", tags=["chat"])
+api_router.include_router(chat_stream_router, prefix="/chat/stream", tags=["chat-streaming"])
+api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
+api_router.include_router(conversations_router, prefix="/conversations", tags=["conversations"])
+api_router.include_router(cron_router, prefix="/cron", tags=["cron"])
+api_router.include_router(workflow_router, prefix="/workflows", tags=["workflows"])
+api_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
+app.include_router(api_router)
 
 
 async def database_error_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -71,6 +85,21 @@ async def _close_idle_browsers() -> None:
             printer.warning(f"Browser idle cleanup failed: {e}")
 
 
+def _log_access(config: WebBackendConfig) -> None:
+    printer.info(f"CORS origins: {', '.join(config.cors_origins) or 'none'}")
+    if config.require_api_key:
+        printer.info("API keys: every /api request needs a stored key in X-API-Key")
+    else:
+        printer.info("API keys: not checked (KNIK_WEB_REQUIRE_API_KEY is off)")
+    if config.tool_consent == "allow":
+        printer.warning(
+            "KNIK_WEB_TOOL_CONSENT=allow: web chats run shell commands, file writes, the browser and every other "
+            "tool that needs consent WITHOUT ASKING ANYONE. Use it only for a trusted single-user setup."
+        )
+    else:
+        printer.info("Tool consent: web chats refuse tools that need consent (KNIK_WEB_TOOL_CONSENT=deny)")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan event handler for startup/shutdown"""
@@ -91,6 +120,7 @@ async def lifespan(app: FastAPI):
     printer.success(f"Backend ready on http://{config.host}:{config.port}")
     printer.info(f"AI Provider: {client_settings.provider}/{client_settings.model}")
     printer.info(f"TTS Voice: {state.settings.voice}")
+    _log_access(config)
     browser_cleaner = asyncio.create_task(_close_idle_browsers(), name="browser-idle-cleaner")
     yield
     printer.info("Shutting down Knik backend...")
