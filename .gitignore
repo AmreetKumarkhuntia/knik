@@ -14,6 +14,15 @@ logs/*
 
 .archify/*
 
-src/frontend/test-results/
-src/frontend/playwright-report/
-src/frontend/dist/
+dist/
+
+# Test screenshots, reports and coverage
+test-results/
+playwright-report/
+blob-report/
+coverage/
+.playwright-mcp/
+/*.png
+.pytest_cache/
+.coverage
+htmlcov/
