@@ -7,7 +7,6 @@ whatever the environment configures. A test that needs other settings replaces `
 starts the app.
 """
 
-import dataclasses
 from collections.abc import Iterator
 
 import numpy as np
@@ -20,6 +19,7 @@ from backend import main
 from backend import state as state_module
 from backend.config import WebBackendConfig
 from backend.main import app
+from lib.core.config import Config
 from tests.db_support import TABLES
 
 
@@ -56,9 +56,15 @@ def stub_tts(monkeypatch) -> None:
 
 @pytest.fixture(autouse=True)
 def config(monkeypatch) -> WebBackendConfig:
-    """The config the app starts with: the env's, but with the mock provider so no test reaches a real AI."""
-    test_config = dataclasses.replace(
-        main.config, ai_provider="mock", ai_model="mock-model", require_api_key=False, tool_consent="deny"
+    """The config the app starts with: the env's, with every user setting at its default and the mock provider.
+
+    Clearing the user settings keeps the results independent of the developer's .env (a stored API key, a
+    telemetry flag); the mock provider keeps every test off a real AI.
+    """
+    for item in Config.schema():
+        monkeypatch.delenv(item["env"], raising=False)
+    test_config = WebBackendConfig(
+        ai_provider="mock", ai_model="mock-model", require_api_key=False, tool_consent="deny"
     )
     monkeypatch.setattr(main, "config", test_config)
     return test_config

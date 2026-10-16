@@ -19,6 +19,10 @@ export interface SettingDefinition {
   options: string[] | null
   secret: boolean
   group: string
+  /** `null` is a value the setting takes: empty text clears it. */
+  nullable: boolean
+  minimum: number | null
+  maximum: number | null
   value: SettingValue | null
   source: 'db' | 'env' | 'default'
 }
@@ -26,11 +30,11 @@ export interface SettingDefinition {
 /** The backend settings API; the one network client of the frontend. */
 export interface SettingsTransport {
   load: () => Promise<SettingDefinition[]>
-  save: (changes: Record<string, SettingValue>) => Promise<void>
+  save: (changes: Record<string, SettingValue | null>) => Promise<void>
   reset: (key: string) => Promise<void>
 }
 
-/** An id/name option (providers, models, voices). */
+/** An id/name option (providers, models). */
 export interface AdminOption {
   id: string
   name: string

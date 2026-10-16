@@ -18,7 +18,8 @@ BROWSER_TOOLS = {definition["name"] for definition in BROWSER_DEFINITIONS}
 
 
 @pytest.fixture
-def upserts(monkeypatch) -> list[dict]:
+def writes(monkeypatch) -> list[dict]:
+    """What SettingsDB.set_many is asked to store, one dict per call."""
     written: list[dict] = []
 
     async def set_many(values):
@@ -54,13 +55,13 @@ def _by_key(service: SettingsService) -> dict[str, dict]:
 
 
 @pytest.mark.asyncio
-async def test_update_persists_then_applies_and_installs_the_layered_config(config, upserts):
+async def test_update_persists_then_applies_and_installs_the_layered_config(config, writes):
     service = SettingsService(config)
     change = {"temperature": 0.3, "max_tokens": 64, "custom_api_base": "http://llm.local/v1", "custom_api_key": "sk-1"}
 
     await service.update(change)
 
-    assert upserts == [change]
+    assert writes == [change]
     settings = service.client_settings
     assert (settings.temperature, settings.max_tokens) == (0.3, 64)
     assert (settings.api_base, settings.api_key) == ("http://llm.local/v1", "sk-1")
@@ -69,40 +70,97 @@ async def test_update_persists_then_applies_and_installs_the_layered_config(conf
 
 
 @pytest.mark.asyncio
-async def test_null_clears_an_optional_setting(config, upserts):
+async def test_null_clears_an_optional_setting(config, writes):
     service = SettingsService(config)
     await service.update({"custom_api_key": "sk-1"})
 
     await service.update({"custom_api_key": None})
 
-    assert upserts[-1] == {"custom_api_key": None}
+    assert writes[-1] == {"custom_api_key": None}
     assert service.client_settings.api_key is None
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "change",
-    [{"db_host": "x"}, {"temperature": "hot"}, {"max_tokens": True}, {"voice_name": "nope"}, {"ai_provider": "nope"}],
+    [
+        {"db_host": "x"},
+        {"temperature": "hot"},
+        {"temperature": float("nan")},
+        {"temperature": 2.5},
+        {"max_tokens": True},
+        {"max_tokens": 0},
+        {"system_instruction": ""},
+        {"voice_name": "nope"},
+        {"ai_provider": "nope"},
+    ],
 )
-async def test_an_invalid_setting_is_refused_before_anything_is_written(config, upserts, change):
+async def test_an_invalid_setting_is_refused_before_anything_is_written(config, writes, change):
     service = SettingsService(config)
 
     with pytest.raises(ValueError):
         await service.update({"temperature": 0.1, **change})
 
-    assert upserts == []
+    assert writes == []
     assert service.client_settings == ClientSettings.from_config(config)
 
 
 @pytest.mark.asyncio
-async def test_posting_the_mask_back_leaves_the_secret_alone(config, upserts):
+async def test_posting_the_mask_back_leaves_the_secret_alone(config, writes):
     service = SettingsService(config)
     await service.update({"custom_api_key": "sk-1"})
 
     await service.update({"custom_api_key": SECRET_MASK, "temperature": 0.4})
 
-    assert upserts[-1] == {"temperature": 0.4}
+    assert writes[-1] == {"temperature": 0.4}
     assert service.client_settings.api_key == "sk-1"
+
+    # Only a secret reads back as the mask, so on any other key it is an ordinary value.
+    await service.update({"display_name": SECRET_MASK})
+
+    assert writes[-1] == {"display_name": SECRET_MASK}
+
+
+@pytest.mark.asyncio
+async def test_a_new_custom_api_base_never_inherits_the_stored_key(config, writes):
+    service = SettingsService(config)
+    await service.update({"custom_api_base": "http://llm.local/v1", "custom_api_key": "sk-1"})
+
+    await service.update({"custom_api_base": "http://elsewhere.example/v1"})
+
+    assert writes[-1] == {"custom_api_base": "http://elsewhere.example/v1", "custom_api_key": None}
+    assert (service.client_settings.api_base, service.client_settings.api_key) == ("http://elsewhere.example/v1", None)
+
+    await service.update({"custom_api_base": "http://third.example/v1", "custom_api_key": "sk-3"})
+    await service.update({"custom_api_base": "http://third.example/v1", "temperature": 0.5})
+
+    assert writes[-1] == {"custom_api_base": "http://third.example/v1", "temperature": 0.5}
+    assert service.client_settings.api_key == "sk-3"
+
+
+@pytest.mark.asyncio
+async def test_stored_rows_the_model_no_longer_accepts_are_dropped_and_can_be_deleted(config, deletes, monkeypatch):
+    async def get_all():
+        return {"bogus": 1, "temperature": "hot", "voice_name": "am_adam"}
+
+    async def no_overrides():
+        return {}
+
+    monkeypatch.setattr(SettingsDB, "get_all", get_all)
+    monkeypatch.setattr(McpToolsDB, "get_overrides", no_overrides)
+    service = SettingsService(config)
+
+    await service.load()
+
+    items = _by_key(service)
+    assert (items["voice_name"]["value"], items["voice_name"]["source"]) == ("am_adam", "db")
+    assert (items["temperature"]["value"], items["temperature"]["source"]) == (config.temperature, "default")
+    assert "bogus" not in service._overrides
+
+    await service.reset("bogus")
+
+    assert deletes == ["bogus"]
+    assert service.config.voice_name == "am_adam"
 
 
 def test_disabled_groups_leave_their_tools_out_of_new_clients(config):
@@ -135,7 +193,7 @@ async def test_without_a_database_the_env_values_stay_in_effect(config, database
 
 
 @pytest.mark.asyncio
-async def test_view_describes_every_user_setting_with_its_value_and_source(config, upserts, monkeypatch):
+async def test_view_describes_every_user_setting_with_its_value_and_source(config, writes, monkeypatch):
     monkeypatch.delenv("KNIK_HISTORY_CONTEXT_SIZE", raising=False)
     monkeypatch.setenv("KNIK_VOICE", config.voice_name)
     service = SettingsService(config)
@@ -148,6 +206,8 @@ async def test_view_describes_every_user_setting_with_its_value_and_source(confi
     assert (items["history_context_size"]["source"], items["voice_name"]["source"]) == ("default", "env")
     assert (items["custom_api_key"]["secret"], items["custom_api_key"]["value"]) == (True, "")
     assert (items["temperature"]["type"], items["temperature"]["group"]) == ("float", "AI")
+    assert (items["temperature"]["minimum"], items["temperature"]["maximum"]) == (0, 2)
+    assert (items["max_tokens"]["nullable"], items["ai_provider"]["nullable"]) == (True, False)
 
     await service.update({"custom_api_key": "sk-1", "temperature": 0.3})
 
@@ -157,7 +217,7 @@ async def test_view_describes_every_user_setting_with_its_value_and_source(confi
 
 
 @pytest.mark.asyncio
-async def test_reset_forgets_one_stored_value(config, upserts, deletes):
+async def test_reset_forgets_one_stored_value(config, writes, deletes):
     service = SettingsService(config)
     await service.update({"temperature": 0.3, "voice_name": "am_adam"})
 

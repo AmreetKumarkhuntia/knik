@@ -278,16 +278,10 @@ class ConsoleApp:
         printer.success("Thanks for using Knik Console! 👋")
 
 
-if __name__ == "__main__":
-    config = ConsoleConfig()
-    app = ConsoleApp(config)
-    app.run()
-
-
 def _local_settings(path: Path) -> dict[str, Any]:
     """{key: value} from the user's settings file; {} when there is none or it is not a JSON object."""
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return {}
     except (OSError, ValueError) as e:
@@ -297,3 +291,9 @@ def _local_settings(path: Path) -> dict[str, Any]:
         printer.warning(f"Ignoring {path}: expected a JSON object")
         return {}
     return data
+
+
+if __name__ == "__main__":
+    config = ConsoleConfig()
+    app = ConsoleApp(config)
+    app.run()

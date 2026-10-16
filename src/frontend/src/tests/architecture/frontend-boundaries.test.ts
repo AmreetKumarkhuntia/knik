@@ -391,14 +391,30 @@ describe('frontend dependency ownership', () => {
     ).toHaveLength(1)
   })
 
-  it('keeps the settings transport out of components, utilities and composition', () => {
+  it('lets only the store bundle import the settings transport', () => {
     const files = {
       'src/lib/transport/settings.ts': 'export const createSettingsTransport = () => null',
     }
     const code = "import { createSettingsTransport } from '$lib/transport/settings'"
-    for (const file of ['src/lib/components/Example.tsx', 'src/lib/utils/format.ts', 'src/App.tsx'])
+    for (const file of [
+      'src/lib/components/Example.tsx',
+      'src/lib/utils/format.ts',
+      'src/App.tsx',
+      'src/lib/pages/Settings.tsx',
+      'src/lib/widgets/settings/RemoteSettingsPane.tsx',
+      'src/lib/hooks/useSettings.ts',
+      'src/lib/stores/chat/actions.ts',
+      'src/lib/stores/settings/hooks.ts',
+    ])
       expect(lint(code, file, files)).toHaveLength(1)
     expect(lint(code, 'src/lib/stores/session/createStoreBundle.ts', files)).toHaveLength(0)
+    expect(
+      lint(
+        "import type { SettingsTransport } from '$lib/transport/settings'",
+        'src/lib/widgets/settings/RemoteSettingsPane.tsx',
+        files
+      )
+    ).toHaveLength(0)
   })
 
   it('keeps utilities below stores and checks dynamic/require imports', () => {

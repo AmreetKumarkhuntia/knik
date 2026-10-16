@@ -140,6 +140,30 @@ async def test_resetting_a_setting_restores_the_env_value(app_state, persisted, 
 
 
 @pytest.mark.asyncio
+async def test_settings_changes_run_one_at_a_time(app_state, monkeypatch):
+    """Each change compares the settings before and after itself, so two must not interleave."""
+    events: list[str] = []
+
+    async def set_many(values):
+        events.append(f"write {list(values)[0]}")
+        await asyncio.sleep(0.01)
+        events.append(f"done {list(values)[0]}")
+
+    monkeypatch.setattr("backend.settings_service.SettingsDB.set_many", set_many)
+    first = await app_state.get_client("c1")
+
+    await asyncio.gather(
+        app_state.update_settings({"ai_model": "other-model"}),
+        app_state.update_settings({"ai_model": "mock-model"}),
+    )
+
+    assert events == ["write ai_model", "done ai_model", "write ai_model", "done ai_model"]
+    assert app_state.settings.client_settings.model == "mock-model"
+    # The second change saw the first one's model, so it dropped the client built under it.
+    assert await app_state.get_client("c1") is not first
+
+
+@pytest.mark.asyncio
 async def test_a_failed_write_applies_nothing(app_state, monkeypatch):
     async def set_many(values):
         raise RuntimeError("database down")

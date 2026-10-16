@@ -26,31 +26,35 @@ export const fieldValue = (
   draft[field.key] ??
   (field.type === 'bool' ? field.value === true : field.secret ? '' : String(field.value ?? ''))
 
-/** The typed value a control holds, or why its text is not one. */
+/** The typed value a control holds (`null` clears a nullable setting), or why its text is not one. */
 export function parseField(
   field: SettingDefinition,
   raw: string | boolean
-): { value: SettingValue } | { error: string } {
+): { value: SettingValue | null } | { error: string } {
   if (field.type === 'bool') return { value: raw === true }
-  if (field.type === 'str') return { value: String(raw) }
   const text = String(raw).trim()
+  if (!text) {
+    if (field.nullable) return { value: null }
+    return { error: field.type === 'str' ? 'Enter a value.' : 'Enter a number.' }
+  }
+  if (field.type === 'str') return { value: text }
   const value = Number(text)
-  if (!text || Number.isNaN(value)) return { error: 'Enter a number.' }
+  if (Number.isNaN(value)) return { error: 'Enter a number.' }
   if (field.type === 'int' && !Number.isInteger(value)) return { error: 'Enter a whole number.' }
   return { value }
 }
 
 /** The draft's changes against the loaded values, and the fields whose text is not a value. */
 export function remoteChanges(definitions: SettingDefinition[], draft: SettingsScope['draft']) {
-  const changes: Record<string, SettingValue> = {},
+  const changes: Record<string, SettingValue | null> = {},
     errors: Record<string, string> = {}
   for (const field of definitions) {
     const raw = draft[field.key]
     if (raw === undefined) continue
     const parsed = parseField(field, raw)
     if ('error' in parsed) errors[field.key] = parsed.error
-    // A secret reads back masked, so typing anything into it is a change.
-    else if (field.secret ? parsed.value !== '' : parsed.value !== (field.value ?? ''))
+    // A secret reads back masked, so only text typed into it is a change; Reset clears a stored one.
+    else if (field.secret ? parsed.value : parsed.value !== (field.value ?? null))
       changes[field.key] = parsed.value
   }
   return { changes, errors }

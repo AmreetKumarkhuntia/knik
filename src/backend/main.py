@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.config import WebBackendConfig
-from backend.deps import require_api_key
+from backend.deps import require_api_key, require_json_body
 from backend.routes.admin import router as admin_router
 from backend.routes.analytics import router as analytics_router
 from backend.routes.chat import router as chat_router
@@ -49,7 +49,7 @@ def add_cors(app: FastAPI, origins: Sequence[str]) -> None:
 add_cors(app, config.cors_origins)
 
 # Every route under /api checks the API key when KNIK_WEB_REQUIRE_API_KEY is on; / and /health stay open.
-api_router = APIRouter(prefix="/api", dependencies=[Depends(require_api_key)])
+api_router = APIRouter(prefix="/api", dependencies=[Depends(require_api_key), Depends(require_json_body)])
 api_router.include_router(chat_router, prefix="/chat", tags=["chat"])
 api_router.include_router(chat_stream_router, prefix="/chat/stream", tags=["chat-streaming"])
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])

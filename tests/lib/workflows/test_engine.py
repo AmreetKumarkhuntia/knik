@@ -1,11 +1,13 @@
 """The workflow engine: how it builds AI clients (through an injected factory, or without tools) and records a cancelled or failed run."""
 
 import asyncio
+import dataclasses
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from lib.core.config import Config
 from lib.services.ai_client.factory import ClientSettings
 from lib.workflows import engine as engine_mod
 from lib.workflows import nodes as nodes_mod
@@ -20,6 +22,11 @@ pytestmark = pytest.mark.asyncio
 def _workflow(**ai_node):
     node = {"type": "AIExecutionNode", "prompt": "Summarise {input.topic}", **ai_node}
     return SimpleNamespace(id="w1", definition={"nodes": {"ai": node}, "connections": []})
+
+
+def _node_settings(**own) -> ClientSettings:
+    """What a node hands the factory: the process's client settings with the node's own on top, no system prompt."""
+    return dataclasses.replace(ClientSettings.from_config(Config.current()), system_instruction=None, **own)
 
 
 @pytest.fixture(autouse=True)
@@ -53,9 +60,9 @@ async def test_ai_node_builds_its_client_with_the_injected_factory():
     )
 
     [(settings, use_tools)] = factory.calls
-    assert settings == ClientSettings(provider="zai", model="glm-5", temperature=0.7)
+    assert settings == _node_settings(provider="zai", model="glm-5", temperature=0.4)
     assert use_tools is True
-    factory.client.chat.assert_called_once_with(prompt="Summarise tides", temperature=0.7)
+    factory.client.chat.assert_called_once_with(prompt="Summarise tides", temperature=0.4)
     assert outputs["ai"]["output"] == "summary"
     assert outputs["ai"]["tokens"]["total_tokens"] == 5
 
@@ -92,9 +99,28 @@ async def test_without_a_factory_the_node_runs_without_tools(monkeypatch):
 
     outputs = await WorkflowEngine().execute_workflow(_workflow(provider="mock", model="m"), {"topic": "x"})
 
-    assert built == [(ClientSettings(provider="mock", model="m", temperature=0.7), {})]
+    assert built == [(_node_settings(provider="mock", model="m", temperature=0.4), {})]
     assert outputs["ai"]["status"] == "success"
     assert outputs["ai"]["output"].startswith("Mock")
+
+
+async def test_ai_node_carries_the_stored_custom_endpoint_and_key(monkeypatch):
+    """A dashboard-stored custom provider must reach scheduled runs too, not fall back to the mock provider."""
+    stored = Config(
+        ai_provider="custom",
+        custom_api_base="http://llm.local/v1",
+        custom_api_key="sk-1",
+        max_tokens=64,
+        temperature=0.4,
+    )
+    monkeypatch.setattr(Config, "_current", stored)
+    factory = RecordingFactory()
+
+    await WorkflowEngine(ai_client_factory=factory).execute_workflow(_workflow(), {"topic": "tides"})
+
+    [(settings, _use_tools)] = factory.calls
+    assert (settings.provider, settings.api_base, settings.api_key) == ("custom", "http://llm.local/v1", "sk-1")
+    assert (settings.max_tokens, settings.temperature, settings.system_instruction) == (64, 0.4, None)
 
 
 async def test_scheduler_builds_one_engine_with_the_factory_for_runs_and_the_loop():

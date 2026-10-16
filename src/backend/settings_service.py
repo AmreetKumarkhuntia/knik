@@ -53,8 +53,9 @@ class SettingsService:
         self._apply({})
 
     def _apply(self, overrides: dict[str, Any]) -> None:
-        self._overrides = overrides
-        self.config = self._base.with_overrides(overrides)
+        # Only rows the model still accepts count as overrides; a stale or invalid row is logged once and dropped.
+        self._overrides = self._base.accept(overrides)
+        self.config = self._base.with_overrides(self._overrides)
         self.client_settings = ClientSettings.from_config(self.config)
         # Library code (compaction, history size, browser) reads the same layered values.
         Config.install(self.config)
@@ -94,7 +95,7 @@ class SettingsService:
     def view(self) -> dict[str, Any]:
         """Every user setting with its definition, the value in effect and where it comes from (db, env or default)."""
         items = []
-        for item in Config.schema():
+        for item in self._base.schema():
             key = item["key"]
             value = getattr(self.config, key)
             if item["secret"]:
@@ -112,11 +113,20 @@ class SettingsService:
         return {"settings": items}
 
     async def update(self, changes: dict[str, Any]) -> None:
-        """Validate, persist, then apply. ValueError names the setting that is not valid."""
-        valid = Config.validate({key: value for key, value in changes.items() if value != SECRET_MASK})
+        """Validate, persist, then apply. ValueError names the setting that is not valid.
+
+        A secret posted back as its mask is left as it is. A new custom API base never inherits the stored key:
+        otherwise anyone who can write settings could point the key at a host they choose and read it there.
+        """
+        secrets = {item["key"] for item in self._base.schema() if item["secret"]}
+        valid = self._base.validate(
+            {key: value for key, value in changes.items() if not (key in secrets and value == SECRET_MASK)}
+        )
         providers = ProviderRegistry.list_providers()
         if "ai_provider" in valid and valid["ai_provider"] not in providers:
             raise ValueError(f"ai_provider must be one of {', '.join(providers)}")
+        if valid.get("custom_api_base", self.config.custom_api_base) != self.config.custom_api_base:
+            valid.setdefault("custom_api_key", None)
         await SettingsDB.set_many(valid)
         self._apply({**self._overrides, **valid})
 

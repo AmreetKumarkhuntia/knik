@@ -330,6 +330,18 @@ export function createFrontendArchitecture({
     }
     return null
   }
+  // The transport reaches widgets only through the store bundle, so tests can inject a fake.
+  function transportViolation(from, resolved, typeOnly) {
+    if (typeOnly || !resolved.file) return null
+    const target = relative(resolved.file)
+    if (!within(target, 'src/lib/transport')) return null
+    if (from === 'src/lib/stores/session/createStoreBundle.ts') return null
+    return {
+      reason:
+        'Only stores/session/createStoreBundle.ts imports the settings transport; everything else receives it through the store bundle.',
+      target,
+    }
+  }
   function findViolation(
     origin,
     resolved,
@@ -381,6 +393,7 @@ export function createFrontendArchitecture({
             if (typeof source !== 'string') return
             const resolved = resolve(source, file)
             const found =
+              transportViolation(from, resolved, typeOnly) ??
               findViolation(origin, resolved, names, typeOnly) ??
               (domain && !typeOnly ? findPeerStore(domain, resolved) : null)
             if (found) context.report({ node, messageId: 'boundary', data: found })
