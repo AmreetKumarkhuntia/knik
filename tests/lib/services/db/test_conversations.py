@@ -185,6 +185,7 @@ async def test_messages(db):
     assert [m.content for m in await ConversationDB.get_recent_messages(conversation_id, last_n=2)] == ["m5", "m6"]
     assert len(await ConversationDB.get_recent_messages(conversation_id)) == 5
     assert len(await ConversationDB.get_recent_messages(conversation_id, last_n=50)) == 7
+    assert await ConversationDB.get_recent_messages(conversation_id, last_n=0) == []
 
     from_id4 = await ConversationDB.get_messages_from(conversation_id, "id4")
     assert [m.content for m in from_id4] == ["m4", "m5", "m6"]

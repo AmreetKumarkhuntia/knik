@@ -5,9 +5,7 @@ export const demoSettings = {
   settings: {
     display_name: 'Amreet Kumar',
     username: 'amreet',
-    provider: 'google',
     model: 'gemini-1.5-flash',
-    voice: 'af_heart',
   },
   apiKeys: [
     {

@@ -73,6 +73,7 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "PostgresDB": ("lib.services.db.connection", "PostgresDB"),
     "DatabaseUnavailable": ("lib.services.db.connection", "DatabaseUnavailable"),
     "DB_ERRORS": ("lib.services.db.connection", "DB_ERRORS"),
+    "UndefinedTable": ("lib.services.db.connection", "UndefinedTable"),
     "ConversationDB": ("lib.services.db.repositories.conversations", "ConversationDB"),
     "ConversationScope": ("lib.services.db.repositories.conversations", "ConversationScope"),
     "UserDB": ("lib.services.db.repositories.users", "UserDB"),
@@ -82,7 +83,6 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "SettingsDB": ("lib.services.db.repositories.settings", "SettingsDB"),
     "ApiKeyDB": ("lib.services.db.repositories.settings", "ApiKeyDB"),
     "McpToolsDB": ("lib.services.db.repositories.settings", "McpToolsDB"),
-    "AppSettings": ("lib.services.db.models", "AppSettings"),
     # services: telegram
     "TelegramClient": ("lib.services.telegram.client", "TelegramClient"),
     "BotCommand": ("lib.services.telegram.models", "BotCommand"),
@@ -119,7 +119,7 @@ if TYPE_CHECKING:
     from lib.services.db.connection import DB_ERRORS as DB_ERRORS
     from lib.services.db.connection import DatabaseUnavailable as DatabaseUnavailable
     from lib.services.db.connection import PostgresDB as PostgresDB
-    from lib.services.db.models import AppSettings as AppSettings
+    from lib.services.db.connection import UndefinedTable as UndefinedTable
     from lib.services.db.models import Schedule as Schedule
     from lib.services.db.models import Workflow as Workflow
     from lib.services.db.repositories.conversations import ConversationDB as ConversationDB

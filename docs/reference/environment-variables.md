@@ -3,17 +3,24 @@
 Knik is configured through environment variables, each with a default. Copy `.env.example` to `.env` and
 customize your settings. The apps load `.env` from the repository root.
 
+The variables marked **stored setting** below can also be changed at runtime: the web dashboard's Settings page
+saves them in Postgres (`GET`/`POST`/`DELETE /api/admin/settings`), where the backend, the bot and the worker read
+them at startup; the console reads `~/.knik/settings.json` instead, keyed by the `Config` field name rather than
+the variable, for example `{"ai_model": "glm-5", "temperature": 0.3}`. A stored value beats the env one; deleting it
+brings the env value back. The full list is `Config.schema()` in `src/lib/core/config.py`: every field declared
+with `user=True`, with its type, whether it may be `null`, its options and its `minimum`/`maximum`.
+
 ## AI Configuration
 
 ### General
 
-| Variable                     | Default            | Description                                                                                                                                               |
-| ---------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `KNIK_AI_PROVIDER`           | `vertex`           | AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock`. An unknown or unconfigured provider falls back to `mock`               |
-| `KNIK_AI_MODEL`              | `gemini-1.5-flash` | Model for the console and the web backend (until one is saved in its settings). The Telegram bot passes none, so the provider's own default applies there |
-| `KNIK_MAX_TOKENS`            | `25565`            | Maximum reply tokens the console asks for with each message. The web backend shows it on its settings page when none is saved                             |
-| `KNIK_TEMPERATURE`           | `0.7`              | Temperature the console sends with each message (0.0 - 2.0). The web backend shows it on its settings page when none is saved                             |
-| `KNIK_AI_SYSTEM_INSTRUCTION` | _(built-in)_       | Custom system instruction for the AI assistant                                                                                                            |
+| Variable                     | Default      | Description                                                                                                                                                 |
+| ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KNIK_AI_PROVIDER`           | `vertex`     | Stored setting. AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock`. An unknown or unconfigured provider falls back to `mock` |
+| `KNIK_AI_MODEL`              | _(unset)_    | Stored setting. Model for every app and the default for workflow AI nodes that name none; unset uses the provider's own default model                       |
+| `KNIK_MAX_TOKENS`            | _(unset)_    | Stored setting. Maximum reply tokens; unset leaves the provider's own limit                                                                                 |
+| `KNIK_TEMPERATURE`           | `0.7`        | Stored setting. Sampling temperature (0.0 - 2.0)                                                                                                            |
+| `KNIK_AI_SYSTEM_INSTRUCTION` | _(built-in)_ | Stored setting. System instruction for the AI assistant                                                                                                     |
 
 ### Vertex AI (Google Cloud)
 
@@ -62,10 +69,10 @@ Set `KNIK_AI_PROVIDER=zai_coding` to use this provider. Requires a GLM Coding Pl
 
 Set `KNIK_AI_PROVIDER=custom` to use this provider. Works with Ollama, LM Studio, Together AI, Groq, vLLM, Fireworks, or any endpoint implementing the OpenAI `/v1/chat/completions` API.
 
-| Variable               | Default | Description                                                |
-| ---------------------- | ------- | ---------------------------------------------------------- |
-| `KNIK_CUSTOM_API_BASE` | None    | Base URL for the OpenAI-compatible endpoint (**required**) |
-| `KNIK_CUSTOM_API_KEY`  | None    | API key (optional — omit for local servers like Ollama)    |
+| Variable               | Default | Description                                                                        |
+| ---------------------- | ------- | ---------------------------------------------------------------------------------- |
+| `KNIK_CUSTOM_API_BASE` | None    | Stored setting. Base URL for the OpenAI-compatible endpoint (**required**)         |
+| `KNIK_CUSTOM_API_KEY`  | None    | Stored setting (secret, masked when read back). Omit for local servers like Ollama |
 
 ### Available AI Models
 
@@ -88,12 +95,12 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Text-to-Speech Configuration
 
-| Variable            | Default                | Description                                                                                              |
-| ------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `KNIK_VOICE_OUTPUT` | `true`                 | Whether the console speaks its replies                                                                   |
-| `KNIK_VOICE`        | `af_heart`             | Voice the web backend speaks with until one is saved on its settings page. The console does not apply it |
-| `KNIK_LANGUAGE`     | `a` (American English) | Not used: speech is always American English (`a`)                                                        |
-| `KNIK_MODEL`        | `hexgrad/Kokoro-82M`   | Not used: the Kokoro model loaded is always `hexgrad/Kokoro-82M`                                         |
+| Variable            | Default                | Description                                                                                                              |
+| ------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `KNIK_VOICE_OUTPUT` | `true`                 | Whether the console speaks its replies; from the env or `~/.knik/settings.json` (the dashboard cannot reach the console) |
+| `KNIK_VOICE`        | `af_heart`             | Stored setting. Voice the web backend speaks with. The console does not apply it                                         |
+| `KNIK_LANGUAGE`     | `a` (American English) | Not used: speech is always American English (`a`)                                                                        |
+| `KNIK_MODEL`        | `hexgrad/Kokoro-82M`   | Not used: the Kokoro model loaded is always `hexgrad/Kokoro-82M`                                                         |
 
 ### Available Voices
 
@@ -119,9 +126,21 @@ Kokoro's language codes, kept for reference; `KNIK_LANGUAGE` does not select one
 
 ## History / Context
 
-| Variable                    | Default | Description                                                                                                                                      |
-| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `KNIK_HISTORY_CONTEXT_SIZE` | `5`     | Earlier user/assistant turn pairs sent as context with each message. A stored conversation that was compacted sends everything since its summary |
+| Variable                    | Default | Description                                                                                                                                                      |
+| --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KNIK_HISTORY_CONTEXT_SIZE` | `5`     | Stored setting. Earlier user/assistant turn pairs sent as context with each message. A stored conversation that was compacted sends everything since its summary |
+
+## Profile and UI
+
+Stored settings the dashboard edits; the env values are only their defaults. Nothing reads them yet: the sidebar
+still shows the demo profile, and no app streams or sends telemetry based on them.
+
+| Variable                | Default | Description                  |
+| ----------------------- | ------- | ---------------------------- |
+| `KNIK_DISPLAY_NAME`     | None    | Dashboard preference, unread |
+| `KNIK_USERNAME`         | None    | Dashboard preference, unread |
+| `KNIK_STREAM_RESPONSES` | `true`  | Dashboard preference, unread |
+| `KNIK_SEND_TELEMETRY`   | `false` | Dashboard preference, unread |
 
 ## Web Backend
 
@@ -204,15 +223,15 @@ Scopes are stored with each key but not enforced: any stored key opens every `/a
 
 ## Browser Automation (Playwright)
 
-| Variable                    | Default                   | Description                                                                  |
-| --------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
-| `KNIK_BROWSER_HEADLESS`     | `false`                   | `false` = visible browser window (headful), `true` = headless                |
-| `KNIK_BROWSER_PROFILE_DIR`  | `~/.knik/browser-profile` | Persistent session storage directory (cookies, logins survive restarts)      |
-| `KNIK_BROWSER_IDLE_TIMEOUT` | `1800`                    | Seconds a browser session may sit unused before the backend or bot closes it |
+| Variable                    | Default                   | Description                                                                   |
+| --------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
+| `KNIK_BROWSER_HEADLESS`     | `false`                   | Stored setting. `false` = visible browser window (headful), `true` = headless |
+| `KNIK_BROWSER_PROFILE_DIR`  | `~/.knik/browser-profile` | Persistent session storage directory (cookies, logins survive restarts)       |
+| `KNIK_BROWSER_IDLE_TIMEOUT` | `1800`                    | Stored setting. Seconds a browser session may sit unused before it is closed  |
 
 ## Context Compaction
 
-Applies to conversations stored in Postgres (web backend and bot).
+Applies to conversations stored in Postgres (web backend and bot). All four are stored settings.
 
 | Variable                          | Default | Description                                                                                     |
 | --------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |

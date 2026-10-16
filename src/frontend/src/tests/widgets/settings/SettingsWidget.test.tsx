@@ -5,38 +5,28 @@ import { StoresProvider } from '$stores'
 import SettingsWidget from '$widgets/settings/SettingsWidget'
 import type { DemoSource } from '$types/demo-session'
 import { resizeTo } from '../../hooks/matchMedia'
+import { fakeTransport } from './remoteSettings'
 
-function renderSettings(source?: DemoSource) {
+const EMPTY: DemoSource = { models: [], providers: [], tools: [], apiKeys: [] }
+
+function renderSettings(source?: DemoSource, transport = fakeTransport()) {
   return render(
-    <StoresProvider
-      source={{ models: [], providers: [], tools: [], voices: [], apiKeys: [], ...source }}
-    >
+    <StoresProvider source={{ ...EMPTY, ...source }} settingsTransport={transport}>
       <SettingsWidget />
     </StoresProvider>
   )
 }
 
 describe('settings session interactions', () => {
-  it('saves profile changes across panes, cancels drafts, and leaves the source untouched', async () => {
+  it('drops an unsaved backend draft when the pane is left', async () => {
     const user = userEvent.setup()
-    const source = { settings: { display_name: 'Alex', username: 'alex' } }
-    renderSettings(source)
-    const displayName = screen.getByLabelText('Display name') as HTMLInputElement
-    await user.clear(displayName)
-    await user.type(displayName, 'Discard me')
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(displayName.value).toBe('Alex')
-    await user.clear(displayName)
-    await user.type(displayName, 'Alex Lee')
-    await user.click(screen.getByRole('button', { name: 'Save profile' }))
+    renderSettings()
+    await user.type(await screen.findByLabelText('Display name'), ' unsaved')
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeEnabled()
     await user.click(screen.getByText('Appearance', { exact: true }))
     await user.click(screen.getByText('General', { exact: true }))
-    expect((screen.getByLabelText('Display name') as HTMLInputElement).value).toBe('Alex Lee')
-    expect(source.settings.display_name).toBe('Alex')
-    await user.type(screen.getByLabelText('Display name'), ' unsaved')
-    await user.click(screen.getByText('Appearance', { exact: true }))
-    await user.click(screen.getByText('General', { exact: true }))
-    expect((screen.getByLabelText('Display name') as HTMLInputElement).value).toBe('Alex Lee')
+    expect(await screen.findByLabelText('Display name')).toHaveValue('Alex')
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled()
   })
 
   it('retains appearance changes within a provider and resets with a new provider', async () => {
@@ -60,14 +50,8 @@ describe('settings session interactions', () => {
   it('shows explicit empty states', async () => {
     const user = userEvent.setup()
     renderSettings()
-    expect(
-      (screen.getByRole('combobox', { name: 'Default model' }) as HTMLSelectElement).disabled
-    ).toBe(true)
     await user.click(screen.getByText('Providers', { exact: true }))
-    expect(screen.getByText('No providers available.')).toBeTruthy()
     expect(screen.getByText('No tool groups available.')).toBeTruthy()
-    await user.click(screen.getByText('Voice', { exact: true, selector: 'button' }))
-    expect(screen.getByText('No voices available.')).toBeTruthy()
     await user.click(screen.getByText('API keys', { exact: true, selector: 'button' }))
     expect(screen.getByText('No API keys available.')).toBeTruthy()
   })
@@ -100,9 +84,6 @@ describe('settings session interactions', () => {
   it('renders arbitrary catalogs from the demo session and preserves local selections', async () => {
     const user = userEvent.setup()
     const source: DemoSource = {
-      models: [{ id: 'source-model', label: 'Source Model' }],
-      providers: [{ id: 'source-provider', name: 'Source Provider' }],
-      voices: [{ id: 'source-voice', name: 'Source Voice' }],
       tools: [{ name: 'Source Tools', category: 'Custom', count: 3, enabled: false }],
       apiKeys: [
         {
@@ -117,34 +98,22 @@ describe('settings session interactions', () => {
     }
     const fetcher = vi.spyOn(globalThis, 'fetch')
     renderSettings(source)
-    await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Default model' }),
-      'source-model'
-    )
     await user.click(screen.getByRole('tab', { name: 'Providers' }))
-    await user.click(screen.getByRole('radio', { name: /Source Provider/ }))
     await user.click(screen.getByRole('switch', { name: /Source Tools/ }))
-    await user.click(screen.getByRole('tab', { name: 'Voice' }))
-    await user.click(screen.getByRole('radio', { name: /Source Voice/ }))
     await user.click(screen.getByRole('tab', { name: 'API keys' }))
     expect(screen.getByText('Source Key')).toBeInTheDocument()
     await user.click(screen.getByRole('tab', { name: 'Providers' }))
-    expect(screen.getByRole('radio', { name: /Source Provider/ })).toBeChecked()
     expect(screen.getByRole('switch', { name: /Source Tools/ })).toBeChecked()
-    await user.click(screen.getByRole('tab', { name: 'Voice' }))
-    expect(screen.getByRole('radio', { name: /Source Voice/ })).toBeChecked()
-    await user.click(screen.getByRole('tab', { name: 'General' }))
-    expect(screen.getByRole('combobox', { name: 'Default model' })).toHaveValue('source-model')
     expect(source.tools?.[0].enabled).toBe(false)
     expect(fetcher).not.toHaveBeenCalled()
   })
 })
 
 describe('settings layout', () => {
-  it('nests settings group headings directly under the page heading', () => {
+  it('nests settings group headings directly under the page heading', async () => {
     renderSettings()
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Profile' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 2, name: 'Profile' })).toBeInTheDocument()
     expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0)
   })
 
@@ -159,7 +128,7 @@ describe('settings deep links', () => {
   it('opens the requested pane once and reports it as applied', () => {
     const applied = vi.fn()
     render(
-      <StoresProvider source={{ models: [], providers: [], tools: [], voices: [], apiKeys: [] }}>
+      <StoresProvider source={EMPTY} settingsTransport={fakeTransport()}>
         <SettingsWidget requestedTab="keys" onRequestedTabApplied={applied} />
       </StoresProvider>
     )
@@ -170,7 +139,7 @@ describe('settings deep links', () => {
   it('ignores an unknown pane', () => {
     const applied = vi.fn()
     render(
-      <StoresProvider source={{ models: [], providers: [], tools: [], voices: [], apiKeys: [] }}>
+      <StoresProvider source={EMPTY} settingsTransport={fakeTransport()}>
         <SettingsWidget requestedTab="missing" onRequestedTabApplied={applied} />
       </StoresProvider>
     )

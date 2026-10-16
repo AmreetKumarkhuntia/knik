@@ -270,7 +270,9 @@ export function createFrontendArchitecture({
     if (target.startsWith('src/types/')) return null
     const targetTier = tier(target)
     const serviceOrHook =
-      /^src\/(?:services|store)(?:\/|$)/.test(target) || within(target, 'src/lib/hooks')
+      /^src\/(?:services|store)(?:\/|$)/.test(target) ||
+      within(target, 'src/lib/hooks') ||
+      within(target, 'src/lib/transport')
     if (
       origin === 'components' &&
       (['stores', 'widgets', 'composition'].includes(targetTier) ||
@@ -328,6 +330,18 @@ export function createFrontendArchitecture({
     }
     return null
   }
+  // The transport reaches widgets only through the store bundle, so tests can inject a fake.
+  function transportViolation(from, resolved, typeOnly) {
+    if (typeOnly || !resolved.file) return null
+    const target = relative(resolved.file)
+    if (!within(target, 'src/lib/transport')) return null
+    if (from === 'src/lib/stores/session/createStoreBundle.ts') return null
+    return {
+      reason:
+        'Only stores/session/createStoreBundle.ts imports the settings transport; everything else receives it through the store bundle.',
+      target,
+    }
+  }
   function findViolation(
     origin,
     resolved,
@@ -379,6 +393,7 @@ export function createFrontendArchitecture({
             if (typeof source !== 'string') return
             const resolved = resolve(source, file)
             const found =
+              transportViolation(from, resolved, typeOnly) ??
               findViolation(origin, resolved, names, typeOnly) ??
               (domain && !typeOnly ? findPeerStore(domain, resolved) : null)
             if (found) context.report({ node, messageId: 'boundary', data: found })
@@ -480,7 +495,7 @@ export function createFrontendArchitecture({
           schema: [],
           messages: {
             transport:
-              'Application network transports and microphone capture are disabled; use the store-owned demo session.',
+              'Application network transports and microphone capture are disabled outside lib/transport/settings.ts; use the store-owned demo session.',
             storage: 'Session state resets on reload; do not read or write browser storage.',
             component:
               'Components and stores cannot perform browser I/O; browser effects belong in widgets.',
@@ -490,6 +505,8 @@ export function createFrontendArchitecture({
           const from = relative(context.filename)
           if (!from.startsWith('src/') || isTest(from)) return {}
           const component = ['components', 'stores'].includes(tier(from))
+          // The one module that talks to the backend settings API.
+          const transport = from === 'src/lib/transport/settings.ts'
           const source = context.sourceCode
           function globalPath(node, seen = new Set()) {
             if (!node || seen.has(node)) return null
@@ -536,7 +553,7 @@ export function createFrontendArchitecture({
                 normalized
               )
             )
-              return 'transport'
+              return transport && /^fetch(?:\.|$)/.test(normalized) ? null : 'transport'
             if (
               /^(?:localStorage|sessionStorage|indexedDB)(?:\.|$)/.test(normalized) ||
               normalized === 'document.cookie'

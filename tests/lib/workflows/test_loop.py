@@ -9,6 +9,7 @@ import psycopg
 import psycopg_pool
 import pytest
 
+from lib.core.config import Config
 from lib.services.db import DatabaseUnavailable, Schedule
 from lib.workflows import loop
 
@@ -119,7 +120,7 @@ def _due_schedules(count: int) -> list[Schedule]:
 
 @pytest.mark.asyncio
 async def test_a_poll_claims_only_as_many_due_occurrences_as_there_are_free_slots(monkeypatch):
-    monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "2")
+    monkeypatch.setattr(Config.current(), "scheduler_max_concurrent", 2)
     engine = GatedEngine()
     scheduler = loop.CronScheduler(engine)  # type: ignore[arg-type]
     monkeypatch.setattr(loop.WorkflowDB, "get_workflow", AsyncMock(return_value=SimpleNamespace(name="w")))
@@ -146,7 +147,7 @@ async def test_a_poll_claims_only_as_many_due_occurrences_as_there_are_free_slot
 
 @pytest.mark.asyncio
 async def test_a_slot_is_freed_by_a_lost_or_failed_claim_and_by_a_run_cancelled_before_it_starts(monkeypatch):
-    monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "1")
+    monkeypatch.setattr(Config.current(), "scheduler_max_concurrent", 1)
     engine = GatedEngine()
     scheduler = loop.CronScheduler(engine)  # type: ignore[arg-type]
     monkeypatch.setattr(loop.WorkflowDB, "get_workflow", AsyncMock(return_value=SimpleNamespace(name="w")))

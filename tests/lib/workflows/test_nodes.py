@@ -155,22 +155,22 @@ def test_an_ai_node_takes_its_temperature_and_defaults_an_empty_model():
     assert isinstance(node, AIExecutionNode)
     assert (node.prompt, node.model, node.provider, node.temperature, node.use_tools) == (
         "Hi",
-        "gemini-3.0-flash",
-        "vertex",
+        "configured-model",
+        "mock",
         0.2,
         True,
     )
 
 
-def test_an_ai_node_without_settings_gets_the_defaults_the_engine_always_used():
+def test_an_ai_node_without_settings_gets_the_configured_defaults():
     node = build_node("ai", {"type": "AIExecutionNode"})
 
     assert isinstance(node, AIExecutionNode)
     assert (node.prompt, node.model, node.provider, node.temperature, node.use_tools) == (
         "",
-        "gemini-3.0-flash",
-        "vertex",
-        0.7,
+        "configured-model",
+        "mock",
+        0.4,
         True,
     )
 

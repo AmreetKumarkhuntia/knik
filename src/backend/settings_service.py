@@ -1,33 +1,37 @@
-"""The settings the backend runs with, merged from the env config, the persisted settings and admin updates.
+"""The settings the backend runs with: the env config with the stored overrides layered on top.
 
-New AI clients are built from ``client_settings``: an admin update wins over the persisted row (read once
-at startup), which wins over the env config. Tool groups switched off in the admin panel are left out of
-every new client's tool registry, and every registry gets the web consent gate. An update is persisted before
-it is applied, so a failed write changes nothing.
+``config`` is the env ``WebBackendConfig`` with every row of the settings table applied over it
+(``Config.with_overrides``), and new AI clients are built from the ``client_settings`` that follow it. An
+update is validated and persisted before it is applied, so a failed write changes nothing. The layered config
+is also installed as ``Config.current()``, so library code reads the same values. Tool groups switched off in
+the admin panel are left out of every new client's tool registry, and every registry gets the web consent gate.
 """
 
 from __future__ import annotations
 
-import dataclasses
 import functools
+import os
 from typing import Any
 
 from backend.config import WebBackendConfig
 from backend.consent import WebConsentGate
-from backend.models.admin import SettingsUpdate
 from imports import (
     ALL_TOOL_CLASSES,
     DB_ERRORS,
     AIClient,
-    AppSettings,
     ClientSettings,
+    Config,
     McpToolsDB,
+    ProviderRegistry,
     SettingsDB,
     build_client,
     create_tool_registry,
     printer,
 )
 
+
+# What a secret setting reads back as; posting it back leaves the stored value alone.
+SECRET_MASK = "••••••"
 
 # Display categories for the built-in tool groups.
 _TOOL_CATEGORY = {
@@ -43,23 +47,28 @@ _TOOL_CATEGORY = {
 
 class SettingsService:
     def __init__(self, config: WebBackendConfig) -> None:
-        self._config = config
-        self.client_settings: ClientSettings = _client_settings(config, AppSettings())
-        self.voice: str = config.voice_name
+        self._base = config
         self.disabled_tool_groups: frozenset[str] = frozenset()
         self._consent_gate = WebConsentGate(config.tool_consent)
+        self._apply({})
+
+    def _apply(self, overrides: dict[str, Any]) -> None:
+        # Only rows the model still accepts count as overrides; a stale or invalid row is logged once and dropped.
+        self._overrides = self._base.accept(overrides)
+        self.config = self._base.with_overrides(self._overrides)
+        self.client_settings = ClientSettings.from_config(self.config)
+        # Library code (compaction, history size, browser) reads the same layered values.
+        Config.install(self.config)
 
     async def load(self) -> None:
-        """Apply the persisted settings and tool-group overrides; without a database the env defaults stay."""
+        """Apply the stored settings and tool-group overrides; without a database the env values stay."""
         try:
-            persisted = await SettingsDB.get()
+            overrides = await SettingsDB.get_all()
         except DB_ERRORS as e:
-            printer.warning(f"Could not load persisted settings: {e}")
+            printer.warning(f"Could not load stored settings, env values apply: {e}")
         else:
-            if persisted:
-                self.client_settings = _client_settings(self._config, persisted)
-                self.voice = persisted.voice or self._config.voice_name
-                printer.info(f"Loaded persisted settings: {persisted.provider}/{persisted.model}")
+            self._apply(overrides)
+            printer.info(f"Loaded {len(overrides)} stored settings: {self.config.ai_provider}/{self.config.ai_model}")
 
         try:
             overrides = await McpToolsDB.get_overrides()
@@ -83,53 +92,48 @@ class SettingsService:
         tool_registry = create_tool_registry(consent_gate=self._consent_gate, disabled=self.disabled_tools)
         return build_client(self.client_settings, tool_registry=tool_registry)
 
-    async def view(self) -> dict[str, Any]:
-        """The settings page: persisted preferences over the values in effect over the env defaults."""
-        # Without a database this still answers with the values in effect, which is then all there is.
-        try:
-            saved = await SettingsDB.get()
-        except DB_ERRORS as e:
-            printer.warning(f"Persisted settings unavailable, showing defaults: {e}")
-            saved = None
-        persisted = saved.to_dict() if saved else {}
-        temperature = persisted.get("temperature")
-        if temperature is None:
-            temperature = self.client_settings.temperature
-        return {
-            "provider": persisted.get("provider") or self.client_settings.provider,
-            "model": persisted.get("model") or self.client_settings.model or self._config.ai_model,
-            "voice": persisted.get("voice") or self.voice,
-            "temperature": temperature if temperature is not None else self._config.temperature,
-            "max_tokens": persisted.get("max_tokens") or self.client_settings.max_tokens or self._config.max_tokens,
-            "sample_rate": self._config.sample_rate,
-            "stream_responses": persisted.get("stream_responses", True),
-            "send_telemetry": persisted.get("send_telemetry", False),
-            "display_name": persisted.get("display_name"),
-            "username": persisted.get("username"),
-            # The client settings and TTS are set up at startup, before any request is served.
-            "initialized": True,
-        }
+    def view(self) -> dict[str, Any]:
+        """Every user setting with its definition, the value in effect and where it comes from (db, env or default)."""
+        items = []
+        for item in self._base.schema():
+            key = item["key"]
+            value = getattr(self.config, key)
+            if item["secret"]:
+                value = SECRET_MASK if value else ""
+            if key == "ai_provider":
+                # The registry lives above lib/core, so the model cannot list the providers itself.
+                item["options"] = ProviderRegistry.list_providers()
+            if key in self._overrides:
+                source = "db"
+            elif os.getenv(item["env"]) is not None:
+                source = "env"
+            else:
+                source = "default"
+            items.append({**item, "value": value, "source": source})
+        return {"settings": items}
 
-    async def update(self, update: SettingsUpdate) -> None:
-        """Persist the fields that are set, then apply them to the clients built from now on.
+    async def update(self, changes: dict[str, Any]) -> None:
+        """Validate, persist, then apply. ValueError names the setting that is not valid.
 
-        An empty provider or model keeps the current one. An empty api_base or api_key clears it, and a
-        max_tokens of 0 leaves the provider's default, as they read back after a restart.
+        A secret posted back as its mask is left as it is. A new custom API base never inherits the stored key:
+        otherwise anyone who can write settings could point the key at a host they choose and read it there.
         """
-        await SettingsDB.upsert(update.model_dump(exclude_none=True))
-
-        current = self.client_settings
-        self.client_settings = dataclasses.replace(
-            current,
-            provider=update.provider or current.provider,
-            model=update.model or current.model,
-            api_base=current.api_base if update.api_base is None else (update.api_base or None),
-            api_key=current.api_key if update.api_key is None else (update.api_key or None),
-            temperature=current.temperature if update.temperature is None else update.temperature,
-            max_tokens=current.max_tokens if update.max_tokens is None else (update.max_tokens or None),
+        secrets = {item["key"] for item in self._base.schema() if item["secret"]}
+        valid = self._base.validate(
+            {key: value for key, value in changes.items() if not (key in secrets and value == SECRET_MASK)}
         )
-        if update.voice:
-            self.voice = update.voice
+        providers = ProviderRegistry.list_providers()
+        if "ai_provider" in valid and valid["ai_provider"] not in providers:
+            raise ValueError(f"ai_provider must be one of {', '.join(providers)}")
+        if valid.get("custom_api_base", self.config.custom_api_base) != self.config.custom_api_base:
+            valid.setdefault("custom_api_key", None)
+        await SettingsDB.set_many(valid)
+        self._apply({**self._overrides, **valid})
+
+    async def reset(self, key: str) -> None:
+        """Forget the stored value, so the env or built-in default applies again. Any key, so a stale row can go."""
+        await SettingsDB.delete(key)
+        self._apply({k: v for k, v in self._overrides.items() if k != key})
 
     async def tool_groups(self) -> list[dict[str, Any]]:
         """Each built-in tool group with its tool count and whether it is enabled (the default)."""
@@ -156,21 +160,6 @@ class SettingsService:
             self.disabled_tool_groups -= {group}
         else:
             self.disabled_tool_groups |= {group}
-
-
-def _client_settings(config: WebBackendConfig, persisted: AppSettings) -> ClientSettings:
-    # Empty strings count as unset, as they did when each setting was only passed on when truthy.
-    return ClientSettings(
-        provider=persisted.provider or config.ai_provider,
-        model=persisted.model or config.ai_model,
-        system_instruction=str(config.system_instruction) if config.system_instruction else None,
-        project_id=config.ai_project_id or None,
-        location=config.ai_location or None,
-        api_base=persisted.api_base or None,
-        api_key=persisted.api_key or None,
-        temperature=persisted.temperature,
-        max_tokens=persisted.max_tokens or None,
-    )
 
 
 @functools.cache

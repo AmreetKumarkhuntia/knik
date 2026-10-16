@@ -7,6 +7,7 @@ export function createSettingsStore(seed: DemoSnapshot) {
     settings: structuredClone(seed.settings),
     appearance: structuredClone(seed.appearance),
     enabledTools: Object.fromEntries(seed.tools.map(tool => [tool.name, tool.enabled])),
+    remote: { status: 'loading', error: null, definitions: [], loadId: 0 },
     scopes: {},
     ...createSettingsActions(set, get),
   }))

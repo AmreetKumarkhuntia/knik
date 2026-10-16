@@ -1,35 +1,35 @@
 import { useMemo } from 'react'
 import { useSettingsStore } from '../settings/hooks'
 import { useCatalog } from '../catalogs/hooks'
-import { modelOptions } from '../catalogs/selectors'
 import { useCredentialsStore } from '../credentials/hooks'
-import { EMPTY_SETTINGS_SCOPE, accountInitials, accountName } from '../settings/selectors'
+import {
+  EMPTY_SETTINGS_SCOPE,
+  fieldValue,
+  groupDefinitions,
+  remoteChanges,
+} from '../settings/selectors'
 import { EMPTY_CREDENTIALS_SCOPE } from '../credentials/selectors'
-export function useProfileView(scopeId: string) {
-  const settings = useSettingsStore(s => s.settings)
+export function useRemoteSettingsView(scopeId: string) {
+  const remote = useSettingsStore(s => s.remote)
   const scope = useSettingsStore(s => s.scopes[scopeId] ?? EMPTY_SETTINGS_SCOPE)
-  const models = useCatalog('models')
-  return {
-    settings,
-    dirty:
-      scope.displayName !== (settings.display_name ?? '') ||
-      scope.username !== (settings.username ?? ''),
-    initials: accountInitials(accountName(settings)),
-    modelOptions: useMemo(() => modelOptions(models), [models]),
-  }
+  const groups = useMemo(() => groupDefinitions(remote.definitions), [remote.definitions])
+  const values = useMemo(
+    () =>
+      Object.fromEntries(
+        remote.definitions.map(field => [field.key, fieldValue(field, scope.draft)])
+      ),
+    [remote.definitions, scope.draft]
+  )
+  const { changes, errors } = useMemo(
+    () => remoteChanges(remote.definitions, scope.draft),
+    [remote.definitions, scope.draft]
+  )
+  return { ...remote, groups, values, draft: scope.draft, saving: scope.saving, changes, errors }
 }
 export function useProvidersView() {
-  const providers = useCatalog('providers'),
-    tools = useCatalog('tools')
-  const provider = useSettingsStore(s => s.settings.provider),
+  const tools = useCatalog('tools'),
     enabled = useSettingsStore(s => s.enabledTools)
   return {
-    provider,
-    providers: useMemo(
-      () =>
-        providers.map(option => ({ value: option.id, label: option.name, monoLabel: option.id })),
-      [providers]
-    ),
     tools: useMemo(
       () => tools.map(tool => ({ ...tool, enabled: enabled[tool.name] ?? false })),
       [tools, enabled]

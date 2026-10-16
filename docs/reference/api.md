@@ -145,7 +145,7 @@ Run it with `python src/main.py --mode console` or `npm run start:console`. See 
 
 **Male:** `am_adam`, `am_michael`, `am_leo`, `am_ryan`
 
-## Web API Endpoints (36 under `/api`)
+## Web API Endpoints (34 under `/api`)
 
 `GET /` and `GET /health` answer without an API key. With `KNIK_WEB_REQUIRE_API_KEY=true` every `/api` route
 needs `X-API-Key` (see [API keys](environment-variables.md#api-keys)). A database failure answers `503`.
@@ -159,18 +159,16 @@ needs `X-API-Key` (see [API keys](environment-variables.md#api-keys)). A databas
 
 ### Admin (`/api/admin`)
 
-| Method | Path                           | Description                                                              |
-| ------ | ------------------------------ | ------------------------------------------------------------------------ |
-| GET    | `/api/admin/settings`          | Current settings                                                         |
-| POST   | `/api/admin/settings`          | Save and apply provider, model, voice, temperature, max tokens, ...      |
-| GET    | `/api/admin/providers`         | Registered AI providers                                                  |
-| GET    | `/api/admin/models`            | Known models (`Config.AI_MODELS`)                                        |
-| GET    | `/api/admin/voices`            | Available voices                                                         |
-| GET    | `/api/admin/mcp-tools`         | Tool groups with their tool counts and whether they are enabled          |
-| PUT    | `/api/admin/mcp-tools/{group}` | Enable or disable a tool group for web chats: `{"enabled": false}`       |
-| GET    | `/api/admin/api-keys`          | API keys (never the secrets)                                             |
-| POST   | `/api/admin/api-keys`          | Create a key: `{"label": "...", "scopes": []}`; the key is returned once |
-| DELETE | `/api/admin/api-keys/{key_id}` | Delete a key                                                             |
+| Method | Path                           | Description                                                                                                                                                                                                                             |
+| ------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/settings`          | Every user setting: `{"settings": [{key, type, nullable, env, default, label, description, group, options, secret, minimum, maximum, value, source}]}`; `source` is `db`, `env` or `default`; a secret reads back as `••••••` when set  |
+| POST   | `/api/admin/settings`          | Save and apply `{key: value, ...}`; `null` clears a nullable setting; a secret posted back as its mask is left unchanged; 422 names an unknown key, a wrong type or a value out of range; 415 for a body that is not `application/json` |
+| DELETE | `/api/admin/settings/{key}`    | Forget the stored value; the env or built-in default applies again                                                                                                                                                                      |
+| GET    | `/api/admin/mcp-tools`         | Tool groups with their tool counts and whether they are enabled                                                                                                                                                                         |
+| PUT    | `/api/admin/mcp-tools/{group}` | Enable or disable a tool group for web chats: `{"enabled": false}`                                                                                                                                                                      |
+| GET    | `/api/admin/api-keys`          | API keys (never the secrets)                                                                                                                                                                                                            |
+| POST   | `/api/admin/api-keys`          | Create a key: `{"label": "...", "scopes": []}`; the key is returned once                                                                                                                                                                |
+| DELETE | `/api/admin/api-keys/{key_id}` | Delete a key                                                                                                                                                                                                                            |
 
 ### Workflows (`/api/workflows`) and schedules (`/api/cron`)
 

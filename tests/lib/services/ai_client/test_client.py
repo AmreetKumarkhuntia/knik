@@ -1,9 +1,11 @@
 """AIClient failures and token totals: a failed provider call raises instead of passing for a reply."""
 
 import asyncio
+from unittest.mock import AsyncMock
 
 import pytest
 
+from lib.core.config import Config
 from lib.services.ai_client import titles
 from lib.services.ai_client.client import AIClient
 from lib.services.ai_client.compaction import ConversationCompactor
@@ -22,6 +24,33 @@ def _failing_client() -> AIClient:
 
     client._provider.chat = chat
     return client
+
+
+@pytest.mark.asyncio
+async def test_a_chat_loads_as_many_history_turns_as_the_installed_config_says(monkeypatch):
+    monkeypatch.setattr(Config, "_current", Config(history_context_size=2))
+    client = build_client(ClientSettings(provider="mock"))
+    monkeypatch.setattr(client, "_ensure_conversation", AsyncMock(return_value="c1"))
+    monkeypatch.setattr(client, "_append_message", AsyncMock())
+    monkeypatch.setattr(client, "_post_chat", AsyncMock())
+    load_history = AsyncMock(return_value=[])
+    monkeypatch.setattr(client, "_load_history", load_history)
+
+    await client.achat(prompt="hi", conversation_id="c1", persist=True)
+
+    load_history.assert_awaited_once_with("c1", 2)
+
+
+def test_compaction_follows_the_installed_config(monkeypatch):
+    monkeypatch.setattr(Config, "_current", Config(compaction_enabled=True, compaction_threshold=0.5))
+    window = 1_048_576  # gemini-1.5-flash
+
+    assert ConversationCompactor.should_compact(window // 2, "gemini-1.5-flash") is True
+    assert ConversationCompactor.should_compact(window // 2 - 1, "gemini-1.5-flash") is False
+
+    monkeypatch.setattr(Config, "_current", Config(compaction_enabled=False, compaction_threshold=0.5))
+
+    assert ConversationCompactor.should_compact(window, "gemini-1.5-flash") is False
 
 
 def test_chat_raises_when_the_provider_fails():

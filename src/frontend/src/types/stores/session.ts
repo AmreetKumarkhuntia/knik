@@ -7,6 +7,7 @@ import type { createSettingsStore } from '$lib/stores/settings/store'
 import type { createCredentialsStore } from '$lib/stores/credentials/store'
 import type { createShellStore } from '$lib/stores/shell/store'
 import type { createFeedbackStore } from '$lib/stores/feedback/store'
+import type { SettingsTransport } from '../sections/settings'
 import type { DemoActionResult } from './demo'
 
 export interface DomainStores {
@@ -27,4 +28,5 @@ export interface SessionCommands {
 }
 export interface StoreBundle extends DomainStores {
   commands: SessionCommands
+  settingsTransport: SettingsTransport
 }

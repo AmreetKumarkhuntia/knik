@@ -4,8 +4,15 @@ import psycopg
 import pytest
 import pytest_asyncio
 
+from lib.core.config import Config
 from lib.services.db.connection import PostgresDB
 from tests.db_support import DATABASE_URL, MIGRATIONS_DIR, TABLES
+
+
+@pytest.fixture(autouse=True)
+def no_installed_config(monkeypatch):
+    """No config installed by an earlier test: Config.current() falls back to the env, as in a fresh process."""
+    monkeypatch.setattr(Config, "_current", None)
 
 
 @pytest.fixture

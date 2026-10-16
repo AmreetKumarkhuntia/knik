@@ -14,7 +14,6 @@ export function validateDemoSource(seed: DemoSnapshot) {
     'executions',
     'models',
     'providers',
-    'voices',
     'apiKeys',
   ] as const)
     uniqueIds(

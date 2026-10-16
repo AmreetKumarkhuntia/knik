@@ -260,47 +260,6 @@ class NodeExecutionRecord:
 
 
 @dataclass
-class AppSettings:
-    """The single app_settings row: AI/voice defaults, UI toggles and profile."""
-
-    id: str = "singleton"
-    provider: str | None = None
-    model: str | None = None
-    voice: str | None = None
-    temperature: float | None = None
-    max_tokens: int | None = None
-    stream_responses: bool | None = True
-    send_telemetry: bool | None = False
-    display_name: str | None = None
-    username: str | None = None
-    updated_at: datetime | None = None
-    api_base: str | None = None
-    api_key: str | None = None
-
-    @classmethod
-    def from_row(cls, row: dict[str, Any]) -> "AppSettings":
-        return cls(
-            id=row["id"],
-            provider=row.get("provider"),
-            model=row.get("model"),
-            voice=row.get("voice"),
-            temperature=row.get("temperature"),
-            max_tokens=row.get("max_tokens"),
-            stream_responses=row.get("stream_responses"),
-            send_telemetry=row.get("send_telemetry"),
-            display_name=row.get("display_name"),
-            username=row.get("username"),
-            updated_at=row.get("updated_at"),
-            api_base=row.get("api_base"),
-            api_key=row.get("api_key"),
-        )
-
-    def to_dict(self) -> dict[str, Any]:
-        """The row as a plain dict in column order; `updated_at` stays a datetime, as the raw row had it."""
-        return asdict(self)
-
-
-@dataclass
 class ApiKey:
     """An API key's public metadata; the secret is never stored, only its hash."""
 

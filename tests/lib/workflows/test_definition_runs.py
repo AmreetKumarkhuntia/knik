@@ -1,10 +1,12 @@
 """Definitions in every spelling run on the engine: the web builder's, the AI tool templates and older stored ones."""
 
+import dataclasses
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
+from lib.core.config import Config
 from lib.services.ai_client.factory import ClientSettings
 from lib.services.db import ExecutionDB, PostgresDB, Workflow, WorkflowDB
 from lib.tools.workflow_tool import WorkflowTool
@@ -45,7 +47,14 @@ def _assert_frontend_run(outputs: dict, factory: RecordingAIFactory) -> None:
     assert (outputs["merge"]["topic"], outputs["merge"]["output"]) == ("tides", "TIDES")
 
     [(settings, use_tools)] = factory.calls
-    assert settings == ClientSettings(provider="vertex", model="gemini-3.0-flash", temperature=0.2)
+    expected = dataclasses.replace(
+        ClientSettings.from_config(Config.current()),
+        provider="mock",
+        model="configured-model",
+        temperature=0.2,
+        system_instruction=None,
+    )
+    assert settings == expected
     assert use_tools is False
     chat_kwargs = factory.client.chat.call_args.kwargs
     assert chat_kwargs["prompt"].startswith("Summarise tides")

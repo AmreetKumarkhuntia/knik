@@ -63,7 +63,7 @@ def config(monkeypatch, tmp_path):
         browser_profile_dir=str(tmp_path / "browser-profile"),
         browser_idle_timeout=1800,
     )
-    monkeypatch.setattr(session_mod, "Config", lambda: cfg)
+    monkeypatch.setattr(session_mod, "Config", SimpleNamespace(current=lambda: cfg))
     return cfg
 
 

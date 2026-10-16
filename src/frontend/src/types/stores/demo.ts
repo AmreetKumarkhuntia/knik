@@ -3,7 +3,13 @@ import type { Conversation, ConversationMessage } from '../conversation'
 import type { ToastType } from '../components/feedback'
 import type { ChatModelOption } from '../components/chat'
 import type { Workflow, Schedule, ExecutionDetail, NodeExecutionStep } from '../workflow'
-import type { FrontendSettings, AdminOption, McpToolInfo, ApiKeyInfo } from '../sections/settings'
+import type {
+  FrontendSettings,
+  AdminOption,
+  McpToolInfo,
+  ApiKeyInfo,
+  SettingsTransport,
+} from '../sections/settings'
 import type { ThemeMode } from '../theme'
 
 export interface AppearanceSettings {
@@ -25,10 +31,6 @@ export interface DemoRunScenario {
   execution: ExecutionDetail
   timeline: NodeExecutionStep[]
 }
-export interface DemoVoiceOption extends AdminOption {
-  lang?: string
-  tags?: string[]
-}
 export interface CatalogModel extends ChatModelOption {
   providerId?: string
 }
@@ -44,7 +46,6 @@ export interface DemoSnapshot {
   settings: FrontendSettings
   appearance: AppearanceSettings
   providers: AdminOption[]
-  voices: DemoVoiceOption[]
   tools: McpToolInfo[]
   apiKeys: ApiKeyInfo[]
   chatScenarios: DemoChatScenario[]
@@ -69,4 +70,6 @@ export interface ScheduleDraft {
 export interface StoresProviderProps {
   children: ReactNode
   source?: DemoSource
+  /** Tests inject a fake; the app uses the backend settings API. */
+  settingsTransport?: SettingsTransport
 }

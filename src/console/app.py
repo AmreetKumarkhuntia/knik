@@ -1,8 +1,11 @@
 """Interactive console application for Knik."""
 
+import json
 import time
+from pathlib import Path
+from typing import Any
 
-from imports import AIClient, TTSAsyncProcessor, printer
+from imports import AIClient, Config, TTSAsyncProcessor, printer
 
 
 try:
@@ -31,7 +34,10 @@ class ConsoleApp:
     """Main interactive console application for Knik AI assistant."""
 
     def __init__(self, config: ConsoleConfig | None = None):
-        self.config = config or ConsoleConfig()
+        base = config or ConsoleConfig()
+        # A key the file has but the model does not warns and is skipped, so a typo never blocks the console.
+        self.config = base.with_overrides(_local_settings(base.settings_file))
+        Config.install(self.config)
         self.ai_client: AIClient | None = None
         self.tts_processor: TTSAsyncProcessor | None = None
         self.console_processor: ConsoleProcessor | None = None
@@ -65,13 +71,7 @@ class ConsoleApp:
         if tools_registered > 0:
             printer.debug(f"Registered {tools_registered} MCP tools to registry")
 
-        settings = ClientSettings(
-            provider=self.config.ai_provider,
-            model=self.config.ai_model,
-            system_instruction=self.config.system_instruction,
-            project_id=self.config.ai_project_id,
-            location=self.config.ai_location,
-        )
+        settings = ClientSettings.from_config(self.config)
         self.ai_client = build_client(settings, tool_registry=self.tool_registry)
 
     def _initialize_command_service(self):
@@ -276,6 +276,21 @@ class ConsoleApp:
         printer.info("Shutting down console application...")
         cleanup_all_tools()
         printer.success("Thanks for using Knik Console! 👋")
+
+
+def _local_settings(path: Path) -> dict[str, Any]:
+    """{key: value} from the user's settings file; {} when there is none or it is not a JSON object."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as e:
+        printer.warning(f"Ignoring {path}: {e}")
+        return {}
+    if not isinstance(data, dict):
+        printer.warning(f"Ignoring {path}: expected a JSON object")
+        return {}
+    return data
 
 
 if __name__ == "__main__":

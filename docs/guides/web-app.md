@@ -16,8 +16,9 @@ flowchart TD
     style D fill:#e8f5e9
 ```
 
-The frontend currently runs on an in-memory demo session (`src/lib/stores/demo/`) and does not call the
-backend. The backend serves the HTTP API described below.
+The frontend runs on an in-memory demo session (`src/lib/stores/demo/`); only its Settings page calls the
+backend, through `src/lib/transport/settings.ts` (`VITE_KNIK_API_URL`, default `http://localhost:8010`). The
+backend serves the HTTP API described below.
 
 ## Frontend (React)
 
@@ -55,15 +56,15 @@ See [Web Architecture](../components/web-architecture.md) for the stores and wid
 **Base URL:** `http://localhost:8010`. `/` and `/health` answer without an API key; every route under `/api`
 checks `X-API-Key` when `KNIK_WEB_REQUIRE_API_KEY=true`.
 
-| Route file         | Prefix               | Endpoints                                                                                                                                              |
-| ------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `chat.py`          | `/api/chat`          | POST `/` (reply text and its speech)                                                                                                                   |
-| `chat_stream.py`   | `/api/chat/stream`   | POST `/` (Server-Sent Events, see [Streaming](../development/streaming.md))                                                                            |
-| `admin.py`         | `/api/admin`         | GET/POST `/settings`, GET `/providers`, `/models`, `/voices`, GET `/mcp-tools`, PUT `/mcp-tools/{name}`, GET/POST `/api-keys`, DELETE `/api-keys/{id}` |
-| `conversations.py` | `/api/conversations` | GET `/`, POST `/`, GET/PATCH/DELETE `/{conversation_id}`, GET `/{conversation_id}/messages`                                                            |
-| `workflow.py`      | `/api/workflows`     | GET `/`, POST `/`, GET/PATCH/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes`                             |
-| `cron.py`          | `/api/cron`          | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle`                                                                                                |
-| `analytics.py`     | `/api/analytics`     | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity`                                                          |
+| Route file         | Prefix               | Endpoints                                                                                                                                |
+| ------------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `chat.py`          | `/api/chat`          | POST `/` (reply text and its speech)                                                                                                     |
+| `chat_stream.py`   | `/api/chat/stream`   | POST `/` (Server-Sent Events, see [Streaming](../development/streaming.md))                                                              |
+| `admin.py`         | `/api/admin`         | GET/POST `/settings`, DELETE `/settings/{key}`, GET `/mcp-tools`, PUT `/mcp-tools/{name}`, GET/POST `/api-keys`, DELETE `/api-keys/{id}` |
+| `conversations.py` | `/api/conversations` | GET `/`, POST `/`, GET/PATCH/DELETE `/{conversation_id}`, GET `/{conversation_id}/messages`                                              |
+| `workflow.py`      | `/api/workflows`     | GET `/`, POST `/`, GET/PATCH/DELETE `/{id}`, POST `/{id}/execute`, GET `/{id}/history`, GET `/{id}/executions/{eid}/nodes`               |
+| `cron.py`          | `/api/cron`          | GET `/`, POST `/`, DELETE `/{id}`, PATCH `/{id}/toggle`                                                                                  |
+| `analytics.py`     | `/api/analytics`     | GET `/dashboard`, `/metrics`, `/top-workflows`, `/executions`, `/workflows/list`, `/activity`                                            |
 
 FastAPI serves the interactive OpenAPI docs at `http://localhost:8010/docs`. See [API Reference](../reference/api.md),
 [Tools](mcp.md) (tool consent and the tool-group switches) and [Workflow Scheduler](scheduler.md).
@@ -98,9 +99,10 @@ KNIK_WEB_TOOL_CONSENT=deny      # deny or allow tools that need consent in web c
 KNIK_WEB_REQUIRE_API_KEY=false  # require X-API-Key on /api routes
 ```
 
-Provider, model, voice, temperature and max tokens saved through `POST /api/admin/settings` override the
-environment, from each chat's next message on. See [Environment Variables](../reference/environment-variables.md#web-backend) for all
-options and how to create the first API key.
+Every setting saved through `POST /api/admin/settings` (each `user=True` field of `Config`) overrides the
+environment from each chat's next message on, and `DELETE /api/admin/settings/{key}` brings the env value back.
+See [Environment Variables](../reference/environment-variables.md#web-backend) for all options and how to create
+the first API key.
 
 ## Development
 

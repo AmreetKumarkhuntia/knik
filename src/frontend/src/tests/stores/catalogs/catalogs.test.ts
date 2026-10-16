@@ -11,7 +11,6 @@ import type { DemoSource } from '$types/demo-session'
 const source: DemoSource = {
   providers: [{ id: 'custom-provider', name: 'Custom Provider' }],
   models: [{ id: 'custom-model', label: 'Custom Model', vendor: 'Custom Provider' }],
-  voices: [{ id: 'custom-voice', name: 'Custom Voice' }],
   tools: [{ name: 'Custom Tools', category: 'Custom', count: 3, enabled: true }],
   apiKeys: [
     {
@@ -28,23 +27,21 @@ const source: DemoSource = {
 function useCatalogs() {
   const providers = useCatalog('providers')
   const models = useCatalog('models')
-  const voices = useCatalog('voices')
   const { tools } = useProvidersView()
   const apiKeys = useCredentialsStore(state => state.apiKeys)
   const toggleTool = useSettingsStore(session => session.toggleTool)
   const deleteKey = useCredentialsStore(session => session.deleteKey)
-  return { providers, models, voices, tools, apiKeys, toggleTool, deleteKey }
+  return { providers, models, tools, apiKeys, toggleTool, deleteKey }
 }
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
   createElement(StoresProvider, { source, children })
 
 describe('store-owned settings catalogs', () => {
-  it('reads arbitrary supplied catalogs without built-in provider, voice or tool options', () => {
+  it('reads arbitrary supplied catalogs without built-in provider or tool options', () => {
     const { result } = renderHook(useCatalogs, { wrapper })
     expect(result.current.providers).toEqual(source.providers)
     expect(result.current.models).toEqual(source.models)
-    expect(result.current.voices).toEqual(source.voices)
     expect(result.current.tools).toEqual(source.tools)
     expect(result.current.apiKeys).toEqual(source.apiKeys)
     expect(result.current.models[0].label).toBe('Custom Model')
@@ -81,13 +78,12 @@ describe('store-owned settings catalogs', () => {
       wrapper: ({ children }) =>
         createElement(StoresProvider, {
           children,
-          source: { providers: [], models: [], voices: [], tools: [], apiKeys: [] },
+          source: { providers: [], models: [], tools: [], apiKeys: [] },
         }),
     })
     for (const result of [unspecified.result, empty.result]) {
       expect(result.current.providers).toEqual([])
       expect(result.current.models).toEqual([])
-      expect(result.current.voices).toEqual([])
       expect(result.current.tools).toEqual([])
       expect(result.current.apiKeys).toEqual([])
     }

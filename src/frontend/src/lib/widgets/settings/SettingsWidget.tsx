@@ -3,10 +3,10 @@ import { useViewport } from '$hooks'
 import { useSettingsScope } from '$stores/settings'
 import VerticalTabs from '$components/navigation/VerticalTabs'
 import SectionHeader from '$components/display/SectionHeader'
+import RemoteSettingsPane from './RemoteSettingsPane'
 import GeneralPane from './GeneralPane'
 import AppearancePane from './AppearancePane'
 import ProvidersPane from './ProvidersPane'
-import VoicePane from './VoicePane'
 import KeysPane from './KeysPane'
 import type { SettingsWidgetProps } from '$types/widgets/settings'
 
@@ -23,7 +23,18 @@ export default function SettingsWidget({
     </div>
   )
   const tabs = [
-    { id: 'general', label: 'General', icon: 'tune', content: pane('general', <GeneralPane />) },
+    {
+      id: 'general',
+      label: 'General',
+      icon: 'tune',
+      content: pane(
+        'general',
+        <>
+          <RemoteSettingsPane />
+          <GeneralPane />
+        </>
+      ),
+    },
     {
       id: 'appearance',
       label: 'Appearance',
@@ -36,7 +47,6 @@ export default function SettingsWidget({
       icon: 'hub',
       content: pane('providers', <ProvidersPane />),
     },
-    { id: 'voice', label: 'Voice', icon: 'graphic_eq', content: pane('voice', <VoicePane />) },
     { id: 'keys', label: 'API keys', icon: 'key', content: pane('keys', <KeysPane />) },
   ]
   const requestedPane = tabs.some(tab => tab.id === requestedTab) ? requestedTab : null

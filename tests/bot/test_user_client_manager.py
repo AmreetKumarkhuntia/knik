@@ -6,6 +6,7 @@ import pytest
 
 from bot.consent import BotConsentGate, ConsentBroker
 from bot.user_client_manager import UserClientManager
+from lib.services.ai_client.settings import ClientSettings
 from lib.tools.registry import ToolRegistry
 
 
@@ -17,9 +18,8 @@ def broker():
 @pytest.fixture
 def manager(transport, broker):
     loop = asyncio.new_event_loop()
-    yield UserClientManager(
-        ai_provider="mock", system_instruction="Be brief.", transport=transport, loop=loop, consent_broker=broker
-    )
+    settings = ClientSettings(provider="mock", system_instruction="Be brief.")
+    yield UserClientManager(settings, transport=transport, loop=loop, consent_broker=broker)
     loop.close()
 
 
@@ -72,7 +72,7 @@ def test_the_gate_follows_the_users_latest_chat(manager):
 
 
 def test_without_transport_there_is_no_consent_gate():
-    registry = UserClientManager(ai_provider="mock").create_new("alice").tool_registry
+    registry = UserClientManager(ClientSettings(provider="mock")).create_new("alice").tool_registry
 
     assert isinstance(registry, ToolRegistry)
     assert registry._consent_gate is None

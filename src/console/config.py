@@ -1,6 +1,7 @@
 """Console application configuration."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 
 from imports import Config
 
@@ -18,3 +19,5 @@ class ConsoleConfig(Config):
     debug_mode: bool = False
     loop_check_timeout: int = 500.0
     loop_check_interval: int = 3.0
+    # Settings overriding the env ones, as {key: value}; the console reads it at startup and never writes it.
+    settings_file: Path = field(default_factory=lambda: Path.home() / ".knik" / "settings.json")
