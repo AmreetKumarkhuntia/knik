@@ -19,13 +19,7 @@ export function normalizeDemoSource(source: DemoSource = {}): DemoSnapshot {
     runScenarios: {},
     ...source,
     settings: {
-      provider: '',
       model: '',
-      voice: '',
-      tts_enabled: true,
-      speaking_rate: 1,
-      stream_responses: false,
-      send_telemetry: false,
       display_name: null,
       username: null,
       ...source.settings,

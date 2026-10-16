@@ -162,7 +162,7 @@ def test_an_ai_node_takes_its_temperature_and_defaults_an_empty_model():
     )
 
 
-def test_an_ai_node_without_settings_gets_the_defaults_the_engine_always_used():
+def test_an_ai_node_without_settings_gets_the_configured_defaults():
     node = build_node("ai", {"type": "AIExecutionNode"})
 
     assert isinstance(node, AIExecutionNode)

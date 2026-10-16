@@ -1,5 +1,5 @@
 export { useChatView, useSidebarView } from './chat'
-export { useProfileView, useProvidersView, useCredentialsView } from './settings'
+export { useRemoteSettingsView, useProvidersView, useCredentialsView } from './settings'
 export { useShellView } from './shell'
 export { useWorkflowHubView, useWorkflowBuilderView } from './workflows'
 export { useSchedulesView } from './schedules'

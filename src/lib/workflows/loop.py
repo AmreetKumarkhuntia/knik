@@ -23,7 +23,7 @@ class CronScheduler:
         self._running = False
         self._task: asyncio.Task | None = None
         self._stopping = asyncio.Event()
-        self.config = Config()
+        self.config = Config.current()
         self.engine = engine or WorkflowEngine()
 
         self._runs: set[asyncio.Task] = set()

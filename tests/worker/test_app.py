@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from lib.core.config import Config
 from lib.services.db import DatabaseUnavailable
 from worker import app as app_mod
 
@@ -34,6 +35,7 @@ def scheduler(monkeypatch) -> MagicMock:
 def database(monkeypatch) -> SimpleNamespace:
     database = SimpleNamespace(initialize=AsyncMock(), close=AsyncMock())
     monkeypatch.setattr(app_mod, "PostgresDB", database)
+    monkeypatch.setattr(app_mod, "SettingsDB", SimpleNamespace(get_all=AsyncMock(return_value={})))
     return database
 
 
@@ -62,6 +64,17 @@ async def test_worker_starts_the_scheduler_and_stops_it_on_sigterm(scheduler, da
     scheduler.start.assert_called_once_with()
     scheduler.stop.assert_awaited_once_with()
     database.close.assert_awaited_once_with()
+
+
+async def test_worker_runs_with_the_stored_settings_over_the_env_ones(scheduler, database, monkeypatch):
+    stored = {"ai_provider": "mock", "ai_model": "mock-model"}
+    monkeypatch.setattr(app_mod, "SettingsDB", SimpleNamespace(get_all=AsyncMock(return_value=stored)))
+    worker = app_mod.WorkerApp()
+
+    await _run_until_sigterm(worker, scheduler)
+
+    assert (worker.config.ai_provider, worker.config.ai_model) == ("mock", "mock-model")
+    assert Config.current() is worker.config
 
 
 async def test_worker_keeps_running_while_postgres_is_down(scheduler, database):

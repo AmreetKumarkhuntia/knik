@@ -1,5 +1,7 @@
 import type { DemoSource } from '$types/stores/demo'
+import type { SettingsTransport } from '$types/sections/settings'
 import type { DomainStores, StoreBundle } from '$types/stores/session'
+import { createSettingsTransport } from '$lib/transport/settings'
 import { createDemoSeed } from '../demo'
 import { createCatalogStore } from '../catalogs/store'
 import { createChatStore } from '../chat/store'
@@ -12,7 +14,10 @@ import { createShellStore } from '../shell/store'
 import { createFeedbackStore } from '../feedback/store'
 import { createSessionCommands } from './commands'
 
-export function createStoreBundle(source?: DemoSource): StoreBundle {
+export function createStoreBundle(
+  source?: DemoSource,
+  settingsTransport: SettingsTransport = createSettingsTransport()
+): StoreBundle {
   const seed = createDemoSeed(source)
   const stores: DomainStores = {
     catalogs: createCatalogStore(seed),
@@ -25,5 +30,5 @@ export function createStoreBundle(source?: DemoSource): StoreBundle {
     shell: createShellStore(),
     feedback: createFeedbackStore(),
   }
-  return { ...stores, commands: createSessionCommands(stores) }
+  return { ...stores, commands: createSessionCommands(stores), settingsTransport }
 }

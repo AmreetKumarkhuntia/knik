@@ -15,7 +15,9 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/*', async route => {
     const request = route.request()
     if (['fetch', 'xhr', 'eventsource'].includes(request.resourceType())) {
-      record.unexpected.push(`${request.resourceType()}: ${request.url()}`)
+      // The settings page may ask the backend for its schema; offline it shows a Retry state.
+      if (!request.url().includes('/api/admin/settings'))
+        record.unexpected.push(`${request.resourceType()}: ${request.url()}`)
       await route.abort('blockedbyclient')
       return
     }
@@ -110,7 +112,7 @@ test('all routes render seeded data or missing-record states without application
     ['/executions/not-a-number', 'Execution not found'],
     ['/workflows/missing/edit', 'Workflow not found'],
     ['/schedules', 'Every day at 09:00'],
-    ['/settings', 'How you appear across Knik AI'],
+    ['/settings', 'Workspace preferences and account'],
   ]
   for (const [path, text] of routes) {
     await page.goto(path, { waitUntil: 'domcontentloaded' })
@@ -318,25 +320,19 @@ test('edited suggestions send through Enter and button without requiring an auth
   await expect(page.getByRole('heading', { name: 'How can I help you today?' })).toBeVisible()
 })
 
-test('profile and appearance are session-only across navigation and reload', async ({ page }) => {
+test('appearance is session-only across navigation and reload', async ({ page }) => {
   await page.goto('/settings', { waitUntil: 'domcontentloaded' })
-  await page.getByLabel('Display name', { exact: true }).fill('Session Person')
-  await page.getByLabel('Username', { exact: true }).fill('session-person')
-  await page.getByRole('button', { name: 'Save profile', exact: true }).click()
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
   await page.getByRole('radio', { name: 'Light', exact: true }).press('Space')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await page.locator('aside').getByRole('link', { name: 'Workflows', exact: true }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await page.locator('aside a[href="/settings"]').click()
-  await expect(page.getByLabel('Display name', { exact: true })).toHaveValue('Session Person')
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
   await expect(page.getByRole('radio', { name: 'Light', exact: true })).toBeChecked()
   await expect(page.getByRole('switch', { name: 'Compact density', exact: true })).toHaveCount(0)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByLabel('Display name', { exact: true })).toHaveValue('Amreet Kumar')
-  await expect(page.getByLabel('Username', { exact: true })).toHaveValue('amreet')
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
   await expect(page.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked()
   await expect(page.getByRole('radio', { name: 'Round', exact: true })).toHaveCount(0)
@@ -397,35 +393,27 @@ test('narrow builder supports node addition, property editing, and dismissal', a
   await noHorizontalOverflow(page)
 })
 
-test('settings catalogs are seeded and pane choices carry over to chat', async ({ page }) => {
+test('settings panes keep local choices and show the backend as unavailable offline', async ({
+  page,
+}) => {
   await page.goto('/settings', { waitUntil: 'domcontentloaded' })
-  const assertLocalPane = async () => {
-    await expect(page.getByRole('button', { name: /Retry/ })).toHaveCount(0)
-    await expect(page.getByText(/Loading (models|providers|tools|voices|API keys)/i)).toHaveCount(0)
-    await noHorizontalOverflow(page)
-  }
-  await expect(page.getByLabel('Default model', { exact: true })).toHaveValue('gemini-1.5-flash')
-  await page.getByLabel('Default model', { exact: true }).selectOption('gpt-4o')
-  await assertLocalPane()
+  await expect(page.getByText('Settings are unavailable', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Delete conversations', exact: true })
+  ).toBeVisible()
+  await noHorizontalOverflow(page)
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click()
   await expect(page.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked()
-  await assertLocalPane()
+  await noHorizontalOverflow(page)
   await page.getByRole('tab', { name: 'Providers', exact: true }).click()
-  await expect(page.getByRole('radio', { name: /Google AI/ })).toBeVisible()
-  await page.getByRole('radio', { name: /OpenAI/ }).press('Space')
   await page.getByRole('switch', { name: /shell/ }).press('Space')
-  await assertLocalPane()
-  await page.getByRole('tab', { name: 'Voice', exact: true }).click()
-  await expect(page.getByRole('radio', { name: /Heart/ })).toBeChecked()
-  await assertLocalPane()
+  await noHorizontalOverflow(page)
   await page.getByRole('tab', { name: 'API keys', exact: true }).click()
   await expect(page.getByText('Demo · Production', { exact: true })).toBeVisible()
-  await assertLocalPane()
+  await noHorizontalOverflow(page)
   await page.getByRole('tab', { name: 'Providers', exact: true }).click()
-  await expect(page.getByRole('radio', { name: /OpenAI/ })).toBeChecked()
   await expect(page.getByRole('switch', { name: /shell/ })).not.toBeChecked()
-  await page.getByRole('link', { name: 'Chat', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Chat model' })).toContainText('GPT-4o')
 })
 
 test('composer shows one focus ring and settings use flat sections', async ({ page }) => {
@@ -556,7 +544,7 @@ test('tools drawer shares selections with settings and preserves the composer dr
   const tabs = page.getByRole('tablist')
   await expect(tabs).toHaveAttribute('aria-orientation', 'horizontal')
   await page.getByRole('tab', { name: 'Providers', exact: true }).press('ArrowRight')
-  await expect(page.getByRole('tab', { name: 'Voice', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('tab', { name: 'API keys', exact: true })).toHaveAttribute(
     'aria-selected',
     'true'
   )
@@ -665,7 +653,6 @@ for (const width of [1440, 390]) {
   }) => {
     test.setTimeout(60_000)
     await page.setViewportSize({ width, height: 844 })
-    const longName = 'An exceptionally long workspace account name '.repeat(5).trim()
     const codeLine = `const sample = "${'readable_demo_value_'.repeat(30)}";`
     const openNavigation = async () => {
       if (width < 768) {
@@ -693,27 +680,7 @@ for (const width of [1440, 390]) {
         animations: 'disabled',
       })
 
-      await (await openNavigation()).locator('a[href="/settings"]').click()
-      await page.getByLabel('Display name', { exact: true }).fill(longName)
-      await page.getByRole('button', { name: 'Save profile', exact: true }).click()
       const navigation = await openNavigation()
-      const account = navigation.locator('a[href="/settings"]')
-      const name = account.locator('span.truncate')
-      await expect(name).toHaveText(longName)
-      await expect(name).toHaveCSS('text-overflow', 'ellipsis')
-      const accountBounds = await account.boundingBox()
-      const navigationBounds = await navigation.boundingBox()
-      expect(accountBounds!.x).toBeGreaterThanOrEqual(navigationBounds!.x)
-      expect(accountBounds!.x + accountBounds!.width).toBeLessThanOrEqual(
-        navigationBounds!.x + navigationBounds!.width
-      )
-      expect(await name.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true)
-      await noHorizontalOverflow(page)
-      await page.screenshot({
-        path: `test-results/workspace-edge-name-${width}-${mode}.png`,
-        animations: 'disabled',
-      })
-
       await navigation.getByRole('link', { name: 'Chat', exact: true }).click()
       const composer = page.getByRole('textbox', { name: 'Message', exact: true })
       await composer.fill(`\`\`\`javascript\n${codeLine}\n\`\`\``)

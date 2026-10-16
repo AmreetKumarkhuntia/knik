@@ -1,9 +1,17 @@
-"""Application settings and constants loaded from environment variables."""
+"""Application settings: one ``setting()`` field per key, read from env, with stored overrides layered on top.
+
+A field with ``user=True`` is a setting people may change at runtime: ``schema()`` describes it, ``coerce()``
+checks a value for it, ``with_overrides()`` applies stored values over the env ones, and ``install()`` makes
+the result the ``current()`` config for the process. Adding a setting is adding one field.
+"""
 
 import os
-from dataclasses import dataclass, field
+import warnings
+from collections.abc import Mapping
+from dataclasses import Field, dataclass, field, fields, replace
 from pathlib import Path
-from typing import ClassVar
+from types import NoneType
+from typing import Any, ClassVar, Self, get_args, get_type_hints
 
 from dotenv import load_dotenv
 
@@ -16,8 +24,46 @@ else:
     load_dotenv()
 
 
+_SCHEMA_KEYS = ("env", "default", "label", "description", "options", "secret", "group")
+
+
+def setting(
+    env: str,
+    default: Any,
+    cast: type = str,
+    *,
+    user: bool = False,
+    secret: bool = False,
+    label: str = "",
+    description: str = "",
+    options: list[Any] | None = None,
+    group: str = "",
+) -> Any:
+    """A Config field read from ``env``, else ``default``. ``user=True`` makes it a setting users may override."""
+    return field(
+        default_factory=lambda: Config.from_env(env, default, cast),
+        metadata={
+            "env": env,
+            "default": default,
+            "user": user,
+            "secret": secret,
+            "label": label,
+            "description": description,
+            "options": options,
+            "group": group,
+        },
+    )
+
+
+def _kind(hint: Any) -> type:
+    """The setting's type with ``None`` stripped: a ``str | None`` field is a ``str`` setting."""
+    return next(t for t in (get_args(hint) or (hint,)) if t is not NoneType)
+
+
 @dataclass
 class Config:
+    _current: ClassVar["Config | None"] = None
+
     SAMPLE_RATE: ClassVar[int] = 24000
 
     DEFAULT_TTS: ClassVar[str] = "kokoro"
@@ -27,7 +73,6 @@ class Config:
 
     DEFAULT_AI_MODEL: ClassVar[str] = "gemini-1.5-flash"
     DEFAULT_AI_LOCATION: ClassVar[str] = "us-central1"
-    DEFAULT_AI_MAX_TOKENS: ClassVar[int] = 25565
     DEFAULT_AI_TEMPERATURE: ClassVar[float] = 0.7
 
     DEFAULT_LOG_LEVEL: ClassVar[str] = "INFO"
@@ -132,83 +177,182 @@ Be reliable, efficient, and action focused like Jarvis."""
         "o3-mini": 200_000,
     }
 
-    ai_provider: str = field(default_factory=lambda: Config.from_env("KNIK_AI_PROVIDER", "vertex"))
-    ai_model: str = field(default_factory=lambda: Config.get_ai_model())
-    ai_project_id: str | None = field(default_factory=lambda: Config.get_ai_project())
-    ai_location: str = field(default_factory=lambda: Config.get_ai_location())
-    max_tokens: int = field(
-        default_factory=lambda: Config.from_env("KNIK_MAX_TOKENS", Config.DEFAULT_AI_MAX_TOKENS, int)
+    ai_provider: str = setting("KNIK_AI_PROVIDER", "vertex", user=True, label="Provider", group="AI")
+    ai_model: str = setting("KNIK_AI_MODEL", DEFAULT_AI_MODEL, user=True, label="Model", group="AI")
+    ai_project_id: str | None = setting("GOOGLE_CLOUD_PROJECT", None)
+    ai_location: str = setting("KNIK_AI_LOCATION", DEFAULT_AI_LOCATION)
+    temperature: float = setting(
+        "KNIK_TEMPERATURE", DEFAULT_AI_TEMPERATURE, float, user=True, label="Temperature", group="AI"
     )
-    temperature: float = field(
-        default_factory=lambda: Config.from_env("KNIK_TEMPERATURE", Config.DEFAULT_AI_TEMPERATURE, float)
+    max_tokens: int | None = setting(
+        "KNIK_MAX_TOKENS",
+        None,
+        int,
+        user=True,
+        label="Max output tokens",
+        group="AI",
+        description="Empty leaves the provider's own limit.",
     )
-
-    custom_api_base: str | None = field(default_factory=lambda: Config.from_env("KNIK_CUSTOM_API_BASE", None))
-    custom_api_key: str | None = field(default_factory=lambda: Config.from_env("KNIK_CUSTOM_API_KEY", None))
-
-    voice_language: str = field(default_factory=lambda: Config.get_language())
-    voice_name: str = field(default_factory=lambda: Config.get_voice())
-    sample_rate: int = field(default=24000)
-    enable_voice_output: bool = field(default_factory=lambda: Config.from_env("KNIK_VOICE_OUTPUT", True, bool))
-
-    db_host: str = field(default_factory=lambda: Config.from_env("KNIK_DB_HOST", "localhost"))
-    db_port: int = field(default_factory=lambda: Config.from_env("KNIK_DB_PORT", 5432, int))
-    db_user: str = field(default_factory=lambda: Config.from_env("KNIK_DB_USER", "postgres"))
-    db_pass: str = field(default_factory=lambda: Config.from_env("KNIK_DB_PASS", ""))
-    db_name: str = field(default_factory=lambda: Config.from_env("KNIK_DB_NAME", "knik"))
-    db_pool_min_size: int = field(default_factory=lambda: Config.from_env("KNIK_DB_POOL_MIN_SIZE", 1, int))
-    db_pool_max_size: int = field(default_factory=lambda: Config.from_env("KNIK_DB_POOL_MAX_SIZE", 10, int))
-    db_connect_timeout: float = field(default_factory=lambda: Config.from_env("KNIK_DB_CONNECT_TIMEOUT", 5.0, float))
-
-    scheduler_check_interval: int = field(
-        default_factory=lambda: Config.from_env("KNIK_SCHEDULER_CHECK_INTERVAL", 60, int)
+    system_instruction: str = setting(
+        "KNIK_AI_SYSTEM_INSTRUCTION", DEFAULT_SYSTEM_INSTRUCTION, user=True, label="System instruction", group="AI"
     )
-    scheduler_workers: int = field(default_factory=lambda: Config.from_env("KNIK_SCHEDULER_WORKERS", 4, int))
-    scheduler_max_concurrent: int = field(
-        default_factory=lambda: Config.from_env("KNIK_SCHEDULER_MAX_CONCURRENT", 10, int)
+    custom_api_base: str | None = setting(
+        "KNIK_CUSTOM_API_BASE",
+        None,
+        user=True,
+        label="Custom API base URL",
+        group="AI",
+        description="For the custom (OpenAI-compatible) provider.",
     )
-    scheduler_stale_execution_seconds: int = field(
-        default_factory=lambda: Config.from_env("KNIK_SCHEDULER_STALE_EXECUTION_SECONDS", 3600, int)
+    custom_api_key: str | None = setting(
+        "KNIK_CUSTOM_API_KEY", None, user=True, secret=True, label="Custom API key", group="AI"
     )
 
-    browser_headless: bool = field(default_factory=lambda: Config.from_env("KNIK_BROWSER_HEADLESS", False, bool))
-    browser_profile_dir: str = field(
-        default_factory=lambda: Config.from_env(
-            "KNIK_BROWSER_PROFILE_DIR",
-            str(Path.home() / ".knik" / "browser-profile"),
-        )
+    voice_language: str = setting("KNIK_LANGUAGE", DEFAULT_LANGUAGE)
+    voice_name: str = setting(
+        "KNIK_VOICE", DEFAULT_VOICE, user=True, label="Voice", group="Voice", options=list(VOICES)
     )
-    browser_idle_timeout: int = field(default_factory=lambda: Config.from_env("KNIK_BROWSER_IDLE_TIMEOUT", 1800, int))
-    telegram_bot_token: str | None = field(default_factory=lambda: Config.from_env("KNIK_TELEGRAM_BOT_TOKEN", None))
-
-    model_discovery_timeout: int = field(
-        default_factory=lambda: Config.from_env(
-            "KNIK_MODEL_DISCOVERY_TIMEOUT", Config.DEFAULT_MODEL_DISCOVERY_TIMEOUT, int
-        )
+    sample_rate: int = 24000
+    enable_voice_output: bool = setting(
+        "KNIK_VOICE_OUTPUT", True, bool, user=True, label="Speak replies", group="Voice"
     )
 
-    # Conversation history context size (number of turn-pairs sent to LLM)
-    history_context_size: int = field(default_factory=lambda: Config.from_env("KNIK_HISTORY_CONTEXT_SIZE", 5, int))
+    db_host: str = setting("KNIK_DB_HOST", "localhost")
+    db_port: int = setting("KNIK_DB_PORT", 5432, int)
+    db_user: str = setting("KNIK_DB_USER", "postgres")
+    db_pass: str = setting("KNIK_DB_PASS", "")
+    db_name: str = setting("KNIK_DB_NAME", "knik")
+    db_pool_min_size: int = setting("KNIK_DB_POOL_MIN_SIZE", 1, int)
+    db_pool_max_size: int = setting("KNIK_DB_POOL_MAX_SIZE", 10, int)
+    db_connect_timeout: float = setting("KNIK_DB_CONNECT_TIMEOUT", 5.0, float)
 
-    compaction_enabled: bool = field(
-        default_factory=lambda: Config.from_env("KNIK_COMPACTION_ENABLED", Config.DEFAULT_COMPACTION_ENABLED, bool)
+    scheduler_check_interval: int = setting("KNIK_SCHEDULER_CHECK_INTERVAL", 60, int)
+    scheduler_workers: int = setting("KNIK_SCHEDULER_WORKERS", 4, int)
+    scheduler_max_concurrent: int = setting("KNIK_SCHEDULER_MAX_CONCURRENT", 10, int)
+    scheduler_stale_execution_seconds: int = setting("KNIK_SCHEDULER_STALE_EXECUTION_SECONDS", 3600, int)
+
+    browser_headless: bool = setting(
+        "KNIK_BROWSER_HEADLESS", False, bool, user=True, label="Headless browser", group="Browser"
     )
-    compaction_threshold: float = field(
-        default_factory=lambda: Config.from_env("KNIK_COMPACTION_THRESHOLD", Config.DEFAULT_COMPACTION_THRESHOLD, float)
+    browser_profile_dir: str = setting("KNIK_BROWSER_PROFILE_DIR", str(Path.home() / ".knik" / "browser-profile"))
+    browser_idle_timeout: int = setting(
+        "KNIK_BROWSER_IDLE_TIMEOUT", 1800, int, user=True, label="Browser idle timeout (seconds)", group="Browser"
     )
-    compaction_circuit_breaker: int = field(
-        default_factory=lambda: Config.from_env(
-            "KNIK_COMPACTION_CIRCUIT_BREAKER", Config.DEFAULT_COMPACTION_CIRCUIT_BREAKER, int
-        )
+    telegram_bot_token: str | None = setting("KNIK_TELEGRAM_BOT_TOKEN", None)
+
+    model_discovery_timeout: int = setting("KNIK_MODEL_DISCOVERY_TIMEOUT", DEFAULT_MODEL_DISCOVERY_TIMEOUT, int)
+
+    history_context_size: int = setting(
+        "KNIK_HISTORY_CONTEXT_SIZE",
+        5,
+        int,
+        user=True,
+        label="History turns sent to the model",
+        group="Conversation",
     )
-    compaction_prompt_buffer: int = field(
-        default_factory=lambda: Config.from_env(
-            "KNIK_COMPACTION_PROMPT_BUFFER", Config.DEFAULT_COMPACTION_PROMPT_BUFFER, int
-        )
+    compaction_enabled: bool = setting(
+        "KNIK_COMPACTION_ENABLED",
+        DEFAULT_COMPACTION_ENABLED,
+        bool,
+        user=True,
+        label="Compact long conversations",
+        group="Conversation",
+    )
+    compaction_threshold: float = setting(
+        "KNIK_COMPACTION_THRESHOLD",
+        DEFAULT_COMPACTION_THRESHOLD,
+        float,
+        user=True,
+        label="Compaction threshold",
+        group="Conversation",
+        description="Share of the context window that triggers a summary.",
+    )
+    compaction_circuit_breaker: int = setting(
+        "KNIK_COMPACTION_CIRCUIT_BREAKER",
+        DEFAULT_COMPACTION_CIRCUIT_BREAKER,
+        int,
+        user=True,
+        label="Compaction failures before giving up",
+        group="Conversation",
+    )
+    compaction_prompt_buffer: int = setting(
+        "KNIK_COMPACTION_PROMPT_BUFFER",
+        DEFAULT_COMPACTION_PROMPT_BUFFER,
+        int,
+        user=True,
+        label="Tokens reserved for the summary",
+        group="Conversation",
     )
 
-    def __post_init__(self):
-        self.system_instruction = Config.from_env("KNIK_AI_SYSTEM_INSTRUCTION", Config.DEFAULT_SYSTEM_INSTRUCTION)
+    display_name: str | None = setting("KNIK_DISPLAY_NAME", None, user=True, label="Display name", group="Profile")
+    username: str | None = setting("KNIK_USERNAME", None, user=True, label="Username", group="Profile")
+    stream_responses: bool = setting(
+        "KNIK_STREAM_RESPONSES", True, bool, user=True, label="Stream responses", group="UI"
+    )
+    send_telemetry: bool = setting("KNIK_SEND_TELEMETRY", False, bool, user=True, label="Send telemetry", group="UI")
+
+    @classmethod
+    def install(cls, config: "Config") -> None:
+        """Make ``config`` the one ``current()`` returns for the rest of this process."""
+        Config._current = config
+
+    @classmethod
+    def current(cls) -> "Config":
+        """The config the app installed (env layered with its stored settings), else a fresh env config."""
+        return Config._current if Config._current is not None else cls()
+
+    @classmethod
+    def schema(cls) -> list[dict[str, Any]]:
+        """One definition per user setting: key, type, env, default, label, description, options, secret, group."""
+        hints = get_type_hints(cls)
+        return [
+            {"key": f.name, "type": _kind(hints[f.name]).__name__, **{k: f.metadata[k] for k in _SCHEMA_KEYS}}
+            for f in cls._user_fields().values()
+        ]
+
+    @classmethod
+    def coerce(cls, key: str, value: Any) -> Any:
+        """``value`` as the setting's type; ValueError for an unknown setting, a wrong type or a value outside its options."""
+        f = cls._user_fields().get(key)
+        if f is None:
+            raise ValueError(f"unknown setting {key!r}")
+        hint = get_type_hints(cls)[key]
+        kind = _kind(hint)
+        if value is None:
+            if NoneType in get_args(hint):
+                return None
+            raise ValueError(f"{key} cannot be empty")
+        # bool is an int in Python, so it needs its own check; an int is fine where a float is expected.
+        accepted = (int, float) if kind is float else (kind,)
+        if isinstance(value, bool) is not (kind is bool) or not isinstance(value, accepted):
+            raise ValueError(f"{key} must be {kind.__name__}")
+        options = f.metadata["options"]
+        if options and value not in options:
+            raise ValueError(f"{key} must be one of {', '.join(map(str, options))}")
+        return kind(value)
+
+    @classmethod
+    def validate(cls, overrides: Mapping[str, Any]) -> dict[str, Any]:
+        """Every override coerced to its setting's type; ValueError on the first one that is not valid."""
+        return {key: cls.coerce(key, value) for key, value in overrides.items()}
+
+    def with_overrides(self, overrides: Mapping[str, Any]) -> Self:
+        """A copy with the valid overrides applied.
+
+        An invalid one, such as a stored key whose field has since been removed, is skipped with a warning
+        rather than failing startup.
+        """
+        accepted = {}
+        for key, value in overrides.items():
+            try:
+                accepted[key] = self.coerce(key, value)
+            except ValueError as e:
+                warnings.warn(f"Ignoring setting: {e}", stacklevel=2)
+        return replace(self, **accepted)
+
+    @classmethod
+    def _user_fields(cls) -> dict[str, Field[Any]]:
+        return {f.name: f for f in fields(cls) if f.metadata.get("user")}
 
     @classmethod
     def from_env(cls, key: str, default=None, type_cast=str):
@@ -239,30 +383,6 @@ Be reliable, efficient, and action focused like Jarvis."""
             return type_cast(value)
         except (ValueError, TypeError):
             return default
-
-    @classmethod
-    def get_language(cls) -> str:
-        return cls.from_env("KNIK_LANGUAGE", cls.DEFAULT_LANGUAGE)
-
-    @classmethod
-    def get_voice(cls) -> str:
-        return cls.from_env("KNIK_VOICE", cls.DEFAULT_VOICE)
-
-    @classmethod
-    def get_model(cls) -> str:
-        return cls.from_env("KNIK_MODEL", cls.DEFAULT_MODEL)
-
-    @classmethod
-    def get_ai_model(cls) -> str:
-        return cls.from_env("KNIK_AI_MODEL", cls.DEFAULT_AI_MODEL)
-
-    @classmethod
-    def get_ai_location(cls) -> str:
-        return cls.from_env("KNIK_AI_LOCATION", cls.DEFAULT_AI_LOCATION)
-
-    @classmethod
-    def get_ai_project(cls) -> str | None:
-        return cls.from_env("GOOGLE_CLOUD_PROJECT", None)
 
     @classmethod
     def get_log_level(cls) -> str:

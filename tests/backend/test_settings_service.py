@@ -1,13 +1,12 @@
-"""SettingsService: env config, then persisted settings, then admin updates decide how new clients are built."""
-
-import dataclasses
+"""SettingsService: the env config with the stored overrides layered on top decides how new clients are built."""
 
 import pytest
 
-from backend.models.admin import SettingsUpdate
-from backend.settings_service import SettingsService
+from backend.settings_service import SECRET_MASK, SettingsService
+from lib.core.config import Config
+from lib.services.ai_client.factory import ClientSettings
+from lib.services.ai_client.registry.provider_registry import ProviderRegistry
 from lib.services.db import DatabaseUnavailable
-from lib.services.db.models import AppSettings
 from lib.services.db.repositories.settings import McpToolsDB, SettingsDB
 from lib.tools.browser_tool import BROWSER_DEFINITIONS
 from lib.tools.shell_tool import ShellTool
@@ -22,11 +21,23 @@ BROWSER_TOOLS = {definition["name"] for definition in BROWSER_DEFINITIONS}
 def upserts(monkeypatch) -> list[dict]:
     written: list[dict] = []
 
-    async def upsert(fields):
-        written.append(fields)
+    async def set_many(values):
+        written.append(values)
 
-    monkeypatch.setattr(SettingsDB, "upsert", upsert)
+    monkeypatch.setattr(SettingsDB, "set_many", set_many)
     return written
+
+
+@pytest.fixture
+def deletes(monkeypatch) -> list[str]:
+    deleted: list[str] = []
+
+    async def delete(key):
+        deleted.append(key)
+        return True
+
+    monkeypatch.setattr(SettingsDB, "delete", delete)
+    return deleted
 
 
 @pytest.fixture
@@ -34,38 +45,64 @@ def database_down(monkeypatch) -> None:
     async def unavailable(*_args, **_kwargs):
         raise DatabaseUnavailable("PostgreSQL is not reachable")
 
-    monkeypatch.setattr(SettingsDB, "get", unavailable)
+    monkeypatch.setattr(SettingsDB, "get_all", unavailable)
     monkeypatch.setattr(McpToolsDB, "get_overrides", unavailable)
 
 
-@pytest.mark.asyncio
-async def test_update_keeps_unset_values_and_clears_empty_ones(config, upserts):
-    service = SettingsService(config)
-    service.client_settings = dataclasses.replace(
-        service.client_settings, api_base="http://a", api_key="k", temperature=0.5, max_tokens=100
-    )
-
-    await service.update(SettingsUpdate(provider="", model="m2", api_key="", temperature=0.0, max_tokens=0))
-
-    assert upserts == [{"provider": "", "model": "m2", "api_key": "", "temperature": 0.0, "max_tokens": 0}]
-    settings = service.client_settings
-    assert (settings.provider, settings.model, settings.api_base, settings.api_key) == ("mock", "m2", "http://a", None)
-    assert (settings.temperature, settings.max_tokens) == (0.0, None)
+def _by_key(service: SettingsService) -> dict[str, dict]:
+    return {item["key"]: item for item in service.view()["settings"]}
 
 
 @pytest.mark.asyncio
-async def test_update_applies_temperature_max_tokens_and_endpoint(config, upserts):
+async def test_update_persists_then_applies_and_installs_the_layered_config(config, upserts):
     service = SettingsService(config)
+    change = {"temperature": 0.3, "max_tokens": 64, "custom_api_base": "http://llm.local/v1", "custom_api_key": "sk-1"}
 
-    await service.update(
-        SettingsUpdate(
-            provider="custom", api_base="http://llm.local/v1", api_key="sk-1", temperature=0.3, max_tokens=64
-        )
-    )
+    await service.update(change)
 
+    assert upserts == [change]
     settings = service.client_settings
-    assert (settings.provider, settings.api_base, settings.api_key) == ("custom", "http://llm.local/v1", "sk-1")
     assert (settings.temperature, settings.max_tokens) == (0.3, 64)
+    assert (settings.api_base, settings.api_key) == ("http://llm.local/v1", "sk-1")
+    assert Config.current() is service.config
+    assert service.config.ai_provider == "mock"
+
+
+@pytest.mark.asyncio
+async def test_null_clears_an_optional_setting(config, upserts):
+    service = SettingsService(config)
+    await service.update({"custom_api_key": "sk-1"})
+
+    await service.update({"custom_api_key": None})
+
+    assert upserts[-1] == {"custom_api_key": None}
+    assert service.client_settings.api_key is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "change",
+    [{"db_host": "x"}, {"temperature": "hot"}, {"max_tokens": True}, {"voice_name": "nope"}, {"ai_provider": "nope"}],
+)
+async def test_an_invalid_setting_is_refused_before_anything_is_written(config, upserts, change):
+    service = SettingsService(config)
+
+    with pytest.raises(ValueError):
+        await service.update({"temperature": 0.1, **change})
+
+    assert upserts == []
+    assert service.client_settings == ClientSettings.from_config(config)
+
+
+@pytest.mark.asyncio
+async def test_posting_the_mask_back_leaves_the_secret_alone(config, upserts):
+    service = SettingsService(config)
+    await service.update({"custom_api_key": "sk-1"})
+
+    await service.update({"custom_api_key": SECRET_MASK, "temperature": 0.4})
+
+    assert upserts[-1] == {"temperature": 0.4}
+    assert service.client_settings.api_key == "sk-1"
 
 
 def test_disabled_groups_leave_their_tools_out_of_new_clients(config):
@@ -82,63 +119,69 @@ def test_disabled_groups_leave_their_tools_out_of_new_clients(config):
 
 
 @pytest.mark.asyncio
-async def test_without_a_database_the_env_defaults_stay_in_effect(config, database_down):
+async def test_without_a_database_the_env_values_stay_in_effect(config, database_down):
     service = SettingsService(config)
 
     await service.load()
 
-    assert service.client_settings == SettingsService(config).client_settings
+    assert service.client_settings == ClientSettings.from_config(config)
     assert service.disabled_tool_groups == frozenset()
 
-
-@pytest.mark.asyncio
-async def test_view_falls_back_to_the_values_in_effect_without_a_database(config, database_down):
-    service = SettingsService(config)
-    service.client_settings = dataclasses.replace(service.client_settings, provider="custom", model="m9")
-    service.voice = "am_adam"
+    # The tool-group list then shows the groups in effect.
     service.disabled_tool_groups = frozenset({"shell"})
-
-    view = await service.view()
-
-    assert (view["provider"], view["model"], view["voice"]) == ("custom", "m9", "am_adam")
-    assert (view["temperature"], view["max_tokens"]) == (config.temperature, config.max_tokens)
-
-    # Temperature and max_tokens in effect (persisted at startup, or set since) win over the env too.
-    service.client_settings = dataclasses.replace(service.client_settings, temperature=0.2, max_tokens=300)
-    view = await service.view()
-    assert (view["temperature"], view["max_tokens"]) == (0.2, 300)
-    assert (view["stream_responses"], view["send_telemetry"], view["initialized"]) == (True, False, True)
     groups = {group["name"]: group["enabled"] for group in await service.tool_groups()}
     assert groups["shell"] is False
     assert all(enabled for name, enabled in groups.items() if name != "shell")
 
 
 @pytest.mark.asyncio
-async def test_view_prefers_persisted_preferences(config, monkeypatch):
-    async def get():
-        return AppSettings(provider="zai", model=None, voice="am_leo", temperature=0.0, max_tokens=None)
-
-    monkeypatch.setattr(SettingsDB, "get", get)
+async def test_view_describes_every_user_setting_with_its_value_and_source(config, upserts, monkeypatch):
+    monkeypatch.delenv("KNIK_HISTORY_CONTEXT_SIZE", raising=False)
+    monkeypatch.setenv("KNIK_VOICE", config.voice_name)
     service = SettingsService(config)
 
-    view = await service.view()
+    items = _by_key(service)
 
-    assert (view["provider"], view["model"], view["voice"]) == ("zai", "mock-model", "am_leo")
-    assert (view["temperature"], view["max_tokens"]) == (0.0, config.max_tokens)
+    assert set(items) == {item["key"] for item in Config.schema()}
+    assert items["ai_provider"]["options"] == ProviderRegistry.list_providers()
+    assert (items["ai_provider"]["value"], items["ai_model"]["value"]) == ("mock", "mock-model")
+    assert (items["history_context_size"]["source"], items["voice_name"]["source"]) == ("default", "env")
+    assert (items["custom_api_key"]["secret"], items["custom_api_key"]["value"]) == (True, "")
+    assert (items["temperature"]["type"], items["temperature"]["group"]) == ("float", "AI")
+
+    await service.update({"custom_api_key": "sk-1", "temperature": 0.3})
+
+    items = _by_key(service)
+    assert (items["custom_api_key"]["value"], items["custom_api_key"]["source"]) == (SECRET_MASK, "db")
+    assert (items["temperature"]["value"], items["temperature"]["source"]) == (0.3, "db")
+
+
+@pytest.mark.asyncio
+async def test_reset_forgets_one_stored_value(config, upserts, deletes):
+    service = SettingsService(config)
+    await service.update({"temperature": 0.3, "voice_name": "am_adam"})
+
+    await service.reset("temperature")
+
+    assert deletes == ["temperature"]
+    assert service.config.temperature == config.temperature
+    assert service.client_settings.temperature == config.temperature
+    assert service.config.voice_name == "am_adam"
+    assert _by_key(service)["temperature"]["source"] != "db"
 
 
 @requires_db
 @pytest.mark.asyncio
-async def test_load_applies_the_persisted_settings_and_tool_overrides(config, db):
-    await SettingsDB.upsert(
+async def test_load_applies_the_stored_settings_and_tool_overrides(config, db):
+    await SettingsDB.set_many(
         {
-            "provider": "custom",
-            "model": "my-model",
-            "voice": "am_adam",
+            "ai_provider": "custom",
+            "ai_model": "my-model",
+            "voice_name": "am_adam",
             "temperature": 0.25,
             "max_tokens": 2048,
-            "api_base": "http://llm.local/v1",
-            "api_key": "sk-test",
+            "custom_api_base": "http://llm.local/v1",
+            "custom_api_key": "sk-test",
         }
     )
     await McpToolsDB.set_enabled("shell", False)
@@ -155,6 +198,7 @@ async def test_load_applies_the_persisted_settings_and_tool_overrides(config, db
         "sk-test",
     )
     assert (settings.temperature, settings.max_tokens) == (0.25, 2048)
-    assert service.voice == "am_adam"
+    assert service.config.voice_name == "am_adam"
+    assert Config.current() is service.config
     assert service.disabled_tool_groups == frozenset({"shell"})
     assert service.disabled_tools == SHELL_TOOLS

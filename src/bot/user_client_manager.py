@@ -23,13 +23,12 @@ class UserClientManager:
 
     def __init__(
         self,
-        ai_provider: str,
-        system_instruction: str | None = None,
+        settings: ClientSettings,
         transport: MessagingTransport | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
         consent_broker: ConsentBroker | None = None,
     ) -> None:
-        self._settings = ClientSettings(provider=ai_provider, system_instruction=system_instruction)
+        self._settings = settings
         self._transport = transport
         self._loop = loop
         self._consent_broker = consent_broker

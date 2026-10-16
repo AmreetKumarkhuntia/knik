@@ -159,18 +159,16 @@ needs `X-API-Key` (see [API keys](environment-variables.md#api-keys)). A databas
 
 ### Admin (`/api/admin`)
 
-| Method | Path                           | Description                                                              |
-| ------ | ------------------------------ | ------------------------------------------------------------------------ |
-| GET    | `/api/admin/settings`          | Current settings                                                         |
-| POST   | `/api/admin/settings`          | Save and apply provider, model, voice, temperature, max tokens, ...      |
-| GET    | `/api/admin/providers`         | Registered AI providers                                                  |
-| GET    | `/api/admin/models`            | Known models (`Config.AI_MODELS`)                                        |
-| GET    | `/api/admin/voices`            | Available voices                                                         |
-| GET    | `/api/admin/mcp-tools`         | Tool groups with their tool counts and whether they are enabled          |
-| PUT    | `/api/admin/mcp-tools/{group}` | Enable or disable a tool group for web chats: `{"enabled": false}`       |
-| GET    | `/api/admin/api-keys`          | API keys (never the secrets)                                             |
-| POST   | `/api/admin/api-keys`          | Create a key: `{"label": "...", "scopes": []}`; the key is returned once |
-| DELETE | `/api/admin/api-keys/{key_id}` | Delete a key                                                             |
+| Method | Path                           | Description                                                                                                                                                                           |
+| ------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/settings`          | Every user setting: `{"settings": [{key, type, label, description, group, options, secret, default, value, source}]}`; `source` is `db`, `env` or `default`; secrets read back masked |
+| POST   | `/api/admin/settings`          | Save and apply `{key: value, ...}`; 422 names an unknown key, a wrong type or a value outside its options                                                                             |
+| DELETE | `/api/admin/settings/{key}`    | Forget the stored value; the env or built-in default applies again                                                                                                                    |
+| GET    | `/api/admin/mcp-tools`         | Tool groups with their tool counts and whether they are enabled                                                                                                                       |
+| PUT    | `/api/admin/mcp-tools/{group}` | Enable or disable a tool group for web chats: `{"enabled": false}`                                                                                                                    |
+| GET    | `/api/admin/api-keys`          | API keys (never the secrets)                                                                                                                                                          |
+| POST   | `/api/admin/api-keys`          | Create a key: `{"label": "...", "scopes": []}`; the key is returned once                                                                                                              |
+| DELETE | `/api/admin/api-keys/{key_id}` | Delete a key                                                                                                                                                                          |
 
 ### Workflows (`/api/workflows`) and schedules (`/api/cron`)
 

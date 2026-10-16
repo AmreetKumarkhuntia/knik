@@ -6,6 +6,7 @@ touches the network; the provider classes themselves are the real ones.
 
 import pytest
 
+from lib.core.config import Config
 from lib.services.ai_client.factory import ClientSettings, build_client, provider_kwargs
 from lib.services.ai_client.providers import (
     custom_provider,
@@ -189,3 +190,16 @@ def test_unknown_provider_falls_back_to_mock():
     client = build_client(ClientSettings(provider="nope", model="m"))
 
     assert client.provider_name == "mock"
+
+
+def test_from_config_treats_empty_values_as_unset():
+    config = Config(ai_model="", system_instruction="", custom_api_base="", custom_api_key="", max_tokens=0)
+
+    settings = ClientSettings.from_config(config)
+
+    assert (settings.model, settings.system_instruction, settings.api_base, settings.api_key) == (None,) * 4
+    assert settings.max_tokens is None
+    assert (settings.provider, settings.temperature) == (config.ai_provider, config.temperature)
+    assert ClientSettings.from_config(Config(max_tokens=None)).max_tokens is None
+    full = ClientSettings.from_config(Config(ai_model="m", custom_api_key="k", max_tokens=512))
+    assert (full.model, full.api_key, full.max_tokens) == ("m", "k", 512)

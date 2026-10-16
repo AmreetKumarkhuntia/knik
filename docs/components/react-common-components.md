@@ -99,7 +99,7 @@ ChatBubble supports supplied avatar, header, reasoning, and content, plus an `on
 
 MarkdownMessage composes CodeBlock and TableParts; JsonViewer composes CodeBlock. Copyable views receive `onCopy(text)`; they never call the clipboard themselves. The widget owns clipboard success/failure feedback.
 
-ProfileSummary, ToolGroupList, VoiceOption, and ApiKeyRow are pure settings views. Their widgets supply data, selections, and toggle/delete callbacks.
+ToolGroupList and ApiKeyRow are pure settings views. Their widgets supply data, selections, and toggle/delete callbacks.
 
 ## Enforced boundaries and tests
 

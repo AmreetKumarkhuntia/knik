@@ -119,7 +119,7 @@ async def lifespan(app: FastAPI):
     client_settings = state.settings.client_settings
     printer.success(f"Backend ready on http://{config.host}:{config.port}")
     printer.info(f"AI Provider: {client_settings.provider}/{client_settings.model}")
-    printer.info(f"TTS Voice: {state.settings.voice}")
+    printer.info(f"TTS Voice: {state.settings.config.voice_name}")
     _log_access(config)
     browser_cleaner = asyncio.create_task(_close_idle_browsers(), name="browser-idle-cleaner")
     yield

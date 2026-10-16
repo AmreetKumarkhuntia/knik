@@ -7,6 +7,7 @@ import pytest
 
 from bot.app import BotApp
 from bot.config import BotConfig
+from lib.core.config import Config
 from lib.services.db.connection import DatabaseUnavailable
 from lib.services.telegram.models import IncomingMessage
 
@@ -18,10 +19,12 @@ EXPECTED_COMMANDS = ["new", "resume", "sessions", "model", "provider", "status",
 def db():
     with (
         patch("bot.app.PostgresDB") as db,
+        patch("bot.app.SettingsDB") as settings,
         patch("bot.app.cleanup_all_tools"),
     ):
         db.initialize = AsyncMock()
         db.close = AsyncMock()
+        settings.get_all = AsyncMock(return_value={})
         yield db
 
 
@@ -133,6 +136,19 @@ async def test_startup_builds_no_ai_client(app, transport):
         await _stop(app, task)
 
     build_client.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_stored_settings_layer_over_the_env_config(app, transport):
+    with patch("bot.app.SettingsDB") as settings:
+        settings.get_all = AsyncMock(return_value={"ai_provider": "mock", "ai_model": "mock-model"})
+        task = await _start(app, transport)
+        await _stop(app, task)
+
+    assert isinstance(app.config, BotConfig)
+    assert (app.config.ai_provider, app.config.ai_model) == ("mock", "mock-model")
+    assert Config.current() is app.config
+    assert app._user_client_manager._settings.model == "mock-model"
 
 
 @pytest.mark.asyncio

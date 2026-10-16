@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 import psycopg
 import pytest
 
+from lib.core.config import Config
 from lib.services.db import ExecutionDB, PostgresDB, Schedule, ScheduleDB, Workflow, WorkflowDB
 from lib.workflows import schedule_service
 from lib.workflows.engine import WorkflowEngine
@@ -136,7 +137,7 @@ async def _cancel_runs(*schedulers: CronScheduler) -> None:
 
 
 async def test_a_worker_with_no_free_slot_leaves_due_occurrences_unclaimed(db, monkeypatch):
-    monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "1")
+    monkeypatch.setattr(Config.current(), "scheduler_max_concurrent", 1)
     await _workflow(seconds=30)
     schedule_id = await _schedule(datetime.now(UTC) - timedelta(seconds=1), recurrence_seconds=1)
     scheduler = CronScheduler(WorkflowEngine())
@@ -162,9 +163,9 @@ async def test_a_worker_with_no_free_slot_leaves_due_occurrences_unclaimed(db, m
 async def test_an_idle_worker_takes_the_occurrences_a_busy_worker_leaves(db, monkeypatch):
     await _workflow(seconds=30)
     await _schedule(datetime.now(UTC) - timedelta(seconds=1), recurrence_seconds=1)
-    monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "1")
+    monkeypatch.setattr(Config.current(), "scheduler_max_concurrent", 1)
     busy = CronScheduler(WorkflowEngine())
-    monkeypatch.setenv("KNIK_SCHEDULER_MAX_CONCURRENT", "10")
+    monkeypatch.setattr(Config.current(), "scheduler_max_concurrent", 10)
     idle = CronScheduler(WorkflowEngine())
 
     await busy._check_schedules()

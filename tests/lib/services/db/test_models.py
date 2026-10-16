@@ -8,7 +8,6 @@ import pytest
 
 from lib.services.db.models import (
     ApiKey,
-    AppSettings,
     Conversation,
     ConversationMessage,
     CreatedApiKey,
@@ -184,38 +183,6 @@ def test_execution_records_default_null_json_to_empty_dicts():
         }
     )
     assert (node.inputs, node.outputs) == ({"a": 1}, {})
-
-
-def _settings_row(**overrides):
-    row = {
-        "id": "singleton",
-        "provider": "gemini",
-        "model": "m",
-        "voice": "af_heart",
-        "temperature": 0.5,
-        "max_tokens": 100,
-        "stream_responses": True,
-        "send_telemetry": False,
-        "display_name": "Amy",
-        "username": "amy",
-        "updated_at": T0,
-        "api_base": "http://localhost:1234/v1",
-        "api_key": "sk-test",
-    }
-    row.update(overrides)
-    return row
-
-
-def test_app_settings_to_dict_is_the_raw_row():
-    row = _settings_row()
-    settings_dict = AppSettings.from_row(row).to_dict()
-    assert settings_dict == row
-    assert list(settings_dict) == list(row)
-
-
-def test_app_settings_keeps_nulls():
-    row = _settings_row(stream_responses=None, temperature=None)
-    assert AppSettings.from_row(row).to_dict() == row
 
 
 def test_api_key_to_dict_shape():

@@ -10,9 +10,12 @@ from typing import TYPE_CHECKING
 
 from imports import (
     DB_ERRORS,
+    ClientSettings,
     CommandService,
+    Config,
     IncomingMessage,
     PostgresDB,
+    SettingsDB,
     TelegramClient,
     browser,
     cleanup_all_tools,
@@ -68,10 +71,15 @@ class BotApp:
 
         try:
             await PostgresDB.initialize()
+            overrides = await SettingsDB.get_all()
             logger.info("PostgresDB initialized")
         except DB_ERRORS as e:
-            # The bot can still chat without Postgres; only conversation history is lost.
-            logger.warning(f"PostgresDB unavailable, continuing without it: {e}")
+            # The bot can still chat without Postgres; only conversation history and stored settings are lost.
+            logger.warning(f"PostgresDB unavailable, continuing with env settings: {e}")
+            overrides = {}
+        # shortcut: settings saved in the web app reach the bot on its next restart only, poll or notify when live updates matter
+        self.config = self.config.with_overrides(overrides)
+        Config.install(self.config)
 
         loop = asyncio.get_running_loop()
 
@@ -81,8 +89,7 @@ class BotApp:
 
         consent_broker = ConsentBroker()
         self._user_client_manager = UserClientManager(
-            ai_provider=self.config.ai_provider,
-            system_instruction=self.config.system_instruction,
+            settings=ClientSettings.from_config(self.config),
             transport=transport,
             loop=loop,
             consent_broker=consent_broker,

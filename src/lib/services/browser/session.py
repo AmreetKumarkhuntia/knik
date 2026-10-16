@@ -196,7 +196,7 @@ class BrowserSession:
                 "Playwright is not installed. Run: pip install playwright && playwright install chromium"
             ) from err
 
-        cfg = Config()
+        cfg = Config.current()
         headless = cfg.browser_headless
         profile_dir = cfg.browser_profile_dir
 
@@ -249,7 +249,7 @@ def cleanup_idle(idle_seconds: int | None = None) -> int:
     ``idle_seconds`` defaults to ``Config.browser_idle_timeout``.
     """
     if idle_seconds is None:
-        idle_seconds = Config().browser_idle_timeout
+        idle_seconds = Config.current().browser_idle_timeout
     now = time.monotonic()
     threshold = now - idle_seconds
     with _sessions_lock:

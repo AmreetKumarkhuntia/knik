@@ -6,8 +6,10 @@ from unittest.mock import MagicMock
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
+from psycopg.types.json import Jsonb
 
 from backend.main import app
+from backend.settings_service import SECRET_MASK
 from lib.tools.shell_tool import ShellTool
 from tests.db_support import requires_db
 
@@ -28,7 +30,12 @@ DB_ROUTES = [
     ("GET", "/api/analytics/activity"),
     ("GET", "/api/admin/api-keys"),
     ("DELETE", "/api/admin/api-keys/some-id"),
+    ("DELETE", "/api/admin/settings/voice_name"),
 ]
+
+
+def settings_by_key(client: TestClient) -> dict[str, dict]:
+    return {item["key"]: item for item in client.get("/api/admin/settings").json()["settings"]}
 
 
 def test_health_and_root_without_database(offline_client):
@@ -46,11 +53,15 @@ def test_database_routes_answer_503_without_database(offline_client, method, pat
 
 
 def test_settings_and_tool_list_fall_back_to_defaults_without_database(offline_client, config):
-    settings = offline_client.get("/api/admin/settings")
-    assert settings.status_code == 200
-    body = settings.json()
-    assert (body["provider"], body["model"], body["voice"]) == (config.ai_provider, config.ai_model, config.voice_name)
-    assert (body["stream_responses"], body["send_telemetry"], body["initialized"]) == (True, False, True)
+    assert offline_client.get("/api/admin/settings").status_code == 200
+    body = settings_by_key(offline_client)
+    assert (body["ai_provider"]["value"], body["ai_model"]["value"], body["voice_name"]["value"]) == (
+        config.ai_provider,
+        config.ai_model,
+        config.voice_name,
+    )
+    assert (body["stream_responses"]["value"], body["send_telemetry"]["value"]) == (True, False)
+    assert {item["source"] for item in body.values()} <= {"env", "default"}
 
     tools = offline_client.get("/api/admin/mcp-tools")
     assert tools.status_code == 200
@@ -108,13 +119,19 @@ def test_deleting_a_conversation_releases_only_its_cached_client(client):
 
 
 @requires_db
-def test_startup_loads_persisted_settings_including_api_base_and_key(database_url):
+def test_startup_loads_stored_settings_including_api_base_and_key(database_url):
+    stored = {
+        "ai_provider": "custom",
+        "ai_model": "my-model",
+        "voice_name": "am_adam",
+        "temperature": 0.2,
+        "max_tokens": 512,
+        "custom_api_base": "http://llm.local/v1",
+        "custom_api_key": "sk-test",
+    }
     with psycopg.connect(database_url, autocommit=True) as conn:
-        conn.execute(
-            "INSERT INTO app_settings (id, provider, model, voice, temperature, max_tokens, api_base, api_key) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            ("singleton", "custom", "my-model", "am_adam", 0.2, 512, "http://llm.local/v1", "sk-test"),
-        )
+        for key, value in stored.items():
+            conn.execute("INSERT INTO settings (key, value) VALUES (%s, %s)", (key, Jsonb(value)))
 
     with TestClient(app) as client:
         state = app.state.knik
@@ -123,29 +140,40 @@ def test_startup_loads_persisted_settings_including_api_base_and_key(database_ur
         assert (client_settings.api_base, client_settings.api_key) == ("http://llm.local/v1", "sk-test")
         assert (client_settings.temperature, client_settings.max_tokens) == (0.2, 512)
         assert (state.tts.voice, state.tts.loaded) == ("am_adam", True)
-        settings = client.get("/api/admin/settings").json()
-        assert (settings["provider"], settings["model"], settings["voice"]) == ("custom", "my-model", "am_adam")
+        settings = settings_by_key(client)
+        assert {key: settings[key]["value"] for key in stored} == {**stored, "custom_api_key": SECRET_MASK}
+        assert {settings[key]["source"] for key in stored} == {"db"}
 
 
 @requires_db
-def test_settings_update_is_persisted_and_used_by_new_clients(client):
+def test_settings_update_is_persisted_and_used_by_new_clients(client, config):
     state = app.state.knik
     state.clients.set("built-before", MagicMock(spec=["tool_registry"]))
-    update = {"temperature": 0.3, "max_tokens": 256, "api_base": "http://llm.local/v1", "api_key": "sk-1"}
+    update = {"temperature": 0.3, "max_tokens": 256, "custom_api_base": "http://llm.local/v1", "custom_api_key": "sk-1"}
 
-    assert client.post("/api/admin/settings", json={**update, "voice": "am_adam", "display_name": "Ada"}).json() == {
-        "status": "success",
-        "message": "Settings updated",
-    }
+    assert client.post(
+        "/api/admin/settings", json={**update, "voice_name": "am_adam", "display_name": "Ada"}
+    ).json() == {"status": "success", "message": "Settings updated"}
 
     client_settings = state.settings.client_settings
     assert (client_settings.temperature, client_settings.max_tokens) == (0.3, 256)
     assert (client_settings.api_base, client_settings.api_key) == ("http://llm.local/v1", "sk-1")
     assert state.clients.get("built-before") is None
     assert state.tts.voice == "am_adam"
-    settings = client.get("/api/admin/settings").json()
-    assert (settings["temperature"], settings["max_tokens"], settings["voice"]) == (0.3, 256, "am_adam")
-    assert settings["display_name"] == "Ada"
+    settings = settings_by_key(client)
+    assert (settings["temperature"]["value"], settings["max_tokens"]["value"]) == (0.3, 256)
+    assert (settings["voice_name"]["value"], settings["display_name"]["value"]) == ("am_adam", "Ada")
+    assert (settings["custom_api_key"]["value"], settings["display_name"]["source"]) == (SECRET_MASK, "db")
+
+    # A bad value is refused as a whole and changes nothing.
+    rejected = client.post("/api/admin/settings", json={"temperature": "hot", "voice_name": "af_sky"})
+    assert (rejected.status_code, rejected.json()) == (422, {"detail": "temperature must be float"})
+    assert (state.settings.client_settings.temperature, state.tts.voice) == (0.3, "am_adam")
+
+    # Forgetting a stored value puts the env one back.
+    assert client.delete("/api/admin/settings/voice_name").json() == {"status": "success", "key": "voice_name"}
+    assert state.tts.voice == config.voice_name
+    assert settings_by_key(client)["voice_name"]["source"] != "db"
 
     # What a restart reads back is what is in effect now.
     with TestClient(app):
@@ -156,6 +184,7 @@ def test_settings_update_is_persisted_and_used_by_new_clients(client):
             "http://llm.local/v1",
             "sk-1",
         )
+        assert app.state.knik.tts.voice == config.voice_name
 
 
 @requires_db

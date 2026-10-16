@@ -1,6 +1,6 @@
 # Knik frontend architecture
 
-The React/Vite frontend uses provider-scoped, in-memory Zustand domain stores under `src/lib/stores`. Widgets obtain all application data and working state through public store hooks and actions. Components receive props and emit events. The frontend operates without application APIs, streaming, polling, browser persistence or microphone capture.
+The React/Vite frontend uses provider-scoped, in-memory Zustand domain stores under `src/lib/stores`. Widgets obtain all application data and working state through public store hooks and actions. Components receive props and emit events. The frontend operates without streaming, polling, browser persistence or microphone capture, and with one application API: the Settings page reads and writes the backend's user settings through `src/lib/transport/settings.ts`, the only module allowed to call `fetch`.
 
 The Archify diagrams of this design (domain ownership, data flow, interactions, session lifetime) live under the Git-ignored `.archify/store-architecture/`, so they are not part of the repository. The [implementation plan](../plan/07-frontend-component-consolidation.md) separates approved contracts from verified baseline observations and acceptance evidence.
 
@@ -37,7 +37,7 @@ Store factories do not import peer domains. The session coordinator receives the
 | Workflows   | Canonical workflow records, builder draft graph/name, selected node, validation and hub filters |
 | Schedules   | Records referencing workflow IDs, create/edit/delete working state                              |
 | Executions  | Records referencing workflow IDs, timelines, run scenarios, filters, sorting and pagination     |
-| Settings    | Profile, preferences, appearance, enabled tool IDs and pane working state                       |
+| Settings    | Backend settings as last loaded, appearance, enabled tool IDs and pane working state (drafts)   |
 | Credentials | Key metadata and delete-confirmation state                                                      |
 | Shell       | Sidebar collapse and command palette state                                                      |
 | Feedback    | Toast queue                                                                                     |
@@ -79,7 +79,7 @@ The controlled workflow builder reads its name, nodes, edges, selection and erro
 
 ThemeWidget applies the light/dark `data-theme` attribute from the settings store. `styles/tokens.css` owns the fixed palette, spacing and corner radii; appearance state contains only `mode`. DOM refs and focus mechanics remain browser resources rather than serializable store data. Their owning widgets clean them up. Existing storage keys are neither read nor cleared.
 
-No network fallback, progress simulation, mock API or live/demo switch is present. Static assets may load normally; this architecture does not promise offline packaging.
+No network fallback, progress simulation, mock API or live/demo switch is present. The one exception is the Settings page: `lib/transport/settings.ts` calls `GET`, `POST` and `DELETE /api/admin/settings` at `VITE_KNIK_API_URL` (default `http://localhost:8010`), sending `VITE_KNIK_API_KEY` as `X-API-Key` when set. The pane renders whatever schema the backend returns, grouped by its `group`; when the backend is unreachable it shows an inline Retry state and the rest of the page keeps working. Tests inject a fake transport through `StoresProvider`. Static assets may load normally; this architecture does not promise offline packaging.
 
 Chat reply availability never blocks a valid local send. An unmatched message is still part of the conversation and appears in subscribed chat/sidebar views without a warning or reply-unavailable status. Authored scenarios provide optional local replay. No assistant message is fabricated and no provider is called. Whitespace-only drafts and sends targeting deleted conversations remain validation failures.
 
@@ -96,7 +96,7 @@ Canonical Button, Table/TableParts, form controls, Modal and Popover retain thei
 | `/workflows/executions` | Execution list                                           |
 | `/executions/:id`       | Execution detail                                         |
 | `/schedules`            | Schedule management                                      |
-| `/settings`             | Profile, appearance, providers/tools, voice and API keys |
+| `/settings`             | Backend settings, appearance, tools and API keys         |
 
 From `src/frontend`:
 

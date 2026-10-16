@@ -7,7 +7,6 @@ keep working without Postgres catch ``DB_ERRORS``.
 from .connection import DB_ERRORS, DB_OUTAGE_ERRORS, DatabaseUnavailable, PostgresDB
 from .models import (
     ApiKey,
-    AppSettings,
     Conversation,
     ConversationMessage,
     CreatedApiKey,
@@ -36,7 +35,6 @@ __all__ = [
     "DB_OUTAGE_ERRORS",
     "ApiKey",
     "ApiKeyDB",
-    "AppSettings",
     "Conversation",
     "ConversationDB",
     "ConversationMessage",

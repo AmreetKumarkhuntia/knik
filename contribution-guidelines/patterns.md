@@ -110,6 +110,26 @@ class MyTool(BaseTool):
 4. No changes to `index.py` needed - `register_all_tools()` binds every definition to its implementation
 5. Add tests in `tests/lib/tools/`
 
+## Adding a Setting
+
+Settings are fields of `Config` (`src/lib/core/config.py`) declared with `setting()`. One line is the whole change:
+
+```python
+reply_language: str = setting("KNIK_REPLY_LANGUAGE", "en", user=True, label="Reply language", group="AI")
+```
+
+- Without `user=True` it is an env-only value (infrastructure: hosts, ports, tokens). With it, the setting shows up
+  in `Config.schema()`, so the backend serves it on `GET /api/admin/settings`, accepts it on `POST`, the dashboard
+  renders it from the schema, the bot and worker read a stored value at startup, and the console reads it from
+  `~/.knik/settings.json`. No API, model or frontend change is needed.
+- The type is the annotation (`str`, `int`, `float`, `bool`, optionally `| None`); `cast` is how the env string is
+  parsed. `options=[...]` restricts the values, `secret=True` masks it when read back, `group` is the dashboard
+  section.
+- Read it through the layered config: `Config.current().reply_language` in library code, `state.settings.config`
+  in the backend, `self.config` in the bot, worker and console. A fresh `Config()` sees only the env.
+- Removing a field is just as safe: a stored row for a key the model no longer has is skipped with a warning at
+  startup and can be deleted with `DELETE /api/admin/settings/{key}`.
+
 ## Coding Style
 
 - Write self-explanatory code

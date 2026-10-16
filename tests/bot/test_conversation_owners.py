@@ -12,6 +12,7 @@ from bot.streaming import StreamingResponseManager
 from bot.user_client_manager import UserClientManager
 from bot.user_identity import UserIdentityManager
 from lib.commands.service import CommandService
+from lib.services.ai_client.settings import ClientSettings
 from lib.services.db import ConversationDB, ConversationScope, UserDB
 from lib.services.telegram.models import IncomingMessage
 from tests.db_support import requires_db
@@ -28,7 +29,7 @@ class Bot:
         config.ai_provider = "mock"
         self.transport = transport
         self.identity = UserIdentityManager()
-        clients = UserClientManager(ai_provider="mock")
+        clients = UserClientManager(ClientSettings(provider="mock"))
         service = CommandService(client_resolver=clients.get_or_create, user_identity=self.identity)
         self.handler = BotMessageHandler(
             transport=transport,
