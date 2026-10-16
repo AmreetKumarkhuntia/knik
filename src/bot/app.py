@@ -17,6 +17,7 @@ from imports import (
     PostgresDB,
     SettingsDB,
     TelegramClient,
+    UndefinedTable,
     browser,
     cleanup_all_tools,
 )
@@ -71,13 +72,16 @@ class BotApp:
 
         try:
             await PostgresDB.initialize()
-            overrides = await SettingsDB.get_all()
             logger.info("PostgresDB initialized")
+            overrides = await SettingsDB.get_all()
+        except UndefinedTable as e:
+            logger.warning(f"Settings table missing, run scripts/migrate.sh; continuing with env settings: {e}")
+            overrides = {}
         except DB_ERRORS as e:
             # The bot can still chat without Postgres; only conversation history and stored settings are lost.
-            logger.warning(f"PostgresDB unavailable, continuing with env settings: {e}")
+            logger.warning(f"Could not load stored settings, env settings apply: {e}")
             overrides = {}
-        # shortcut: settings saved in the web app reach the bot on its next restart only, poll or notify when live updates matter
+        # shortcut: web-app settings reach the bot on its next restart only, poll or notify when live updates matter
         self.config = self.config.with_overrides(overrides)
         Config.install(self.config)
 

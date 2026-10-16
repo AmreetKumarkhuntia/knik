@@ -32,6 +32,8 @@ class DatabaseUnavailable(RuntimeError):  # noqa: N818 - name fixed by the servi
 
 # What a caller catches when it should degrade instead of failing (e.g. chat without persistence).
 DB_ERRORS = (DatabaseUnavailable, psycopg.Error, psycopg_pool.PoolTimeout)
+# A table that migrations have not created yet; callers tell it apart from an outage.
+UndefinedTable = psycopg.errors.UndefinedTable
 
 # The subset of DB_ERRORS that means "Postgres cannot be reached", as opposed to a bad query.
 # PoolTimeout is an OperationalError.

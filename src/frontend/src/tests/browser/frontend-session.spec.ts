@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { remoteSettings } from '../fixtures/remoteSettings'
 
 const observations = new Map<Page, { unexpected: string[]; errors: string[] }>()
 
@@ -15,9 +16,18 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/*', async route => {
     const request = route.request()
     if (['fetch', 'xhr', 'eventsource'].includes(request.resourceType())) {
-      // The settings page may ask the backend for its schema; offline it shows a Retry state.
-      if (!request.url().includes('/api/admin/settings'))
-        record.unexpected.push(`${request.resourceType()}: ${request.url()}`)
+      const url = new URL(request.url())
+      // The settings pane's backend: a fixture answers it, so the loaded form takes part in these checks.
+      if (
+        url.origin === 'http://localhost:8010' &&
+        url.pathname.startsWith('/api/admin/settings')
+      ) {
+        await route.fulfill({
+          json: request.method() === 'GET' ? { settings: remoteSettings } : { status: 'success' },
+        })
+        return
+      }
+      record.unexpected.push(`${request.resourceType()}: ${request.url()}`)
       await route.abort('blockedbyclient')
       return
     }
@@ -352,6 +362,12 @@ test('narrow routes remain usable in dark and light modes without horizontal bod
   ]) {
     await page.goto(path, { waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('button', { name: 'Light mode', exact: true })).toBeVisible()
+    if (path === '/settings') {
+      const field = page.getByRole('spinbutton', { name: 'Temperature', exact: true })
+      await expect(field).toBeVisible()
+      const bounds = await field.boundingBox()
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390)
+    }
     await noHorizontalOverflow(page)
     await page.getByRole('button', { name: 'Light mode', exact: true }).click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
@@ -393,9 +409,31 @@ test('narrow builder supports node addition, property editing, and dismissal', a
   await noHorizontalOverflow(page)
 })
 
+test('settings render the backend schema, save only changed keys and reset stored ones', async ({
+  page,
+}) => {
+  await page.goto('/settings', { waitUntil: 'domcontentloaded' })
+  const temperature = page.getByRole('spinbutton', { name: 'Temperature', exact: true })
+  await expect(temperature).toHaveValue('0.7')
+  await expect(temperature).toHaveAttribute('max', '2')
+  await expect(page.getByRole('button', { name: 'Save settings', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Reset Model', exact: true })).toBeVisible()
+  await temperature.fill('0.3')
+  await page.getByRole('button', { name: 'Save settings', exact: true }).click()
+  await expect(page.getByText('Settings saved.', { exact: true })).toBeVisible()
+  await expect(temperature).toBeFocused()
+  await page.getByRole('button', { name: 'Reset Model', exact: true }).click()
+  await expect(page.getByText('Reset Model.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Model', exact: true })).toBeFocused()
+  await noHorizontalOverflow(page)
+})
+
 test('settings panes keep local choices and show the backend as unavailable offline', async ({
   page,
 }) => {
+  await page.route('http://localhost:8010/api/admin/settings**', route =>
+    route.abort('blockedbyclient')
+  )
   await page.goto('/settings', { waitUntil: 'domcontentloaded' })
   await expect(page.getByText('Settings are unavailable', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()

@@ -12,7 +12,6 @@ export function normalizeDemoSource(source: DemoSource = {}): DemoSnapshot {
     executions: [],
     timelines: {},
     providers: [],
-    voices: [],
     tools: [],
     apiKeys: [],
     chatScenarios: [],

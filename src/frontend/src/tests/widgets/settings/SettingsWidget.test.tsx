@@ -7,7 +7,7 @@ import type { DemoSource } from '$types/demo-session'
 import { resizeTo } from '../../hooks/matchMedia'
 import { fakeTransport } from './remoteSettings'
 
-const EMPTY: DemoSource = { models: [], providers: [], tools: [], voices: [], apiKeys: [] }
+const EMPTY: DemoSource = { models: [], providers: [], tools: [], apiKeys: [] }
 
 function renderSettings(source?: DemoSource, transport = fakeTransport()) {
   return render(

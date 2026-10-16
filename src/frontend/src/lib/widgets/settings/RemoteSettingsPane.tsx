@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import Button from '$components/buttons/Button'
 import EmptyState from '$components/display/EmptyState'
 import LoadingSpinner from '$components/feedback/LoadingSpinner'
@@ -11,7 +11,7 @@ import FormRow from '$widgets/FormRow'
 import { useSettingsScope, useSettingsStore, useSettingsTransport } from '$stores/settings'
 import { useFeedbackStore } from '$stores/feedback'
 import { useRemoteSettingsView } from '$stores/views'
-import { omit } from '$utils/omit'
+import type { SettingDefinition } from '$types/sections/settings'
 import type { SettingFieldProps } from '$types/widgets/settings'
 
 const describe = (failure: unknown) =>
@@ -20,42 +20,62 @@ const describe = (failure: unknown) =>
 /** The backend's user settings, drawn from its schema; the one pane that leaves the demo session. */
 export default function RemoteSettingsPane() {
   const { scopeId, scope, patch } = useSettingsScope()
-  const { status, error, definitions, groups, values, changes, errors, saving } =
+  const { status, definitions, error, groups, values, changes, errors, saving } =
     useRemoteSettingsView(scopeId)
-  const setRemote = useSettingsStore(s => s.setRemote)
+  const startLoad = useSettingsStore(s => s.startLoad)
+  const finishLoad = useSettingsStore(s => s.finishLoad)
+  const dropDraftKeys = useSettingsStore(s => s.dropDraftKeys)
   const transport = useSettingsTransport()
   const addToast = useFeedbackStore(s => s.addToast)
   const id = useId()
+  // Saving disables the Save button, which drops keyboard focus; it lands on the first saved field instead.
+  const refocus = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (saving || !refocus.current) return
+    refocus.current.focus()
+    refocus.current = null
+  }, [saving])
 
   const load = useCallback(async () => {
-    setRemote({ status: 'loading' })
+    const loadId = startLoad()
     try {
-      setRemote({ status: 'ready', error: null, definitions: await transport.load() })
+      finishLoad(loadId, { status: 'ready', error: null, definitions: await transport.load() })
     } catch (failure) {
-      setRemote({ status: 'error', error: describe(failure) })
+      finishLoad(loadId, { status: 'error', error: describe(failure) })
     }
-  }, [setRemote, transport])
+  }, [startLoad, finishLoad, transport])
   useEffect(() => {
     void load()
   }, [load])
 
   const save = async () => {
+    if (saving) return
+    const keys = Object.keys(changes)
+    const active = document.activeElement
+    refocus.current =
+      active instanceof HTMLElement && active.tagName !== 'BUTTON'
+        ? active
+        : document.getElementById(`${id}-${keys[0]}`)
     patch({ saving: true })
     try {
       await transport.save(changes)
       await load()
-      patch({ draft: {}, saving: false })
+      dropDraftKeys(scopeId, keys)
       addToast('Settings saved.', 'success')
     } catch (failure) {
-      patch({ saving: false })
       addToast(describe(failure), 'error')
+    } finally {
+      patch({ saving: false })
     }
   }
-  const reset = async (key: string) => {
+  const reset = async (field: SettingDefinition) => {
     try {
-      await transport.reset(key)
+      await transport.reset(field.key)
       await load()
-      patch({ draft: omit(scope.draft, key) })
+      dropDraftKeys(scopeId, [field.key])
+      // The Reset button is gone once the value is no longer stored, so focus moves to the control.
+      document.getElementById(`${id}-${field.key}`)?.focus()
+      addToast(`Reset ${field.label}.`, 'success')
     } catch (failure) {
       addToast(describe(failure), 'error')
     }
@@ -74,7 +94,12 @@ export default function RemoteSettingsPane() {
         }
       />
     )
-  if (definitions.length === 0) return <LoadingSpinner className="py-10" />
+  if (definitions.length === 0)
+    return status === 'ready' ? (
+      <EmptyState icon="tune" title="No settings to show" />
+    ) : (
+      <LoadingSpinner className="py-10" />
+    )
   const dirty = Object.keys(scope.draft).length > 0
   return (
     <form
@@ -93,10 +118,9 @@ export default function RemoteSettingsPane() {
               field={field}
               value={values[field.key] ?? ''}
               error={errors[field.key]}
-              disabled={saving}
               last={index === fields.length - 1}
               onChange={value => patch({ draft: { ...scope.draft, [field.key]: value } })}
-              onReset={field.source === 'db' ? () => void reset(field.key) : undefined}
+              onReset={field.source === 'db' ? () => void reset(field) : undefined}
             />
           ))}
         </FormGroup>
@@ -124,20 +148,12 @@ export default function RemoteSettingsPane() {
   )
 }
 
-function SettingField({
-  id,
-  field,
-  value,
-  error,
-  disabled,
-  last,
-  onChange,
-  onReset,
-}: SettingFieldProps) {
+function SettingField({ id, field, value, error, last, onChange, onReset }: SettingFieldProps) {
   const hintId = field.description ? `${id}-hint` : undefined
   const text = typeof value === 'string' ? value : ''
   // shortcut: only system_instruction is multiline, add a schema flag when the backend exposes one
   const multiline = field.key === 'system_instruction'
+  const numeric = field.type === 'int' || field.type === 'float'
   const control =
     field.type === 'bool' ? (
       <ToggleSwitch
@@ -145,7 +161,6 @@ function SettingField({
         aria-label={field.label}
         aria-describedby={hintId}
         checked={value === true}
-        disabled={disabled}
         onChange={onChange}
       />
     ) : field.options ? (
@@ -156,7 +171,6 @@ function SettingField({
         className="w-full bg-surface"
         options={field.options.map(option => ({ value: option, label: option }))}
         value={text}
-        disabled={disabled}
         onValueChange={onChange}
       />
     ) : multiline ? (
@@ -166,7 +180,6 @@ function SettingField({
         rows={4}
         className="bg-surface px-3 py-1.5"
         value={text}
-        disabled={disabled}
         error={error}
         onChange={event => onChange(event.target.value)}
       />
@@ -175,13 +188,14 @@ function SettingField({
         id={id}
         aria-describedby={hintId}
         className="bg-surface"
-        type={field.secret ? 'password' : field.type === 'str' ? 'text' : 'number'}
+        type={field.secret ? 'password' : numeric ? 'number' : 'text'}
         step={field.type === 'int' ? 1 : field.type === 'float' ? 'any' : undefined}
-        inputMode={field.type === 'str' ? undefined : 'decimal'}
+        min={numeric ? (field.minimum ?? undefined) : undefined}
+        max={numeric ? (field.maximum ?? undefined) : undefined}
+        inputMode={numeric ? 'decimal' : undefined}
         autoComplete={field.secret ? 'new-password' : undefined}
         placeholder={field.secret ? (field.value ? 'Set (hidden)' : 'Not set') : undefined}
         value={text}
-        disabled={disabled}
         error={error}
         onChange={event => onChange(event.target.value)}
       />
@@ -199,13 +213,7 @@ function SettingField({
       >
         <div className={multiline ? 'w-full' : 'w-full min-w-0 sm:w-[260px]'}>{control}</div>
         {onReset && (
-          <Button
-            variant="ghost"
-            size="xs"
-            aria-label={`Reset ${field.label}`}
-            disabled={disabled}
-            onClick={onReset}
-          >
+          <Button variant="ghost" size="xs" aria-label={`Reset ${field.label}`} onClick={onReset}>
             Reset
           </Button>
         )}

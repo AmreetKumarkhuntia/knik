@@ -8,7 +8,7 @@ import pytest
 from bot.app import BotApp
 from bot.config import BotConfig
 from lib.core.config import Config
-from lib.services.db.connection import DatabaseUnavailable
+from lib.services.db.connection import DatabaseUnavailable, UndefinedTable
 from lib.services.telegram.models import IncomingMessage
 
 
@@ -140,15 +140,39 @@ async def test_startup_builds_no_ai_client(app, transport):
 
 @pytest.mark.asyncio
 async def test_stored_settings_layer_over_the_env_config(app, transport):
+    stored = {
+        "ai_provider": "mock",
+        "ai_model": "mock-model",
+        "temperature": 0.3,
+        "custom_api_base": "http://llm.local/v1",
+        "custom_api_key": "sk-1",
+        "system_instruction": "Be brief.",
+    }
     with patch("bot.app.SettingsDB") as settings:
-        settings.get_all = AsyncMock(return_value={"ai_provider": "mock", "ai_model": "mock-model"})
+        settings.get_all = AsyncMock(return_value=stored)
         task = await _start(app, transport)
         await _stop(app, task)
 
     assert isinstance(app.config, BotConfig)
     assert (app.config.ai_provider, app.config.ai_model) == ("mock", "mock-model")
     assert Config.current() is app.config
-    assert app._user_client_manager._settings.model == "mock-model"
+    client_settings = app._user_client_manager._settings
+    assert (client_settings.model, client_settings.temperature) == ("mock-model", 0.3)
+    assert (client_settings.api_base, client_settings.api_key) == ("http://llm.local/v1", "sk-1")
+    assert client_settings.system_instruction == "Be brief."
+
+
+@pytest.mark.asyncio
+async def test_a_missing_settings_table_is_reported_as_a_migration_to_run(app, transport):
+    with patch("bot.app.SettingsDB") as settings, patch("bot.app.logger") as logger:
+        settings.get_all = AsyncMock(side_effect=UndefinedTable('relation "settings" does not exist'))
+        task = await _start(app, transport)
+        await _stop(app, task)
+
+    assert Config.current() is app.config
+    assert app.config.ai_provider == BotConfig().ai_provider
+    warning = logger.warning.call_args.args[0]
+    assert warning.startswith("Settings table missing, run scripts/migrate.sh")
 
 
 @pytest.mark.asyncio

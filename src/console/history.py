@@ -49,7 +49,7 @@ class ConversationHistory:
         if not self.entries or not LANGCHAIN_AVAILABLE:
             return []
 
-        context_entries = self.entries[-last_n:]
+        context_entries = self.entries[-last_n:] if last_n else []
         messages = []
 
         for entry in context_entries:

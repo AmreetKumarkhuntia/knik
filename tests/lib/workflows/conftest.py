@@ -6,6 +6,6 @@ from lib.core.config import Config
 
 
 @pytest.fixture(autouse=True)
-def installed_config(no_installed_config, monkeypatch):
-    """A known installed config, so the defaults an AI node falls back to do not depend on the env."""
-    monkeypatch.setattr(Config, "_current", Config(ai_provider="vertex", ai_model="gemini-3.0-flash", temperature=0.7))
+def installed_config(monkeypatch):
+    """A known installed config, unlike the env and the old hard-coded node defaults, so a node falling back to it shows."""
+    monkeypatch.setattr(Config, "_current", Config(ai_provider="mock", ai_model="configured-model", temperature=0.4))

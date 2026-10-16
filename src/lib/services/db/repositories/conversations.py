@@ -186,7 +186,7 @@ class ConversationDB:
     @staticmethod
     async def get_recent_messages(conversation_id: str, last_n: int = 5) -> list[ConversationMessage]:
         raw_messages = await ConversationDB._raw_messages(conversation_id)
-        recent = raw_messages[-last_n:] if len(raw_messages) > last_n else raw_messages
+        recent = raw_messages[-last_n:] if last_n else []
         return [ConversationMessage.from_dict(m) for m in recent]
 
     @staticmethod

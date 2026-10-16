@@ -22,7 +22,18 @@ describe('settings store', () => {
     })
     expect(errors).toEqual({ max_tokens: 'Enter a whole number.' })
     expect(parseField(field('temperature'), ' ')).toEqual({ error: 'Enter a number.' })
+    expect(parseField(field('ai_provider'), ' ')).toEqual({ error: 'Enter a value.' })
+    expect(parseField(field('max_tokens'), '')).toEqual({ value: null })
+    expect(parseField(field('ai_model'), '  ')).toEqual({ value: null })
     expect(remoteChanges(remoteSettings, { custom_api_key: '' }).changes).toEqual({})
+    expect(remoteChanges(remoteSettings, { temperature: '0.70', display_name: ' Alex ' })).toEqual({
+      changes: {},
+      errors: {},
+    })
+    expect(remoteChanges(remoteSettings, { max_tokens: '', ai_model: '' }).changes).toEqual({
+      max_tokens: null,
+      ai_model: null,
+    })
   })
   it('shows loaded values as control values, never a secret, and keeps the backend group order', () => {
     expect(fieldValue(field('temperature'), {})).toBe('0.7')
@@ -44,11 +55,20 @@ describe('settings store', () => {
       status: 'ready',
       error: null,
       definitions: remoteSettings,
+      loadId: 0,
     })
+    const first = store.getState().startLoad(),
+      second = store.getState().startLoad()
+    store.getState().finishLoad(first, { status: 'error', error: 'late' })
+    expect(store.getState().remote.status).toBe('loading')
+    store.getState().finishLoad(second, { status: 'ready', error: null })
+    expect(store.getState().remote.status).toBe('ready')
     store.getState().initializeScope('left')
     store.getState().initializeScope('right')
-    store.getState().patchScope('left', { draft: { ai_model: 'm2' } })
+    store.getState().patchScope('left', { draft: { ai_model: 'm2', temperature: '1' } })
     expect(store.getState().scopes.right!.draft).toEqual({})
+    store.getState().dropDraftKeys('left', ['ai_model'])
+    expect(store.getState().scopes.left!.draft).toEqual({ temperature: '1' })
     store.getState().disposeScope('left')
     expect(store.getState().scopes.left).toBeUndefined()
   })

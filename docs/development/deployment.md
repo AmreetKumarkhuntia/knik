@@ -153,8 +153,14 @@ sudo systemctl status knik-backend
 cd src/frontend && npm run build
 ```
 
-This creates optimized static files in `src/frontend/dist/`. The frontend currently runs on an in-memory
-demo session and does not call the backend.
+This creates optimized static files in `src/frontend/dist/`. The frontend runs on an in-memory demo session;
+only its Settings page calls the backend. `VITE_KNIK_API_URL` (default `http://localhost:8010`) and
+`VITE_KNIK_API_KEY` are read at build time and baked into the bundle, so set the URL before building and treat
+the key as public: anyone who can load the dashboard can read it. It is meant for a single-user deployment.
+
+Upgrading to a build with migration `015_settings_key_value.sql`: it replaces the old `app_settings` row with the
+`settings` table and does not copy the row, so re-enter settings saved on the old page (provider, model, voice,
+custom API base and key) from the dashboard after `scripts/migrate.sh`.
 
 **2. Serve with Nginx:**
 

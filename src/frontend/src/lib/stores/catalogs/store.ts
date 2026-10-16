@@ -7,7 +7,6 @@ export function createCatalogStore(seed: DemoSnapshot) {
     structuredClone({
       models: seed.models,
       providers: seed.providers,
-      voices: seed.voices,
       tools: seed.tools,
       suggestions: seed.suggestions,
     })

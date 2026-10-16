@@ -5,13 +5,14 @@ checks a value for it, ``with_overrides()`` applies stored values over the env o
 the result the ``current()`` config for the process. Adding a setting is adding one field.
 """
 
+import logging
+import math
 import os
-import warnings
 from collections.abc import Mapping
 from dataclasses import Field, dataclass, field, fields, replace
 from pathlib import Path
-from types import NoneType
-from typing import Any, ClassVar, Self, get_args, get_type_hints
+from types import NoneType, UnionType
+from typing import Any, ClassVar, Self, Union, get_args, get_origin, get_type_hints
 
 from dotenv import load_dotenv
 
@@ -24,7 +25,12 @@ else:
     load_dotenv()
 
 
-_SCHEMA_KEYS = ("env", "default", "label", "description", "options", "secret", "group")
+_SCHEMA_KEYS = ("env", "default", "label", "description", "options", "secret", "group", "minimum", "maximum")
+_SETTING_KINDS = (str, int, float, bool)
+
+# core sits below utils, so printer (which imports this module) cannot be used here; warnings.warn would
+# deduplicate repeats and fail under -W error, so stale stored settings are reported through logging.
+_log = logging.getLogger(__name__)
 
 
 def setting(
@@ -38,6 +44,8 @@ def setting(
     description: str = "",
     options: list[Any] | None = None,
     group: str = "",
+    minimum: float | None = None,
+    maximum: float | None = None,
 ) -> Any:
     """A Config field read from ``env``, else ``default``. ``user=True`` makes it a setting users may override."""
     return field(
@@ -51,13 +59,17 @@ def setting(
             "description": description,
             "options": options,
             "group": group,
+            "minimum": minimum,
+            "maximum": maximum,
         },
     )
 
 
-def _kind(hint: Any) -> type:
+def _kind(hint: Any) -> Any:
     """The setting's type with ``None`` stripped: a ``str | None`` field is a ``str`` setting."""
-    return next(t for t in (get_args(hint) or (hint,)) if t is not NoneType)
+    if get_origin(hint) in (UnionType, Union):
+        return next(t for t in get_args(hint) if t is not NoneType)
+    return hint
 
 
 @dataclass
@@ -71,7 +83,6 @@ class Config:
     DEFAULT_VOICE: ClassVar[str] = "af_heart"
     DEFAULT_MODEL: ClassVar[str] = "hexgrad/Kokoro-82M"
 
-    DEFAULT_AI_MODEL: ClassVar[str] = "gemini-1.5-flash"
     DEFAULT_AI_LOCATION: ClassVar[str] = "us-central1"
     DEFAULT_AI_TEMPERATURE: ClassVar[float] = 0.7
 
@@ -178,11 +189,25 @@ Be reliable, efficient, and action focused like Jarvis."""
     }
 
     ai_provider: str = setting("KNIK_AI_PROVIDER", "vertex", user=True, label="Provider", group="AI")
-    ai_model: str = setting("KNIK_AI_MODEL", DEFAULT_AI_MODEL, user=True, label="Model", group="AI")
+    ai_model: str | None = setting(
+        "KNIK_AI_MODEL",
+        None,
+        user=True,
+        label="Model",
+        group="AI",
+        description="Empty uses the provider's default model.",
+    )
     ai_project_id: str | None = setting("GOOGLE_CLOUD_PROJECT", None)
     ai_location: str = setting("KNIK_AI_LOCATION", DEFAULT_AI_LOCATION)
     temperature: float = setting(
-        "KNIK_TEMPERATURE", DEFAULT_AI_TEMPERATURE, float, user=True, label="Temperature", group="AI"
+        "KNIK_TEMPERATURE",
+        DEFAULT_AI_TEMPERATURE,
+        float,
+        user=True,
+        label="Temperature",
+        group="AI",
+        minimum=0,
+        maximum=2,
     )
     max_tokens: int | None = setting(
         "KNIK_MAX_TOKENS",
@@ -192,6 +217,7 @@ Be reliable, efficient, and action focused like Jarvis."""
         label="Max output tokens",
         group="AI",
         description="Empty leaves the provider's own limit.",
+        minimum=1,
     )
     system_instruction: str = setting(
         "KNIK_AI_SYSTEM_INSTRUCTION", DEFAULT_SYSTEM_INSTRUCTION, user=True, label="System instruction", group="AI"
@@ -236,7 +262,13 @@ Be reliable, efficient, and action focused like Jarvis."""
     )
     browser_profile_dir: str = setting("KNIK_BROWSER_PROFILE_DIR", str(Path.home() / ".knik" / "browser-profile"))
     browser_idle_timeout: int = setting(
-        "KNIK_BROWSER_IDLE_TIMEOUT", 1800, int, user=True, label="Browser idle timeout (seconds)", group="Browser"
+        "KNIK_BROWSER_IDLE_TIMEOUT",
+        1800,
+        int,
+        user=True,
+        label="Browser idle timeout (seconds)",
+        group="Browser",
+        minimum=1,
     )
     telegram_bot_token: str | None = setting("KNIK_TELEGRAM_BOT_TOKEN", None)
 
@@ -249,6 +281,7 @@ Be reliable, efficient, and action focused like Jarvis."""
         user=True,
         label="History turns sent to the model",
         group="Conversation",
+        minimum=0,
     )
     compaction_enabled: bool = setting(
         "KNIK_COMPACTION_ENABLED",
@@ -266,6 +299,8 @@ Be reliable, efficient, and action focused like Jarvis."""
         label="Compaction threshold",
         group="Conversation",
         description="Share of the context window that triggers a summary.",
+        minimum=0.05,
+        maximum=1,
     )
     compaction_circuit_breaker: int = setting(
         "KNIK_COMPACTION_CIRCUIT_BREAKER",
@@ -274,6 +309,7 @@ Be reliable, efficient, and action focused like Jarvis."""
         user=True,
         label="Compaction failures before giving up",
         group="Conversation",
+        minimum=1,
     )
     compaction_prompt_buffer: int = setting(
         "KNIK_COMPACTION_PROMPT_BUFFER",
@@ -282,6 +318,7 @@ Be reliable, efficient, and action focused like Jarvis."""
         user=True,
         label="Tokens reserved for the summary",
         group="Conversation",
+        minimum=0,
     )
 
     display_name: str | None = setting("KNIK_DISPLAY_NAME", None, user=True, label="Display name", group="Profile")
@@ -303,56 +340,89 @@ Be reliable, efficient, and action focused like Jarvis."""
 
     @classmethod
     def schema(cls) -> list[dict[str, Any]]:
-        """One definition per user setting: key, type, env, default, label, description, options, secret, group."""
+        """One definition per user setting: key, type, nullable, env, default, label, description, options, secret,
+        group, minimum, maximum."""
         hints = get_type_hints(cls)
         return [
-            {"key": f.name, "type": _kind(hints[f.name]).__name__, **{k: f.metadata[k] for k in _SCHEMA_KEYS}}
+            {
+                "key": f.name,
+                "type": _kind(hints[f.name]).__name__,
+                "nullable": NoneType in get_args(hints[f.name]),
+                **{k: f.metadata[k] for k in _SCHEMA_KEYS},
+            }
             for f in cls._user_fields().values()
         ]
 
     @classmethod
     def coerce(cls, key: str, value: Any) -> Any:
-        """``value`` as the setting's type; ValueError for an unknown setting, a wrong type or a value outside its options."""
+        """``value`` as the setting's type; ValueError for an unknown setting, a wrong type or a value out of range."""
         f = cls._user_fields().get(key)
         if f is None:
             raise ValueError(f"unknown setting {key!r}")
         hint = get_type_hints(cls)[key]
         kind = _kind(hint)
+        nullable = NoneType in get_args(hint)
         if value is None:
-            if NoneType in get_args(hint):
+            if nullable:
                 return None
             raise ValueError(f"{key} cannot be empty")
         # bool is an int in Python, so it needs its own check; an int is fine where a float is expected.
         accepted = (int, float) if kind is float else (kind,)
         if isinstance(value, bool) is not (kind is bool) or not isinstance(value, accepted):
             raise ValueError(f"{key} must be {kind.__name__}")
-        options = f.metadata["options"]
+        try:
+            value = kind(value)
+        except OverflowError as e:
+            raise ValueError(f"{key} is out of range") from e
+        if kind is str:
+            if "\x00" in value:
+                raise ValueError(f"{key} cannot contain a NUL character")
+            if not value.strip() and not nullable:
+                raise ValueError(f"{key} cannot be empty")
+        if kind is float and not math.isfinite(value):
+            raise ValueError(f"{key} must be a finite number")
+        options, minimum, maximum = f.metadata["options"], f.metadata["minimum"], f.metadata["maximum"]
         if options and value not in options:
             raise ValueError(f"{key} must be one of {', '.join(map(str, options))}")
-        return kind(value)
+        if kind in (int, float) and (
+            minimum is not None and value < minimum or maximum is not None and value > maximum
+        ):
+            if minimum is not None and maximum is not None:
+                raise ValueError(f"{key} must be between {minimum:g} and {maximum:g}")
+            raise ValueError(
+                f"{key} must be at least {minimum:g}" if minimum is not None else f"{key} must be at most {maximum:g}"
+            )
+        return value
 
     @classmethod
     def validate(cls, overrides: Mapping[str, Any]) -> dict[str, Any]:
         """Every override coerced to its setting's type; ValueError on the first one that is not valid."""
         return {key: cls.coerce(key, value) for key, value in overrides.items()}
 
-    def with_overrides(self, overrides: Mapping[str, Any]) -> Self:
-        """A copy with the valid overrides applied.
-
-        An invalid one, such as a stored key whose field has since been removed, is skipped with a warning
-        rather than failing startup.
-        """
+    @classmethod
+    def accept(cls, overrides: Mapping[str, Any]) -> dict[str, Any]:
+        """The valid overrides, coerced; an invalid one, such as a stored key whose field was removed, is logged
+        and left out rather than failing startup."""
         accepted = {}
         for key, value in overrides.items():
             try:
-                accepted[key] = self.coerce(key, value)
+                accepted[key] = cls.coerce(key, value)
             except ValueError as e:
-                warnings.warn(f"Ignoring setting: {e}", stacklevel=2)
-        return replace(self, **accepted)
+                _log.warning(f"Ignoring setting: {e}")
+        return accepted
+
+    def with_overrides(self, overrides: Mapping[str, Any]) -> Self:
+        """A copy with the valid overrides applied (see ``accept``)."""
+        return replace(self, **self.accept(overrides))
 
     @classmethod
     def _user_fields(cls) -> dict[str, Field[Any]]:
-        return {f.name: f for f in fields(cls) if f.metadata.get("user")}
+        hints = get_type_hints(cls)
+        user_fields = {f.name: f for f in fields(cls) if f.metadata.get("user")}
+        for name in user_fields:
+            if _kind(hints[name]) not in _SETTING_KINDS:
+                raise TypeError(f"{name}: a user setting must be str, int, float or bool (optionally | None)")
+        return user_fields
 
     @classmethod
     def from_env(cls, key: str, default=None, type_cast=str):

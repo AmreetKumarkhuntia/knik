@@ -1,6 +1,7 @@
 """Workflow node implementations for the execution engine."""
 
 import asyncio
+import dataclasses
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -218,7 +219,14 @@ class AIExecutionNode(BaseNode):
             # .invoke() call to a worker thread so nothing blocks the asyncio
             # event loop (matches the web backend _build_ai + to_thread pattern).
             def _build_and_chat() -> tuple[str, dict | None]:
-                settings = ClientSettings(provider=self.provider, model=self.model, temperature=self.temperature)
+                # The process's client settings (custom API base and key, max tokens) with the node's own on top.
+                settings = dataclasses.replace(
+                    ClientSettings.from_config(Config.current()),
+                    provider=self.provider,
+                    model=self.model,
+                    temperature=self.temperature,
+                    system_instruction=None,
+                )
                 factory = self.ai_client_factory
                 # Without a factory there is no way to reach the tools, so the node runs without them.
                 ai_client = factory(settings, self.use_tools) if factory else build_client(settings)

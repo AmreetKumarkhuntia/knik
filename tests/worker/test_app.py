@@ -10,6 +10,7 @@ import pytest
 
 from lib.core.config import Config
 from lib.services.db import DatabaseUnavailable
+from lib.services.db.connection import UndefinedTable
 from worker import app as app_mod
 
 
@@ -79,11 +80,27 @@ async def test_worker_runs_with_the_stored_settings_over_the_env_ones(scheduler,
 
 async def test_worker_keeps_running_while_postgres_is_down(scheduler, database):
     database.initialize.side_effect = DatabaseUnavailable("down")
+    worker = app_mod.WorkerApp()
 
-    await _run_until_sigterm(app_mod.WorkerApp(), scheduler)
+    await _run_until_sigterm(worker, scheduler)
 
     scheduler.start.assert_called_once_with()
     scheduler.stop.assert_awaited_once_with()
+    assert Config.current() is worker.config
+    assert worker.config.ai_provider == Config().ai_provider
+
+
+async def test_a_missing_settings_table_is_reported_as_a_migration_to_run(scheduler, database, monkeypatch):
+    missing = SimpleNamespace(get_all=AsyncMock(side_effect=UndefinedTable('relation "settings" does not exist')))
+    monkeypatch.setattr(app_mod, "SettingsDB", missing)
+    logger = MagicMock()
+    monkeypatch.setattr(app_mod, "logger", logger)
+    worker = app_mod.WorkerApp()
+
+    await _run_until_sigterm(worker, scheduler)
+
+    assert Config.current() is worker.config
+    assert logger.warning.call_args.args[0].startswith("Settings table missing, run scripts/migrate.sh")
 
 
 async def test_worker_closes_the_pool_only_once_the_scheduler_has_stopped(scheduler, database):

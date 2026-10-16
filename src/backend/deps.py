@@ -1,4 +1,4 @@
-"""FastAPI dependencies: the shared AppState, and the API key check every /api route runs.
+"""FastAPI dependencies: the shared AppState, and the API key and JSON body checks every /api route runs.
 
 The chat routes get their AI client from ``AppState.get_client`` inside the route rather than through a
 dependency: a dependency would have to read the request body too, and FastAPI then validates the body once
@@ -38,6 +38,19 @@ async def require_api_key(api_key: str | None = Depends(_api_key_header), state:
     if key_id is None:
         raise _unauthorized("Invalid API key")
     state.record_api_key_use(key_id)
+
+
+async def require_json_body(request: Request) -> None:
+    """A request with a body must declare application/json.
+
+    A browser sends a POST with no Content-Type (or text/plain) from any origin without a CORS preflight, so
+    without this check a page on another site could write settings or send chats.
+    """
+    has_body = request.headers.get("content-length", "0") != "0" or "transfer-encoding" in request.headers
+    if request.method in ("POST", "PUT", "PATCH") and has_body:
+        media_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+        if media_type != "application/json":
+            raise HTTPException(status_code=415, detail="Content-Type must be application/json")
 
 
 def _unauthorized(detail: str) -> HTTPException:

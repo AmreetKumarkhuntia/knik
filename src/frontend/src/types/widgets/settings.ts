@@ -13,7 +13,6 @@ export interface SettingFieldProps {
   /** What the control shows: a boolean for a switch, text for everything else. */
   value: string | boolean
   error?: string
-  disabled?: boolean
   last: boolean
   onChange: (value: string | boolean) => void
   /** Only a stored value can go back to its env or built-in default. */

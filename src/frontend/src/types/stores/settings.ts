@@ -14,12 +14,17 @@ export interface RemoteSettings {
   status: 'loading' | 'ready' | 'error'
   error: string | null
   definitions: SettingDefinition[]
+  /** Counts loads, so a result that an earlier load delivers late is ignored. */
+  loadId: number
 }
 export interface SettingsState
   extends Pick<DemoSnapshot, 'settings' | 'appearance'>, ScopeState<SettingsScope> {
   enabledTools: Record<string, boolean>
   remote: RemoteSettings
+  startLoad: () => number
+  finishLoad: (loadId: number, patch: Partial<RemoteSettings>) => void
   setRemote: (patch: Partial<RemoteSettings>) => void
+  dropDraftKeys: (scopeId: string, keys: string[]) => void
   updateSettings: (patch: Partial<DemoSnapshot['settings']>) => void
   updateAppearance: (patch: Partial<DemoSnapshot['appearance']>) => void
   toggleTool: (name: string, enabled: boolean) => void

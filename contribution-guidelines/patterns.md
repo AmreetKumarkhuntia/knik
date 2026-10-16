@@ -121,12 +121,18 @@ reply_language: str = setting("KNIK_REPLY_LANGUAGE", "en", user=True, label="Rep
 - Without `user=True` it is an env-only value (infrastructure: hosts, ports, tokens). With it, the setting shows up
   in `Config.schema()`, so the backend serves it on `GET /api/admin/settings`, accepts it on `POST`, the dashboard
   renders it from the schema, the bot and worker read a stored value at startup, and the console reads it from
-  `~/.knik/settings.json`. No API, model or frontend change is needed.
-- The type is the annotation (`str`, `int`, `float`, `bool`, optionally `| None`); `cast` is how the env string is
-  parsed. `options=[...]` restricts the values, `secret=True` masks it when read back, `group` is the dashboard
-  section.
-- Read it through the layered config: `Config.current().reply_language` in library code, `state.settings.config`
-  in the backend, `self.config` in the bot, worker and console. A fresh `Config()` sees only the env.
+  `~/.knik/settings.json`. Storing, serving and editing the value needs no API, model or frontend change.
+- The type is the annotation: `str`, `int`, `float` or `bool`, optionally `| None` (anything else, such as
+  `Literal` or `list`, is refused by `schema()` with a `TypeError`). `cast` is how the env string is parsed.
+  `options=[...]` restricts the values, `minimum`/`maximum` bound a number, `secret=True` masks it when read back,
+  `group` is the dashboard section. A `Config` subclass must not use `from __future__ import annotations` with
+  `TYPE_CHECKING`-only names: `schema()` resolves every annotation at runtime.
+- What the one line does not cover: a reader (`Config.current().reply_language` in library code,
+  `state.settings.config` in the backend, `self.config` in the bot, worker and console; a fresh `Config()` sees
+  only the env); a setting the AI client needs also wants a `ClientSettings` field and a line in
+  `ClientSettings.from_config`; a runtime side effect (like the TTS voice) goes in `AppState._apply_settings`;
+  and `.env.example` plus `docs/reference/environment-variables.md` are kept by hand. The bot and worker see a
+  new stored value on their next restart.
 - Removing a field is just as safe: a stored row for a key the model no longer has is skipped with a warning at
   startup and can be deleted with `DELETE /api/admin/settings/{key}`.
 

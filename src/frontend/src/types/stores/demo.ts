@@ -31,10 +31,6 @@ export interface DemoRunScenario {
   execution: ExecutionDetail
   timeline: NodeExecutionStep[]
 }
-export interface DemoVoiceOption extends AdminOption {
-  lang?: string
-  tags?: string[]
-}
 export interface CatalogModel extends ChatModelOption {
   providerId?: string
 }
@@ -50,7 +46,6 @@ export interface DemoSnapshot {
   settings: FrontendSettings
   appearance: AppearanceSettings
   providers: AdminOption[]
-  voices: DemoVoiceOption[]
   tools: McpToolInfo[]
   apiKeys: ApiKeyInfo[]
   chatScenarios: DemoChatScenario[]

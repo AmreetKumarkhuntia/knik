@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import signal
 
-from imports import DB_ERRORS, Config, PostgresDB, Scheduler, SettingsDB, build_workflow_client
+from imports import DB_ERRORS, Config, PostgresDB, Scheduler, SettingsDB, UndefinedTable, build_workflow_client
 from imports import printer as logger
 
 
@@ -21,12 +21,16 @@ class WorkerApp:
 
         try:
             await PostgresDB.initialize()
+            logger.info("PostgresDB initialized")
             overrides = await SettingsDB.get_all()
+        except UndefinedTable as e:
+            logger.warning(f"Settings table missing, run scripts/migrate.sh; continuing with env settings: {e}")
+            overrides = {}
         except DB_ERRORS as e:
             # Queries reconnect on their own once Postgres is back, so keep the loop running.
-            logger.warning(f"PostgresDB unavailable, continuing with env settings: {e}")
+            logger.warning(f"Could not load stored settings, env settings apply: {e}")
             overrides = {}
-        # shortcut: settings saved in the web app reach the worker on its next restart only, poll or notify when live updates matter
+        # shortcut: web-app settings reach the worker on its next restart only, poll or notify when live updates matter
         self.config = self.config.with_overrides(overrides)
         Config.install(self.config)
 

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { StoresProvider } from '$stores'
 import { useFeedbackStore } from '$stores/feedback'
 import RemoteSettingsPane from '$widgets/settings/RemoteSettingsPane'
@@ -28,8 +28,7 @@ function renderPane(transport = fakeTransport()) {
 }
 
 describe('backend settings pane', () => {
-  it('renders the schema as groups in backend order, with a control per type and no fetch', async () => {
-    const fetcher = vi.spyOn(globalThis, 'fetch')
+  it('renders the schema as groups in backend order, with a control per type', async () => {
     renderPane()
     expect(await screen.findByLabelText('Display name')).toHaveValue('Alex')
     expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual([
@@ -41,8 +40,9 @@ describe('backend settings pane', () => {
     expect(screen.getByLabelText('Temperature')).toHaveAttribute('type', 'number')
     expect(screen.getByRole('switch', { name: 'Speak replies' })).toBeChecked()
     expect(screen.getByText("Empty leaves the provider's own limit.")).toBeInTheDocument()
+    expect(screen.getByLabelText('Temperature')).toHaveAttribute('min', '0')
+    expect(screen.getByLabelText('Temperature')).toHaveAttribute('max', '2')
     expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled()
-    expect(fetcher).not.toHaveBeenCalled()
   })
 
   it('posts only the changed keys, typed, then reloads and clears the draft', async () => {
@@ -96,14 +96,58 @@ describe('backend settings pane', () => {
     await waitFor(() => expect(transport.save).toHaveBeenCalledWith({ custom_api_key: 'new-key' }))
   })
 
-  it('offers Reset only on stored values and reloads after it', async () => {
+  it('offers Reset only on stored values, then focuses the control and keeps other edits', async () => {
     const user = userEvent.setup()
-    const transport = renderPane()
-    await screen.findByLabelText('Display name')
+    const transport = fakeTransport()
+    let finishReset = () => undefined as void
+    transport.reset.mockImplementation(() => new Promise(resolve => (finishReset = resolve)))
+    renderPane(transport)
+    const name = await screen.findByLabelText('Display name')
     expect(screen.queryByRole('button', { name: 'Reset Display name' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Reset Model' }))
-    await waitFor(() => expect(transport.reset).toHaveBeenCalledWith('ai_model'))
+    expect(transport.reset).toHaveBeenCalledWith('ai_model')
+    await user.type(name, ' Lee')
+    finishReset()
     await waitFor(() => expect(transport.load).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText('Reset Model.')).toBeInTheDocument()
+    expect(name).toHaveValue('Alex Lee')
+    expect(screen.getByLabelText('Model')).toHaveFocus()
+  })
+
+  it('clears a nullable setting with empty text and refuses an empty required one', async () => {
+    const user = userEvent.setup()
+    const transport = renderPane()
+    const tokens = await screen.findByLabelText('Max output tokens')
+    await user.clear(tokens)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() => expect(transport.save).toHaveBeenCalledWith({ max_tokens: null }))
+    await user.clear(screen.getByLabelText('Temperature'))
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a number.')
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled()
+    await user.type(screen.getByLabelText('Temperature'), '0.70')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled()
+  })
+
+  it('keeps keyboard focus on the field, or moves it to the saved field after a button save', async () => {
+    const user = userEvent.setup()
+    const transport = renderPane()
+    const name = await screen.findByLabelText('Display name')
+    await user.type(name, ' Lee{Enter}')
+    await waitFor(() => expect(transport.save).toHaveBeenCalledWith({ display_name: 'Alex Lee' }))
+    await screen.findByText('Settings saved.')
+    expect(name).toHaveFocus()
+    await user.clear(screen.getByLabelText('Temperature'))
+    await user.type(screen.getByLabelText('Temperature'), '0.3')
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() => expect(transport.save).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getByLabelText('Temperature')).toHaveFocus())
+  })
+
+  it('tells an empty schema apart from a load still in flight', async () => {
+    renderPane(fakeTransport([]))
+    expect(await screen.findByText('No settings to show')).toBeInTheDocument()
   })
 
   it('shows a Retry state when the backend cannot be reached', async () => {

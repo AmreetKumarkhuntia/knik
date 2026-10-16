@@ -50,6 +50,8 @@ class AppState:
         self._built_in: weakref.WeakKeyDictionary[AIClient, int] = weakref.WeakKeyDictionary()
         # Tool cleanups and API-key stamps still running; close() waits for them.
         self._background: set[asyncio.Task] = set()
+        # Settings changes run one at a time: a change compares the settings before and after itself.
+        self._settings_lock = asyncio.Lock()
 
     @classmethod
     async def create(cls, config: WebBackendConfig) -> AppState:
@@ -127,19 +129,20 @@ class AppState:
 
     async def _apply_settings(self, change: Coroutine[Any, Any, None]) -> None:
         """Cached clients are dropped if new ones would be built differently, and TTS follows the voice."""
-        client_before = self.settings.client_settings
-        voice_before = self.settings.config.voice_name
-        await change
+        async with self._settings_lock:
+            client_before = self.settings.client_settings
+            voice_before = self.settings.config.voice_name
+            await change
 
-        after = self.settings.client_settings
-        if after != client_before:
-            self._drop_clients()
-            printer.info(f"AI client settings updated: {after.provider}/{after.model}")
+            after = self.settings.client_settings
+            if after != client_before:
+                self._drop_clients()
+                printer.info(f"AI client settings updated: {after.provider}/{after.model}")
 
-        voice = self.settings.config.voice_name
-        if voice != voice_before:
-            self.tts.set_voice(voice)
-            printer.info(f"TTS voice updated: {voice}")
+            voice = self.settings.config.voice_name
+            if voice != voice_before:
+                self.tts.set_voice(voice)
+                printer.info(f"TTS voice updated: {voice}")
 
     async def set_tool_group_enabled(self, group: str, enabled: bool) -> None:
         """Persist and apply a tool-group switch; cached clients are dropped so every conversation follows it."""

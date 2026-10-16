@@ -5,21 +5,22 @@ customize your settings. The apps load `.env` from the repository root.
 
 The variables marked **stored setting** below can also be changed at runtime: the web dashboard's Settings page
 saves them in Postgres (`GET`/`POST`/`DELETE /api/admin/settings`), where the backend, the bot and the worker read
-them at startup; the console reads `~/.knik/settings.json` (`{"key": value}`, keys as in the table) instead. A stored
-value beats the env one; deleting it brings the env value back. The full list is `Config.schema()` in
-`src/lib/core/config.py`: every field declared with `user=True`.
+them at startup; the console reads `~/.knik/settings.json` instead, keyed by the `Config` field name rather than
+the variable, for example `{"ai_model": "glm-5", "temperature": 0.3}`. A stored value beats the env one; deleting it
+brings the env value back. The full list is `Config.schema()` in `src/lib/core/config.py`: every field declared
+with `user=True`, with its type, whether it may be `null`, its options and its `minimum`/`maximum`.
 
 ## AI Configuration
 
 ### General
 
-| Variable                     | Default            | Description                                                                                                                                                 |
-| ---------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `KNIK_AI_PROVIDER`           | `vertex`           | Stored setting. AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock`. An unknown or unconfigured provider falls back to `mock` |
-| `KNIK_AI_MODEL`              | `gemini-1.5-flash` | Stored setting. Model for every app, and the default for workflow AI nodes that name none                                                                   |
-| `KNIK_MAX_TOKENS`            | _(unset)_          | Stored setting. Maximum reply tokens; unset leaves the provider's own limit                                                                                 |
-| `KNIK_TEMPERATURE`           | `0.7`              | Stored setting. Sampling temperature (0.0 - 2.0)                                                                                                            |
-| `KNIK_AI_SYSTEM_INSTRUCTION` | _(built-in)_       | Stored setting. System instruction for the AI assistant                                                                                                     |
+| Variable                     | Default      | Description                                                                                                                                                 |
+| ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KNIK_AI_PROVIDER`           | `vertex`     | Stored setting. AI provider: `vertex`, `gemini`, `zhipuai`, `zai`, `zai_coding`, `custom`, `mock`. An unknown or unconfigured provider falls back to `mock` |
+| `KNIK_AI_MODEL`              | _(unset)_    | Stored setting. Model for every app and the default for workflow AI nodes that name none; unset uses the provider's own default model                       |
+| `KNIK_MAX_TOKENS`            | _(unset)_    | Stored setting. Maximum reply tokens; unset leaves the provider's own limit                                                                                 |
+| `KNIK_TEMPERATURE`           | `0.7`        | Stored setting. Sampling temperature (0.0 - 2.0)                                                                                                            |
+| `KNIK_AI_SYSTEM_INSTRUCTION` | _(built-in)_ | Stored setting. System instruction for the AI assistant                                                                                                     |
 
 ### Vertex AI (Google Cloud)
 
@@ -94,12 +95,12 @@ When using the `custom` provider, set `KNIK_AI_MODEL` to any model name supporte
 
 ## Text-to-Speech Configuration
 
-| Variable            | Default                | Description                                                                      |
-| ------------------- | ---------------------- | -------------------------------------------------------------------------------- |
-| `KNIK_VOICE_OUTPUT` | `true`                 | Stored setting. Whether the console speaks its replies                           |
-| `KNIK_VOICE`        | `af_heart`             | Stored setting. Voice the web backend speaks with. The console does not apply it |
-| `KNIK_LANGUAGE`     | `a` (American English) | Not used: speech is always American English (`a`)                                |
-| `KNIK_MODEL`        | `hexgrad/Kokoro-82M`   | Not used: the Kokoro model loaded is always `hexgrad/Kokoro-82M`                 |
+| Variable            | Default                | Description                                                                                                              |
+| ------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `KNIK_VOICE_OUTPUT` | `true`                 | Whether the console speaks its replies; from the env or `~/.knik/settings.json` (the dashboard cannot reach the console) |
+| `KNIK_VOICE`        | `af_heart`             | Stored setting. Voice the web backend speaks with. The console does not apply it                                         |
+| `KNIK_LANGUAGE`     | `a` (American English) | Not used: speech is always American English (`a`)                                                                        |
+| `KNIK_MODEL`        | `hexgrad/Kokoro-82M`   | Not used: the Kokoro model loaded is always `hexgrad/Kokoro-82M`                                                         |
 
 ### Available Voices
 
@@ -131,14 +132,15 @@ Kokoro's language codes, kept for reference; `KNIK_LANGUAGE` does not select one
 
 ## Profile and UI
 
-Stored settings the dashboard edits; the env values are only their defaults.
+Stored settings the dashboard edits; the env values are only their defaults. Nothing reads them yet: the sidebar
+still shows the demo profile, and no app streams or sends telemetry based on them.
 
-| Variable                | Default | Description                                   |
-| ----------------------- | ------- | --------------------------------------------- |
-| `KNIK_DISPLAY_NAME`     | None    | Name shown in the dashboard                   |
-| `KNIK_USERNAME`         | None    | Username shown in the dashboard               |
-| `KNIK_STREAM_RESPONSES` | `true`  | Dashboard preference: stream chat replies     |
-| `KNIK_SEND_TELEMETRY`   | `false` | Dashboard preference; nothing sends telemetry |
+| Variable                | Default | Description                  |
+| ----------------------- | ------- | ---------------------------- |
+| `KNIK_DISPLAY_NAME`     | None    | Dashboard preference, unread |
+| `KNIK_USERNAME`         | None    | Dashboard preference, unread |
+| `KNIK_STREAM_RESPONSES` | `true`  | Dashboard preference, unread |
+| `KNIK_SEND_TELEMETRY`   | `false` | Dashboard preference, unread |
 
 ## Web Backend
 

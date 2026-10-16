@@ -52,6 +52,15 @@ def test_database_routes_answer_503_without_database(offline_client, method, pat
     assert response.json() == {"detail": "Database unavailable"}
 
 
+def test_a_body_that_is_not_json_is_refused_before_any_route_runs(offline_client):
+    """A browser sends these from any origin without a CORS preflight, so they must not write anything."""
+    for headers in ({}, {"content-type": "text/plain"}):
+        response = offline_client.post("/api/admin/settings", content=b'{"display_name": "pwned"}', headers=headers)
+        assert (response.status_code, response.json()) == (415, {"detail": "Content-Type must be application/json"})
+    assert offline_client.get("/api/admin/settings").status_code == 200
+    assert offline_client.delete("/api/admin/settings/voice_name").status_code == 503
+
+
 def test_settings_and_tool_list_fall_back_to_defaults_without_database(offline_client, config):
     assert offline_client.get("/api/admin/settings").status_code == 200
     body = settings_by_key(offline_client)

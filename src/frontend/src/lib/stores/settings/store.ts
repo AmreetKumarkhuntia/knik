@@ -3,12 +3,12 @@ import type { DemoSnapshot } from '$types/demo-session'
 import type { SettingsState } from '$types/stores/settings'
 import { createSettingsActions } from './actions'
 export function createSettingsStore(seed: DemoSnapshot) {
-  return createStore<SettingsState>()(set => ({
+  return createStore<SettingsState>()((set, get) => ({
     settings: structuredClone(seed.settings),
     appearance: structuredClone(seed.appearance),
     enabledTools: Object.fromEntries(seed.tools.map(tool => [tool.name, tool.enabled])),
-    remote: { status: 'loading', error: null, definitions: [] },
+    remote: { status: 'loading', error: null, definitions: [], loadId: 0 },
     scopes: {},
-    ...createSettingsActions(set),
+    ...createSettingsActions(set, get),
   }))
 }
