@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
 
+from lib.core.config import Config
 from lib.services.ai_client.client import AIClient
 from lib.services.ai_client.factory import ClientSettings, build_client
 from lib.utils import printer as logger
@@ -199,9 +200,11 @@ class AIExecutionNode(BaseNode):
     ):
         super().__init__(node_id)
         self.prompt = prompt
-        self.model = model or "gemini-3.0-flash"
-        self.provider = provider or "vertex"
-        self.temperature = 0.7 if temperature is None else temperature
+        # A node without its own settings uses the ones the process runs with.
+        cfg = Config.current()
+        self.model = model or cfg.ai_model
+        self.provider = provider or cfg.ai_provider
+        self.temperature = cfg.temperature if temperature is None else temperature
         self.use_tools = True if use_tools is None else use_tools
         self.ai_client_factory = ai_client_factory
 

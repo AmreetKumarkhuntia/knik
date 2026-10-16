@@ -3,7 +3,13 @@ import type { Conversation, ConversationMessage } from '../conversation'
 import type { ToastType } from '../components/feedback'
 import type { ChatModelOption } from '../components/chat'
 import type { Workflow, Schedule, ExecutionDetail, NodeExecutionStep } from '../workflow'
-import type { FrontendSettings, AdminOption, McpToolInfo, ApiKeyInfo } from '../sections/settings'
+import type {
+  FrontendSettings,
+  AdminOption,
+  McpToolInfo,
+  ApiKeyInfo,
+  SettingsTransport,
+} from '../sections/settings'
 import type { ThemeMode } from '../theme'
 
 export interface AppearanceSettings {
@@ -69,4 +75,6 @@ export interface ScheduleDraft {
 export interface StoresProviderProps {
   children: ReactNode
   source?: DemoSource
+  /** Tests inject a fake; the app uses the backend settings API. */
+  settingsTransport?: SettingsTransport
 }

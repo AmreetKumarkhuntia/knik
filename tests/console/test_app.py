@@ -5,15 +5,16 @@ import pytest
 from console.app import ConsoleApp
 from console.config import ConsoleConfig
 from console.tools.agent_cmd import agent_command
+from lib.core.config import Config
 from lib.services.ai_client.factory import build_client
 from lib.services.ai_client.settings import ClientSettings
 from tests.lib.commands import fakes
 
 
 @pytest.fixture
-def app(monkeypatch):
+def app(monkeypatch, tmp_path):
     fakes.install(monkeypatch, fakes.FakeConversations())
-    app = ConsoleApp(ConsoleConfig())
+    app = ConsoleApp(ConsoleConfig(settings_file=tmp_path / "settings.json"))
     app.ai_client = fakes.FakeClient()
     app._initialize_command_service()
     return app
@@ -52,3 +53,15 @@ def test_agent_shows_the_error_of_a_failed_call(app):
     app.ai_client = client
 
     assert agent_command(app, "hi") == "Chat error: quota exceeded"
+
+
+def test_the_settings_file_layers_over_the_env_and_a_stray_key_only_warns(tmp_path):
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text('{"ai_model": "m2", "bogus": 1}')
+
+    with pytest.warns(UserWarning, match="unknown setting 'bogus'"):
+        app = ConsoleApp(ConsoleConfig(settings_file=settings_file))
+
+    assert isinstance(app.config, ConsoleConfig)
+    assert app.config.ai_model == "m2"
+    assert Config.current() is app.config

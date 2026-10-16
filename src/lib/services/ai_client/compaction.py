@@ -118,7 +118,7 @@ class ConversationCompactor:
 
     @staticmethod
     def should_compact(context_tokens: int, model: str) -> bool:
-        cfg = Config()
+        cfg = Config.current()
         if not cfg.compaction_enabled:
             return False
         context_window = get_context_window(model)
@@ -164,7 +164,7 @@ class ConversationCompactor:
                 return False
 
     async def _do_compact(self, conversation_id: str) -> bool:
-        cfg = Config()
+        cfg = Config.current()
         context_window = get_context_window(self._model)
         prompt_buffer = cfg.compaction_prompt_buffer
         circuit_breaker_limit = cfg.compaction_circuit_breaker

@@ -391,6 +391,16 @@ describe('frontend dependency ownership', () => {
     ).toHaveLength(1)
   })
 
+  it('keeps the settings transport out of components, utilities and composition', () => {
+    const files = {
+      'src/lib/transport/settings.ts': 'export const createSettingsTransport = () => null',
+    }
+    const code = "import { createSettingsTransport } from '$lib/transport/settings'"
+    for (const file of ['src/lib/components/Example.tsx', 'src/lib/utils/format.ts', 'src/App.tsx'])
+      expect(lint(code, file, files)).toHaveLength(1)
+    expect(lint(code, 'src/lib/stores/session/createStoreBundle.ts', files)).toHaveLength(0)
+  })
+
   it('keeps utilities below stores and checks dynamic/require imports', () => {
     expect(
       lint("import { useChatStore } from '$stores/chat'", 'src/lib/utils/format.ts')
@@ -493,6 +503,22 @@ describe('frontend browser I/O restrictions', () => {
         message => message.messageId === 'component'
       )
     ).toBe(true)
+  })
+
+  it('allows fetch in the settings transport alone', () => {
+    const transport = 'src/lib/transport/settings.ts'
+    expect(lint("fetch('/api/admin/settings')", transport)).toHaveLength(0)
+    expect(
+      lint("new WebSocket('wss://example.invalid')", transport).some(
+        message => message.messageId === 'transport'
+      )
+    ).toBe(true)
+    for (const file of ['src/lib/transport/other.ts', 'src/lib/widgets/Example.tsx'])
+      expect(
+        lint("fetch('/api/admin/settings')", file).some(
+          message => message.messageId === 'transport'
+        )
+      ).toBe(true)
   })
 
   it('allows component focus/layout work and does not confuse shadowed names or type members with globals', () => {

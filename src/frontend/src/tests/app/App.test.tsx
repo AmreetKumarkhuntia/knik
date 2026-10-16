@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { useReducedMotionConfig } from 'framer-motion'
 import App from '../../App'
@@ -25,6 +25,13 @@ beforeAll(() => {
 afterAll(() => {
   Reflect.deleteProperty(window, 'matchMedia')
 })
+// The settings page asks the backend for its schema; here there is none, so it shows its Retry state.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.reject(new TypeError('offline')))
+  )
+})
 
 function renderAt(path: string) {
   window.history.pushState({}, '', path)
@@ -42,7 +49,7 @@ describe('App routes', () => {
     const { container } = renderAt('/settings')
     expect(screen.getByRole('main')).toBeInTheDocument()
     expect(container.querySelector('main .knik-spinner')).toBeInTheDocument()
-    expect(await screen.findByLabelText('Display name')).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: 'General' })).toBeInTheDocument()
     expect(container.querySelector('main .knik-spinner')).toBeNull()
   })
 

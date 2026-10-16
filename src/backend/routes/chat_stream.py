@@ -123,7 +123,7 @@ async def stream_chat_response(
                 conversation_id=conversation_id,
                 persist=persist,
                 source=SOURCE,
-                provider_meta={"provider": state.config.ai_provider, "model": state.config.ai_model},
+                provider_meta={"provider": state.settings.config.ai_provider, "model": state.settings.config.ai_model},
             ):
                 match event:
                     case ConversationReady(conversation_id=conv_id):

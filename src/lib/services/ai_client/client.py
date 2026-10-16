@@ -366,7 +366,7 @@ class AIClient:
             *usage* may be ``None`` if the provider didn't report it.
         """
         meta = provider_meta or {}
-        cfg = Config()
+        cfg = Config.current()
 
         requested_id = conversation_id
         conversation_id = (
@@ -462,7 +462,7 @@ class AIClient:
             ``StreamEvent``s, ending with ``StreamDone``.
         """
         meta = provider_meta or {}
-        cfg = Config()
+        cfg = Config.current()
 
         conversation_id = (
             await self._ensure_conversation(conversation_id, user_id=user_id, source=source) if persist else None

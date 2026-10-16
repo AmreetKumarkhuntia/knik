@@ -20,7 +20,7 @@ TABLES = (
     "workflows",
     "conversations",
     "users",
-    "app_settings",
+    "settings",
     "api_keys",
     "mcp_tools_state",
 )

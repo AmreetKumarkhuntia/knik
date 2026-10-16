@@ -1,11 +1,13 @@
 """Admin API endpoints — manage AI client settings and configuration."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from backend.deps import get_state
-from backend.models.admin import ApiKeyCreate, McpToolToggle, SettingsUpdate
+from backend.models.admin import ApiKeyCreate, McpToolToggle
 from backend.state import AppState
-from imports import DB_ERRORS, ApiKeyDB, Config, ProviderRegistry, printer
+from imports import ApiKeyDB
 
 
 router = APIRouter()
@@ -13,55 +15,25 @@ router = APIRouter()
 
 @router.get("/settings")
 async def get_settings(state: AppState = Depends(get_state)):
-    """Current settings: persisted preferences merged over the values in effect and the env defaults."""
-    return await state.settings.view()
+    """Every user setting with its definition, the value in effect and where it comes from (db, env or default)."""
+    return state.settings.view()
 
 
 @router.post("/settings")
-async def update_settings(settings: SettingsUpdate, state: AppState = Depends(get_state)):
-    """Persist the given preferences and apply them: new chats use the new AI settings, TTS the new voice."""
+async def update_settings(changes: dict[str, Any], state: AppState = Depends(get_state)):
+    """Persist the given settings and apply them: new chats use the new AI settings, TTS the new voice."""
     try:
-        await state.update_settings(settings)
-        return {"status": "success", "message": "Settings updated"}
-
-    except DB_ERRORS:
-        raise
-    except Exception as e:
-        printer.error(f"Settings update error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        await state.update_settings(changes)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    return {"status": "success", "message": "Settings updated"}
 
 
-@router.get("/providers")
-async def list_providers():
-    provider_names = {
-        "vertex": "Google Vertex AI",
-        "gemini": "Google Gemini AI Studio",
-        "zhipuai": "ZhipuAI (GLM)",
-        "zai": "Z.AI Platform",
-        "zai_coding": "Z.AI Coding Plan",
-        "custom": "Custom (OpenAI-Compatible)",
-        "mock": "Mock Provider (Testing)",
-    }
-    registered = ProviderRegistry.list_providers()
-    return {"providers": [{"id": pid, "name": provider_names.get(pid, pid.title())} for pid in registered]}
-
-
-@router.get("/models")
-async def list_models():
-    return {"models": [{"id": model_id, "name": description} for model_id, description in Config.AI_MODELS.items()]}
-
-
-@router.get("/voices")
-async def list_voices():
-    return {
-        "voices": [
-            {
-                "id": voice_id,
-                "name": f"{voice_id.replace('_', ' ').title()} ({'Female' if voice_id.startswith('af_') else 'Male'})",
-            }
-            for voice_id in Config.VOICES
-        ]
-    }
+@router.delete("/settings/{key}")
+async def reset_setting(key: str, state: AppState = Depends(get_state)):
+    """Forget the stored value; the env or built-in default applies again."""
+    await state.reset_setting(key)
+    return {"status": "success", "key": key}
 
 
 @router.get("/mcp-tools")

@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import signal
 
-from imports import DB_ERRORS, Config, PostgresDB, Scheduler, build_workflow_client
+from imports import DB_ERRORS, Config, PostgresDB, Scheduler, SettingsDB, build_workflow_client
 from imports import printer as logger
 
 
@@ -21,9 +21,14 @@ class WorkerApp:
 
         try:
             await PostgresDB.initialize()
+            overrides = await SettingsDB.get_all()
         except DB_ERRORS as e:
             # Queries reconnect on their own once Postgres is back, so keep the loop running.
-            logger.warning(f"PostgresDB unavailable, continuing without it: {e}")
+            logger.warning(f"PostgresDB unavailable, continuing with env settings: {e}")
+            overrides = {}
+        # shortcut: settings saved in the web app reach the worker on its next restart only, poll or notify when live updates matter
+        self.config = self.config.with_overrides(overrides)
+        Config.install(self.config)
 
         loop = asyncio.get_running_loop()
         stop_event = asyncio.Event()

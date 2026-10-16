@@ -82,7 +82,6 @@ _EXPORTS: dict[str, tuple[str, str | None]] = {
     "SettingsDB": ("lib.services.db.repositories.settings", "SettingsDB"),
     "ApiKeyDB": ("lib.services.db.repositories.settings", "ApiKeyDB"),
     "McpToolsDB": ("lib.services.db.repositories.settings", "McpToolsDB"),
-    "AppSettings": ("lib.services.db.models", "AppSettings"),
     # services: telegram
     "TelegramClient": ("lib.services.telegram.client", "TelegramClient"),
     "BotCommand": ("lib.services.telegram.models", "BotCommand"),
@@ -119,7 +118,6 @@ if TYPE_CHECKING:
     from lib.services.db.connection import DB_ERRORS as DB_ERRORS
     from lib.services.db.connection import DatabaseUnavailable as DatabaseUnavailable
     from lib.services.db.connection import PostgresDB as PostgresDB
-    from lib.services.db.models import AppSettings as AppSettings
     from lib.services.db.models import Schedule as Schedule
     from lib.services.db.models import Workflow as Workflow
     from lib.services.db.repositories.conversations import ConversationDB as ConversationDB

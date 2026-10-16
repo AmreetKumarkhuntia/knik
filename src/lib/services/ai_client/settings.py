@@ -4,6 +4,8 @@ import inspect
 from dataclasses import dataclass
 from typing import Any
 
+from lib.core.config import Config
+
 from .registry import ProviderRegistry
 
 
@@ -18,6 +20,21 @@ class ClientSettings:
     api_key: str | None = None
     temperature: float | None = None
     max_tokens: int | None = None
+
+    @classmethod
+    def from_config(cls, config: Config) -> "ClientSettings":
+        """The client settings a config asks for; empty strings and 0 count as unset."""
+        return cls(
+            provider=config.ai_provider,
+            model=config.ai_model or None,
+            system_instruction=config.system_instruction or None,
+            project_id=config.ai_project_id or None,
+            location=config.ai_location or None,
+            api_base=config.custom_api_base or None,
+            api_key=config.custom_api_key or None,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens or None,
+        )
 
 
 def provider_kwargs(settings: ClientSettings) -> dict[str, Any]:

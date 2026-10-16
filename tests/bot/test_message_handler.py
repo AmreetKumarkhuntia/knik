@@ -14,6 +14,7 @@ from bot.user_client_manager import UserClientManager
 from bot.user_identity import UserIdentityManager
 from lib.commands.models import CommandResult
 from lib.commands.service import CommandService
+from lib.services.ai_client.settings import ClientSettings
 from lib.services.ai_client.stream_events import StreamDone, TextDelta, ToolCallFinished, ToolCallStarted
 from lib.services.telegram.models import IncomingMessage, MessageResult
 from lib.tools.consent import ConsentRequest
@@ -517,7 +518,9 @@ async def test_model_and_provider_commands_change_the_senders_own_client(
     monkeypatch.setattr("lib.commands.service.ProviderRegistry", fakes.FakeProviderRegistry)
 
     identity = UserIdentityManager()
-    user_clients = UserClientManager(ai_provider="mock", transport=transport, loop=asyncio.get_running_loop())
+    user_clients = UserClientManager(
+        ClientSettings(provider="mock"), transport=transport, loop=asyncio.get_running_loop()
+    )
     service = CommandService(client_resolver=user_clients.get_or_create, user_identity=identity)
     _, dispatcher = create_command_system(service, user_clients)
     handler = BotMessageHandler(

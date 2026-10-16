@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from backend import state as state_module
-from backend.models.admin import SettingsUpdate
 from backend.settings_service import SettingsService
 from backend.state import AppState
 from lib.services.ai_client.factory import ClientSettings
@@ -21,13 +20,13 @@ def persisted(monkeypatch) -> dict:
     """SettingsDB/McpToolsDB without a database: writes are recorded, overrides start empty."""
     saved: dict = {"settings": [], "tools": {}}
 
-    async def upsert(fields):
-        saved["settings"].append(fields)
+    async def set_many(values):
+        saved["settings"].append(values)
 
     async def set_enabled(tool_name, enabled):
         saved["tools"][tool_name] = enabled
 
-    monkeypatch.setattr("backend.settings_service.SettingsDB.upsert", upsert)
+    monkeypatch.setattr("backend.settings_service.SettingsDB.set_many", set_many)
     monkeypatch.setattr("backend.settings_service.McpToolsDB.set_enabled", set_enabled)
     return saved
 
@@ -41,13 +40,8 @@ def app_state(config, persisted) -> AppState:
 def test_settings_start_from_the_env_config(config):
     settings = SettingsService(config).client_settings
 
-    assert settings == ClientSettings(
-        provider="mock",
-        model="mock-model",
-        system_instruction=str(config.system_instruction),
-        project_id=config.ai_project_id or None,
-        location=config.ai_location or None,
-    )
+    assert settings == ClientSettings.from_config(config)
+    assert (settings.provider, settings.model) == ("mock", "mock-model")
 
 
 @pytest.mark.asyncio
@@ -106,7 +100,7 @@ async def test_every_client_gets_its_own_tool_registry(app_state):
 async def test_changing_client_settings_drops_cached_clients(app_state, persisted):
     first = await app_state.get_client("c1")
 
-    await app_state.update_settings(SettingsUpdate(temperature=0.2, max_tokens=512))
+    await app_state.update_settings({"temperature": 0.2, "max_tokens": 512})
 
     assert persisted["settings"] == [{"temperature": 0.2, "max_tokens": 512}]
     assert (app_state.settings.client_settings.temperature, app_state.settings.client_settings.max_tokens) == (0.2, 512)
@@ -117,25 +111,45 @@ async def test_changing_client_settings_drops_cached_clients(app_state, persiste
 async def test_settings_that_do_not_change_clients_keep_them(app_state, persisted):
     first = await app_state.get_client("c1")
 
-    await app_state.update_settings(SettingsUpdate(display_name="Ada", model="mock-model", voice="am_adam"))
+    await app_state.update_settings({"display_name": "Ada", "ai_model": "mock-model", "voice_name": "am_adam"})
 
-    assert persisted["settings"] == [{"model": "mock-model", "voice": "am_adam", "display_name": "Ada"}]
+    assert persisted["settings"] == [{"display_name": "Ada", "ai_model": "mock-model", "voice_name": "am_adam"}]
     assert await app_state.get_client("c1") is first
     assert app_state.tts.voice == "am_adam"
-    assert app_state.settings.voice == "am_adam"
+    assert app_state.settings.config.voice_name == "am_adam"
+
+
+@pytest.mark.asyncio
+async def test_resetting_a_setting_restores_the_env_value(app_state, persisted, config, monkeypatch):
+    deleted: list[str] = []
+
+    async def delete(key):
+        deleted.append(key)
+        return True
+
+    monkeypatch.setattr("backend.settings_service.SettingsDB.delete", delete)
+    first = await app_state.get_client("c1")
+    await app_state.update_settings({"voice_name": "am_adam"})
+
+    await app_state.reset_setting("voice_name")
+
+    assert deleted == ["voice_name"]
+    assert app_state.tts.voice == config.voice_name
+    assert app_state.settings.config.voice_name == config.voice_name
+    assert await app_state.get_client("c1") is first
 
 
 @pytest.mark.asyncio
 async def test_a_failed_write_applies_nothing(app_state, monkeypatch):
-    async def upsert(fields):
+    async def set_many(values):
         raise RuntimeError("database down")
 
-    monkeypatch.setattr("backend.settings_service.SettingsDB.upsert", upsert)
+    monkeypatch.setattr("backend.settings_service.SettingsDB.set_many", set_many)
     first = await app_state.get_client("c1")
     before = app_state.settings.client_settings
 
     with pytest.raises(RuntimeError):
-        await app_state.update_settings(SettingsUpdate(provider="custom", voice="am_adam"))
+        await app_state.update_settings({"ai_provider": "custom", "voice_name": "am_adam"})
 
     assert app_state.settings.client_settings == before
     assert app_state.tts.voice == "af_heart"
@@ -215,7 +229,7 @@ async def test_a_client_is_cleaned_up_only_after_the_request_holding_it_ends(app
 async def test_a_settings_change_cleans_up_idle_clients_and_spares_busy_ones(app_state, persisted, fake_builds):
     idle = await app_state.get_client("idle")
     async with app_state.client("busy") as busy:
-        await app_state.update_settings(SettingsUpdate(temperature=0.2))
+        await app_state.update_settings({"temperature": 0.2})
         await _settle(app_state)
         assert idle.cleaned_up
         assert not busy.cleaned_up

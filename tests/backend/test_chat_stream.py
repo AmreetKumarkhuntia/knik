@@ -4,6 +4,7 @@ A stub client yields scripted events, so these pin the exact bytes the backend s
 """
 
 import contextlib
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -56,7 +57,7 @@ class StubState:
     """The parts of AppState the route uses; records the conversation ids it caches a client under."""
 
     def __init__(self, config, tts=None) -> None:
-        self.config = config
+        self.settings = SimpleNamespace(config=config)
         self.tts = tts
         self.ai_client: StubClient | None = None
         self.requested: list[str | None] = []

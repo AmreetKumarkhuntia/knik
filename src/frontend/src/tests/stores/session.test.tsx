@@ -66,6 +66,12 @@ describe('independent store session', () => {
     expect(populated.workflows.getState().workflows).toHaveLength(5)
     expect(populated.chat.getState().conversations).toHaveLength(5)
     const empty = createStoreBundle({})
+    const transport = {
+      load: async () => [],
+      save: async () => undefined,
+      reset: async () => undefined,
+    }
+    expect(createStoreBundle({}, transport).settingsTransport).toBe(transport)
     expect(empty.workflows.getState().workflows).toEqual([])
     expect(empty.executions.getState().executions).toEqual([])
     expect(empty.catalogs.getState().models).toEqual([])

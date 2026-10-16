@@ -13,7 +13,6 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from backend.config import WebBackendConfig
-from backend.models.admin import SettingsUpdate
 from backend.settings_service import SettingsService
 from imports import (
     DB_ERRORS,
@@ -57,7 +56,7 @@ class AppState:
         """Load the settings and the TTS model. Copes with the database being down (env defaults apply)."""
         settings = SettingsService(config)
         await settings.load()
-        tts = await _load_tts(settings.voice)
+        tts = await _load_tts(settings.config.voice_name)
         return cls(config, settings, tts, Scheduler(ai_client_factory=build_workflow_client))
 
     @asynccontextmanager
@@ -118,19 +117,29 @@ class AppState:
         """Drop the conversation's cached client; its tools are cleaned up once no request holds it."""
         self.clients.remove(conversation_id)
 
-    async def update_settings(self, update: SettingsUpdate) -> None:
-        """Persist and apply a settings change. Cached clients are dropped if new ones would be built differently."""
-        before = self.settings.client_settings
-        await self.settings.update(update)
+    async def update_settings(self, changes: dict[str, Any]) -> None:
+        """Persist and apply a settings change; see _apply_settings for what follows from it."""
+        await self._apply_settings(self.settings.update(changes))
+
+    async def reset_setting(self, key: str) -> None:
+        """Forget a stored setting; the env or built-in default applies from now on."""
+        await self._apply_settings(self.settings.reset(key))
+
+    async def _apply_settings(self, change: Coroutine[Any, Any, None]) -> None:
+        """Cached clients are dropped if new ones would be built differently, and TTS follows the voice."""
+        client_before = self.settings.client_settings
+        voice_before = self.settings.config.voice_name
+        await change
 
         after = self.settings.client_settings
-        if after != before:
+        if after != client_before:
             self._drop_clients()
             printer.info(f"AI client settings updated: {after.provider}/{after.model}")
 
-        if update.voice:
-            self.tts.set_voice(update.voice)
-            printer.info(f"TTS voice updated: {update.voice}")
+        voice = self.settings.config.voice_name
+        if voice != voice_before:
+            self.tts.set_voice(voice)
+            printer.info(f"TTS voice updated: {voice}")
 
     async def set_tool_group_enabled(self, group: str, enabled: bool) -> None:
         """Persist and apply a tool-group switch; cached clients are dropped so every conversation follows it."""

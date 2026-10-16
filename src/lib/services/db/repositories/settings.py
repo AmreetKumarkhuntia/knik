@@ -1,4 +1,4 @@
-"""Web-app settings: the single settings row, API keys and tool-group overrides."""
+"""Web-app settings: the key/value settings table, API keys and tool-group overrides."""
 
 import hashlib
 import hmac
@@ -7,57 +7,38 @@ import uuid
 from typing import Any
 
 from ..connection import PostgresDB
-from ..models import ApiKey, AppSettings, CreatedApiKey, McpToolState
-from .base import json_param, to_model, to_models
+from ..models import ApiKey, CreatedApiKey, McpToolState
+from .base import json_param, to_models
 
-
-_SETTINGS_ID = "singleton"
 
 # How many leading characters of a key are stored in the clear, to list it by and to look it up by.
 _KEY_PREFIX_LENGTH = 16
 
-# The only columns upsert may write; it builds its SQL from the field names, so this also guards it.
-SETTINGS_COLUMNS = frozenset(
-    {
-        "provider",
-        "model",
-        "voice",
-        "temperature",
-        "max_tokens",
-        "stream_responses",
-        "send_telemetry",
-        "display_name",
-        "username",
-        "api_base",
-        "api_key",
-    }
-)
-
 
 class SettingsDB:
-    @staticmethod
-    async def get() -> AppSettings | None:
-        """The persisted settings, or None when nothing has been saved yet."""
-        row = await PostgresDB.fetch_one("SELECT * FROM app_settings WHERE id = %s", (_SETTINGS_ID,))
-        return to_model(AppSettings.from_row, row)
+    """The ``settings`` table: one row per overridden Config key, its value as JSON (so its type survives)."""
 
     @staticmethod
-    async def upsert(fields: dict[str, Any]) -> None:
-        """Save the given columns; unknown names and None values are ignored."""
-        data = {k: v for k, v in fields.items() if k in SETTINGS_COLUMNS and v is not None}
-        if not data:
+    async def get_all() -> dict[str, Any]:
+        rows = await PostgresDB.fetch_all("SELECT key, value FROM settings")
+        return {row["key"]: row["value"] for row in rows}
+
+    @staticmethod
+    async def set_many(values: dict[str, Any]) -> None:
+        """Insert or replace every given key in one statement, so a failure writes nothing."""
+        if not values:
             return
-        cols = list(data)
-        insert_cols = ", ".join(["id", *cols, "updated_at"])
-        placeholders = ", ".join(["%s"] * (len(cols) + 1) + ["CURRENT_TIMESTAMP"])
-        updates = ", ".join(f"{c} = EXCLUDED.{c}" for c in cols)
-        query = f"""
-            INSERT INTO app_settings ({insert_cols})
-            VALUES ({placeholders})
-            ON CONFLICT (id) DO UPDATE
-            SET {updates}, updated_at = CURRENT_TIMESTAMP
-        """
-        await PostgresDB.execute(query, (_SETTINGS_ID, *[data[c] for c in cols]))
+        rows = ", ".join(["(%s, %s, CURRENT_TIMESTAMP)"] * len(values))
+        params = tuple(param for key, value in values.items() for param in (key, json_param(value)))
+        await PostgresDB.execute(
+            f"INSERT INTO settings (key, value, updated_at) VALUES {rows} "
+            "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP",
+            params,
+        )
+
+    @staticmethod
+    async def delete(key: str) -> bool:
+        return await PostgresDB.execute("DELETE FROM settings WHERE key = %s", (key,)) > 0
 
 
 class ApiKeyDB:
